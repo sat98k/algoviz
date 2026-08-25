@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { AlgorithmStep } from '../types/algorithm';
 import { getAlgorithmById } from '../config/algorithmRegistry';
+import { motion, useReducedMotion } from 'framer-motion';
 
 // Visualizer Components
 import { ArrayBarVisualizer } from '../components/visualizers/ArrayBarVisualizer';
@@ -19,7 +20,7 @@ import { ResultPanel } from '../components/common/ResultPanel';
 import { InputControlPanel } from '../components/common/InputControlPanel';
 import { CodeExplanation } from '../components/common/CodeExplanation';
 
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, Terminal } from 'lucide-react';
 
 interface AlgorithmPageProps {
   algorithmId: string;
@@ -28,16 +29,19 @@ interface AlgorithmPageProps {
 
 export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBack }) => {
   const config = useMemo(() => getAlgorithmById(algorithmId), [algorithmId]);
+  const shouldReduceMotion = useReducedMotion();
 
   if (!config) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="text-rose-400 font-mono">Algorithm '{algorithmId}' not found in registry.</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-8">
+        <p className="text-rose-400 font-mono text-xs uppercase tracking-widest">
+          ERROR 404 // ALGORITHM '{algorithmId}' NOT FOUND IN REGISTRY.
+        </p>
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm"
+          className="flex items-center gap-2 px-5 py-2.5 bg-obsidian-850 hover:bg-obsidian-800 text-chalk-200 border border-hairline font-mono text-xs uppercase tracking-wider"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Catalog
+          <ArrowLeft className="w-4 h-4" /> Return to Catalog
         </button>
       </div>
     );
@@ -151,63 +155,76 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
         return <StringMatchVisualizer step={currentStep} />;
       default:
         return (
-          <div className="p-8 text-center text-slate-400">
-            Visualizer '{config.visualizer}' is not registered.
+          <div className="p-12 text-center font-mono text-xs text-chalk-500 border border-hairline bg-obsidian-950">
+            VISUALIZER '{config.visualizer}' IS NOT REGISTERED.
           </div>
         );
     }
   };
 
+  const moduleNumStr = String(config.module).padStart(2, '0');
+
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="flex flex-col gap-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
       {/* Top Header & Navigation */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-colors"
-            title="Back to Catalog"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-semibold text-sky-400">
-                {config.moduleName}
+      <motion.div
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="flex flex-col gap-6 pb-6 border-b border-hairline"
+      >
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="flex flex-col gap-3">
+            {/* Back trigger + Chapter index */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onBack}
+                className="group flex items-center gap-1.5 px-3 py-1.5 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-400 hover:text-chalk-100 border border-hairline font-mono text-xs uppercase tracking-wider transition-colors"
+                title="Back to Catalog"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+                <span>CATALOG</span>
+              </button>
+
+              <span className="font-mono text-xs text-amber uppercase tracking-widest">
+                [ {moduleNumStr} // {config.moduleName.toUpperCase()} ]
               </span>
-              <span className="text-slate-600">•</span>
-              <span className="text-xs font-mono text-slate-400">{config.paradigm}</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+
+            {/* Main Algorithm Title */}
+            <h1 className="font-display font-black text-3xl sm:text-5xl md:text-6xl tracking-tighter text-chalk-100 mt-1">
               {config.name}
             </h1>
           </div>
+
+          {/* Complexity Ledger Block */}
+          <div className="w-full md:w-auto md:min-w-[420px]">
+            <ComplexityBadge complexity={config.complexity} paradigm={config.paradigm} />
+          </div>
         </div>
 
-        {/* Complexity Cards */}
-        <div className="w-full md:w-auto min-w-[320px]">
-          <ComplexityBadge complexity={config.complexity} paradigm={config.paradigm} />
+        {/* Problem Statement Ledger Banner */}
+        <div className="p-4 bg-obsidian-950 border border-hairline flex items-start gap-3">
+          <Terminal className="w-4 h-4 text-amber shrink-0 mt-0.5" />
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-500">
+              FORMAL PROBLEM STATEMENT
+            </span>
+            <p className="text-xs sm:text-sm text-chalk-300 font-sans leading-relaxed">
+              {config.problemStatement}
+            </p>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Problem Statement Banner */}
-      <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex items-start gap-3">
-        <BookOpen className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
-        <div className="flex flex-col gap-1">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 font-mono">
-            Problem Statement
-          </h4>
-          <p className="text-xs md:text-sm text-slate-300 leading-relaxed font-sans">
-            {config.problemStatement}
-          </p>
+      {/* Main Visualizer Stage */}
+      <section className="flex flex-col gap-4">
+        {/* Visualizer Canvas Component */}
+        <div className="w-full relative">
+          {renderVisualizer()}
         </div>
-      </div>
 
-      {/* Main Visualizer Canvas Area */}
-      <div className="flex flex-col gap-4">
-        {renderVisualizer()}
-
-        {/* Playback Controls */}
+        {/* Playback Controls Bar */}
         <PlaybackControls
           currentStep={currentStepIndex}
           totalSteps={steps.length}
@@ -221,12 +238,12 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
           onSeek={(idx) => setCurrentStepIndex(idx)}
           onSpeedChange={(newSpeed) => setSpeed(newSpeed)}
         />
-      </div>
+      </section>
 
-      {/* Side-by-Side Lower Layout: Inputs & Explanation vs Metrics & Results */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: Code & Step Explanation */}
-        <div className="flex flex-col gap-6">
+      {/* Side-by-Side Lower Deck: Inputs & Explanation vs Metrics & Results */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
+        {/* Left Column: Code & Step Explanation + Inputs */}
+        <div className="flex flex-col gap-8">
           <CodeExplanation step={currentStep} pseudocode={config.pseudocode} />
           <InputControlPanel
             config={config}
@@ -235,16 +252,17 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
           />
         </div>
 
-        {/* Right Column: Live Metrics & Result Panel */}
-        <div className="flex flex-col gap-6">
+        {/* Right Column: Live Operation Telemetry + Result Panel */}
+        <div className="flex flex-col gap-8">
           <MetricsPanel metrics={currentStep.metrics || {}} />
           <ResultPanel
             result={currentStep.result || (currentStep.isFinal ? finalStep?.result : undefined)}
-            title="Algorithm Output & Solution"
+            title="COMPUTED SOLUTION ARTIFACT"
             isFinal={currentStep.isFinal}
           />
         </div>
-      </div>
+      </section>
     </div>
   );
 };
+

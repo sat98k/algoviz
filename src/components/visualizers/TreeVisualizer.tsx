@@ -178,47 +178,47 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
   const getNodeFill = (status?: string) => {
     switch (status) {
       case 'active':
-        return 'fill-sky-500 stroke-sky-300 stroke-2';
+        return 'fill-amber stroke-amber-glow stroke-2';
       case 'pruned':
-        return 'fill-rose-900/80 stroke-rose-500 stroke-2';
+        return 'fill-rose-950/80 stroke-rose-500 stroke-2';
       case 'best':
-        return 'fill-emerald-600 stroke-emerald-300 stroke-2';
+        return 'fill-acid-500/80 stroke-acid-400 stroke-2 text-obsidian-950';
       case 'explored':
-        return 'fill-slate-700 stroke-slate-500';
+        return 'fill-obsidian-800 stroke-obsidian-600';
       default:
-        return 'fill-slate-800 stroke-slate-600';
+        return 'fill-obsidian-850 stroke-hairline';
     }
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-[420px] p-6 bg-slate-900/90 rounded-xl border border-slate-800 backdrop-blur">
+    <div className="flex flex-col items-center w-full min-h-[420px] p-6 bg-obsidian-900 border border-hairline transition-all">
       {/* Top Banner Details */}
       {isHuffman && state.codeTable && Object.keys(state.codeTable).length > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
           {Object.entries(state.codeTable).map(([char, code]) => (
             <span
               key={char}
-              className="px-2.5 py-1 text-xs font-mono bg-slate-950 border border-sky-500/40 rounded-md text-sky-300 shadow-sm"
+              className="px-3 py-1 text-xs font-mono bg-obsidian-950 border border-amber/30 text-chalk-200"
             >
-              <strong>'{char}'</strong>: <code className="text-emerald-400 font-bold">{code as string}</code>
+              <strong>'{char}'</strong>: <code className="text-acid-500 font-bold">{code as string}</code>
             </span>
           ))}
         </div>
       )}
 
       {isKnapsackBB && (
-        <div className="flex items-center gap-4 mb-4 text-xs font-mono">
-          <span className="px-3 py-1 bg-emerald-950/80 border border-emerald-500/40 rounded-full text-emerald-300">
+        <div className="flex flex-wrap items-center gap-4 mb-4 text-xs font-mono">
+          <span className="px-3 py-1 bg-obsidian-950 border border-acid-500/40 text-acid-500">
             Current Best Value: <strong>{state.bestValue}</strong> (Weight: {state.bestWeight}/{state.capacity})
           </span>
-          <span className="px-3 py-1 bg-slate-950 border border-slate-700 rounded-full text-slate-300">
+          <span className="px-3 py-1 bg-obsidian-950 border border-hairline text-chalk-400">
             Queue Size: {state.queueSize} | Pruned: {state.prunedNodeIds?.length || 0}
           </span>
         </div>
       )}
 
       {/* SVG Canvas Container */}
-      <div className="w-full overflow-x-auto overflow-y-auto max-h-[500px] flex justify-center bg-slate-950/70 rounded-lg border border-slate-800/80 p-2">
+      <div className="w-full overflow-x-auto overflow-y-auto max-h-[500px] flex justify-center bg-obsidian-950 border border-hairline p-4">
         <svg
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           className="w-full max-w-4xl min-w-[700px] h-[440px] select-none"
@@ -233,7 +233,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748b" />
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="#647087" />
             </marker>
           </defs>
 
@@ -245,7 +245,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
                 y1={edge.y1}
                 x2={edge.x2}
                 y2={edge.y2}
-                stroke="#475569"
+                stroke="#2a2e39"
                 strokeWidth="1.8"
                 strokeDasharray={edge.status === 'exclude' ? '4 3' : undefined}
               />
@@ -256,14 +256,13 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
                     y="-9"
                     width="24"
                     height="16"
-                    rx="3"
-                    className="fill-slate-900/90 stroke-slate-700"
+                    className="fill-obsidian-950 stroke-hairline"
                     strokeWidth="0.8"
                   />
                   <text
                     textAnchor="middle"
                     dominantBaseline="central"
-                    className="text-[10px] font-mono font-bold fill-sky-300"
+                    className="text-[10px] font-mono font-bold fill-amber-glow"
                   >
                     {edge.label}
                   </text>
@@ -283,13 +282,12 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
                     y="-18"
                     width="68"
                     height="36"
-                    rx="6"
-                    className={`${getNodeFill(node.status)} shadow-lg`}
+                    className={`${getNodeFill(node.status)} shadow-md`}
                   />
                 ) : (
                   <circle
                     r={node.isLeaf ? 22 : 18}
-                    className={`${getNodeFill(node.status)} shadow-lg`}
+                    className={`${getNodeFill(node.status)} shadow-md`}
                   />
                 )}
 
@@ -309,7 +307,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
                     y={10}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    className="text-[9px] font-mono fill-slate-300 pointer-events-none"
+                    className="text-[9px] font-mono fill-chalk-400 pointer-events-none"
                   >
                     {node.subLabel}
                   </text>
@@ -323,14 +321,13 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
                       y="-7"
                       width="36"
                       height="14"
-                      rx="3"
-                      className="fill-emerald-950 stroke-emerald-500"
+                      className="fill-obsidian-950 stroke-acid-500"
                       strokeWidth="0.8"
                     />
                     <text
                       textAnchor="middle"
                       dominantBaseline="central"
-                      className="text-[9px] font-mono font-bold fill-emerald-300 pointer-events-none"
+                      className="text-[9px] font-mono font-bold fill-acid-500 pointer-events-none"
                     >
                       {node.code}
                     </text>
@@ -343,18 +340,18 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-5 text-xs text-slate-300">
+      <div className="flex flex-wrap items-center justify-center gap-5 mt-5 text-xs font-mono text-chalk-400">
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-sky-500 border border-sky-300"></span>
+          <span className="w-2.5 h-2.5 bg-amber border border-amber-glow"></span>
           <span>Active Node</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-emerald-600 border border-emerald-300"></span>
-          <span>Optimal / Feasible Solution</span>
+          <span className="w-2.5 h-2.5 bg-acid-500 border border-acid-400"></span>
+          <span>Optimal Solution</span>
         </div>
         {isKnapsackBB && (
           <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded bg-rose-900 border border-rose-500"></span>
+            <span className="w-2.5 h-2.5 bg-rose-900 border border-rose-500"></span>
             <span>Pruned Branch</span>
           </div>
         )}

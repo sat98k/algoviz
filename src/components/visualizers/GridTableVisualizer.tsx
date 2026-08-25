@@ -40,57 +40,57 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
   const getCellClasses = (r: number, c: number) => {
     const status = getCellStatus(r, c);
     if (status === 'active') {
-      return 'bg-sky-500/30 border-2 border-sky-400 text-sky-200 font-bold shadow-lg shadow-sky-500/30 scale-105 z-10';
+      return 'bg-amber/25 border border-amber text-amber-glow font-bold scale-105 z-10';
     }
     if (status === 'source') {
-      return 'bg-amber-500/25 border-2 border-amber-400 text-amber-200 font-bold';
+      return 'bg-electric-500/20 border border-electric-400 text-electric-400 font-bold';
     }
     if (status === 'path') {
-      return 'bg-emerald-500/30 border-2 border-emerald-400 text-emerald-200 font-bold shadow-md shadow-emerald-500/20';
+      return 'bg-acid-500/25 border border-acid-500 text-acid-500 font-bold';
     }
     if (status === 'check') {
       return 'bg-rose-500/20 border border-rose-400 text-rose-300';
     }
-    return 'bg-slate-900/80 border border-slate-800 text-slate-300';
+    return 'bg-obsidian-950/60 border border-hairline text-chalk-300';
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-[380px] p-6 bg-slate-900/90 rounded-xl border border-slate-800 backdrop-blur">
+    <div className="flex flex-col items-center w-full min-h-[380px] p-6 bg-obsidian-900 border border-hairline transition-all">
       {/* Formula / Explanation banner */}
       {state.formulaExplanation && (
-        <div className="mb-4 px-4 py-2 bg-slate-950/80 border border-sky-500/40 rounded-lg text-xs md:text-sm font-mono text-sky-300 shadow-inner flex items-center gap-2">
-          <span className="font-semibold text-slate-400">Recurrence:</span>
+        <div className="mb-4 px-4 py-2 bg-obsidian-950 border border-amber/30 text-xs md:text-sm font-mono text-amber-glow flex items-center gap-2">
+          <span className="font-semibold text-chalk-500 uppercase">[ RECURRENCE ]:</span>
           <span>{state.formulaExplanation}</span>
         </div>
       )}
 
       {/* Selected Items / LCS Output banner */}
       {isKnapsack && state.selectedItems && state.selectedItems.length > 0 && (
-        <div className="mb-3 px-3 py-1 bg-emerald-950/60 border border-emerald-600/50 rounded-full text-xs font-mono text-emerald-300">
+        <div className="mb-3 px-4 py-1.5 bg-obsidian-950 border border-acid-500/40 text-xs font-mono text-acid-500">
           Selected Items: [{state.selectedItems.join(', ')}] | Max Value: {state.maxValue}
         </div>
       )}
 
       {isLCS && state.lcsString !== undefined && (
-        <div className="mb-3 px-3 py-1 bg-emerald-950/60 border border-emerald-600/50 rounded-full text-xs font-mono text-emerald-300">
+        <div className="mb-3 px-4 py-1.5 bg-obsidian-950 border border-acid-500/40 text-xs font-mono text-acid-500">
           Current LCS: "{state.lcsString}" (Length: {state.lcsString.length})
         </div>
       )}
 
       {/* Grid Table Container */}
-      <div className="w-full overflow-x-auto overflow-y-auto max-h-[480px] pb-2 rounded-lg border border-slate-800">
+      <div className="w-full overflow-x-auto overflow-y-auto max-h-[480px] pb-2 border border-hairline bg-obsidian-950">
         <table className="w-full border-collapse text-center text-xs font-mono">
           {/* Column Headers */}
           <thead>
-            <tr className="bg-slate-950/90 sticky top-0 z-20">
-              <th className="p-2.5 border-b border-r border-slate-700/80 text-slate-400 font-semibold sticky left-0 bg-slate-950 z-30">
+            <tr className="bg-obsidian-950 sticky top-0 z-20">
+              <th className="p-3 border-b border-r border-hairline text-chalk-500 font-semibold sticky left-0 bg-obsidian-950 z-30 uppercase tracking-wider text-[11px]">
                 {isKnapsack ? 'Items \\ Cap' : isLCS ? 'Str1 \\ Str2' : 'Row \\ Col'}
               </th>
               {colLabels.map((colText, cIdx) => (
                 <th
                   key={cIdx}
-                  className={`p-2.5 border-b border-slate-700/80 font-semibold min-w-[52px] ${
-                    cIdx === currentCol ? 'text-sky-300 bg-sky-950/40 border-b-2 border-sky-400' : 'text-slate-400'
+                  className={`p-3 border-b border-hairline font-semibold min-w-[54px] text-[11px] ${
+                    cIdx === currentCol ? 'text-amber-glow bg-amber/10 border-b-2 border-amber' : 'text-chalk-500'
                   }`}
                 >
                   {colText}
@@ -100,11 +100,11 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
           </thead>
           <tbody>
             {dpTable.map((row, rIdx) => (
-              <tr key={rIdx} className="hover:bg-slate-800/30 transition-colors">
+              <tr key={rIdx} className="hover:bg-obsidian-850/60 transition-colors">
                 {/* Row Header */}
                 <th
-                  className={`p-2.5 border-r border-b border-slate-700/80 font-semibold text-left sticky left-0 z-10 ${
-                    rIdx === currentRow ? 'text-sky-300 bg-sky-950/70 border-r-2 border-sky-400' : 'text-slate-400 bg-slate-950/95'
+                  className={`p-3 border-r border-b border-hairline font-semibold text-left sticky left-0 z-10 text-[11px] ${
+                    rIdx === currentRow ? 'text-amber-glow bg-amber/10 border-r-2 border-amber' : 'text-chalk-400 bg-obsidian-950'
                   }`}
                 >
                   {rowLabels[rIdx] || `R${rIdx}`}
@@ -117,7 +117,7 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
                   return (
                     <td
                       key={cIdx}
-                      className={`p-2.5 border border-slate-800/80 transition-all duration-200 relative ${cellClasses}`}
+                      className={`p-3 border border-hairline transition-all duration-200 relative tabular-nums ${cellClasses}`}
                     >
                       <span className={`${isCurrent ? 'scale-110 font-bold' : ''}`}>
                         {val}
@@ -132,18 +132,18 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-5 text-xs text-slate-300">
+      <div className="flex flex-wrap items-center justify-center gap-5 mt-5 text-xs font-mono text-chalk-400">
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-sky-500/40 border border-sky-400"></span>
-          <span>Active Cell (Current)</span>
+          <span className="w-2.5 h-2.5 bg-amber/40 border border-amber"></span>
+          <span>Active Cell</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-amber-500/40 border border-amber-400"></span>
-          <span>Source Dependency Cells</span>
+          <span className="w-2.5 h-2.5 bg-electric-500/40 border border-electric-400"></span>
+          <span>Dependency</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-emerald-500/40 border border-emerald-400"></span>
-          <span>Backtracked Solution Path</span>
+          <span className="w-2.5 h-2.5 bg-acid-500/40 border border-acid-500"></span>
+          <span>Solution Path</span>
         </div>
       </div>
     </div>

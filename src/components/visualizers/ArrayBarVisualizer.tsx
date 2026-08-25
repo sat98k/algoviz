@@ -54,18 +54,18 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full min-h-[360px] p-6 bg-slate-900/90 rounded-xl border border-slate-800 backdrop-blur">
+    <div className="flex flex-col items-center justify-center w-full min-h-[380px] p-6 bg-obsidian-900 border border-hairline transition-all">
       {/* Subarray / Window status indicator */}
       {windowRange && (
-        <div className="mb-4 text-xs font-mono px-3 py-1 bg-cyan-950/80 border border-cyan-700/50 rounded-full text-cyan-300 flex items-center gap-2">
-          <span>Active Window: [{windowRange[0]} .. {windowRange[1]}]</span>
-          {state.currentSum !== undefined && <span>| Current Sum: <strong>{state.currentSum}</strong></span>}
-          {state.maxSum !== undefined && <span>| Max Sum: <strong className="text-emerald-400">{state.maxSum}</strong></span>}
+        <div className="mb-4 text-xs font-mono px-4 py-1.5 bg-obsidian-950 border border-amber/30 text-amber-glow flex items-center gap-3">
+          <span className="font-semibold uppercase tracking-wider">[ WINDOW: {windowRange[0]} .. {windowRange[1]} ]</span>
+          {state.currentSum !== undefined && <span className="text-chalk-400">| Current Sum: <strong className="text-chalk-100">{state.currentSum}</strong></span>}
+          {state.maxSum !== undefined && <span className="text-chalk-400">| Max Sum: <strong className="text-acid-500">{state.maxSum}</strong></span>}
         </div>
       )}
 
       {/* Array Bars Container */}
-      <div className="flex items-end justify-center gap-2 md:gap-3 w-full max-w-4xl h-64 px-4 pb-4 pt-8 bg-slate-950/60 rounded-lg border border-slate-800/80 overflow-x-auto">
+      <div className="flex items-end justify-center gap-2 md:gap-3 w-full max-w-4xl h-64 px-6 pb-4 pt-8 bg-obsidian-950 border border-hairline overflow-x-auto">
         {array.map((val, idx) => {
           // Normalize height to percentage (between 15% and 95%)
           const heightPercent = Math.max(15, Math.min(95, ((val - minVal) / range) * 80 + 15));
@@ -76,7 +76,7 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
               {/* Badge tag */}
               <div className="h-5 flex items-center justify-center mb-1">
                 {badge && (
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-200">
+                  <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-obsidian-800 border border-hairline text-chalk-200 uppercase tracking-wider">
                     {badge}
                   </span>
                 )}
@@ -85,17 +85,17 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
               {/* Animated Bar */}
               <div
                 style={{ height: `${heightPercent}%` }}
-                className={`w-full rounded-t-md border-t-2 border-x transition-all duration-300 flex items-start justify-center pt-1 shadow-lg ${getBarColor(
+                className={`w-full border-t-2 border-x transition-all duration-300 flex items-start justify-center pt-1 shadow-md ${getBarColor(
                   idx
                 )}`}
               >
-                <span className="text-xs font-bold font-mono text-white drop-shadow-md select-none">
+                <span className="text-xs font-bold font-mono text-white drop-shadow select-none tabular-nums">
                   {val}
                 </span>
               </div>
 
               {/* Index marker */}
-              <div className="mt-2 text-[11px] font-mono text-slate-400 select-none">
+              <div className="mt-2 text-[10px] font-mono text-chalk-500 select-none tabular-nums">
                 {idx}
               </div>
             </div>
@@ -104,26 +104,26 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-6 text-xs text-slate-300">
+      <div className="flex flex-wrap items-center justify-center gap-5 mt-6 text-xs font-mono text-chalk-400">
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-purple-500 border border-purple-300"></span>
+          <span className="w-2.5 h-2.5 bg-purple-500 border border-purple-300"></span>
           <span>Pivot</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-amber-400 border border-amber-200"></span>
+          <span className="w-2.5 h-2.5 bg-amber-400 border border-amber-200"></span>
           <span>Comparing</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-rose-500 border border-rose-300"></span>
+          <span className="w-2.5 h-2.5 bg-rose-500 border border-rose-300"></span>
           <span>Swapping</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-emerald-500 border border-emerald-300"></span>
+          <span className="w-2.5 h-2.5 bg-emerald-500 border border-emerald-300"></span>
           <span>Sorted / Final</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-cyan-600 border border-cyan-400"></span>
-          <span>Subarray Window</span>
+          <span className="w-2.5 h-2.5 bg-cyan-600 border border-cyan-400"></span>
+          <span>Window</span>
         </div>
       </div>
     </div>

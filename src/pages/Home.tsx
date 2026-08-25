@@ -1,7 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { algorithmRegistry } from '../config/algorithmRegistry';
 import { AlgorithmConfig } from '../types/algorithm';
-import { Search, ArrowRight, Play, Sparkles, Filter, Layers, Clock, Cpu, GitCompare } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import {
+  Search,
+  ArrowUpRight,
+  Play,
+  Filter,
+  Layers,
+  Clock,
+  Cpu,
+  GitCompare,
+  Terminal,
+} from 'lucide-react';
 
 interface HomeProps {
   onSelectAlgorithm: (id: string) => void;
@@ -12,6 +23,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedParadigm, setSelectedParadigm] = useState<string>('All');
   const [selectedModule, setSelectedModule] = useState<string>('All');
+  const shouldReduceMotion = useReducedMotion();
 
   const paradigms = useMemo(() => {
     const list: string[] = ['All'];
@@ -22,7 +34,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
   }, []);
 
   const modules = useMemo(() => {
-    return ['All', 'Module 1', 'Module 2', 'Module 3', 'Module 4', 'Module 5', 'Module 6', 'Module 7'];
+    return ['All', 'Module 1', 'Module 2', 'Module 3', 'Module 4', 'Module 5', 'Module 6', 'Module 7', 'Module 8'];
   }, []);
 
   const filteredAlgorithms = useMemo(() => {
@@ -51,164 +63,307 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
     return Array.from(map.entries());
   }, [filteredAlgorithms]);
 
+  const totalAlgorithms = algorithmRegistry.length;
+
   return (
-    <div className="flex flex-col gap-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden p-8 md:p-12 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-800 shadow-2xl">
-        <div className="relative z-10 max-w-3xl flex flex-col gap-4">
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-sky-950/80 border border-sky-500/40 text-sky-300 text-xs font-mono font-medium w-fit">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>BCSE204L — Design and Analysis of Algorithms</span>
+    <div className="flex flex-col w-full min-h-screen bg-obsidian-900 text-chalk-100 overflow-hidden">
+      {/* ========================================================================= */}
+      {/* SECTION 01: HERO EXPOSITION (Fullscreen Editorial Scale)                  */}
+      {/* ========================================================================= */}
+      <section className="relative min-h-[90vh] flex flex-col justify-between pt-12 pb-16 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto w-full border-b border-hairline">
+        {/* Top Section Index Marker */}
+        <div className="flex items-center justify-between font-mono text-xs text-chalk-500 uppercase tracking-widest pb-8">
+          <div className="flex items-center gap-3">
+            <span className="text-amber font-bold">[ 01 // EXPOSITION ]</span>
+            <span className="hidden sm:inline-block text-chalk-600">/</span>
+            <span className="hidden sm:inline-block">BCSE204L • DESIGN & ANALYSIS OF ALGORITHMS</span>
           </div>
+          <div className="flex items-center gap-2 text-chalk-400">
+            <span className="w-2 h-2 bg-acid-500 rounded-full animate-pulse"></span>
+            <span>{totalAlgorithms} ACTIVE SIMULATION ENGINES</span>
+          </div>
+        </div>
 
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            Interactive DAA <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">Algorithm Visualizer</span>
-          </h1>
+        {/* Giant Typographic Statement with Asymmetric Layout */}
+        <div className="relative z-10 my-auto py-8">
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col gap-2 sm:gap-4"
+          >
+            <div className="flex items-center gap-3 font-mono text-xs tracking-widest text-amber-glow uppercase">
+              <Terminal className="w-3.5 h-3.5" />
+              <span>DETERMINISTIC STATE RECURRENCE</span>
+            </div>
 
-          <p className="text-sm md:text-base text-slate-300 leading-relaxed font-sans">
-            Step-by-step interactive animations covering all 8 syllabus modules — from greedy Huffman trees and Kadane’s dynamic scan to Edmonds-Karp network flows, Graham’s convex hulls, and 2-approximation bounds.
-          </p>
+            <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tighter text-chalk-100 leading-[0.9] text-balance">
+              ALGORITHMIC <br />
+              <span className="font-serif italic font-normal text-chalk-300">ARCHITECTURE.</span>
+            </h1>
+          </motion.div>
 
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button
-              onClick={() => onSelectAlgorithm('randomized-quicksort')}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm transition-all shadow-lg shadow-sky-500/25"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              <span>Launch Quickstart (Quicksort)</span>
-            </button>
+          {/* Subtext and Quickstart Ledger Block */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-12 items-end">
+            <div className="lg:col-span-7">
+              <p className="text-base sm:text-lg md:text-xl text-chalk-400 font-sans font-light leading-relaxed max-w-2xl text-balance">
+                An interactive computational archive dissecting all 8 course modules — from greedy Huffman trees and dynamic tabulation to branch-and-bound pruning, network flows, and 2-approximation bounds.
+              </p>
+            </div>
 
-            <button
-              onClick={onNavigateComparison}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 font-semibold text-sm transition-all"
-            >
-              <GitCompare className="w-4 h-4" />
-              <span>Compare DP vs Branch & Bound</span>
-            </button>
+            {/* Quick Action Triggers */}
+            <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-3 font-mono text-xs">
+              <button
+                onClick={() => onSelectAlgorithm('randomized-quicksort')}
+                className="group flex items-center justify-between p-4 bg-chalk-100 text-obsidian-950 font-bold uppercase tracking-wider transition-all duration-300 hover:bg-amber hover:text-obsidian-950 shadow-lg shadow-black/40"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Launch Quicksort Studio</span>
+                </div>
+                <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </button>
+
+              <button
+                onClick={onNavigateComparison}
+                className="group flex items-center justify-between p-4 bg-obsidian-850 text-chalk-200 border border-hairline uppercase tracking-wider transition-all duration-300 hover:border-amber hover:text-amber-glow"
+              >
+                <div className="flex items-center gap-2.5">
+                  <GitCompare className="w-4 h-4 text-amber" />
+                  <span>Compare DP vs Branch & Bound</span>
+                </div>
+                <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 01 Footer Stats Ribbon */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-hairline border-t border-hairline pt-6 text-xs font-mono text-chalk-400">
+          <div className="px-3 py-1 flex flex-col">
+            <span className="text-chalk-600 uppercase text-[10px]">PARADIGMS</span>
+            <span className="font-bold text-chalk-200 text-sm mt-0.5">8 Classifications</span>
+          </div>
+          <div className="px-3 py-1 flex flex-col">
+            <span className="text-chalk-600 uppercase text-[10px]">TIME BOUNDS</span>
+            <span className="font-bold text-amber-glow text-sm mt-0.5">O(n log n) .. O(2ⁿ)</span>
+          </div>
+          <div className="px-3 py-1 flex flex-col">
+            <span className="text-chalk-600 uppercase text-[10px]">ENGINES</span>
+            <span className="font-bold text-acid-500 text-sm mt-0.5">12 Step Generators</span>
+          </div>
+          <div className="px-3 py-1 flex flex-col">
+            <span className="text-chalk-600 uppercase text-[10px]">ARCHITECTURE</span>
+            <span className="font-bold text-chalk-200 text-sm mt-0.5">Pure Client-Side</span>
           </div>
         </div>
       </section>
 
-      {/* Filter and Search Bar */}
-      <section className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-        {/* Search Input */}
-        <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search algorithms, paradigms (e.g. Greedy, DP, KMP)..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-sm font-sans text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500"
-          />
+      {/* ========================================================================= */}
+      {/* SECTION 02: CONTINUOUS MARQUEE TICKER (Typography Flow)                   */}
+      {/* ========================================================================= */}
+      <div className="w-full border-b border-hairline py-4 bg-obsidian-950 overflow-hidden flex select-none">
+        <div className="flex shrink-0 items-center gap-12 animate-marquee font-mono text-xs uppercase tracking-widest text-chalk-400">
+          <span>01. GREEDY HUFFMAN PREFIX CODES</span>
+          <span className="text-amber">✦</span>
+          <span>02. DYNAMIC PROGRAMMING RECURRENCE & LCS</span>
+          <span className="text-acid-500">✦</span>
+          <span>03. RANDOMIZED EXPECTED O(N LOG N) QUICKSORT</span>
+          <span className="text-electric-400">✦</span>
+          <span>04. N-QUEENS BACKTRACKING STATE SEARCH</span>
+          <span className="text-amber">✦</span>
+          <span>05. BRANCH & BOUND 0-1 KNAPSACK PRUNING</span>
+          <span className="text-acid-500">✦</span>
+          <span>06. FLOYD-WARSHALL ALL-PAIRS SHORTEST PATHS</span>
+          <span className="text-electric-400">✦</span>
+          <span>07. KMP STRING PATTERN MATCHER & LPS ARRAY</span>
+          <span className="text-amber">✦</span>
+          <span>08. GRAHAM SCAN COMPUTATIONAL CONVEX HULL</span>
+        </div>
+        <div className="flex shrink-0 items-center gap-12 animate-marquee font-mono text-xs uppercase tracking-widest text-chalk-400" aria-hidden="true">
+          <span>01. GREEDY HUFFMAN PREFIX CODES</span>
+          <span className="text-amber">✦</span>
+          <span>02. DYNAMIC PROGRAMMING RECURRENCE & LCS</span>
+          <span className="text-acid-500">✦</span>
+          <span>03. RANDOMIZED EXPECTED O(N LOG N) QUICKSORT</span>
+          <span className="text-electric-400">✦</span>
+          <span>04. N-QUEENS BACKTRACKING STATE SEARCH</span>
+          <span className="text-amber">✦</span>
+          <span>05. BRANCH & BOUND 0-1 KNAPSACK PRUNING</span>
+          <span className="text-acid-500">✦</span>
+          <span>06. FLOYD-WARSHALL ALL-PAIRS SHORTEST PATHS</span>
+          <span className="text-electric-400">✦</span>
+          <span>07. KMP STRING PATTERN MATCHER & LPS ARRAY</span>
+          <span className="text-amber">✦</span>
+          <span>08. GRAHAM SCAN COMPUTATIONAL CONVEX HULL</span>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* SECTION 03: HUD FILTER & SEARCH BAR (Minimal Editorial Control)           */}
+      {/* ========================================================================= */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 pt-16 pb-8">
+        <div className="flex items-center justify-between font-mono text-xs text-chalk-500 uppercase tracking-widest pb-6">
+          <div className="flex items-center gap-2">
+            <span className="text-amber font-bold">[ 02 // SEARCH & FILTERS ]</span>
+            <span>/ CATALOG DISSECTION</span>
+          </div>
+          <span>MATCHING: {filteredAlgorithms.length} / {totalAlgorithms}</span>
         </div>
 
-        {/* Paradigm & Module Filters */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-          {/* Paradigm Dropdown */}
-          <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <select
-              value={selectedParadigm}
-              onChange={(e) => setSelectedParadigm(e.target.value)}
-              className="bg-transparent text-slate-300 text-xs focus:outline-none cursor-pointer"
-            >
-              {paradigms.map((p) => (
-                <option key={p} value={p} className="bg-slate-900 text-slate-200">
-                  {p}
-                </option>
-              ))}
-            </select>
+        <div className="flex flex-col lg:flex-row items-stretch gap-4 p-2 bg-obsidian-950 border border-hairline">
+          {/* Search Input */}
+          <div className="relative flex-1 flex items-center">
+            <Search className="w-4 h-4 text-chalk-500 absolute left-4" />
+            <input
+              type="text"
+              placeholder="Search algorithm, paradigm (e.g. Greedy, DP, KMP, Flow)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-obsidian-950 text-xs sm:text-sm font-mono text-chalk-200 placeholder-chalk-600 focus:outline-none focus:bg-obsidian-900 border-none"
+            />
           </div>
 
-          {/* Module Dropdown */}
-          <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
-            <Layers className="w-3.5 h-3.5 text-slate-400" />
-            <select
-              value={selectedModule}
-              onChange={(e) => setSelectedModule(e.target.value)}
-              className="bg-transparent text-slate-300 text-xs focus:outline-none cursor-pointer"
-            >
-              {modules.map((m) => (
-                <option key={m} value={m} className="bg-slate-900 text-slate-200">
-                  {m}
-                </option>
-              ))}
-            </select>
+          {/* Paradigm & Module Filters */}
+          <div className="flex flex-wrap items-center gap-2 border-t lg:border-t-0 lg:border-l border-hairline pt-2 lg:pt-0 lg:pl-3">
+            {/* Paradigm Dropdown */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-obsidian-900 border border-hairline text-xs font-mono text-chalk-300">
+              <Filter className="w-3.5 h-3.5 text-amber" />
+              <select
+                value={selectedParadigm}
+                onChange={(e) => setSelectedParadigm(e.target.value)}
+                className="bg-transparent text-chalk-200 text-xs focus:outline-none cursor-pointer"
+              >
+                {paradigms.map((p) => (
+                  <option key={p} value={p} className="bg-obsidian-950 text-chalk-200">
+                    {p === 'All' ? 'All Paradigms' : p}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Module Dropdown */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-obsidian-900 border border-hairline text-xs font-mono text-chalk-300">
+              <Layers className="w-3.5 h-3.5 text-acid-500" />
+              <select
+                value={selectedModule}
+                onChange={(e) => setSelectedModule(e.target.value)}
+                className="bg-transparent text-chalk-200 text-xs focus:outline-none cursor-pointer"
+              >
+                {modules.map((m) => (
+                  <option key={m} value={m} className="bg-obsidian-950 text-chalk-200">
+                    {m === 'All' ? 'All Modules (1-8)' : m}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Algorithm Catalog Grouped by Module */}
-      <section className="flex flex-col gap-10">
+      {/* ========================================================================= */}
+      {/* SECTION 04: SYLLABUS LEDGER INDEX (Editorial Numbered Chapters 01 - 08)   */}
+      {/* ========================================================================= */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 py-12 flex flex-col gap-20">
         {groupedByModule.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 bg-slate-900/40 border border-slate-800 rounded-2xl">
-            No algorithms match the current search or filters.
+          <div className="p-16 text-center text-chalk-500 font-mono text-xs border border-hairline bg-obsidian-950">
+            NO ALGORITHMS MATCH THE ACTIVE CRITERIA. ADJUST SEARCH QUERY OR PARADIGM FILTER.
           </div>
         ) : (
-          groupedByModule.map(([moduleName, algos]) => (
-            <div key={moduleName} className="flex flex-col gap-4">
-              <div className="flex items-center gap-3 border-b border-slate-800 pb-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-400 shadow-sm shadow-sky-400/50"></span>
-                <h2 className="text-lg font-bold text-white tracking-wide font-mono">
-                  {moduleName}
-                </h2>
-                <span className="text-xs text-slate-500 font-mono">
-                  ({algos.length} algorithm{algos.length > 1 ? 's' : ''})
-                </span>
-              </div>
+          groupedByModule.map(([moduleName, algos], moduleIdx) => {
+            const moduleNumber = algos[0]?.module || moduleIdx + 1;
+            const formattedModuleNum = String(moduleNumber).padStart(2, '0');
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {algos.map((algo) => (
-                  <div
-                    key={algo.id}
-                    onClick={() => onSelectAlgorithm(algo.id)}
-                    className="group relative flex flex-col justify-between p-6 bg-slate-900/70 hover:bg-slate-900 border border-slate-800/90 hover:border-sky-500/50 rounded-2xl transition-all duration-300 cursor-pointer shadow-lg hover:shadow-sky-500/10 hover:-translate-y-1"
-                  >
-                    <div className="flex flex-col gap-3">
-                      {/* Top Paradigm & Module Header */}
-                      <div className="flex items-center justify-between">
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-sky-950 border border-sky-600/40 text-sky-300">
-                          {algo.paradigm}
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-500">
-                          Module {algo.module}
-                        </span>
-                      </div>
-
-                      {/* Name */}
-                      <h3 className="text-lg font-bold text-white group-hover:text-sky-300 transition-colors">
-                        {algo.name}
-                      </h3>
-
-                      {/* Problem Statement */}
-                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
-                        {algo.problemStatement}
-                      </p>
-                    </div>
-
-                    {/* Footer Complexities & CTA */}
-                    <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
-                      <div className="flex items-center gap-3 text-[11px] font-mono text-slate-400">
-                        <span className="flex items-center gap-1 text-amber-300/90">
-                          <Clock className="w-3 h-3" /> {algo.complexity.timeAverage || algo.complexity.timeWorst}
-                        </span>
-                        <span className="flex items-center gap-1 text-emerald-300/90">
-                          <Cpu className="w-3 h-3" /> {algo.complexity.spaceWorst}
-                        </span>
-                      </div>
-
-                      <div className="p-2 rounded-lg bg-slate-800 group-hover:bg-sky-500 text-slate-300 group-hover:text-white transition-all">
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </div>
+            return (
+              <motion.div
+                key={moduleName}
+                initial={shouldReduceMotion ? false : { opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.6 }}
+                className="relative flex flex-col gap-6"
+              >
+                {/* Chapter Section Header (Editorial Style with Numeral Watermark) */}
+                <div className="relative flex flex-col sm:flex-row sm:items-baseline justify-between border-b border-hairline pb-4 gap-2">
+                  <div className="flex items-baseline gap-4">
+                    <span className="font-display font-black text-3xl sm:text-4xl text-amber">
+                      {formattedModuleNum}
+                    </span>
+                    <h2 className="font-display font-bold text-xl sm:text-2xl text-chalk-100 uppercase tracking-tight">
+                      {moduleName}
+                    </h2>
                   </div>
-                ))}
-              </div>
-            </div>
-          ))
+
+                  <span className="font-mono text-xs text-chalk-500 uppercase tracking-widest">
+                    [ {algos.length} ALGORITHM{algos.length > 1 ? 'S' : ''} ]
+                  </span>
+                </div>
+
+                {/* Editorial Ledger Grid for the Module */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {algos.map((algo, algoIdx) => {
+                    const algoNum = `${formattedModuleNum}.${String(algoIdx + 1).padStart(2, '0')}`;
+
+                    return (
+                      <div
+                        key={algo.id}
+                        onClick={() => onSelectAlgorithm(algo.id)}
+                        className="group relative flex flex-col justify-between p-7 bg-obsidian-950 border border-hairline hover:border-amber/60 transition-all duration-300 cursor-pointer overflow-hidden"
+                      >
+                        {/* Numeral Watermark Background */}
+                        <span className="absolute -right-2 -bottom-6 font-display font-black text-8xl text-obsidian-850 select-none pointer-events-none group-hover:text-amber/5 transition-colors">
+                          {String(algoIdx + 1).padStart(2, '0')}
+                        </span>
+
+                        <div className="relative z-10 flex flex-col gap-4">
+                          {/* Top Meta Line */}
+                          <div className="flex items-center justify-between font-mono text-[11px]">
+                            <span className="text-amber font-semibold tracking-wider">
+                              {algoNum}
+                            </span>
+                            <span className="px-2 py-0.5 bg-obsidian-850 border border-hairline text-chalk-400 text-[10px] uppercase">
+                              {algo.paradigm}
+                            </span>
+                          </div>
+
+                          {/* Algorithm Name */}
+                          <h3 className="font-display font-bold text-xl text-chalk-100 group-hover:text-amber-glow transition-colors">
+                            {algo.name}
+                          </h3>
+
+                          {/* Problem Statement */}
+                          <p className="text-xs text-chalk-400 font-sans leading-relaxed line-clamp-3">
+                            {algo.problemStatement}
+                          </p>
+                        </div>
+
+                        {/* Bottom Complexity Ledger & Arrow Trigger */}
+                        <div className="relative z-10 pt-6 mt-6 border-t border-hairline flex items-center justify-between font-mono text-[11px]">
+                          <div className="flex flex-col gap-1 text-chalk-400">
+                            <span className="flex items-center gap-1.5 text-amber-glow font-medium">
+                              <Clock className="w-3 h-3" />
+                              <span>{algo.complexity.timeAverage || algo.complexity.timeWorst}</span>
+                            </span>
+                            <span className="flex items-center gap-1.5 text-acid-500 font-medium">
+                              <Cpu className="w-3 h-3" />
+                              <span>{algo.complexity.spaceWorst}</span>
+                            </span>
+                          </div>
+
+                          <div className="w-8 h-8 flex items-center justify-center bg-obsidian-850 group-hover:bg-amber group-hover:text-obsidian-950 text-chalk-400 border border-hairline transition-all">
+                            <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            );
+          })
         )}
       </section>
     </div>
   );
 };
+

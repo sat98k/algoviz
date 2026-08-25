@@ -57,46 +57,46 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-[420px] p-6 bg-slate-900/90 rounded-xl border border-slate-800 backdrop-blur">
+    <div className="flex flex-col items-center w-full min-h-[420px] p-6 bg-obsidian-900 border border-hairline transition-all">
       {/* Top Controls / Tabs */}
-      <div className="flex items-center justify-between w-full max-w-2xl mb-4">
+      <div className="flex flex-wrap items-center justify-between w-full max-w-2xl mb-4 gap-3">
         {/* Status badges */}
-        <div className="flex items-center gap-3 text-xs font-mono">
+        <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
           {isFloyd && state.k >= 0 && (
-            <span className="px-3 py-1 bg-sky-950 border border-sky-500/40 rounded-full text-sky-300">
-              Intermediate Pivot Vertex: <strong>V{state.k + 1}</strong>
+            <span className="px-3 py-1 bg-obsidian-950 border border-amber/30 text-amber-glow">
+              PIVOT VERTEX: <strong>V{state.k + 1}</strong>
             </span>
           )}
           {isFordFulkerson && (
-            <span className="px-3 py-1 bg-emerald-950 border border-emerald-500/40 rounded-full text-emerald-300">
-              Total Max Flow: <strong>{state.totalMaxFlow}</strong>
+            <span className="px-3 py-1 bg-obsidian-950 border border-acid-500/40 text-acid-500">
+              TOTAL MAX FLOW: <strong>{state.totalMaxFlow}</strong>
             </span>
           )}
           {isVertexCover && (
-            <span className="px-3 py-1 bg-purple-950 border border-purple-500/40 rounded-full text-purple-300">
-              Cover Size |C|: <strong>{state.coveredVertices?.length || 0}</strong>
+            <span className="px-3 py-1 bg-obsidian-950 border border-amber/30 text-amber-glow">
+              COVER SIZE |C|: <strong>{state.coveredVertices?.length || 0}</strong>
             </span>
           )}
         </div>
 
         {/* View toggle for Floyd-Warshall / Ford-Fulkerson */}
         {(isFloyd || isFordFulkerson) && (
-          <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-medium">
+          <div className="flex bg-obsidian-950 p-0.5 border border-hairline text-xs font-mono">
             <button
               onClick={() => setActiveTab('graph')}
-              className={`px-3 py-1 rounded-md transition-all ${
-                activeTab === 'graph' ? 'bg-sky-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              className={`px-3 py-1 transition-all ${
+                activeTab === 'graph' ? 'bg-amber text-obsidian-950 font-bold' : 'text-chalk-400 hover:text-chalk-200'
               }`}
             >
-              Graph View
+              GRAPH VIEW
             </button>
             <button
               onClick={() => setActiveTab('matrix')}
-              className={`px-3 py-1 rounded-md transition-all ${
-                activeTab === 'matrix' ? 'bg-sky-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              className={`px-3 py-1 transition-all ${
+                activeTab === 'matrix' ? 'bg-amber text-obsidian-950 font-bold' : 'text-chalk-400 hover:text-chalk-200'
               }`}
             >
-              {isFloyd ? 'Distance Matrix' : 'Capacity Matrix'}
+              {isFloyd ? 'DISTANCE MATRIX' : 'CAPACITY MATRIX'}
             </button>
           </div>
         )}
@@ -104,7 +104,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
 
       {/* Main Visual Content */}
       {activeTab === 'graph' ? (
-        <div className="w-full flex justify-center bg-slate-950/70 rounded-lg border border-slate-800/80 p-2">
+        <div className="w-full flex justify-center bg-obsidian-950 border border-hairline p-4">
           <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full max-w-2xl h-[360px] select-none">
             <defs>
               <marker
@@ -116,7 +116,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 markerHeight="6"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748b" />
+                <path d="M 0 1 L 8 5 L 0 9 z" fill="#647087" />
               </marker>
               <marker
                 id="graph-arrow-active"
@@ -127,7 +127,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 markerHeight="6"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8" />
+                <path d="M 0 1 L 8 5 L 0 9 z" fill="#f59e0b" />
               </marker>
             </defs>
 
@@ -140,17 +140,17 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               const edgeStatus = isEdgeHighlighted(`${edge.u}`, `${edge.v}`);
               const isDirected = isFloyd || isFordFulkerson;
 
-              let strokeColor = '#334155';
+              let strokeColor = '#2a2e39';
               let strokeWidth = 1.8;
               let marker = isDirected ? 'url(#graph-arrow)' : undefined;
 
               if (edgeStatus === 'active') {
-                strokeColor = '#38bdf8';
-                strokeWidth = 3;
+                strokeColor = '#f59e0b';
+                strokeWidth = 2.5;
                 marker = isDirected ? 'url(#graph-arrow-active)' : undefined;
               } else if (edgeStatus === 'flow' || edgeStatus === 'cover') {
                 strokeColor = '#10b981';
-                strokeWidth = 3;
+                strokeWidth = 2.5;
               }
 
               const midX = (p1.x + p2.x) / 2;
@@ -166,47 +166,47 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                     stroke={strokeColor}
                     strokeWidth={strokeWidth}
                     markerEnd={marker}
+                    className="transition-colors duration-300"
                   />
-                  {/* Edge Weight / Flow label */}
-                  <g transform={`translate(${midX}, ${midY})`}>
-                    <rect
-                      x="-14"
-                      y="-9"
-                      width="28"
-                      height="17"
-                      rx="4"
-                      className="fill-slate-900/90 stroke-slate-700"
-                      strokeWidth="0.8"
-                    />
-                    <text
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      className="text-[10px] font-mono font-bold fill-slate-300"
-                    >
-                      {isFordFulkerson
-                        ? `${edge.flow || 0}/${edge.capacity}`
-                        : `${edge.weight}`}
-                    </text>
-                  </g>
+                  {(edge.weight !== undefined || edge.capacity !== undefined) && (
+                    <g transform={`translate(${midX}, ${midY})`}>
+                      <rect
+                        x="-14"
+                        y="-9"
+                        width="28"
+                        height="18"
+                        className="fill-obsidian-950 stroke-hairline"
+                        strokeWidth="0.8"
+                      />
+                      <text
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        className="text-[10px] font-mono font-bold fill-chalk-200"
+                      >
+                        {edge.flow !== undefined ? `${edge.flow}/${edge.capacity}` : edge.weight}
+                      </text>
+                    </g>
+                  )}
                 </g>
               );
             })}
 
             {/* Nodes */}
             {nodes.map((node) => {
-              const pos = nodePositions.get(node.id);
+              const pos = nodePositions.get(`${node.id}`);
               if (!pos) return null;
-              const nodeStatus = isNodeHighlighted(node.id);
 
-              let fillClass = 'fill-slate-800 stroke-slate-600';
-              if (nodeStatus === 'active') fillClass = 'fill-sky-500 stroke-sky-300 stroke-2';
-              if (nodeStatus === 'cover') fillClass = 'fill-purple-600 stroke-purple-300 stroke-2';
-              if (nodeStatus === 'highlight') fillClass = 'fill-emerald-600 stroke-emerald-300 stroke-2';
-              if (nodeStatus === 'special') fillClass = 'fill-amber-600 stroke-amber-300 stroke-2';
+              const nodeStatus = isNodeHighlighted(`${node.id}`);
+
+              let fillClass = 'fill-obsidian-850 stroke-hairline';
+              if (nodeStatus === 'active') fillClass = 'fill-amber stroke-amber-glow stroke-2';
+              if (nodeStatus === 'cover') fillClass = 'fill-amber-glow/80 stroke-amber stroke-2';
+              if (nodeStatus === 'highlight') fillClass = 'fill-acid-500/80 stroke-acid-400 stroke-2';
+              if (nodeStatus === 'special') fillClass = 'fill-electric-500/80 stroke-electric-400 stroke-2';
 
               return (
                 <g key={node.id} transform={`translate(${pos.x}, ${pos.y})`} className="cursor-pointer">
-                  <circle r={20} className={`${fillClass} shadow-lg transition-all`} />
+                  <circle r={20} className={`${fillClass} shadow-md transition-all`} />
                   <text
                     textAnchor="middle"
                     dominantBaseline="central"
@@ -221,13 +221,13 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
         </div>
       ) : (
         /* Matrix View for Floyd-Warshall or Ford-Fulkerson */
-        <div className="w-full overflow-x-auto max-h-[360px] p-4 bg-slate-950/80 rounded-lg border border-slate-800">
+        <div className="w-full overflow-x-auto max-h-[360px] p-4 bg-obsidian-950 border border-hairline">
           <table className="w-full border-collapse text-center text-xs font-mono">
             <thead>
               <tr>
-                <th className="p-2 border-b border-r border-slate-700 text-slate-400">Src \ Dst</th>
+                <th className="p-2.5 border-b border-r border-hairline text-chalk-500 uppercase tracking-wider text-[10px]">Src \ Dst</th>
                 {nodes.map((n) => (
-                  <th key={n.id} className="p-2 border-b border-slate-700 text-slate-300">
+                  <th key={n.id} className="p-2.5 border-b border-hairline text-chalk-400 text-[11px]">
                     {n.label}
                   </th>
                 ))}
@@ -235,15 +235,15 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
             </thead>
             <tbody>
               {(isFloyd ? state.distMatrix : state.capacityMatrix)?.map((row: any[], r: number) => (
-                <tr key={r} className="hover:bg-slate-800/40">
-                  <th className="p-2 border-r border-b border-slate-700 text-slate-400">{nodes[r]?.label}</th>
+                <tr key={r} className="hover:bg-obsidian-850/60">
+                  <th className="p-2.5 border-r border-b border-hairline text-chalk-400 text-[11px]">{nodes[r]?.label}</th>
                   {row.map((val: any, c: number) => {
                     const isUpdated = state.updatedCell?.i === r && state.updatedCell?.j === c;
                     return (
                       <td
                         key={c}
-                        className={`p-2 border border-slate-800 ${
-                          isUpdated ? 'bg-sky-500/30 text-sky-200 font-bold border-sky-400' : 'text-slate-300'
+                        className={`p-2.5 border border-hairline tabular-nums ${
+                          isUpdated ? 'bg-amber/20 text-amber-glow font-bold border-amber' : 'text-chalk-300'
                         }`}
                       >
                         {val === null ? '∞' : val}
@@ -258,20 +258,20 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
       )}
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-5 text-xs text-slate-300">
+      <div className="flex flex-wrap items-center justify-center gap-5 mt-5 text-xs font-mono text-chalk-400">
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-sky-500 border border-sky-300"></span>
+          <span className="w-2.5 h-2.5 bg-amber border border-amber-glow"></span>
           <span>Active Vertex / Path</span>
         </div>
         {isVertexCover && (
           <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded bg-purple-600 border border-purple-300"></span>
-            <span>Vertex Cover Set C</span>
+            <span className="w-2.5 h-2.5 bg-amber-glow border border-amber"></span>
+            <span>Vertex Cover C</span>
           </div>
         )}
         {isFordFulkerson && (
           <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded bg-emerald-600 border border-emerald-300"></span>
+            <span className="w-2.5 h-2.5 bg-acid-500 border border-acid-400"></span>
             <span>Augmented Flow</span>
           </div>
         )}

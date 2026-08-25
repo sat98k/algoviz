@@ -17,24 +17,24 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
   const comparison = state.currentComparison;
 
   return (
-    <div className="flex flex-col items-center w-full min-h-[420px] p-6 bg-slate-900/90 rounded-xl border border-slate-800 backdrop-blur">
+    <div className="flex flex-col items-center w-full min-h-[420px] p-6 bg-obsidian-900 border border-hairline transition-all">
       {/* Top Banner Details */}
-      <div className="flex flex-wrap items-center justify-between w-full max-w-3xl mb-5">
-        <div className="flex items-center gap-2 text-xs font-mono">
-          <span className="px-3 py-1 bg-slate-950 border border-slate-700 rounded-full text-slate-300">
-            Phase: <strong className="text-sky-300">{phase === 'lps' ? '1. Construct LPS Table' : '2. String Search'}</strong>
+      <div className="flex flex-wrap items-center justify-between w-full max-w-3xl mb-5 gap-3">
+        <div className="flex items-center gap-3 text-xs font-mono">
+          <span className="px-3 py-1 bg-obsidian-950 border border-hairline text-chalk-300">
+            PHASE: <strong className="text-amber-glow">{phase === 'lps' ? '1. CONSTRUCT LPS (π) TABLE' : '2. KMP SEARCH SCAN'}</strong>
           </span>
-          <span className="px-3 py-1 bg-emerald-950/70 border border-emerald-500/40 rounded-full text-emerald-300">
-            Matches Found: <strong>{matchIndices.length}</strong>
+          <span className="px-3 py-1 bg-obsidian-950 border border-acid-500/40 text-acid-500">
+            MATCHES: <strong>{matchIndices.length}</strong>
           </span>
         </div>
 
         {comparison && (
           <div
-            className={`px-3 py-1 rounded-md text-xs font-mono border flex items-center gap-2 ${
+            className={`px-3 py-1 text-xs font-mono border flex items-center gap-2 ${
               comparison.isMatch
-                ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300'
-                : 'bg-rose-950/80 border-rose-500 text-rose-300'
+                ? 'bg-obsidian-950 border-acid-500/50 text-acid-500'
+                : 'bg-obsidian-950 border-rose-500/50 text-rose-300'
             }`}
           >
             <span>'{comparison.textChar}'</span>
@@ -46,32 +46,32 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
       </div>
 
       {/* Main String Alignments Container */}
-      <div className="w-full max-w-3xl flex flex-col gap-6 p-5 bg-slate-950/80 rounded-xl border border-slate-800 overflow-x-auto">
+      <div className="w-full max-w-3xl flex flex-col gap-6 p-6 bg-obsidian-950 border border-hairline overflow-x-auto">
         {/* TEXT Ribbon */}
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-mono font-semibold text-slate-400">Target Text (T):</span>
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-mono uppercase tracking-wider text-chalk-500">Target Text T[i]:</span>
           <div className="flex items-center gap-1.5">
             {text.split('').map((char, idx) => {
               const isCurrent = phase === 'search' && textIndex === idx;
               const isMatchedOccur = matchIndices.some((m) => idx >= m && idx < m + pattern.length);
 
-              let cellStyle = 'bg-slate-900 border-slate-700 text-slate-300';
+              let cellStyle = 'bg-obsidian-850 border-hairline text-chalk-300';
               if (isCurrent) {
                 cellStyle = comparison?.isMatch
-                  ? 'bg-emerald-500/30 border-emerald-400 text-emerald-200 font-bold scale-110 shadow-lg shadow-emerald-500/20'
-                  : 'bg-rose-500/30 border-rose-400 text-rose-200 font-bold scale-110 shadow-lg shadow-rose-500/20';
+                  ? 'bg-acid-500/25 border-acid-500 text-acid-500 font-bold scale-105'
+                  : 'bg-rose-500/25 border-rose-500 text-rose-300 font-bold scale-105';
               } else if (isMatchedOccur) {
-                cellStyle = 'bg-emerald-900/40 border-emerald-500/60 text-emerald-300';
+                cellStyle = 'bg-acid-500/15 border-acid-500/60 text-acid-500 font-semibold';
               }
 
               return (
                 <div key={idx} className="flex flex-col items-center">
                   <div
-                    className={`w-9 h-10 flex items-center justify-center rounded-md border text-sm font-mono transition-all duration-200 ${cellStyle}`}
+                    className={`w-9 h-10 flex items-center justify-center border text-sm font-mono transition-all duration-200 ${cellStyle}`}
                   >
                     {char}
                   </div>
-                  <span className="text-[10px] font-mono text-slate-500 mt-1">{idx}</span>
+                  <span className="text-[9px] font-mono text-chalk-600 mt-1 tabular-nums">{idx}</span>
                 </div>
               );
             })}
@@ -79,8 +79,8 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
         </div>
 
         {/* PATTERN Ribbon (Aligned with current search offset) */}
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-mono font-semibold text-slate-400">Pattern (P):</span>
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-mono uppercase tracking-wider text-chalk-500">Pattern P[j]:</span>
           <div
             className="flex items-center gap-1.5 transition-all duration-300"
             style={{
@@ -93,21 +93,21 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
             {pattern.split('').map((char, idx) => {
               const isCurrent = patternIndex === idx;
 
-              let cellStyle = 'bg-slate-900 border-slate-700 text-slate-300';
+              let cellStyle = 'bg-obsidian-850 border-hairline text-chalk-300';
               if (isCurrent) {
                 cellStyle = comparison?.isMatch
-                  ? 'bg-emerald-500/30 border-emerald-400 text-emerald-200 font-bold scale-110 shadow-lg shadow-emerald-500/20'
-                  : 'bg-rose-500/30 border-rose-400 text-rose-200 font-bold scale-110 shadow-lg shadow-rose-500/20';
+                  ? 'bg-acid-500/25 border-acid-500 text-acid-500 font-bold scale-105'
+                  : 'bg-rose-500/25 border-rose-500 text-rose-300 font-bold scale-105';
               }
 
               return (
                 <div key={idx} className="flex flex-col items-center">
                   <div
-                    className={`w-9 h-10 flex items-center justify-center rounded-md border text-sm font-mono transition-all duration-200 ${cellStyle}`}
+                    className={`w-9 h-10 flex items-center justify-center border text-sm font-mono transition-all duration-200 ${cellStyle}`}
                   >
                     {char}
                   </div>
-                  <span className="text-[10px] font-mono text-slate-500 mt-1">{idx}</span>
+                  <span className="text-[9px] font-mono text-chalk-600 mt-1 tabular-nums">{idx}</span>
                 </div>
               );
             })}
@@ -115,8 +115,8 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
         </div>
 
         {/* LPS Table Preview */}
-        <div className="flex flex-col gap-2 pt-3 border-t border-slate-800">
-          <span className="text-xs font-mono font-semibold text-sky-400">LPS (π) Array:</span>
+        <div className="flex flex-col gap-2 pt-4 border-t border-hairline">
+          <span className="text-xs font-mono uppercase tracking-wider text-amber-glow">LPS π[j] Prefix-Suffix Array:</span>
           <div className="flex items-center gap-1.5">
             {pattern.split('').map((char, idx) => {
               const lpsVal = lpsTable[idx] !== undefined ? lpsTable[idx] : '-';
@@ -125,15 +125,15 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
               return (
                 <div key={idx} className="flex flex-col items-center">
                   <div
-                    className={`w-9 h-8 flex items-center justify-center rounded-md border text-xs font-mono font-bold transition-all ${
+                    className={`w-9 h-8 flex items-center justify-center border text-xs font-mono font-bold transition-all ${
                       isLpsActive
-                        ? 'bg-sky-500/30 border-sky-400 text-sky-200 shadow-md'
-                        : 'bg-slate-900 border-slate-700 text-slate-300'
+                        ? 'bg-amber/25 border-amber text-amber-glow shadow-sm'
+                        : 'bg-obsidian-850 border-hairline text-chalk-400'
                     }`}
                   >
                     {lpsVal}
                   </div>
-                  <span className="text-[9px] font-mono text-slate-500 mt-0.5">'{char}'</span>
+                  <span className="text-[9px] font-mono text-chalk-500 mt-0.5">'{char}'</span>
                 </div>
               );
             })}
@@ -142,17 +142,17 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-5 text-xs text-slate-300">
+      <div className="flex flex-wrap items-center justify-center gap-5 mt-5 text-xs font-mono text-chalk-400">
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-emerald-500/40 border border-emerald-400"></span>
+          <span className="w-2.5 h-2.5 bg-acid-500 border border-acid-400"></span>
           <span>Character Match</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-rose-500/40 border border-rose-400"></span>
+          <span className="w-2.5 h-2.5 bg-rose-500 border border-rose-400"></span>
           <span>Character Mismatch</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-sky-500/40 border border-sky-400"></span>
+          <span className="w-2.5 h-2.5 bg-amber border border-amber-glow"></span>
           <span>Active LPS Element</span>
         </div>
       </div>

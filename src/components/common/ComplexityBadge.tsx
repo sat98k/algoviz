@@ -1,6 +1,6 @@
 import React from 'react';
 import { ComplexityInfo } from '../../types/algorithm';
-import { Clock, Cpu, Info } from 'lucide-react';
+import { Clock, Cpu, Layers } from 'lucide-react';
 
 interface ComplexityBadgeProps {
   complexity: ComplexityInfo;
@@ -9,42 +9,51 @@ interface ComplexityBadgeProps {
 
 export const ComplexityBadge: React.FC<ComplexityBadgeProps> = ({ complexity, paradigm }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 w-full">
-      {/* Paradigm Badge */}
-      <div className="flex flex-col p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
-        <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-          <Info className="w-3 h-3 text-sky-400" /> Paradigm
+    <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-hairline bg-obsidian-900 border border-hairline w-full">
+      {/* Paradigm */}
+      <div className="p-3.5 flex flex-col justify-between">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-500 flex items-center gap-1.5">
+          <Layers className="w-3 h-3 text-amber" /> PARADIGM
         </span>
-        <span className="mt-1 text-sm font-semibold text-sky-300 font-mono">
+        <span className="font-display font-bold text-sm tracking-tight text-chalk-100 mt-1">
           {paradigm}
         </span>
       </div>
 
       {/* Time Complexity */}
-      <div className="flex flex-col p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
-        <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-          <Clock className="w-3 h-3 text-amber-400" /> Time Complexity
+      <div className="p-3.5 flex flex-col justify-between">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-500 flex items-center gap-1.5">
+          <Clock className="w-3 h-3 text-amber-glow" /> TIME BOUND
         </span>
-        <span className="mt-1 text-sm font-semibold text-amber-300 font-mono">
-          {complexity.timeAverage ? `${complexity.timeAverage} (avg)` : complexity.timeWorst}
-        </span>
-        {complexity.timeWorst && complexity.timeAverage && (
-          <span className="text-[10px] text-slate-500 font-mono">Worst: {complexity.timeWorst}</span>
-        )}
+        <div className="flex items-baseline gap-2 mt-1">
+          <span className="font-mono font-bold text-sm text-amber-glow">
+            {complexity.timeAverage ? `${complexity.timeAverage} (avg)` : complexity.timeWorst}
+          </span>
+          {complexity.timeWorst && complexity.timeAverage && (
+            <span className="font-mono text-[10px] text-chalk-500">
+              W: {complexity.timeWorst}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Space Complexity */}
-      <div className="col-span-2 md:col-span-1 flex flex-col p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
-        <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-          <Cpu className="w-3 h-3 text-emerald-400" /> Space Complexity
+      <div className="p-3.5 flex flex-col justify-between">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-500 flex items-center gap-1.5">
+          <Cpu className="w-3 h-3 text-acid-500" /> SPACE BOUND
         </span>
-        <span className="mt-1 text-sm font-semibold text-emerald-300 font-mono">
-          {complexity.spaceWorst}
-        </span>
-        {complexity.description && (
-          <span className="text-[10px] text-slate-500 font-mono truncate">{complexity.description}</span>
-        )}
+        <div className="flex flex-col mt-1">
+          <span className="font-mono font-bold text-sm text-acid-500">
+            {complexity.spaceWorst}
+          </span>
+          {complexity.description && (
+            <span className="font-mono text-[10px] text-chalk-500 truncate" title={complexity.description}>
+              {complexity.description}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
 };
+

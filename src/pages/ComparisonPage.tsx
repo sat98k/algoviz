@@ -4,12 +4,14 @@ import { knapsackBBSteps } from '../algorithms/knapsackBB';
 import { GridTableVisualizer } from '../components/visualizers/GridTableVisualizer';
 import { TreeVisualizer } from '../components/visualizers/TreeVisualizer';
 import { PlaybackControls } from '../components/common/PlaybackControls';
+import { motion, useReducedMotion } from 'framer-motion';
 import { GitCompare } from 'lucide-react';
 
 export const ComparisonPage: React.FC = () => {
   const [weights, setWeights] = useState<number[]>([2, 3, 4, 5]);
   const [values, setValues] = useState<number[]>([3, 4, 5, 6]);
   const [capacity, setCapacity] = useState<number>(5);
+  const shouldReduceMotion = useReducedMotion();
 
   const dpSteps = useMemo(() => {
     const gen = knapsackDPSteps({ weights, values, capacity });
@@ -53,66 +55,75 @@ export const ComparisonPage: React.FC = () => {
   const currBBStep = bbSteps[Math.min(currentStepIdx, bbSteps.length - 1)];
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
-            <GitCompare className="w-4 h-4" />
-            <span>Paradigm Showdown (Module 2)</span>
+    <div className="flex flex-col gap-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+      {/* Top Header & Parameters Ribbon */}
+      <motion.div
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="flex flex-col gap-6 pb-6 border-b border-hairline"
+      >
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 font-mono text-xs text-amber uppercase tracking-widest">
+              <GitCompare className="w-3.5 h-3.5" />
+              <span>[ 02 // PARADIGM SHOWDOWN ]</span>
+            </div>
+            <h1 className="font-display font-black text-3xl sm:text-5xl md:text-6xl tracking-tighter text-chalk-100 mt-2">
+              0-1 KNAPSACK <span className="font-serif italic font-normal text-chalk-300">DUAL ENGINE.</span>
+            </h1>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-            0-1 Knapsack: Dynamic Programming vs Branch & Bound
-          </h1>
-        </div>
 
-        {/* Input Parameters bar */}
-        <div className="flex flex-wrap items-center gap-3 bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-xs font-mono">
-          <div className="flex items-center gap-1">
-            <span className="text-slate-400">Weights:</span>
-            <input
-              type="text"
-              value={weights.join(', ')}
-              onChange={(e) =>
-                setWeights(
-                  e.target.value
-                    .split(',')
-                    .map((s) => parseFloat(s.trim()))
-                    .filter((n) => !isNaN(n))
-                )
-              }
-              className="w-24 px-2 py-1 bg-slate-950 border border-slate-700 rounded text-slate-200"
-            />
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-slate-400">Values:</span>
-            <input
-              type="text"
-              value={values.join(', ')}
-              onChange={(e) =>
-                setValues(
-                  e.target.value
-                    .split(',')
-                    .map((s) => parseFloat(s.trim()))
-                    .filter((n) => !isNaN(n))
-                )
-              }
-              className="w-24 px-2 py-1 bg-slate-950 border border-slate-700 rounded text-slate-200"
-            />
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-slate-400">Capacity:</span>
-            <input
-              type="number"
-              value={capacity}
-              min={1}
-              max={20}
-              onChange={(e) => setCapacity(parseInt(e.target.value, 10) || 1)}
-              className="w-16 px-2 py-1 bg-slate-950 border border-slate-700 rounded text-slate-200"
-            />
+          {/* Input Parameters Monospace Bar */}
+          <div className="flex flex-wrap items-center gap-4 bg-obsidian-950 p-4 border border-hairline font-mono text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-chalk-500 uppercase">WEIGHTS:</span>
+              <input
+                type="text"
+                value={weights.join(', ')}
+                onChange={(e) =>
+                  setWeights(
+                    e.target.value
+                      .split(',')
+                      .map((s) => parseFloat(s.trim()))
+                      .filter((n) => !isNaN(n))
+                  )
+                }
+                className="w-28 px-2.5 py-1 bg-obsidian-900 border border-hairline text-chalk-200 focus:outline-none focus:border-amber"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-chalk-500 uppercase">VALUES:</span>
+              <input
+                type="text"
+                value={values.join(', ')}
+                onChange={(e) =>
+                  setValues(
+                    e.target.value
+                      .split(',')
+                      .map((s) => parseFloat(s.trim()))
+                      .filter((n) => !isNaN(n))
+                  )
+                }
+                className="w-28 px-2.5 py-1 bg-obsidian-900 border border-hairline text-chalk-200 focus:outline-none focus:border-amber"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-chalk-500 uppercase">CAPACITY:</span>
+              <input
+                type="number"
+                value={capacity}
+                min={1}
+                max={20}
+                onChange={(e) => setCapacity(parseInt(e.target.value, 10) || 1)}
+                className="w-16 px-2.5 py-1 bg-obsidian-900 border border-hairline text-chalk-200 focus:outline-none focus:border-amber"
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Global Comparison Playback Bar */}
       <PlaybackControls
@@ -132,71 +143,84 @@ export const ComparisonPage: React.FC = () => {
         onSpeedChange={(s) => setSpeed(s)}
       />
 
-      {/* Side-by-Side Visualizers */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: DP Version */}
-        <div className="flex flex-col gap-3 p-4 bg-slate-900/60 rounded-2xl border border-slate-800">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+      {/* Side-by-Side Comparative Showdown Deck */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Column: DP Engine */}
+        <div className="flex flex-col gap-4 p-6 bg-obsidian-950 border border-hairline">
+          {/* Column Header */}
+          <div className="flex items-start justify-between pb-4 border-b border-hairline">
             <div>
-              <span className="text-[11px] font-mono text-sky-400 font-semibold uppercase">
-                Dynamic Programming
+              <span className="font-mono text-xs uppercase tracking-widest text-amber font-semibold">
+                [ 01 // DYNAMIC PROGRAMMING ]
               </span>
-              <h3 className="text-lg font-bold text-white">Bottom-Up DP Table</h3>
+              <h3 className="font-display font-bold text-2xl text-chalk-100 mt-1">
+                Bottom-Up Tabulation
+              </h3>
             </div>
-            <div className="text-right text-[11px] font-mono text-slate-400">
-              <div>Time: O(n · W)</div>
-              <div>Space: O(n · W)</div>
+            <div className="text-right font-mono text-[11px] text-chalk-500">
+              <div>TIME: <strong className="text-chalk-300">O(n · W)</strong></div>
+              <div>SPACE: <strong className="text-chalk-300">O(n · W)</strong></div>
             </div>
           </div>
 
-          <div className="text-xs text-slate-300 font-mono">
-            Step: {Math.min(currentStepIdx + 1, dpSteps.length)} / {dpSteps.length} | {currDPStep?.title}
+          <div className="font-mono text-xs text-chalk-400">
+            STEP: {Math.min(currentStepIdx + 1, dpSteps.length)} / {dpSteps.length} | {currDPStep?.title}
           </div>
 
+          {/* Visualizer Stage */}
           {currDPStep && <GridTableVisualizer step={currDPStep} />}
 
-          {/* Metrics summary */}
-          <div className="grid grid-cols-2 gap-2 mt-2 text-xs font-mono">
-            <div className="p-2 bg-slate-950 rounded border border-slate-800 text-slate-300">
-              Table Iterations: <strong className="text-sky-300">{currDPStep?.metrics.iterations || 0}</strong>
+          {/* Comparative Metrics Telemetry */}
+          <div className="grid grid-cols-2 gap-3 mt-2 font-mono text-xs">
+            <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col justify-between">
+              <span className="text-[10px] text-chalk-500 uppercase tracking-wider">TABLE CELLS EVALUATED</span>
+              <strong className="text-xl text-amber-glow mt-1 tabular-nums">{currDPStep?.metrics.iterations || 0}</strong>
             </div>
-            <div className="p-2 bg-slate-950 rounded border border-slate-800 text-slate-300">
-              Optimal Value: <strong className="text-emerald-400">{currDPStep?.state.maxValue ?? '-'}</strong>
+            <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col justify-between">
+              <span className="text-[10px] text-chalk-500 uppercase tracking-wider">OPTIMAL MAX VALUE</span>
+              <strong className="text-xl text-acid-500 mt-1 tabular-nums">{currDPStep?.state.maxValue ?? '-'}</strong>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Branch & Bound Version */}
-        <div className="flex flex-col gap-3 p-4 bg-slate-900/60 rounded-2xl border border-slate-800">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+        {/* Right Column: Branch & Bound Engine */}
+        <div className="flex flex-col gap-4 p-6 bg-obsidian-950 border border-hairline">
+          {/* Column Header */}
+          <div className="flex items-start justify-between pb-4 border-b border-hairline">
             <div>
-              <span className="text-[11px] font-mono text-emerald-400 font-semibold uppercase">
-                Branch & Bound
+              <span className="font-mono text-xs uppercase tracking-widest text-acid-500 font-semibold">
+                [ 02 // BRANCH & BOUND ]
               </span>
-              <h3 className="text-lg font-bold text-white">State-Space Decision Tree</h3>
+              <h3 className="font-display font-bold text-2xl text-chalk-100 mt-1">
+                State-Space Tree Pruning
+              </h3>
             </div>
-            <div className="text-right text-[11px] font-mono text-slate-400">
-              <div>Time: O(2ⁿ) worst</div>
-              <div>Space: O(2ⁿ) worst</div>
+            <div className="text-right font-mono text-[11px] text-chalk-500">
+              <div>TIME: <strong className="text-chalk-300">O(2ⁿ) worst</strong></div>
+              <div>SPACE: <strong className="text-chalk-300">O(2ⁿ) worst</strong></div>
             </div>
           </div>
 
-          <div className="text-xs text-slate-300 font-mono">
-            Step: {Math.min(currentStepIdx + 1, bbSteps.length)} / {bbSteps.length} | {currBBStep?.title}
+          <div className="font-mono text-xs text-chalk-400">
+            STEP: {Math.min(currentStepIdx + 1, bbSteps.length)} / {bbSteps.length} | {currBBStep?.title}
           </div>
 
+          {/* Visualizer Stage */}
           {currBBStep && <TreeVisualizer step={currBBStep} />}
 
-          {/* Metrics summary */}
-          <div className="grid grid-cols-3 gap-2 mt-2 text-xs font-mono">
-            <div className="p-2 bg-slate-950 rounded border border-slate-800 text-slate-300">
-              Nodes Explored: <strong className="text-cyan-300">{currBBStep?.metrics.nodesExplored || 0}</strong>
+          {/* Comparative Metrics Telemetry */}
+          <div className="grid grid-cols-3 gap-3 mt-2 font-mono text-xs">
+            <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col justify-between">
+              <span className="text-[10px] text-chalk-500 uppercase tracking-wider">NODES EXPLORED</span>
+              <strong className="text-xl text-amber-glow mt-1 tabular-nums">{currBBStep?.metrics.nodesExplored || 0}</strong>
             </div>
-            <div className="p-2 bg-slate-950 rounded border border-slate-800 text-slate-300">
-              Pruned Branches: <strong className="text-rose-400">{currBBStep?.metrics.prunedNodes || 0}</strong>
+            <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col justify-between">
+              <span className="text-[10px] text-chalk-500 uppercase tracking-wider">PRUNED BRANCHES</span>
+              <strong className="text-xl text-rose-400 mt-1 tabular-nums">{currBBStep?.metrics.prunedNodes || 0}</strong>
             </div>
-            <div className="p-2 bg-slate-950 rounded border border-slate-800 text-slate-300">
-              Best Value: <strong className="text-emerald-400">{currBBStep?.state.bestValue ?? 0}</strong>
+            <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col justify-between">
+              <span className="text-[10px] text-chalk-500 uppercase tracking-wider">BEST VALUE</span>
+              <strong className="text-xl text-acid-500 mt-1 tabular-nums">{currBBStep?.state.bestValue ?? 0}</strong>
             </div>
           </div>
         </div>
@@ -204,3 +228,4 @@ export const ComparisonPage: React.FC = () => {
     </div>
   );
 };
+

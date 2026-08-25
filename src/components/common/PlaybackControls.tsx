@@ -5,14 +5,14 @@ import {
   SkipBack,
   SkipForward,
   RotateCcw,
-  FastForward,
+  Gauge,
 } from 'lucide-react';
 
 interface PlaybackControlsProps {
   currentStep: number;
   totalSteps: number;
   isPlaying: boolean;
-  speed: number; // speed multiplier, e.g. 1x, 2x, 0.5x
+  speed: number;
   onPlay: () => void;
   onPause: () => void;
   onStepForward: () => void;
@@ -35,10 +35,8 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   onSeek,
   onSpeedChange,
 }) => {
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Avoid triggering when focused on an input or textarea
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
         return;
       }
@@ -63,107 +61,130 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   }, [isPlaying, onPlay, onPause, onStepForward, onStepBackward, onReset]);
 
   const progressPercent = totalSteps > 1 ? (currentStep / (totalSteps - 1)) * 100 : 0;
+  const formattedCurrent = String(totalSteps > 0 ? currentStep + 1 : 0).padStart(2, '0');
+  const formattedTotal = String(totalSteps).padStart(2, '0');
 
   return (
-    <div className="flex flex-col gap-3 w-full p-4 bg-slate-900/95 border border-slate-800 rounded-xl shadow-lg backdrop-blur">
-      {/* Top Scrub Bar */}
-      <div className="flex items-center gap-3 w-full">
-        <span className="text-xs font-mono text-slate-400 min-w-[50px]">
-          {totalSteps > 0 ? `${currentStep + 1} / ${totalSteps}` : '0 / 0'}
-        </span>
-        <div className="relative flex-1 flex items-center">
-          <input
-            type="range"
-            min={0}
-            max={Math.max(0, totalSteps - 1)}
-            value={currentStep}
-            onChange={(e) => onSeek(parseInt(e.target.value, 10))}
-            disabled={totalSteps <= 1}
-            className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500 disabled:opacity-50"
-          />
+    <div className="flex flex-col gap-4 w-full p-5 bg-obsidian-900 border border-hairline transition-all">
+      {/* Top Scrubber & Large Typographic Index */}
+      <div className="flex items-center justify-between gap-6 pb-3 border-b border-hairline">
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-xs uppercase tracking-widest text-chalk-500">
+            STEP
+          </span>
+          <span className="font-display font-bold text-2xl text-chalk-100 tabular-nums">
+            {formattedCurrent}
+          </span>
+          <span className="font-mono text-xs text-chalk-500">
+            / {formattedTotal}
+          </span>
         </div>
-        <span className="text-xs font-mono text-sky-400 min-w-[42px] text-right">
-          {Math.round(progressPercent)}%
-        </span>
+
+        <div className="flex items-center gap-3 font-mono text-xs text-amber-glow tabular-nums">
+          <span>PROGRESS</span>
+          <span className="font-bold text-sm bg-obsidian-850 px-2 py-0.5 border border-hairline">
+            {Math.round(progressPercent)}%
+          </span>
+        </div>
       </div>
 
-      {/* Action Buttons & Speed Slider */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        {/* Playback Button Group */}
-        <div className="flex items-center gap-1.5 md:gap-2">
-          {/* Reset */}
+      {/* Scrub Line Range */}
+      <div className="relative flex items-center w-full py-1">
+        <input
+          type="range"
+          min={0}
+          max={Math.max(0, totalSteps - 1)}
+          value={currentStep}
+          onChange={(e) => onSeek(parseInt(e.target.value, 10))}
+          disabled={totalSteps <= 1}
+          className="w-full h-1 bg-obsidian-700 appearance-none cursor-pointer accent-amber disabled:opacity-40"
+        />
+      </div>
+
+      {/* Action Controls & Speed Multipliers */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+        {/* Buttons Group */}
+        <div className="flex items-center gap-2">
           <button
             onClick={onReset}
             title="Reset to beginning (Key: R)"
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2.5 text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-800 border border-hairline transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
 
-          {/* Step Back */}
           <button
             onClick={onStepBackward}
             disabled={currentStep <= 0}
             title="Step backward (Key: ←)"
-            className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent rounded-lg transition-colors"
+            className="p-2.5 text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-800 disabled:opacity-30 disabled:hover:bg-transparent border border-hairline transition-colors"
           >
             <SkipBack className="w-4 h-4" />
           </button>
 
-          {/* Play / Pause Toggle */}
           <button
             onClick={isPlaying ? onPause : onPlay}
             disabled={totalSteps <= 1 || (currentStep >= totalSteps - 1 && !isPlaying)}
             title={isPlaying ? 'Pause (Key: Space)' : 'Play (Key: Space)'}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-md ${
+            className={`flex items-center gap-2 px-6 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all ${
               isPlaying
-                ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold'
-                : 'bg-sky-500 hover:bg-sky-400 text-white font-semibold disabled:opacity-40 disabled:hover:bg-sky-500'
+                ? 'bg-amber text-obsidian-950 shadow-md shadow-amber/20'
+                : 'bg-chalk-100 text-obsidian-950 hover:bg-chalk-300 disabled:opacity-40'
             }`}
           >
             {isPlaying ? (
               <>
-                <Pause className="w-4 h-4 fill-current" />
-                <span>Pause</span>
+                <Pause className="w-3.5 h-3.5 fill-current" />
+                <span>PAUSE</span>
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-current" />
-                <span>Play</span>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>PLAY</span>
               </>
             )}
           </button>
 
-          {/* Step Forward */}
           <button
             onClick={onStepForward}
             disabled={currentStep >= totalSteps - 1}
             title="Step forward (Key: →)"
-            className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent rounded-lg transition-colors"
+            className="p-2.5 text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-800 disabled:opacity-30 disabled:hover:bg-transparent border border-hairline transition-colors"
           >
             <SkipForward className="w-4 h-4" />
           </button>
         </div>
 
         {/* Speed Controls */}
-        <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs">
-          <FastForward className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-slate-400 font-mono">Speed:</span>
-          {[0.5, 1, 2, 4].map((s) => (
-            <button
-              key={s}
-              onClick={() => onSpeedChange(s)}
-              className={`px-2 py-0.5 rounded font-mono font-medium transition-all ${
-                speed === s
-                  ? 'bg-sky-500 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {s}x
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-500 flex items-center gap-1">
+            <Gauge className="w-3 h-3 text-chalk-400" /> SPEED:
+          </span>
+          <div className="flex items-center border border-hairline bg-obsidian-850">
+            {[0.5, 1, 2, 4].map((s) => (
+              <button
+                key={s}
+                onClick={() => onSpeedChange(s)}
+                className={`px-3 py-1 font-mono text-xs font-medium transition-all ${
+                  speed === s
+                    ? 'bg-amber text-obsidian-950 font-bold'
+                    : 'text-chalk-400 hover:text-chalk-100'
+                }`}
+              >
+                {s}x
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Keyboard navigation hints */}
+        <div className="hidden xl:flex items-center gap-3 font-mono text-[10px] text-chalk-500">
+          <span><kbd className="px-1.5 py-0.5 bg-obsidian-850 border border-hairline text-chalk-400">Space</kbd> Play/Pause</span>
+          <span><kbd className="px-1.5 py-0.5 bg-obsidian-850 border border-hairline text-chalk-400">←/→</kbd> Step</span>
+          <span><kbd className="px-1.5 py-0.5 bg-obsidian-850 border border-hairline text-chalk-400">R</kbd> Reset</span>
         </div>
       </div>
     </div>
   );
 };
+

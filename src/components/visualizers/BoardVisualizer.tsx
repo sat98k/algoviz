@@ -26,24 +26,24 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-[400px] p-6 bg-slate-900/90 rounded-xl border border-slate-800 backdrop-blur">
+    <div className="flex flex-col items-center w-full min-h-[400px] p-6 bg-obsidian-900 border border-hairline transition-all">
       {/* Solution Status Bar */}
-      <div className="flex items-center gap-4 mb-5 text-xs font-mono">
-        <span className="px-3 py-1 bg-slate-950 border border-slate-700 rounded-full text-slate-300">
-          Board Size: <strong>{n} × {n}</strong>
+      <div className="flex flex-wrap items-center gap-4 mb-5 text-xs font-mono">
+        <span className="px-3 py-1 bg-obsidian-950 border border-hairline text-chalk-300">
+          BOARD: <strong>{n} × {n}</strong>
         </span>
-        <span className="px-3 py-1 bg-emerald-950/70 border border-emerald-500/40 rounded-full text-emerald-300">
-          Solutions Found: <strong>{solutionCount}</strong>
+        <span className="px-3 py-1 bg-obsidian-950 border border-acid-500/40 text-acid-500">
+          SOLUTIONS FOUND: <strong>{solutionCount}</strong>
         </span>
         {action === 'conflict' && (
-          <span className="px-3 py-1 bg-rose-950/80 border border-rose-500/50 rounded-full text-rose-300 flex items-center gap-1.5 animate-pulse">
-            <AlertTriangle className="w-3.5 h-3.5" /> Conflict Detected!
+          <span className="px-3 py-1 bg-obsidian-950 border border-rose-500/50 text-rose-300 flex items-center gap-1.5 animate-pulse">
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-400" /> CONFLICT DETECTED
           </span>
         )}
       </div>
 
       {/* Chessboard Grid Container */}
-      <div className="p-3 bg-slate-950 rounded-xl border-4 border-slate-800 shadow-2xl">
+      <div className="p-3 bg-obsidian-950 border border-hairline shadow-2xl">
         <div
           className="grid gap-1"
           style={{
@@ -61,33 +61,33 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
               return (
                 <div
                   key={`${r}-${c}`}
-                  className={`relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-md transition-all duration-200 select-none ${
+                  className={`relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 transition-all duration-200 select-none ${
                     hasConflict
-                      ? 'bg-rose-900/80 border-2 border-rose-500 shadow-inner'
+                      ? 'bg-rose-950/80 border border-rose-500'
                       : isCurrentCell
-                      ? 'bg-sky-600/60 border-2 border-sky-400'
+                      ? 'bg-amber/30 border border-amber'
                       : hasQueen
-                      ? 'bg-emerald-900/70 border border-emerald-500 shadow-md shadow-emerald-500/30'
+                      ? 'bg-obsidian-850 border border-amber/60'
                       : isThreatened && action === 'conflict'
-                      ? 'bg-rose-950/30 border border-rose-900/40'
+                      ? 'bg-rose-950/20 border border-rose-900/30'
                       : isDarkTile
-                      ? 'bg-slate-800/80 border border-slate-700/50'
-                      : 'bg-slate-700/60 border border-slate-600/40'
+                      ? 'bg-obsidian-850 border border-hairline'
+                      : 'bg-obsidian-800/60 border border-hairline'
                   }`}
                 >
                   {/* Coordinates indicator on corners */}
-                  <span className="absolute top-0.5 left-1 text-[8px] font-mono text-slate-500 pointer-events-none">
+                  <span className="absolute top-0.5 left-1 text-[8px] font-mono text-chalk-600 pointer-events-none">
                     {r},{c}
                   </span>
 
                   {/* Queen Icon */}
                   {hasQueen && (
-                    <div className="flex flex-col items-center justify-center animate-bounce duration-300">
+                    <div className="flex flex-col items-center justify-center">
                       <Crown
                         className={`w-6 h-6 md:w-7 md:h-7 ${
                           hasConflict
-                            ? 'text-rose-300 drop-shadow-[0_0_8px_rgba(244,63,94,0.8)]'
-                            : 'text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]'
+                            ? 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.8)]'
+                            : 'text-amber-glow drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]'
                         }`}
                       />
                     </div>
@@ -100,22 +100,22 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-6 text-xs text-slate-300">
+      <div className="flex flex-wrap items-center justify-center gap-5 mt-6 text-xs font-mono text-chalk-400">
         <div className="flex items-center gap-1.5">
-          <Crown className="w-4 h-4 text-amber-300" />
+          <Crown className="w-4 h-4 text-amber-glow" />
           <span>Placed Queen</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-rose-900 border border-rose-500"></span>
-          <span>Attacking / Conflict</span>
+          <span className="w-2.5 h-2.5 bg-rose-950 border border-rose-500"></span>
+          <span>Conflict / Attack</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-sky-600 border border-sky-400"></span>
-          <span>Current Placement Attempt</span>
+          <span className="w-2.5 h-2.5 bg-amber/40 border border-amber"></span>
+          <span>Probe Cell</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded bg-emerald-900 border border-emerald-500"></span>
-          <span>Valid Position</span>
+          <span className="w-2.5 h-2.5 bg-obsidian-850 border border-amber/60"></span>
+          <span>Valid Placement</span>
         </div>
       </div>
     </div>

@@ -7,7 +7,7 @@ interface ResultPanelProps {
   isFinal?: boolean;
 }
 
-export const ResultPanel: React.FC<ResultPanelProps> = ({ result, title = 'Final Result', isFinal = false }) => {
+export const ResultPanel: React.FC<ResultPanelProps> = ({ result, title = 'FINAL SOLUTION & COMPUTED ARTIFACTS', isFinal = false }) => {
   const [copied, setCopied] = useState(false);
 
   if (!result && !isFinal) return null;
@@ -19,35 +19,36 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, title = 'Final
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 bg-slate-900/90 border border-emerald-500/30 rounded-xl shadow-lg">
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+    <div className="flex flex-col gap-4 p-5 bg-obsidian-900 border border-hairline">
+      <div className="flex items-center justify-between pb-3 border-b border-hairline">
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
+          <CheckCircle2 className="w-3.5 h-3.5 text-acid-500" />
+          <h3 className="font-mono text-xs uppercase tracking-widest text-acid-500 font-semibold">
             {title}
           </h3>
         </div>
         {result && (
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1 px-2.5 py-1 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-md text-xs font-mono border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-300 border border-hairline text-xs font-mono transition-colors"
           >
             {copied ? (
               <>
-                <Check className="w-3 h-3 text-emerald-400" /> Copied
+                <Check className="w-3 h-3 text-acid-500" /> COPIED
               </>
             ) : (
               <>
-                <Copy className="w-3 h-3" /> Copy JSON
+                <Copy className="w-3 h-3 text-chalk-400" /> COPY JSON
               </>
             )}
           </button>
         )}
       </div>
 
-      <div className="p-3 bg-slate-950/80 rounded-lg border border-slate-800 text-xs font-mono text-slate-200 overflow-x-auto max-h-48">
+      <div className="p-4 bg-obsidian-950 border border-hairline font-mono text-xs text-chalk-200 overflow-x-auto max-h-56 leading-relaxed">
         <pre className="whitespace-pre-wrap">{JSON.stringify(result, null, 2)}</pre>
       </div>
     </div>
   );
 };
+

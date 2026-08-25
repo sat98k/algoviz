@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Terminal } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 import { AlgorithmStep } from '../../types/algorithm';
 
 interface CodeExplanationProps {
@@ -11,29 +11,43 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
   const activeLine = step.codeLine;
 
   return (
-    <div className="flex flex-col gap-3 p-4 bg-slate-900/90 border border-slate-800 rounded-xl">
+    <div className="flex flex-col gap-4 p-5 bg-obsidian-900 border border-hairline">
       {/* Current Step Title & Explanation */}
-      <div className="flex flex-col gap-1.5 pb-3 border-b border-slate-800">
-        <div className="flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-sky-400" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-            Step {step.stepIndex + 1}: {step.title}
-          </h3>
+      <div className="flex flex-col gap-2 pb-4 border-b border-hairline">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-amber"></span>
+            <span className="font-mono text-xs uppercase tracking-widest text-amber">
+              STEP {String(step.stepIndex + 1).padStart(2, '0')} // EXECUTION STATE
+            </span>
+          </div>
         </div>
-        <p className="text-xs text-slate-300 leading-relaxed font-sans mt-0.5">
+
+        <h3 className="font-display font-bold text-lg text-chalk-100 mt-1">
+          {step.title}
+        </h3>
+
+        <p className="text-xs text-chalk-400 font-sans leading-relaxed">
           {step.description}
         </p>
       </div>
 
       {/* Pseudocode Box with active line highlighting */}
       {pseudocode && pseudocode.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
-            <Terminal className="w-3 h-3 text-slate-500" />
-            <span>Algorithm Pseudocode</span>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between font-mono text-[11px] text-chalk-500 pb-1">
+            <div className="flex items-center gap-1.5">
+              <Terminal className="w-3.5 h-3.5 text-chalk-400" />
+              <span className="uppercase tracking-wider">FORMAL PSEUDOCODE</span>
+            </div>
+            {activeLine && (
+              <span className="text-amber-glow font-bold">
+                ACTIVE LINE: {activeLine}
+              </span>
+            )}
           </div>
 
-          <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-xs overflow-x-auto max-h-56 leading-5">
+          <div className="p-3.5 bg-obsidian-950 border border-hairline font-mono text-xs overflow-x-auto max-h-64 leading-relaxed">
             {pseudocode.map((line, idx) => {
               const lineNum = idx + 1;
               const isActive = activeLine === lineNum;
@@ -41,14 +55,14 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
               return (
                 <div
                   key={lineNum}
-                  className={`flex items-start px-2 py-0.5 rounded transition-colors ${
+                  className={`flex items-start px-2 py-0.5 transition-colors ${
                     isActive
-                      ? 'bg-sky-500/20 text-sky-300 font-bold border-l-2 border-sky-400'
-                      : 'text-slate-400 hover:text-slate-300'
+                      ? 'bg-amber/15 text-amber-glow font-semibold border-l-2 border-amber'
+                      : 'text-chalk-400 hover:text-chalk-200'
                   }`}
                 >
-                  <span className="w-6 text-[10px] text-slate-600 select-none mr-2">
-                    {lineNum}
+                  <span className="w-6 text-[10px] text-chalk-600 select-none mr-2 font-mono tabular-nums">
+                    {String(lineNum).padStart(2, '0')}
                   </span>
                   <span className="whitespace-pre">{line}</span>
                 </div>
@@ -60,3 +74,4 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
     </div>
   );
 };
+

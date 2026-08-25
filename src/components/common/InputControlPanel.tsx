@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AlgorithmConfig } from '../../types/algorithm';
-import { Dices, Sliders, PlayCircle } from 'lucide-react';
+import { Dices, SlidersHorizontal, Play } from 'lucide-react';
 
 interface InputControlPanelProps {
   config: AlgorithmConfig;
@@ -49,37 +49,39 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-slate-900/90 border border-slate-800 rounded-xl">
+    <div className="flex flex-col gap-4 p-5 bg-obsidian-900 border border-hairline">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-3 border-b border-hairline">
         <div className="flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-sky-400" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-            Input Controls & Presets
+          <SlidersHorizontal className="w-3.5 h-3.5 text-amber" />
+          <h3 className="font-mono text-xs uppercase tracking-widest text-chalk-200">
+            INPUT PARAMETERS & PRESETS
           </h3>
         </div>
         <button
           type="button"
           onClick={handleRandomize}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/40 rounded-lg text-xs font-medium transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1 bg-obsidian-850 hover:bg-obsidian-800 text-amber-glow border border-amber/30 text-xs font-mono transition-colors"
         >
-          <Dices className="w-3.5 h-3.5" /> Randomize Input
+          <Dices className="w-3.5 h-3.5 text-amber" /> RANDOMIZE
         </button>
       </div>
 
-      {/* Preset Buttons */}
+      {/* Preset Chips */}
       {config.presets && config.presets.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-400 font-mono">Presets:</span>
+          <span className="font-mono text-[10px] uppercase tracking-wider text-chalk-500 mr-1">
+            PRESETS:
+          </span>
           {config.presets.map((preset) => (
             <button
               key={preset.name}
               type="button"
               onClick={() => handlePresetSelect(preset.name, preset.data)}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+              className={`px-3 py-1 font-mono text-xs transition-all ${
                 activePreset === preset.name
-                  ? 'bg-sky-500 text-white shadow'
-                  : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                  ? 'bg-amber text-obsidian-950 font-bold shadow-sm'
+                  : 'bg-obsidian-950 hover:bg-obsidian-800 text-chalk-400 border border-hairline'
               }`}
             >
               {preset.name}
@@ -89,25 +91,26 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({
       )}
 
       {/* Dynamic Input Form */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 pt-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {config.inputSchema.map((field) => {
             const rawVal = formData[field.name];
             const displayVal = Array.isArray(rawVal) ? rawVal.join(', ') : rawVal ?? '';
 
             return (
-              <div key={field.name} className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-slate-300 font-mono">
-                  {field.label}
+              <div key={field.name} className="flex flex-col gap-1.5">
+                <label className="font-mono text-xs text-chalk-300 flex items-center justify-between">
+                  <span>{field.label}</span>
+                  <span className="text-[10px] text-chalk-500 uppercase">{field.type}</span>
                 </label>
                 {field.type === 'select' ? (
                   <select
                     value={rawVal}
                     onChange={(e) => handleInputChange(field.name, e.target.value, field.type)}
-                    className="px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono text-slate-200 focus:outline-none focus:border-sky-500"
+                    className="px-3 py-2 bg-obsidian-950 border border-hairline text-xs font-mono text-chalk-200 focus:outline-none focus:border-amber"
                   >
                     {field.options?.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
+                      <option key={opt.value} value={opt.value} className="bg-obsidian-900 text-chalk-200">
                         {opt.label}
                       </option>
                     ))}
@@ -120,11 +123,11 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({
                     placeholder={field.placeholder}
                     value={displayVal}
                     onChange={(e) => handleInputChange(field.name, e.target.value, field.type)}
-                    className="px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                    className="px-3 py-2 bg-obsidian-950 border border-hairline text-xs font-mono text-chalk-200 placeholder-chalk-600 focus:outline-none focus:border-amber"
                   />
                 )}
                 {field.helperText && (
-                  <span className="text-[10px] text-slate-500">{field.helperText}</span>
+                  <span className="font-mono text-[10px] text-chalk-500">{field.helperText}</span>
                 )}
               </div>
             );
@@ -133,11 +136,13 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({
 
         <button
           type="submit"
-          className="flex items-center justify-center gap-2 mt-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30 rounded-lg text-xs font-semibold transition-colors"
+          className="flex items-center justify-center gap-2 mt-2 px-4 py-2.5 bg-obsidian-800 hover:bg-obsidian-700 text-chalk-100 border border-hairline font-mono text-xs uppercase tracking-wider font-semibold transition-colors"
         >
-          <PlayCircle className="w-4 h-4" /> Load & Run Visualization
+          <Play className="w-3.5 h-3.5 text-amber fill-current" />
+          <span>INITIALIZE & RUN SIMULATION</span>
         </button>
       </form>
     </div>
   );
 };
+
