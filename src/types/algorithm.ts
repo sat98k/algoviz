@@ -18,7 +18,10 @@ export type VisualizerType =
   | 'BoardVisualizer'
   | 'GraphVisualizer'
   | 'PointCanvasVisualizer'
-  | 'StringMatchVisualizer';
+  | 'StringMatchVisualizer'
+  | 'RecursionTreeVisualizer'
+  | 'FractionalKnapsackVisualizer'
+  | 'AssemblyLineVisualizer';
 
 export interface ComplexityInfo {
   timeBest?: string;
@@ -53,7 +56,7 @@ export interface HighlightInfo {
   nodes?: (string | number)[];
   activeNode?: string | number;
   prunedNodes?: (string | number)[];
-  edges?: { u: string | number; v: string | number; status?: 'active' | 'flow' | 'residual' | 'visited' | 'cover' }[];
+  edges?: { u: string | number; v: string | number; status?: 'active' | 'flow' | 'residual' | 'visited' | 'cover' | 'conflict' }[];
   points?: number[];
   activePoint?: number;
   hullPoints?: number[];

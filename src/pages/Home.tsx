@@ -14,6 +14,15 @@ import {
   Terminal,
 } from 'lucide-react';
 
+// Algorithmic catalog filter list - defines temporarily hidden algorithm IDs
+// (To restore Ford-Fulkerson through Module 7, simply remove IDs from this Set)
+const HIDDEN_ALGORITHM_IDS = new Set([
+  'ford-fulkerson',
+  'graham-scan',
+  'randomized-quicksort',
+  'vertex-cover-approx',
+]);
+
 interface HomeProps {
   onSelectAlgorithm: (id: string) => void;
   onNavigateComparison: () => void;
@@ -25,20 +34,29 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
   const [selectedModule, setSelectedModule] = useState<string>('All');
   const shouldReduceMotion = useReducedMotion();
 
+  const visibleRegistry = useMemo(() => {
+    return algorithmRegistry.filter((algo) => !HIDDEN_ALGORITHM_IDS.has(algo.id));
+  }, []);
+
   const paradigms = useMemo(() => {
     const list: string[] = ['All'];
-    algorithmRegistry.forEach((a) => {
+    visibleRegistry.forEach((a) => {
       if (!list.includes(a.paradigm)) list.push(a.paradigm);
     });
     return list;
-  }, []);
+  }, [visibleRegistry]);
 
   const modules = useMemo(() => {
-    return ['All', 'Module 1', 'Module 2', 'Module 3', 'Module 4', 'Module 5', 'Module 6', 'Module 7', 'Module 8'];
-  }, []);
+    const list: string[] = ['All'];
+    visibleRegistry.forEach((a) => {
+      const m = `Module ${a.module}`;
+      if (!list.includes(m)) list.push(m);
+    });
+    return list;
+  }, [visibleRegistry]);
 
   const filteredAlgorithms = useMemo(() => {
-    return algorithmRegistry.filter((algo) => {
+    return visibleRegistry.filter((algo) => {
       const matchesSearch =
         algo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         algo.paradigm.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -50,7 +68,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
 
       return matchesSearch && matchesParadigm && matchesModule;
     });
-  }, [searchTerm, selectedParadigm, selectedModule]);
+  }, [visibleRegistry, searchTerm, selectedParadigm, selectedModule]);
 
   // Group filtered by module
   const groupedByModule = useMemo(() => {
@@ -63,7 +81,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
     return Array.from(map.entries());
   }, [filteredAlgorithms]);
 
-  const totalAlgorithms = algorithmRegistry.length;
+  const totalAlgorithms = visibleRegistry.length;
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-obsidian-900 text-chalk-100 overflow-hidden">
@@ -107,19 +125,19 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-12 items-end">
             <div className="lg:col-span-7">
               <p className="text-base sm:text-lg md:text-xl text-chalk-400 font-sans font-light leading-relaxed max-w-2xl text-balance">
-                An interactive computational archive dissecting all 8 course modules — from greedy Huffman trees and dynamic tabulation to branch-and-bound pruning, network flows, and 2-approximation bounds.
+                An interactive computational archive — from greedy Huffman trees and dynamic tabulation to graph coloring, Floyd-Warshall APSP, and branch-and-bound pruning.
               </p>
             </div>
 
             {/* Quick Action Triggers */}
             <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-3 font-mono text-xs">
               <button
-                onClick={() => onSelectAlgorithm('randomized-quicksort')}
+                onClick={() => onSelectAlgorithm('job-selection-bb')}
                 className="group flex items-center justify-between p-4 bg-chalk-100 text-obsidian-950 font-bold uppercase tracking-wider transition-all duration-300 hover:bg-amber hover:text-obsidian-950 shadow-lg shadow-black/40"
               >
                 <div className="flex items-center gap-2.5">
                   <Play className="w-4 h-4 fill-current" />
-                  <span>Launch Quicksort Studio</span>
+                  <span>Launch Job Selection Studio</span>
                 </div>
                 <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </button>
@@ -142,7 +160,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
         <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-hairline border-t border-hairline pt-6 text-xs font-mono text-chalk-400">
           <div className="px-3 py-1 flex flex-col">
             <span className="text-chalk-600 uppercase text-[10px]">PARADIGMS</span>
-            <span className="font-bold text-chalk-200 text-sm mt-0.5">8 Classifications</span>
+            <span className="font-bold text-chalk-200 text-sm mt-0.5">{paradigms.length - 1} Classifications</span>
           </div>
           <div className="px-3 py-1 flex flex-col">
             <span className="text-chalk-600 uppercase text-[10px]">TIME BOUNDS</span>
@@ -150,7 +168,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
           </div>
           <div className="px-3 py-1 flex flex-col">
             <span className="text-chalk-600 uppercase text-[10px]">ENGINES</span>
-            <span className="font-bold text-acid-500 text-sm mt-0.5">12 Step Generators</span>
+            <span className="font-bold text-acid-500 text-sm mt-0.5">{totalAlgorithms} Step Generators</span>
           </div>
           <div className="px-3 py-1 flex flex-col">
             <span className="text-chalk-600 uppercase text-[10px]">ARCHITECTURE</span>
@@ -168,7 +186,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
           <span className="text-amber">✦</span>
           <span>02. DYNAMIC PROGRAMMING RECURRENCE & LCS</span>
           <span className="text-acid-500">✦</span>
-          <span>03. RANDOMIZED EXPECTED O(N LOG N) QUICKSORT</span>
+          <span>03. MATRIX CHAIN MULTIPLICATION TABULATION</span>
           <span className="text-electric-400">✦</span>
           <span>04. N-QUEENS BACKTRACKING STATE SEARCH</span>
           <span className="text-amber">✦</span>
@@ -178,14 +196,14 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
           <span className="text-electric-400">✦</span>
           <span>07. KMP STRING PATTERN MATCHER & LPS ARRAY</span>
           <span className="text-amber">✦</span>
-          <span>08. GRAHAM SCAN COMPUTATIONAL CONVEX HULL</span>
+          <span>08. JOB SELECTION BRANCH & BOUND MIN-COST</span>
         </div>
         <div className="flex shrink-0 items-center gap-12 animate-marquee font-mono text-xs uppercase tracking-widest text-chalk-400" aria-hidden="true">
           <span>01. GREEDY HUFFMAN PREFIX CODES</span>
           <span className="text-amber">✦</span>
           <span>02. DYNAMIC PROGRAMMING RECURRENCE & LCS</span>
           <span className="text-acid-500">✦</span>
-          <span>03. RANDOMIZED EXPECTED O(N LOG N) QUICKSORT</span>
+          <span>03. MATRIX CHAIN MULTIPLICATION TABULATION</span>
           <span className="text-electric-400">✦</span>
           <span>04. N-QUEENS BACKTRACKING STATE SEARCH</span>
           <span className="text-amber">✦</span>
@@ -195,7 +213,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
           <span className="text-electric-400">✦</span>
           <span>07. KMP STRING PATTERN MATCHER & LPS ARRAY</span>
           <span className="text-amber">✦</span>
-          <span>08. GRAHAM SCAN COMPUTATIONAL CONVEX HULL</span>
+          <span>08. JOB SELECTION BRANCH & BOUND MIN-COST</span>
         </div>
       </div>
 

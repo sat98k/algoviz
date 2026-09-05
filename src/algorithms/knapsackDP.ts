@@ -17,6 +17,7 @@ export interface KnapsackDPState {
   formulaExplanation?: string;
   backtrackPath?: { r: number; c: number }[];
   maxValue?: number;
+  backtrackPhase?: boolean;
 }
 
 export function* knapsackDPSteps(inputs: {
@@ -103,8 +104,8 @@ export function* knapsackDPSteps(inputs: {
 
         yield {
           stepIndex: stepIndex++,
-          title: `Compute dp[${i}][${w}]`,
-          description: `Item ${i} fits (wt: ${item.weight}, val: ${item.value}). Exclude: dp[${i - 1}][${w}] = ${excludeVal}. Include: ${item.value} + dp[${i - 1}][${w - item.weight}] = ${includeVal}. Max = ${dp[i][w]}.`,
+          title: `Evaluate Item ${i} at Weight ${w}`,
+          description: `Option 1 (Exclude): dp[${i - 1}][${w}] = ${excludeVal}. Option 2 (Include): ${item.value} + dp[${i - 1}][${w - item.weight}] = ${includeVal}. Selected: ${dp[i][w]}.`,
           codeLine: 3,
           state: {
             items,
@@ -113,7 +114,7 @@ export function* knapsackDPSteps(inputs: {
             currentRow: i,
             currentCol: w,
             selectedItems: [],
-            formulaExplanation: `max(exclude=${excludeVal}, include=${includeVal}) = ${dp[i][w]}`,
+            formulaExplanation: `dp[${i}][${w}] = max(dp[${i - 1}][${w}] = ${excludeVal}, ${item.value} + dp[${i - 1}][${w - item.weight}] = ${includeVal}) = ${dp[i][w]}`,
           },
           highlights: {
             cells: [
@@ -128,20 +129,49 @@ export function* knapsackDPSteps(inputs: {
     }
   }
 
-  // Backtracking phase to find selected items
+  // --- PHASE 2: Step-by-Step Backtrack Reconstruction ---
   const selectedItems: number[] = [];
   const backtrackPath: { r: number; c: number }[] = [];
   let currW = capacity;
 
+  yield {
+    stepIndex: stepIndex++,
+    title: 'DP Table Complete: Begin Item Backtracking',
+    description: `DP table fill completed with optimal value dp[${n}][${capacity}] = ${dp[n][capacity]}. Starting backtrack from cell (${n}, ${capacity}) to identify which items were selected.`,
+    codeLine: 4,
+    state: {
+      items,
+      capacity,
+      dpTable: dp.map((row) => [...row]),
+      currentRow: n,
+      currentCol: capacity,
+      selectedItems: [],
+      backtrackPath: [{ r: n, c: capacity }],
+      maxValue: dp[n][capacity],
+      backtrackPhase: true,
+      formulaExplanation: `Start backtracking at cell (${n}, ${capacity}) with max value = ${dp[n][capacity]}.`,
+    },
+    highlights: {
+      cells: [{ r: n, c: capacity, status: 'path' }],
+    },
+    metrics: { comparisons, iterations },
+  };
+
   for (let i = n; i > 0; i--) {
+    const item = items[i - 1];
+    const valCurr = dp[i][currW];
+    const valPrev = dp[i - 1][currW];
     backtrackPath.push({ r: i, c: currW });
-    if (dp[i][currW] !== dp[i - 1][currW]) {
+
+    if (valCurr !== valPrev) {
+      // Item was included
       selectedItems.push(i);
-      currW -= items[i - 1].weight;
+      const nextW = currW - item.weight;
+
       yield {
         stepIndex: stepIndex++,
-        title: `Backtrack: Item ${i} Included`,
-        description: `dp[${i}][${currW + items[i - 1].weight}] != dp[${i - 1}][${currW + items[i - 1].weight}], so Item ${i} was included! Remaining capacity: ${currW}.`,
+        title: `Backtrack: Item ${i} INCLUDED`,
+        description: `At cell (i=${i}, w=${currW}): dp[${i}][${currW}] = ${valCurr} vs dp[${i - 1}][${currW}] = ${valPrev} (NOT EQUAL). Item ${i} (weight: ${item.weight}, value: ${item.value}) was INCLUDED! Moving cursor to (i=${i - 1}, w=${nextW}).`,
         codeLine: 4,
         state: {
           items,
@@ -152,17 +182,27 @@ export function* knapsackDPSteps(inputs: {
           selectedItems: [...selectedItems],
           backtrackPath: [...backtrackPath],
           maxValue: dp[n][capacity],
+          backtrackPhase: true,
+          formulaExplanation: `dp[${i}][${currW}] (${valCurr}) != dp[${i - 1}][${currW}] (${valPrev}) ➔ Item ${i} INCLUDED (+${item.value})`,
         },
         highlights: {
-          cells: backtrackPath.map((p) => ({ ...p, status: 'path' as const })),
+          cells: [
+            ...backtrackPath.map((p) => ({ ...p, status: 'path' as const })),
+            { r: i, c: currW, status: 'active' as const },
+            { r: i - 1, c: currW, status: 'source' as const },
+            { r: i - 1, c: nextW, status: 'path' as const },
+          ],
         },
         metrics: { comparisons, iterations },
       };
+
+      currW = nextW;
     } else {
+      // Item was excluded
       yield {
         stepIndex: stepIndex++,
-        title: `Backtrack: Item ${i} Excluded`,
-        description: `dp[${i}][${currW}] == dp[${i - 1}][${currW}], so Item ${i} was not included.`,
+        title: `Backtrack: Item ${i} NOT Included`,
+        description: `At cell (i=${i}, w=${currW}): dp[${i}][${currW}] = ${valCurr} vs dp[${i - 1}][${currW}] = ${valPrev} (EQUAL). Item ${i} was NOT included. Moving cursor directly up to (i=${i - 1}, w=${currW}).`,
         codeLine: 5,
         state: {
           items,
@@ -173,14 +213,21 @@ export function* knapsackDPSteps(inputs: {
           selectedItems: [...selectedItems],
           backtrackPath: [...backtrackPath],
           maxValue: dp[n][capacity],
+          backtrackPhase: true,
+          formulaExplanation: `dp[${i}][${currW}] (${valCurr}) == dp[${i - 1}][${currW}] (${valPrev}) ➔ Item ${i} Excluded`,
         },
         highlights: {
-          cells: backtrackPath.map((p) => ({ ...p, status: 'path' as const })),
+          cells: [
+            ...backtrackPath.map((p) => ({ ...p, status: 'path' as const })),
+            { r: i, c: currW, status: 'active' as const },
+            { r: i - 1, c: currW, status: 'source' as const },
+          ],
         },
         metrics: { comparisons, iterations },
       };
     }
   }
+
   backtrackPath.push({ r: 0, c: currW });
   selectedItems.reverse();
 
@@ -191,7 +238,7 @@ export function* knapsackDPSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: '0-1 Knapsack Complete',
-    description: `Optimal solution found: Maximum Value = ${totalVal}, Total Weight = ${totalWeight}/${capacity}. Selected Items: [${selectedItems.join(', ')}].`,
+    description: `Backtrack completed. Optimal solution achieved: Total Value = ${totalVal}, Total Weight = ${totalWeight}/${capacity}. Selected Items: [${selectedItems.map((id) => `Item ${id}`).join(', ')}].`,
     codeLine: 6,
     state: {
       items,
@@ -202,6 +249,8 @@ export function* knapsackDPSteps(inputs: {
       selectedItems,
       backtrackPath,
       maxValue: totalVal,
+      backtrackPhase: true,
+      formulaExplanation: `Optimal Solution: Items [${selectedItems.join(', ')}] with total value = ${totalVal} and total weight = ${totalWeight}/${capacity}.`,
     },
     highlights: {
       cells: backtrackPath.map((p) => ({ ...p, status: 'path' as const })),

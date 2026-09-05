@@ -6,6 +6,18 @@ interface GraphVisualizerProps {
   step: AlgorithmStep;
 }
 
+const COLOR_PALETTE: Record<number, { name: string; bg: string; border: string; text: string }> = {
+  0: { name: 'Uncolored', bg: '#181a20', border: '#374151', text: '#94a3b8' },
+  1: { name: 'Red', bg: '#ef4444', border: '#f87171', text: '#ffffff' },
+  2: { name: 'Blue', bg: '#3b82f6', border: '#60a5fa', text: '#ffffff' },
+  3: { name: 'Green', bg: '#10b981', border: '#34d399', text: '#ffffff' },
+  4: { name: 'Yellow', bg: '#f59e0b', border: '#fbbf24', text: '#000000' },
+  5: { name: 'Purple', bg: '#8b5cf6', border: '#a78bfa', text: '#ffffff' },
+  6: { name: 'Cyan', bg: '#06b6d4', border: '#22d3ee', text: '#ffffff' },
+  7: { name: 'Orange', bg: '#f97316', border: '#fb923c', text: '#ffffff' },
+  8: { name: 'Pink', bg: '#ec4899', border: '#f472b6', text: '#ffffff' },
+};
+
 export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
   const [activeTab, setActiveTab] = useState<'graph' | 'matrix'>('graph');
   const state = step.state || {};
@@ -16,6 +28,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
   const isFloyd = state.distMatrix !== undefined;
   const isFordFulkerson = state.flowMatrix !== undefined;
   const isVertexCover = state.coveredVertices !== undefined;
+  const isGraphColoring = state.isGraphColoring === true || state.colorAssignment !== undefined;
 
   const svgWidth = 600;
   const svgHeight = 380;
@@ -76,6 +89,43 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
             <span className="px-3 py-1 bg-obsidian-950 border border-amber/30 text-amber-glow">
               COVER SIZE |C|: <strong>{state.coveredVertices?.length || 0}</strong>
             </span>
+          )}
+          {isGraphColoring && (
+            <>
+              <span className="px-3 py-1 bg-obsidian-950 border border-hairline text-chalk-300">
+                COLORS: <strong>k = {state.numColors ?? 3}</strong>
+              </span>
+              {state.currentVertex !== undefined && (
+                <span className="px-3 py-1 bg-obsidian-950 border border-amber/40 text-amber-glow flex items-center gap-1.5">
+                  CURRENT: <strong>V{parseInt(state.currentVertex) + 1}</strong>
+                  {state.currentColor !== undefined && state.currentColor > 0 && (
+                    <span className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded text-[10px] bg-obsidian-900 border border-hairline">
+                      <span
+                        className="w-2 h-2 rounded-full inline-block"
+                        style={{ backgroundColor: COLOR_PALETTE[state.currentColor]?.bg || '#f59e0b' }}
+                      />
+                      {COLOR_PALETTE[state.currentColor]?.name}
+                    </span>
+                  )}
+                </span>
+              )}
+              {state.conflictVertex !== undefined && (
+                <span className="px-3 py-1 bg-red-950/80 border border-red-500/80 text-red-400 font-bold animate-pulse">
+                  ⚠️ CONFLICT: V{parseInt(state.conflictVertex) + 1}
+                </span>
+              )}
+              {step.isFinal && step.result && (
+                <span
+                  className={`px-3 py-1 font-bold border ${
+                    step.result.solvable
+                      ? 'bg-emerald-950/60 border-emerald-500 text-emerald-400'
+                      : 'bg-red-950/60 border-red-500 text-red-400'
+                  }`}
+                >
+                  {step.result.solvable ? `✓ VALID ${state.numColors}-COLORING` : `✕ NOT ${state.numColors}-COLORABLE`}
+                </span>
+              )}
+            </>
           )}
         </div>
 
@@ -139,12 +189,24 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
 
               const edgeStatus = isEdgeHighlighted(`${edge.u}`, `${edge.v}`);
               const isDirected = isFloyd || isFordFulkerson;
+              const isConflictEdge =
+                edgeStatus === 'conflict' ||
+                (isGraphColoring &&
+                  state.conflictVertex !== undefined &&
+                  state.currentVertex !== undefined &&
+                  ((`${edge.u}` === `${state.currentVertex}` && `${edge.v}` === `${state.conflictVertex}`) ||
+                    (`${edge.v}` === `${state.currentVertex}` && `${edge.u}` === `${state.conflictVertex}`)));
 
               let strokeColor = '#2a2e39';
               let strokeWidth = 1.8;
+              let strokeDasharray: string | undefined = undefined;
               let marker = isDirected ? 'url(#graph-arrow)' : undefined;
 
-              if (edgeStatus === 'active') {
+              if (isConflictEdge) {
+                strokeColor = '#ef4444';
+                strokeWidth = 3;
+                strokeDasharray = '5 3';
+              } else if (edgeStatus === 'active') {
                 strokeColor = '#f59e0b';
                 strokeWidth = 2.5;
                 marker = isDirected ? 'url(#graph-arrow-active)' : undefined;
@@ -165,6 +227,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                     y2={p2.y}
                     stroke={strokeColor}
                     strokeWidth={strokeWidth}
+                    strokeDasharray={strokeDasharray}
                     markerEnd={marker}
                     className="transition-colors duration-300"
                   />
@@ -195,6 +258,82 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
             {nodes.map((node) => {
               const pos = nodePositions.get(`${node.id}`);
               if (!pos) return null;
+
+              if (isGraphColoring) {
+                const assignedColor = state.colorAssignment?.[node.id] || 0;
+                const isCurrent = `${node.id}` === `${state.currentVertex}`;
+                const isConflict = `${node.id}` === `${state.conflictVertex}`;
+
+                const colorInfo = COLOR_PALETTE[assignedColor] || COLOR_PALETTE[0];
+                const attemptedColorInfo =
+                  state.currentColor && state.currentColor > 0 ? COLOR_PALETTE[state.currentColor] : null;
+
+                return (
+                  <g key={node.id} transform={`translate(${pos.x}, ${pos.y})`} className="cursor-pointer">
+                    {/* Pulsing ring for current node being colored */}
+                    {isCurrent && (
+                      <circle
+                        r={27}
+                        fill="none"
+                        stroke={isConflict ? '#ef4444' : attemptedColorInfo?.bg || '#f59e0b'}
+                        strokeWidth={2.5}
+                        strokeDasharray={isConflict ? '4 3' : undefined}
+                        className="animate-pulse"
+                      />
+                    )}
+
+                    {/* Warning ring for conflict node */}
+                    {isConflict && (
+                      <circle
+                        r={28}
+                        fill="none"
+                        stroke="#ef4444"
+                        strokeWidth={2.5}
+                        strokeDasharray="4 3"
+                      />
+                    )}
+
+                    {/* Main Node Circle */}
+                    <circle
+                      r={20}
+                      fill={assignedColor > 0 ? colorInfo.bg : '#1e222d'}
+                      stroke={
+                        isConflict
+                          ? '#ef4444'
+                          : assignedColor > 0
+                          ? colorInfo.border
+                          : isCurrent
+                          ? '#f59e0b'
+                          : '#374151'
+                      }
+                      strokeWidth={isCurrent || isConflict || assignedColor > 0 ? 2.5 : 1.5}
+                      className="shadow-md transition-all"
+                    />
+
+                    {/* Node Label */}
+                    <text
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="text-[11px] font-mono font-bold pointer-events-none"
+                      fill={assignedColor > 0 ? colorInfo.text : '#94a3b8'}
+                    >
+                      {node.label}
+                    </text>
+
+                    {/* Under-node color name */}
+                    {assignedColor > 0 && (
+                      <text
+                        y={32}
+                        textAnchor="middle"
+                        className="text-[9px] font-mono font-bold uppercase pointer-events-none"
+                        fill={colorInfo.border}
+                      >
+                        {colorInfo.name}
+                      </text>
+                    )}
+                  </g>
+                );
+              }
 
               const nodeStatus = isNodeHighlighted(`${node.id}`);
 
@@ -259,10 +398,12 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
 
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-5 mt-5 text-xs font-mono text-chalk-400">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-amber border border-amber-glow"></span>
-          <span>Active Vertex / Path</span>
-        </div>
+        {!isGraphColoring && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 bg-amber border border-amber-glow"></span>
+            <span>Active Vertex / Path</span>
+          </div>
+        )}
         {isVertexCover && (
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 bg-amber-glow border border-amber"></span>
@@ -273,6 +414,31 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 bg-acid-500 border border-acid-400"></span>
             <span>Augmented Flow</span>
+          </div>
+        )}
+        {isGraphColoring && (
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-chalk-400">
+            <span className="text-chalk-500 uppercase">Available Colors:</span>
+            {Array.from({ length: state.numColors || 3 }, (_, i) => i + 1).map((c) => (
+              <div key={c} className="flex items-center gap-1.5">
+                <span
+                  className="w-3 h-3 rounded-full border"
+                  style={{
+                    backgroundColor: COLOR_PALETTE[c]?.bg || '#475569',
+                    borderColor: COLOR_PALETTE[c]?.border || '#94a3b8',
+                  }}
+                />
+                <span>{COLOR_PALETTE[c]?.name || `Color ${c}`}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-1.5 ml-2">
+              <span className="w-3 h-3 rounded-full border-2 border-amber" />
+              <span>Current Vertex</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full border-2 border-dashed border-red-500" />
+              <span>Conflict</span>
+            </div>
           </div>
         )}
       </div>

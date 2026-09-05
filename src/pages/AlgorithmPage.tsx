@@ -11,6 +11,9 @@ import { BoardVisualizer } from '../components/visualizers/BoardVisualizer';
 import { GraphVisualizer } from '../components/visualizers/GraphVisualizer';
 import { PointCanvasVisualizer } from '../components/visualizers/PointCanvasVisualizer';
 import { StringMatchVisualizer } from '../components/visualizers/StringMatchVisualizer';
+import { FractionalKnapsackVisualizer } from '../components/visualizers/FractionalKnapsackVisualizer';
+import { RecursionTreeVisualizer } from '../components/visualizers/RecursionTreeVisualizer';
+import { AssemblyLineVisualizer } from '../components/visualizers/AssemblyLineVisualizer';
 
 // Controls & Panels
 import { PlaybackControls } from '../components/common/PlaybackControls';
@@ -153,6 +156,12 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
         return <PointCanvasVisualizer step={currentStep} />;
       case 'StringMatchVisualizer':
         return <StringMatchVisualizer step={currentStep} />;
+      case 'FractionalKnapsackVisualizer':
+        return <FractionalKnapsackVisualizer step={currentStep} />;
+      case 'RecursionTreeVisualizer':
+        return <RecursionTreeVisualizer step={currentStep} />;
+      case 'AssemblyLineVisualizer':
+        return <AssemblyLineVisualizer step={currentStep} />;
       default:
         return (
           <div className="p-12 text-center font-mono text-xs text-chalk-500 border border-hairline bg-obsidian-950">

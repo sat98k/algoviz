@@ -11,8 +11,105 @@ import { floydWarshallSteps } from '../algorithms/floydWarshall';
 import { fordFulkersonSteps } from '../algorithms/fordFulkerson';
 import { grahamScanSteps } from '../algorithms/grahamScan';
 import { vertexCoverApproxSteps } from '../algorithms/vertexCoverApprox';
+import { fractionalKnapsackSteps } from '../algorithms/fractionalKnapsack';
+import { matrixChainMultiplicationSteps } from '../algorithms/matrixChainMultiplication';
+import { karatsubaSteps } from '../algorithms/karatsuba';
+import { assemblyLineSchedulingSteps } from '../algorithms/assemblyLineScheduling';
+import { subsetSumSteps } from '../algorithms/subsetSum';
+import { graphColoringSteps } from '../algorithms/graphColoring';
+import { jobSelectionBBSteps } from '../algorithms/jobSelectionBB';
 
 export const algorithmRegistry: AlgorithmConfig[] = [
+  // Module 1: Greedy — Fractional Knapsack
+  {
+    id: 'fractional-knapsack',
+    module: 1,
+    moduleName: 'Module 1: Greedy Algorithms',
+    name: 'Fractional Knapsack',
+    paradigm: 'Greedy',
+    complexity: {
+      timeBest: 'O(n log n)',
+      timeAverage: 'O(n log n)',
+      timeWorst: 'O(n log n)',
+      spaceWorst: 'O(n)',
+      description: 'Sorting items by value/weight ratio descending + O(n) greedy linear fill',
+    },
+    problemStatement:
+      'Given weights and values of n items and a knapsack capacity W, determine the maximum value achievable by taking entire items or fractional portions of items.',
+    explanation:
+      'The Fractional Knapsack problem exhibits the greedy choice property: items are sorted by their value-to-weight density (v_i / w_i). We greedily consume highest-density items in full, taking a fractional slice of the first item that exceeds remaining capacity.',
+    pseudocode: [
+      'function FractionalKnapsack(weights, values, W):',
+      '  for i = 1 to n: ratio[i] = values[i] / weights[i]',
+      '  sort items descending by ratio',
+      '  currentWeight = 0, currentValue = 0',
+      '  for each item i in sortedItems:',
+      '    if currentWeight + weights[i] <= W:',
+      '      take 100% of item i; currentWeight += weights[i]; currentValue += values[i]',
+      '    else:',
+      '      fraction = (W - currentWeight) / weights[i]',
+      '      take fraction of item i; currentValue += fraction * values[i]; break',
+      '  return currentValue',
+    ],
+    visualizer: 'FractionalKnapsackVisualizer',
+    inputSchema: [
+      {
+        name: 'weights',
+        label: 'Item Weights',
+        type: 'array',
+        defaultValue: [10, 20, 30],
+        placeholder: 'e.g. 10, 20, 30',
+        helperText: 'Weights of items (comma-separated).',
+      },
+      {
+        name: 'values',
+        label: 'Item Values ($)',
+        type: 'array',
+        defaultValue: [60, 100, 120],
+        placeholder: 'e.g. 60, 100, 120',
+        helperText: 'Values of items (comma-separated).',
+      },
+      {
+        name: 'capacity',
+        label: 'Knapsack Capacity (W)',
+        type: 'number',
+        defaultValue: 50,
+        min: 1,
+        max: 500,
+        helperText: 'Total weight capacity of knapsack.',
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic Textbook (W=50)',
+        description: 'Standard 3-item problem with ratio ordering 6, 5, 4',
+        data: { weights: [10, 20, 30], values: [60, 100, 120], capacity: 50 },
+      },
+      {
+        name: 'High Density Split (W=60)',
+        description: '4 items with high value dense items',
+        data: { weights: [10, 40, 20, 30], values: [60, 280, 120, 150], capacity: 60 },
+      },
+      {
+        name: 'Small Knapsack (W=15)',
+        description: 'Small capacity requiring early fraction slice',
+        data: { weights: [10, 20, 30], values: [60, 100, 120], capacity: 15 },
+      },
+    ],
+    generateRandomInput: () => {
+      const count = Math.floor(Math.random() * 3) + 3; // 3 to 5 items
+      const weights: number[] = [];
+      const values: number[] = [];
+      for (let i = 0; i < count; i++) {
+        weights.push((Math.floor(Math.random() * 4) + 1) * 10);
+        values.push((Math.floor(Math.random() * 10) + 2) * 20);
+      }
+      const totalW = weights.reduce((a, b) => a + b, 0);
+      const capacity = Math.round(totalW * 0.6);
+      return { weights, values, capacity };
+    },
+    stepGenerator: fractionalKnapsackSteps,
+  },
   // Module 1: Greedy — Huffman Coding
   {
     id: 'huffman',
@@ -75,31 +172,29 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     id: 'max-subarray',
     module: 1,
     moduleName: 'Module 1: Divide & Conquer',
-    name: 'Maximum Subarray (Kadane’s Algorithm)',
+    name: 'Maximum Subarray (Divide & Conquer)',
     paradigm: 'Divide & Conquer',
     complexity: {
-      timeAverage: 'O(n)',
-      timeWorst: 'O(n)',
-      spaceWorst: 'O(1)',
-      description: 'Single pass optimal scanning',
+      timeBest: 'O(n log n)',
+      timeAverage: 'O(n log n)',
+      timeWorst: 'O(n log n)',
+      spaceWorst: 'O(log n)',
+      description: 'Master theorem T(n) = 2T(n/2) + O(n) -> O(n log n) recursive recursion tree',
     },
     problemStatement:
-      'Find the contiguous subarray within a one-dimensional array of numbers which has the largest sum.',
+      'Find the contiguous subarray within a one-dimensional array of numbers which has the largest sum, using the classic Divide & Conquer paradigm.',
     explanation:
-      'At each element, decide whether to extend the existing contiguous subarray or start a new subarray beginning at that element (Kadane’s linear scan), maintaining the running global maximum.',
+      'Recursively split the array at midpoint mid into left half [low..mid] and right half [mid+1..high]. Solve both recursively, compute the maximum crossing subarray spanning the midpoint in O(n) time, and return the maximum of the three subproblem answers.',
     pseudocode: [
-      'function MaximumSubarray(arr):',
-      '  currentSum = arr[0], maxSum = arr[0]',
-      '  start = 0, bestStart = 0, bestEnd = 0',
-      '  for i = 1 to length(arr) - 1:',
-      '    if arr[i] > currentSum + arr[i]:',
-      '      currentSum = arr[i], start = i',
-      '    else: currentSum = currentSum + arr[i]',
-      '    if currentSum > maxSum:',
-      '      maxSum = currentSum, bestStart = start, bestEnd = i',
-      '  return (maxSum, bestStart, bestEnd)',
+      'function MaxSubarrayDC(A, low, high):',
+      '  if low == high: return (A[low], low, high) // Base Case',
+      '  mid = floor((low + high) / 2)',
+      '  (leftSum, leftL, leftH) = MaxSubarrayDC(A, low, mid)',
+      '  (rightSum, rightL, rightH) = MaxSubarrayDC(A, mid + 1, high)',
+      '  (crossSum, crossL, crossH) = MaxCrossingSubarray(A, low, mid, high)',
+      '  return max(leftSum, rightSum, crossSum)',
     ],
-    visualizer: 'ArrayBarVisualizer',
+    visualizer: 'RecursionTreeVisualizer',
     inputSchema: [
       {
         name: 'array',
@@ -107,20 +202,121 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         type: 'array',
         defaultValue: [-2, 1, -3, 4, -1, 2, 1, -5, 4],
         placeholder: 'e.g. -2, 1, -3, 4, -1, 2, 1, -5, 4',
-        helperText: 'Can include positive and negative numbers.',
+        helperText: 'Elements may include negative, zero, and positive integers.',
       },
     ],
     presets: [
-      { name: 'Standard Textbook', data: { array: [-2, 1, -3, 4, -1, 2, 1, -5, 4] } },
-      { name: 'All Negative Values', data: { array: [-8, -3, -6, -2, -5, -4] } },
-      { name: 'Alternating Highs/Lows', data: { array: [5, -2, 3, -1, 4, -8, 6, 2] } },
+      {
+        name: 'Classic CLRS Array',
+        description: 'Textbook 9-element array with mixed values',
+        data: { array: [-2, 1, -3, 4, -1, 2, 1, -5, 4] },
+      },
+      {
+        name: 'All Negative Array',
+        description: 'Requires selecting single least negative element',
+        data: { array: [-8, -3, -6, -2, -5] },
+      },
+      {
+        name: 'All Positive Array',
+        description: 'Whole array constitutes optimal subarray',
+        data: { array: [1, 2, 3, 4, 5] },
+      },
+      {
+        name: 'Alternating Array',
+        description: 'Multiple competing subpeaks',
+        data: { array: [3, -2, 5, -1, 4, -3, 2] },
+      },
     ],
     generateRandomInput: () => {
-      const len = Math.floor(Math.random() * 6) + 7;
-      const array = Array.from({ length: len }, () => Math.floor(Math.random() * 25) - 12);
-      return { array };
+      const len = Math.floor(Math.random() * 4) + 6; // 6 to 9 elements
+      const arr: number[] = [];
+      for (let i = 0; i < len; i++) {
+        arr.push(Math.floor(Math.random() * 21) - 10);
+      }
+      return { array: arr };
     },
     stepGenerator: maxSubarraySteps,
+  },
+
+  // Module 1: Divide & Conquer — Karatsuba Fast Multiplication
+  {
+    id: 'karatsuba',
+    module: 1,
+    moduleName: 'Module 1: Divide & Conquer',
+    name: 'Karatsuba Fast Multiplication',
+    paradigm: 'Divide & Conquer',
+    complexity: {
+      timeBest: 'O(n^{1.585})',
+      timeAverage: 'O(n^{\\log_2 3}) \\approx O(n^{1.585})',
+      timeWorst: 'O(n^{1.585})',
+      spaceWorst: 'O(n)',
+      description: 'Master theorem T(n) = 3T(n/2) + O(n) -> reduces 4 multiplications to 3 recursive subproblems',
+    },
+    problemStatement:
+      'Multiply two large n-digit integers faster than standard O(n²) grade-school multiplication using recursive 3-way algebraic decomposition.',
+    explanation:
+      'Splits X = a·10^m + b and Y = c·10^m + d. Instead of computing 4 subproducts (ac, ad, bc, bd), Karatsuba computes z2 = ac, z0 = bd, and z1 = (a+b)(c+d) - z2 - z0 using only 3 recursive calls, combining them as z2·10^(2m) + z1·10^m + z0 in O(n^1.585) time.',
+    pseudocode: [
+      'function Karatsuba(X, Y):',
+      '  if X < 10 or Y < 10: return X * Y // Base Case',
+      '  m = floor(max(digits(X), digits(Y)) / 2)',
+      '  (a, b) = split(X, m); (c, d) = split(Y, m)',
+      '  z2 = Karatsuba(a, c)',
+      '  z0 = Karatsuba(b, d)',
+      '  z1 = Karatsuba(a + b, c + d) - z2 - z0',
+      '  return z2 * 10^(2m) + z1 * 10^m + z0',
+    ],
+    visualizer: 'RecursionTreeVisualizer',
+    inputSchema: [
+      {
+        name: 'num1',
+        label: 'First Integer (X)',
+        type: 'text',
+        defaultValue: '1234',
+        placeholder: 'e.g. 1234 or 98765',
+        helperText: 'Non-negative integer (arbitrary digits supported).',
+      },
+      {
+        name: 'num2',
+        label: 'Second Integer (Y)',
+        type: 'text',
+        defaultValue: '5678',
+        placeholder: 'e.g. 5678 or 4321',
+        helperText: 'Non-negative integer (arbitrary digits supported).',
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic 4-Digit (1234 × 5678)',
+        description: 'Standard textbook CLRS 4-digit split example',
+        data: { num1: '1234', num2: '5678' },
+      },
+      {
+        name: 'Asymmetric 5x3 Digits (98765 × 432)',
+        description: 'Unequal lengths with padding and split handling',
+        data: { num1: '98765', num2: '432' },
+      },
+      {
+        name: '6-Digit Large Integers (123456 × 654321)',
+        description: 'Deep 3-level recursive tree demo',
+        data: { num1: '123456', num2: '654321' },
+      },
+      {
+        name: 'Single-Digit Base Case (7 × 8)',
+        description: 'Immediate single-node resolution',
+        data: { num1: '7', num2: '8' },
+      },
+    ],
+    generateRandomInput: () => {
+      const len1 = Math.floor(Math.random() * 3) + 3; // 3 to 5 digits
+      const len2 = Math.floor(Math.random() * 3) + 3;
+      let s1 = String(Math.floor(Math.random() * 9) + 1);
+      let s2 = String(Math.floor(Math.random() * 9) + 1);
+      for (let i = 1; i < len1; i++) s1 += Math.floor(Math.random() * 10);
+      for (let i = 1; i < len2; i++) s2 += Math.floor(Math.random() * 10);
+      return { num1: s1, num2: s2 };
+    },
+    stepGenerator: karatsubaSteps,
   },
 
   // Module 2: Dynamic Programming — 0-1 Knapsack (DP)
@@ -248,6 +444,238 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { str1: genStr(6), str2: genStr(5) };
     },
     stepGenerator: lcsSteps,
+  },
+
+  // Module 2: Dynamic Programming — Matrix Chain Multiplication
+  {
+    id: 'matrix-chain-multiplication',
+    module: 2,
+    moduleName: 'Module 2: Dynamic Programming',
+    name: 'Matrix Chain Multiplication',
+    paradigm: 'Dynamic Programming',
+    complexity: {
+      timeBest: 'O(n³)',
+      timeAverage: 'O(n³)',
+      timeWorst: 'O(n³)',
+      spaceWorst: 'O(n²)',
+      description: 'Tabular computation across all chain lengths L=2..n testing split points k',
+    },
+    problemStatement:
+      'Given a sequence of matrices A1, A2, ..., An with specified dimensions, find the optimal parenthesization that minimizes the total number of scalar multiplications.',
+    explanation:
+      'Matrix multiplication is associative. We define m[i, j] as the minimum scalar multiplications to compute A_i..A_j. The recurrence tests every split point k (i <= k < j) combining optimal costs m[i, k] + m[k+1, j] + p_{i-1}*p_k*p_j, storing the best split in table s to reconstruct parenthesization.',
+    pseudocode: [
+      'function MatrixChainOrder(p, n):',
+      '  for i = 1 to n: m[i, i] = 0 // Base cases',
+      '  for L = 2 to n: // L is chain length',
+      '    for i = 1 to n - L + 1:',
+      '      j = i + L - 1; m[i, j] = infinity',
+      '      for k = i to j - 1:',
+      '        q = m[i, k] + m[k+1, j] + p[i-1]*p[k]*p[j]',
+      '        if q < m[i, j]:',
+      '          m[i, j] = q; s[i, j] = k',
+      '  return (m[1, n], reconstructParens(s, 1, n))',
+    ],
+    visualizer: 'GridTableVisualizer',
+    inputSchema: [
+      {
+        name: 'dimensions',
+        label: 'Matrix Dimensions (p0, p1, ..., pn)',
+        type: 'array',
+        defaultValue: [10, 20, 30, 40, 30],
+        placeholder: 'e.g. 10, 20, 30, 40, 30',
+        helperText: 'Array of dimensions representing n matrices: A_i has dimension p_{i-1} x p_i.',
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic CLRS (4 Matrices)',
+        description: 'Dimensions [10, 20, 30, 40, 30] -> min cost 30,000',
+        data: { dimensions: [10, 20, 30, 40, 30] },
+      },
+      {
+        name: '3 Matrices Split Comparison',
+        description: 'Dimensions [10, 100, 5, 50] -> min cost 7,500',
+        data: { dimensions: [10, 100, 5, 50] },
+      },
+      {
+        name: '5 Matrices Chain',
+        description: 'Dimensions [5, 10, 3, 12, 5, 50]',
+        data: { dimensions: [5, 10, 3, 12, 5, 50] },
+      },
+      {
+        name: '2 Matrices Base Pair',
+        description: 'Dimensions [40, 20, 30]',
+        data: { dimensions: [40, 20, 30] },
+      },
+    ],
+    generateRandomInput: () => {
+      const matrixCount = Math.floor(Math.random() * 3) + 3; // 3 to 5 matrices (4 to 6 dimensions)
+      const dims: number[] = [Math.floor(Math.random() * 4 + 1) * 10];
+      for (let i = 0; i < matrixCount; i++) {
+        dims.push(Math.floor(Math.random() * 5 + 1) * 10);
+      }
+      return { dimensions: dims };
+    },
+    stepGenerator: matrixChainMultiplicationSteps,
+  },
+
+  // Module 2: Dynamic Programming — Assembly Line Scheduling
+  {
+    id: 'assembly-line-scheduling',
+    module: 2,
+    moduleName: 'Module 2: Dynamic Programming',
+    name: 'Assembly Line Scheduling',
+    paradigm: 'Dynamic Programming',
+    complexity: {
+      timeBest: 'O(n)',
+      timeAverage: 'O(n)',
+      timeWorst: 'O(n)',
+      spaceWorst: 'O(n)',
+      description: 'Single-pass dynamic programming across n stations per line + O(n) path backtrack',
+    },
+    problemStatement:
+      'Given two parallel assembly lines with n manufacturing stations, processing times, line transfer penalties, and entry/exit times, determine the fastest path to assemble an automobile.',
+    explanation:
+      'Maintains f1[j] and f2[j] representing the fastest time to exit station j on lines 1 and 2. At each station, decides whether to stay on the same line or transfer from the parallel line. Backtracks from the fastest exit to reconstruct the exact manufacturing sequence.',
+    pseudocode: [
+      'function AssemblyLine(a1, a2, t1, t2, e1, e2, x1, x2, n):',
+      '  f1[1] = e1 + a1[1]; f2[1] = e2 + a2[1]',
+      '  for j = 2 to n:',
+      '    f1[j] = min(f1[j-1] + a1[j], f2[j-1] + t2[j-1] + a1[j])',
+      '    f2[j] = min(f2[j-1] + a2[j], f1[j-1] + t1[j-1] + a2[j])',
+      '  f* = min(f1[n] + x1, f2[n] + x2)',
+      '  return (f*, backtrackOptimalPath(l1, l2, winningExit))',
+    ],
+    visualizer: 'AssemblyLineVisualizer',
+    inputSchema: [
+      {
+        name: 'a1',
+        label: 'Line 1 Station Times (a1)',
+        type: 'array',
+        defaultValue: [7, 9, 3, 4, 8, 4],
+        placeholder: 'e.g. 7, 9, 3, 4, 8, 4',
+        helperText: 'Processing times for stations on Line 1.',
+      },
+      {
+        name: 'a2',
+        label: 'Line 2 Station Times (a2)',
+        type: 'array',
+        defaultValue: [8, 5, 6, 4, 5, 7],
+        placeholder: 'e.g. 8, 5, 6, 4, 5, 7',
+        helperText: 'Processing times for stations on Line 2.',
+      },
+      {
+        name: 't1',
+        label: 'Transfer Line 1 ➔ Line 2 (t1)',
+        type: 'array',
+        defaultValue: [2, 3, 1, 3, 4],
+        placeholder: 'e.g. 2, 3, 1, 3, 4',
+        helperText: 'Transfer penalties to switch from Line 1 to Line 2 (n-1 values).',
+      },
+      {
+        name: 't2',
+        label: 'Transfer Line 2 ➔ Line 1 (t2)',
+        type: 'array',
+        defaultValue: [2, 1, 2, 2, 1],
+        placeholder: 'e.g. 2, 1, 2, 2, 1',
+        helperText: 'Transfer penalties to switch from Line 2 to Line 1 (n-1 values).',
+      },
+      {
+        name: 'e1',
+        label: 'Entry Time Line 1 (e1)',
+        type: 'number',
+        defaultValue: 2,
+        min: 0,
+        max: 50,
+      },
+      {
+        name: 'e2',
+        label: 'Entry Time Line 2 (e2)',
+        type: 'number',
+        defaultValue: 4,
+        min: 0,
+        max: 50,
+      },
+      {
+        name: 'x1',
+        label: 'Exit Time Line 1 (x1)',
+        type: 'number',
+        defaultValue: 3,
+        min: 0,
+        max: 50,
+      },
+      {
+        name: 'x2',
+        label: 'Exit Time Line 2 (x2)',
+        type: 'number',
+        defaultValue: 2,
+        min: 0,
+        max: 50,
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic CLRS 6 Stations',
+        description: 'Textbook 6-station problem with optimal time 35',
+        data: {
+          a1: [7, 9, 3, 4, 8, 4],
+          a2: [8, 5, 6, 4, 5, 7],
+          t1: [2, 3, 1, 3, 4],
+          t2: [2, 1, 2, 2, 1],
+          e1: 2,
+          e2: 4,
+          x1: 3,
+          x2: 2,
+        },
+      },
+      {
+        name: '4-Station Fast Track',
+        description: 'Shorter 4-station manufacturing line',
+        data: {
+          a1: [4, 5, 3, 2],
+          a2: [2, 10, 1, 4],
+          t1: [1, 2, 1],
+          t2: [1, 1, 2],
+          e1: 1,
+          e2: 2,
+          x1: 2,
+          x2: 1,
+        },
+      },
+      {
+        name: 'High Transfer Penalties',
+        description: 'Forcing cars to stay on single lanes',
+        data: {
+          a1: [3, 4, 3, 5, 3],
+          a2: [5, 2, 4, 2, 6],
+          t1: [10, 10, 10, 10],
+          t2: [10, 10, 10, 10],
+          e1: 2,
+          e2: 3,
+          x1: 1,
+          x2: 2,
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      const n = 5;
+      const a1 = Array.from({ length: n }, () => Math.floor(Math.random() * 8) + 2);
+      const a2 = Array.from({ length: n }, () => Math.floor(Math.random() * 8) + 2);
+      const t1 = Array.from({ length: n - 1 }, () => Math.floor(Math.random() * 4) + 1);
+      const t2 = Array.from({ length: n - 1 }, () => Math.floor(Math.random() * 4) + 1);
+      return {
+        a1,
+        a2,
+        t1,
+        t2,
+        e1: Math.floor(Math.random() * 4) + 1,
+        e2: Math.floor(Math.random() * 4) + 1,
+        x1: Math.floor(Math.random() * 4) + 1,
+        x2: Math.floor(Math.random() * 4) + 1,
+      };
+    },
+    stepGenerator: assemblyLineSchedulingSteps,
   },
 
   // Module 2: Backtracking — N-Queens
@@ -807,6 +1235,309 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     stepGenerator: vertexCoverApproxSteps,
+  },
+
+  // Module 2: Backtracking — Subset Sum
+  {
+    id: 'subset-sum',
+    module: 2,
+    moduleName: 'Module 2: Backtracking',
+    name: 'Subset Sum (Backtracking)',
+    paradigm: 'Backtracking',
+    complexity: {
+      timeWorst: 'O(2ⁿ)',
+      spaceWorst: 'O(n)',
+      description: 'Backtracking with pruning — sum-exceeds and remaining-insufficient cutoffs',
+    },
+    problemStatement:
+      'Given a set of positive integers and a target sum, determine whether any subset of the integers sums exactly to the target value using backtracking with pruning.',
+    explanation:
+      'Explores an include/exclude binary decision tree. At each level, decides whether to include the current element. Prunes branches where the running sum exceeds the target or the maximum achievable sum (current + all remaining) falls below the target.',
+    pseudocode: [
+      'function SubsetSum(index, currentSum, remaining, included):',
+      '  if currentSum == target: return SOLUTION(included)',
+      '  if index >= n: return FAIL',
+      '  // Option 1: Include numbers[index]',
+      '  if currentSum + numbers[index] > target: PRUNE (overflow)',
+      '  else if currentSum + numbers[index] + remaining < target: PRUNE (insufficient)',
+      '  else: recurse(index+1, currentSum+numbers[index], remaining-numbers[index], included+[numbers[index]])',
+      '  // Option 2: Exclude numbers[index]',
+      '  if currentSum + remaining - numbers[index] < target: PRUNE (insufficient)',
+      '  else: recurse(index+1, currentSum, remaining-numbers[index], included)',
+    ],
+    visualizer: 'TreeVisualizer',
+    inputSchema: [
+      {
+        name: 'numbers',
+        label: 'Set of Numbers',
+        type: 'array',
+        defaultValue: [3, 34, 4, 12, 5, 2],
+        placeholder: 'e.g. 3, 34, 4, 12, 5, 2',
+        helperText: 'Positive integers (comma-separated). Will be sorted internally for better pruning.',
+      },
+      {
+        name: 'targetSum',
+        label: 'Target Sum',
+        type: 'number',
+        defaultValue: 9,
+        min: 1,
+        max: 200,
+        helperText: 'The exact sum to find among subsets.',
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic Example (Target 9)',
+        description: 'Set [3, 34, 4, 12, 5, 2] with target sum 9 → subset [4, 5]',
+        data: { numbers: [3, 34, 4, 12, 5, 2], targetSum: 9 },
+      },
+      {
+        name: 'No Solution (Target 13)',
+        description: 'Set [3, 5, 7] with target 13 → no valid subset',
+        data: { numbers: [3, 5, 7], targetSum: 13 },
+      },
+      {
+        name: 'Full Set Match (Target 12)',
+        description: 'Set [2, 4, 6] with target 12 → all elements',
+        data: { numbers: [2, 4, 6], targetSum: 12 },
+      },
+      {
+        name: 'Larger Set (Target 21)',
+        description: 'Set [1, 5, 3, 7, 4, 8, 2] with target 21',
+        data: { numbers: [1, 5, 3, 7, 4, 8, 2], targetSum: 21 },
+      },
+    ],
+    generateRandomInput: () => {
+      const n = Math.floor(Math.random() * 4) + 4; // 4-7 elements
+      const numbers = Array.from({ length: n }, () => Math.floor(Math.random() * 15) + 1);
+      const totalSum = numbers.reduce((a, b) => a + b, 0);
+      const targetSum = Math.floor(Math.random() * (totalSum - 1)) + 1;
+      return { numbers, targetSum };
+    },
+    stepGenerator: subsetSumSteps,
+  },
+
+  // Module 2: Backtracking — Graph Coloring
+  {
+    id: 'graph-coloring',
+    module: 2,
+    moduleName: 'Module 2: Backtracking',
+    name: 'Graph Coloring (m-Coloring)',
+    paradigm: 'Backtracking',
+    complexity: {
+      timeWorst: 'O(kⁿ)',
+      spaceWorst: 'O(n)',
+      description: 'Exponential backtracking trying k colors per vertex with neighbor conflict pruning',
+    },
+    problemStatement:
+      'Given an undirected graph G = (V, E) and an integer k, determine if vertices can be assigned at most k colors such that no two adjacent vertices share the same color.',
+    explanation:
+      'Assigns colors 1 through k sequentially to vertices. For each vertex, tries each color in order, checking for conflicts with already-colored neighbors. If all k colors conflict, backtracks to uncolor the previous vertex and tries alternative assignments.',
+    pseudocode: [
+      'function GraphColoring(vertexIndex, colorAssignment, k):',
+      '  if vertexIndex == |V|: return SOLUTION(colorAssignment)',
+      '  for c = 1 to k:',
+      '    if isSafe(vertexIndex, c, colorAssignment):',
+      '      colorAssignment[vertexIndex] = c',
+      '      if GraphColoring(vertexIndex + 1, colorAssignment, k): return true',
+      '      colorAssignment[vertexIndex] = 0  // Backtrack: uncolor',
+      '  return false  // No valid color found',
+    ],
+    visualizer: 'GraphVisualizer',
+    inputSchema: [
+      {
+        name: 'numColors',
+        label: 'Available Colors (k)',
+        type: 'number',
+        defaultValue: 3,
+        min: 2,
+        max: 6,
+        helperText: 'Number of distinct colors available for vertex coloring.',
+      },
+    ],
+    presets: [
+      {
+        name: '5-Node Planar (k=3, Solvable)',
+        description: 'Standard 5-vertex planar graph solvable with 3 colors',
+        data: {
+          numColors: 3,
+          edgeList: [
+            ['0', '1'],
+            ['0', '2'],
+            ['0', '3'],
+            ['1', '2'],
+            ['2', '3'],
+          ],
+        },
+      },
+      {
+        name: 'Complete Graph K4 (k=3, Unsolvable)',
+        description: 'K4 complete graph requires 4 colors; 3 colors fails with backtracking',
+        data: {
+          numColors: 3,
+          edgeList: [
+            ['0', '1'],
+            ['0', '2'],
+            ['0', '3'],
+            ['1', '2'],
+            ['1', '3'],
+            ['2', '3'],
+          ],
+        },
+      },
+      {
+        name: 'Complete Graph K4 (k=4, Solvable)',
+        description: 'K4 complete graph colored with k=4 colors',
+        data: {
+          numColors: 4,
+          edgeList: [
+            ['0', '1'],
+            ['0', '2'],
+            ['0', '3'],
+            ['1', '2'],
+            ['1', '3'],
+            ['2', '3'],
+          ],
+        },
+      },
+      {
+        name: 'Odd Cycle C5 (k=2, Unsolvable)',
+        description: '5-cycle is not bipartite, impossible with 2 colors',
+        data: {
+          numColors: 2,
+          edgeList: [
+            ['0', '1'],
+            ['1', '2'],
+            ['2', '3'],
+            ['3', '4'],
+            ['4', '0'],
+          ],
+        },
+      },
+      {
+        name: 'Hexagon Cycle C6 (k=2, Solvable)',
+        description: 'Even cycle C6 is bipartite, cleanly 2-colorable',
+        data: {
+          numColors: 2,
+          edgeList: [
+            ['0', '1'],
+            ['1', '2'],
+            ['2', '3'],
+            ['3', '4'],
+            ['4', '5'],
+            ['5', '0'],
+          ],
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      return {
+        numColors: 3,
+        edgeList: [
+          ['0', '1'],
+          ['0', '2'],
+          ['1', '2'],
+          ['2', '3'],
+          ['3', '0'],
+        ],
+      };
+    },
+    stepGenerator: graphColoringSteps,
+  },
+
+  // Module 2: Branch & Bound — Job Selection Problem
+  {
+    id: 'job-selection-bb',
+    module: 2,
+    moduleName: 'Module 2: Branch & Bound',
+    name: 'Job Selection Problem (Branch & Bound)',
+    paradigm: 'Branch & Bound',
+    complexity: {
+      timeWorst: 'O(2ⁿ)',
+      spaceWorst: 'O(2ⁿ)',
+      description: 'Best-first search branch & bound with deadline feasibility pruning and greedy upper-bound cutoff',
+    },
+    problemStatement:
+      'Given n jobs with individual deadlines and profits, select a subset of jobs that can be scheduled within their deadlines to maximize total profit.',
+    explanation:
+      'Explores a state-space tree where branches decide whether to include or exclude each job (sorted by profit descending). Subtrees are pruned if the accumulated job set violates deadlines or if the calculated upper bound cannot beat the best-known feasible profit.',
+    pseudocode: [
+      'function JobSelectionBB(jobs):',
+      '  sort jobs descending by profit',
+      '  Q = PriorityQueue([Root(profit=0, bound=calcBound())])',
+      '  bestProfit = 0, bestSchedule = []',
+      '  while Q not empty:',
+      '    curr = Q.extractMax()',
+      '    if curr.bound <= bestProfit: PRUNE',
+      '    // Branch 1: Include job[curr.level]',
+      '    if isFeasible(curr.selected + job):',
+      '      leftBound = calcBound(curr.profit + job.profit)',
+      '      if leftBound > bestProfit: Q.insert(LeftChild)',
+      '    // Branch 2: Exclude job[curr.level]',
+      '    rightBound = calcBound(curr.profit)',
+      '    if rightBound > bestProfit: Q.insert(RightChild)',
+      '  return bestSchedule, bestProfit',
+    ],
+    visualizer: 'TreeVisualizer',
+    inputSchema: [
+      {
+        name: 'deadlines',
+        label: 'Job Deadlines',
+        type: 'array',
+        defaultValue: [2, 1, 2, 1, 3],
+        placeholder: 'e.g. 2, 1, 2, 1, 3',
+        helperText: 'Deadlines for each job (comma-separated integers >= 1).',
+      },
+      {
+        name: 'profits',
+        label: 'Job Profits',
+        type: 'array',
+        defaultValue: [100, 19, 27, 25, 15],
+        placeholder: 'e.g. 100, 19, 27, 25, 15',
+        helperText: 'Profits earned if each job finishes by its deadline.',
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic 5-Job (Profit 142)',
+        description: 'Standard textbook problem with 5 jobs, max profit 142 [J1, J3, J5]',
+        data: {
+          deadlines: [2, 1, 2, 1, 3],
+          profits: [100, 19, 27, 25, 15],
+        },
+      },
+      {
+        name: 'Horowitz-Sahni 4-Job (Profit 127)',
+        description: 'Classic benchmark: 4 jobs with deadlines [2, 1, 2, 1] and profits [100, 10, 15, 27]',
+        data: {
+          deadlines: [2, 1, 2, 1],
+          profits: [100, 10, 15, 27],
+        },
+      },
+      {
+        name: 'Tight Deadlines (Single Slot)',
+        description: 'All deadlines = 1, only 1 job can be scheduled: highest profit wins',
+        data: {
+          deadlines: [1, 1, 1, 1],
+          profits: [50, 40, 30, 20],
+        },
+      },
+      {
+        name: 'Sequential Slots (All Fit)',
+        description: 'Deadlines [1, 2, 3, 4] allow all 4 jobs to complete',
+        data: {
+          deadlines: [1, 2, 3, 4],
+          profits: [20, 35, 45, 60],
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      const n = 5;
+      const deadlines = Array.from({ length: n }, () => Math.floor(Math.random() * 3) + 1);
+      const profits = Array.from({ length: n }, () => Math.floor(Math.random() * 80) + 10);
+      return { deadlines, profits };
+    },
+    stepGenerator: jobSelectionBBSteps,
   },
 ];
 
