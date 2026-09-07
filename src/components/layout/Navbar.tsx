@@ -50,15 +50,9 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
           <span className="font-display font-bold text-2xl tracking-tighter text-chalk-100 group-hover:text-amber transition-colors">
             ALGO<span className="font-serif italic font-normal text-amber-glow">VIZ</span>
           </span>
-          <span className="hidden sm:inline-block font-mono text-[10px] uppercase tracking-widest text-chalk-400 border-l border-hairline pl-3">
-            DAA // BCSE204L
+          <span className="hidden sm:inline-block font-mono text-[11px] uppercase tracking-wider text-chalk-400 border-l border-hairline pl-3">
+            Algorithm Visualizer
           </span>
-        </div>
-
-        {/* Center Live Badge (Editorial Style) */}
-        <div className="hidden lg:flex items-center gap-2 font-mono text-[11px] text-chalk-400 px-3 py-1 rounded-full bg-obsidian-850 border border-hairline">
-          <span className="w-1.5 h-1.5 rounded-full bg-acid-500 animate-ping"></span>
-          <span>8 SYLLABUS MODULES • INTERACTIVE STEP GENERATOR</span>
         </div>
 
         {/* Navigation & Theme Toggle */}
@@ -73,8 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
           >
             <span className="flex items-center gap-1.5">
               <BookOpen className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">[ 01 // Catalog ]</span>
-              <span className="sm:hidden">Catalog</span>
+              <span>Catalog</span>
             </span>
           </button>
 
@@ -88,26 +81,25 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
           >
             <span className="flex items-center gap-1.5">
               <GitCompare className="w-3.5 h-3.5 text-amber" />
-              <span className="hidden sm:inline">[ 02 // Showdown ]</span>
-              <span className="sm:hidden">Showdown</span>
+              <span>Compare</span>
             </span>
           </button>
 
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to Editorial Light Mode' : 'Switch to Dark Mode'}
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             className="group relative flex items-center gap-1.5 px-3 py-2 text-xs font-mono tracking-wider uppercase bg-obsidian-850 hover:bg-obsidian-800 text-chalk-300 hover:text-amber-glow border border-hairline transition-all"
           >
             {theme === 'dark' ? (
               <>
                 <Sun className="w-3.5 h-3.5 text-amber" />
-                <span className="hidden md:inline">[ ☼ LIGHT ]</span>
+                <span className="hidden md:inline">Light</span>
               </>
             ) : (
               <>
                 <Moon className="w-3.5 h-3.5 text-amber" />
-                <span className="hidden md:inline">[ ☽ DARK ]</span>
+                <span className="hidden md:inline">Dark</span>
               </>
             )}
           </button>

@@ -52,4 +52,58 @@ describe('Assembly Line Scheduling (M2 Dynamic Programming)', () => {
     expect(finalStep.isFinal).toBe(true);
     expect(finalStep.result.minTotalTime).toBe(12);
   });
+
+  it('generates correct highlights.cells for DP table synchronization across all phases', () => {
+    const a1 = [7, 9, 3, 4, 8, 4];
+    const a2 = [8, 5, 6, 4, 5, 7];
+    const t1 = [2, 3, 1, 3, 4];
+    const t2 = [2, 1, 2, 2, 1];
+    const e1 = 2;
+    const e2 = 4;
+    const x1 = 3;
+    const x2 = 2;
+
+    const steps = Array.from(
+      assemblyLineSchedulingSteps({ a1, a2, t1, t2, e1, e2, x1, x2 })
+    );
+
+    // Step 0: Base cases
+    const step0 = steps[0];
+    expect(step0.highlights?.cells).toBeDefined();
+    expect(step0.highlights?.cells).toEqual([
+      { r: 0, c: 0, status: 'active' },
+      { r: 1, c: 0, status: 'active' },
+    ]);
+
+    // Step 1: Forward line 1 at station 2 (j=1)
+    const step1 = steps[1];
+    expect(step1.highlights?.cells).toEqual([
+      { r: 0, c: 1, status: 'active' },
+      { r: 0, c: 0, status: 'source' },
+      { r: 1, c: 0, status: 'source' },
+    ]);
+
+    // Step 2: Forward line 2 at station 2 (j=1)
+    const step2 = steps[2];
+    expect(step2.highlights?.cells).toEqual([
+      { r: 1, c: 1, status: 'active' },
+      { r: 1, c: 0, status: 'source' },
+      { r: 0, c: 0, status: 'source' },
+    ]);
+
+    // Exit step
+    const exitStep = steps.find((s) => s.state?.phase === 'exit')!;
+    expect(exitStep).toBeDefined();
+    expect(exitStep.highlights?.cells).toContainEqual({ r: 0, c: 5, status: 'source' });
+    expect(exitStep.highlights?.cells).toContainEqual({ r: 1, c: 5, status: 'source' });
+    expect(exitStep.highlights?.cells).toContainEqual({ r: 0, c: 5, status: 'path' });
+
+    // Complete step
+    const finalStep = steps[steps.length - 1];
+    expect(finalStep.highlights?.cells).toBeDefined();
+    expect(finalStep.highlights?.cells).toHaveLength(6);
+    finalStep.highlights?.cells?.forEach((cell) => {
+      expect(cell.status).toBe('path');
+    });
+  });
 });

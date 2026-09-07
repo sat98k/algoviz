@@ -2,13 +2,15 @@ import React, { useState, useRef } from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
 import { computeTreeLayout, TreeNodeInput } from '../../utils/treeLayout';
 import { getNodeTheme } from '../../utils/treeTheme';
+import { TreeTraversalOverride } from '../../utils/huffmanCodec';
 import { ZoomIn, ZoomOut, RotateCcw, Move } from 'lucide-react';
 
 interface TreeVisualizerProps {
   step: AlgorithmStep;
+  traversalOverride?: TreeTraversalOverride | null;
 }
 
-export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
+export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalOverride }) => {
   const state = step.state || {};
   const highlights = step.highlights || {};
 
@@ -20,7 +22,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Check algorithm type
-  const isHuffman = state.frequencyMap !== undefined;
+  const isHuffman = state.frequencyMap !== undefined || traversalOverride?.treeRootOverride !== undefined;
   const isKnapsackBB =
     state.items !== undefined && state.capacity !== undefined && state.frequencyMap === undefined;
   const isSubsetSum = state.targetSum !== undefined;
@@ -29,11 +31,26 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
   // Convert state trees into standardized TreeNodeInput format for two-pass layout
   const convertToTreeInputs = (): TreeNodeInput[] => {
     if (isHuffman) {
-      const forest = state.forest || (state.treeRoot ? [state.treeRoot] : []);
+      const forest = (traversalOverride?.treeRootOverride ? [traversalOverride.treeRootOverride] : null)
+        || state.forest 
+        || (state.treeRoot ? [state.treeRoot] : []);
       const convertHuffmanNode = (node: any): TreeNodeInput | null => {
         if (!node) return null;
         const isHighlighted = highlights.nodes?.includes(node.id);
         const isActiveMerge = state.activeMergeNodes?.includes(node.id);
+
+        let nodeStatus: 'active' | 'best' | 'explored' | 'normal' =
+          isActiveMerge ? 'active' : isHighlighted ? 'best' : 'normal';
+
+        if (traversalOverride) {
+          if (traversalOverride.activeNodeId === node.id) {
+            nodeStatus = 'active';
+          } else if (traversalOverride.visitedNodeIds?.includes(node.id)) {
+            nodeStatus = 'best';
+          } else {
+            nodeStatus = 'normal';
+          }
+        }
 
         const children: TreeNodeInput[] = [];
         if (node.left) {
@@ -57,7 +74,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
           id: node.id,
           label: node.char !== undefined ? `'${node.char}'` : `Σ ${node.freq}`,
           subLabel: node.char !== undefined ? `f: ${node.freq}` : node.code ? `code: ${node.code}` : undefined,
-          status: isActiveMerge ? 'active' : isHighlighted ? 'best' : 'normal',
+          status: nodeStatus,
           children,
           rawNode: node,
         };
@@ -248,10 +265,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
       )}
 
       {/* Narrative callout */}
-      {state.explanation && (
+      {(traversalOverride?.explanationOverride || state.explanation) && (
         <div className="w-full max-w-4xl mb-4 px-4 py-1.5 bg-obsidian-950 border border-amber/30 text-xs font-mono text-amber-glow flex items-center gap-2">
           <span className="font-semibold text-chalk-500 uppercase">[ STATE ]:</span>
-          <span>{state.explanation}</span>
+          <span>{traversalOverride?.explanationOverride || state.explanation}</span>
         </div>
       )}
 
@@ -319,6 +336,15 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
               const midX = (edge.x1 + edge.x2) / 2;
               const midY = (edge.y1 + edge.y2) / 2;
 
+              const isEdgeActive =
+                traversalOverride?.activeEdge &&
+                traversalOverride.activeEdge.from === edge.u &&
+                traversalOverride.activeEdge.to === edge.v;
+
+              const isEdgeVisited = traversalOverride?.visitedEdgeIds?.includes(
+                `${edge.u}->${edge.v}`
+              );
+
               return (
                 <g key={`edge-${edge.u}-${edge.v}-${idx}`}>
                   {/* Edge connecting line */}
@@ -327,8 +353,18 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
                     y1={edge.y1}
                     x2={edge.x2}
                     y2={edge.y2}
-                    stroke={isExclude ? '#475569' : '#64748b'}
-                    strokeWidth={isExclude ? 1.4 : 1.8}
+                    stroke={
+                      isEdgeActive
+                        ? '#f59e0b'
+                        : isEdgeVisited
+                        ? '#10b981'
+                        : isExclude
+                        ? '#475569'
+                        : '#64748b'
+                    }
+                    strokeWidth={
+                      isEdgeActive ? 3.5 : isEdgeVisited ? 2.5 : isExclude ? 1.4 : 1.8
+                    }
                     strokeDasharray={isExclude ? '4 3' : undefined}
                     className="transition-colors duration-200"
                   />
@@ -342,16 +378,16 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step }) => {
                         width={36}
                         height={18}
                         rx={4}
-                        fill="#0b0d13"
-                        stroke="#334155"
-                        strokeWidth={0.8}
+                        fill={isEdgeActive ? '#f59e0b' : '#0b0d13'}
+                        stroke={isEdgeActive ? '#fbbf24' : '#334155'}
+                        strokeWidth={isEdgeActive ? 1.5 : 0.8}
                         className="shadow-sm"
                       />
                       <text
                         x={0}
                         y={3}
                         textAnchor="middle"
-                        fill="#e2e8f0"
+                        fill={isEdgeActive ? '#0a0a0c' : '#e2e8f0'}
                         fontSize="9"
                         fontWeight="bold"
                         className="font-mono pointer-events-none"

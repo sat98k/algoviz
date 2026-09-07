@@ -14,6 +14,8 @@ import { StringMatchVisualizer } from '../components/visualizers/StringMatchVisu
 import { FractionalKnapsackVisualizer } from '../components/visualizers/FractionalKnapsackVisualizer';
 import { RecursionTreeVisualizer } from '../components/visualizers/RecursionTreeVisualizer';
 import { AssemblyLineVisualizer } from '../components/visualizers/AssemblyLineVisualizer';
+import { HuffmanCodecVisualizer } from '../components/visualizers/HuffmanCodecVisualizer';
+import { TreeTraversalOverride } from '../utils/huffmanCodec';
 
 // Controls & Panels
 import { PlaybackControls } from '../components/common/PlaybackControls';
@@ -37,8 +39,8 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
   if (!config) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-8">
-        <p className="text-rose-400 font-mono text-xs uppercase tracking-widest">
-          ERROR 404 // ALGORITHM '{algorithmId}' NOT FOUND IN REGISTRY.
+        <p className="text-rose-400 font-mono text-sm tracking-wide">
+          Algorithm '{algorithmId}' not found.
         </p>
         <button
           onClick={onBack}
@@ -66,6 +68,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [speed, setSpeed] = useState<number>(1);
+  const [huffmanTraversal, setHuffmanTraversal] = useState<TreeTraversalOverride | null>(null);
 
   // Generate all steps upfront
   const steps: AlgorithmStep[] = useMemo(() => {
@@ -86,12 +89,14 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
   useEffect(() => {
     setCurrentStepIndex(0);
     setIsPlaying(false);
+    setHuffmanTraversal(null);
   }, [inputs, algorithmId]);
 
   // Playback timer loop
   const timerRef = useRef<number | null>(null);
 
   const stepForward = useCallback(() => {
+    setHuffmanTraversal(null);
     setCurrentStepIndex((prev) => {
       if (prev < steps.length - 1) {
         return prev + 1;
@@ -103,10 +108,12 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
   }, [steps.length]);
 
   const stepBackward = useCallback(() => {
+    setHuffmanTraversal(null);
     setCurrentStepIndex((prev) => Math.max(0, prev - 1));
   }, []);
 
   const handleReset = useCallback(() => {
+    setHuffmanTraversal(null);
     setIsPlaying(false);
     setCurrentStepIndex(0);
   }, []);
@@ -147,7 +154,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
       case 'GridTableVisualizer':
         return <GridTableVisualizer step={currentStep} />;
       case 'TreeVisualizer':
-        return <TreeVisualizer step={currentStep} />;
+        return <TreeVisualizer step={currentStep} traversalOverride={huffmanTraversal} />;
       case 'BoardVisualizer':
         return <BoardVisualizer step={currentStep} />;
       case 'GraphVisualizer':
@@ -195,8 +202,8 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
                 <span>CATALOG</span>
               </button>
 
-              <span className="font-mono text-xs text-amber uppercase tracking-widest">
-                [ {moduleNumStr} // {config.moduleName.toUpperCase()} ]
+              <span className="font-mono text-xs text-amber uppercase tracking-wider font-semibold">
+                {moduleNumStr} • {config.moduleName}
               </span>
             </div>
 
@@ -212,12 +219,12 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
           </div>
         </div>
 
-        {/* Problem Statement Ledger Banner */}
+        {/* Problem Statement Banner */}
         <div className="p-4 bg-obsidian-950 border border-hairline flex items-start gap-3">
           <Terminal className="w-4 h-4 text-amber shrink-0 mt-0.5" />
           <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-500">
-              FORMAL PROBLEM STATEMENT
+            <span className="font-mono text-[10px] uppercase tracking-wider text-chalk-400 font-semibold">
+              PROBLEM STATEMENT
             </span>
             <p className="text-xs sm:text-sm text-chalk-300 font-sans leading-relaxed">
               {config.problemStatement}
@@ -244,10 +251,24 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
           onStepForward={stepForward}
           onStepBackward={stepBackward}
           onReset={handleReset}
-          onSeek={(idx) => setCurrentStepIndex(idx)}
+          onSeek={(idx) => {
+            setHuffmanTraversal(null);
+            setCurrentStepIndex(idx);
+          }}
           onSpeedChange={(newSpeed) => setSpeed(newSpeed)}
         />
       </section>
+
+      {/* Huffman Encoding & Decoding Studio (Traversal Phase) */}
+      {config.id === 'huffman' && finalStep?.state?.treeRoot && (
+        <HuffmanCodecVisualizer
+          treeRoot={finalStep.state.treeRoot}
+          inputText={finalStep.state.inputText || inputs.text || 'ABRACADABRA'}
+          codeTable={finalStep.state.codeTable || {}}
+          encodedBits={finalStep.state.encodedBits || ''}
+          onTraversalChange={setHuffmanTraversal}
+        />
+      )}
 
       {/* Side-by-Side Lower Deck: Inputs & Explanation vs Metrics & Results */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">

@@ -65,12 +65,12 @@ export const ComparisonPage: React.FC = () => {
       >
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 font-mono text-xs text-amber uppercase tracking-widest">
+            <div className="flex items-center gap-2 font-mono text-xs text-amber uppercase tracking-wider font-semibold">
               <GitCompare className="w-3.5 h-3.5" />
-              <span>[ 02 // PARADIGM SHOWDOWN ]</span>
+              <span>Paradigm Comparison</span>
             </div>
             <h1 className="font-display font-black text-3xl sm:text-5xl md:text-6xl tracking-tighter text-chalk-100 mt-2">
-              0-1 KNAPSACK <span className="font-serif italic font-normal text-chalk-300">DUAL ENGINE.</span>
+              0-1 KNAPSACK <span className="font-serif italic font-normal text-chalk-300">COMPARISON.</span>
             </h1>
           </div>
 
@@ -143,15 +143,15 @@ export const ComparisonPage: React.FC = () => {
         onSpeedChange={(s) => setSpeed(s)}
       />
 
-      {/* Side-by-Side Comparative Showdown Deck */}
+      {/* Side-by-Side Comparative Deck */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Column: DP Engine */}
         <div className="flex flex-col gap-4 p-6 bg-obsidian-950 border border-hairline">
           {/* Column Header */}
           <div className="flex items-start justify-between pb-4 border-b border-hairline">
             <div>
-              <span className="font-mono text-xs uppercase tracking-widest text-amber font-semibold">
-                [ 01 // DYNAMIC PROGRAMMING ]
+              <span className="font-mono text-xs uppercase tracking-wider text-amber font-semibold">
+                Dynamic Programming
               </span>
               <h3 className="font-display font-bold text-2xl text-chalk-100 mt-1">
                 Bottom-Up Tabulation
@@ -188,8 +188,8 @@ export const ComparisonPage: React.FC = () => {
           {/* Column Header */}
           <div className="flex items-start justify-between pb-4 border-b border-hairline">
             <div>
-              <span className="font-mono text-xs uppercase tracking-widest text-acid-500 font-semibold">
-                [ 02 // BRANCH & BOUND ]
+              <span className="font-mono text-xs uppercase tracking-wider text-acid-500 font-semibold">
+                Branch & Bound
               </span>
               <h3 className="font-display font-bold text-2xl text-chalk-100 mt-1">
                 State-Space Tree Pruning

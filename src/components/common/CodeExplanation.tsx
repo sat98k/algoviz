@@ -17,8 +17,8 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-amber"></span>
-            <span className="font-mono text-xs uppercase tracking-widest text-amber">
-              STEP {String(step.stepIndex + 1).padStart(2, '0')} // EXECUTION STATE
+            <span className="font-mono text-xs uppercase tracking-wider text-amber font-semibold">
+              STEP {step.stepIndex + 1} • EXECUTION STATE
             </span>
           </div>
         </div>
@@ -38,7 +38,7 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
           <div className="flex items-center justify-between font-mono text-[11px] text-chalk-500 pb-1">
             <div className="flex items-center gap-1.5">
               <Terminal className="w-3.5 h-3.5 text-chalk-400" />
-              <span className="uppercase tracking-wider">FORMAL PSEUDOCODE</span>
+              <span className="uppercase tracking-wider font-semibold text-chalk-400">PSEUDOCODE</span>
             </div>
             {activeLine && (
               <span className="text-amber-glow font-bold">

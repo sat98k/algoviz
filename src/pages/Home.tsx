@@ -85,24 +85,20 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-obsidian-900 text-chalk-100 overflow-hidden">
-      {/* ========================================================================= */}
-      {/* SECTION 01: HERO EXPOSITION (Fullscreen Editorial Scale)                  */}
-      {/* ========================================================================= */}
+      {/* SECTION 01: HERO */}
       <section className="relative min-h-[90vh] flex flex-col justify-between pt-12 pb-16 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto w-full border-b border-hairline">
-        {/* Top Section Index Marker */}
-        <div className="flex items-center justify-between font-mono text-xs text-chalk-500 uppercase tracking-widest pb-8">
+        {/* Top Section Marker */}
+        <div className="flex items-center justify-between font-mono text-xs text-chalk-400 tracking-wider pb-8">
           <div className="flex items-center gap-3">
-            <span className="text-amber font-bold">[ 01 // EXPOSITION ]</span>
-            <span className="hidden sm:inline-block text-chalk-600">/</span>
-            <span className="hidden sm:inline-block">BCSE204L • DESIGN & ANALYSIS OF ALGORITHMS</span>
+            <span className="text-chalk-300 font-semibold uppercase">Design & Analysis of Algorithms</span>
           </div>
           <div className="flex items-center gap-2 text-chalk-400">
             <span className="w-2 h-2 bg-acid-500 rounded-full animate-pulse"></span>
-            <span>{totalAlgorithms} ACTIVE SIMULATION ENGINES</span>
+            <span>{totalAlgorithms} Interactive Algorithms</span>
           </div>
         </div>
 
-        {/* Giant Typographic Statement with Asymmetric Layout */}
+        {/* Giant Typographic Statement */}
         <div className="relative z-10 my-auto py-8">
           <motion.div
             initial={shouldReduceMotion ? false : { opacity: 0, y: 30 }}
@@ -110,22 +106,22 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col gap-2 sm:gap-4"
           >
-            <div className="flex items-center gap-3 font-mono text-xs tracking-widest text-amber-glow uppercase">
+            <div className="flex items-center gap-3 font-mono text-xs tracking-wider text-amber font-medium uppercase">
               <Terminal className="w-3.5 h-3.5" />
-              <span>DETERMINISTIC STATE RECURRENCE</span>
+              <span>Step-by-Step Visualization</span>
             </div>
 
             <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tighter text-chalk-100 leading-[0.9] text-balance">
-              ALGORITHMIC <br />
-              <span className="font-serif italic font-normal text-chalk-300">ARCHITECTURE.</span>
+              ALGORITHM <br />
+              <span className="font-serif italic font-normal text-chalk-300">VISUALIZER.</span>
             </h1>
           </motion.div>
 
-          {/* Subtext and Quickstart Ledger Block */}
+          {/* Subtext and Quickstart Block */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-12 items-end">
             <div className="lg:col-span-7">
               <p className="text-base sm:text-lg md:text-xl text-chalk-400 font-sans font-light leading-relaxed max-w-2xl text-balance">
-                An interactive computational archive — from greedy Huffman trees and dynamic tabulation to graph coloring, Floyd-Warshall APSP, and branch-and-bound pruning.
+                Explore core algorithmic paradigms interactively — with step-by-step state visualization, complexity analysis, and dual-algorithm comparisons.
               </p>
             </div>
 
@@ -137,7 +133,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
               >
                 <div className="flex items-center gap-2.5">
                   <Play className="w-4 h-4 fill-current" />
-                  <span>Launch Job Selection Studio</span>
+                  <span>Explore Branch & Bound</span>
                 </div>
                 <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </button>
@@ -156,77 +152,70 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
           </div>
         </div>
 
-        {/* Section 01 Footer Stats Ribbon */}
+        {/* Section Stats Ribbon */}
         <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-hairline border-t border-hairline pt-6 text-xs font-mono text-chalk-400">
           <div className="px-3 py-1 flex flex-col">
-            <span className="text-chalk-600 uppercase text-[10px]">PARADIGMS</span>
-            <span className="font-bold text-chalk-200 text-sm mt-0.5">{paradigms.length - 1} Classifications</span>
+            <span className="text-chalk-500 uppercase text-[10px]">PARADIGMS</span>
+            <span className="font-bold text-chalk-200 text-sm mt-0.5">{paradigms.length - 1} Categories</span>
           </div>
           <div className="px-3 py-1 flex flex-col">
-            <span className="text-chalk-600 uppercase text-[10px]">TIME BOUNDS</span>
-            <span className="font-bold text-amber-glow text-sm mt-0.5">O(n log n) .. O(2ⁿ)</span>
+            <span className="text-chalk-500 uppercase text-[10px]">TIME COMPLEXITY</span>
+            <span className="font-bold text-amber-glow text-sm mt-0.5">O(n log n) to O(2ⁿ)</span>
           </div>
           <div className="px-3 py-1 flex flex-col">
-            <span className="text-chalk-600 uppercase text-[10px]">ENGINES</span>
-            <span className="font-bold text-acid-500 text-sm mt-0.5">{totalAlgorithms} Step Generators</span>
+            <span className="text-chalk-500 uppercase text-[10px]">ALGORITHMS</span>
+            <span className="font-bold text-acid-500 text-sm mt-0.5">{totalAlgorithms} Interactive Visualizers</span>
           </div>
           <div className="px-3 py-1 flex flex-col">
-            <span className="text-chalk-600 uppercase text-[10px]">ARCHITECTURE</span>
-            <span className="font-bold text-chalk-200 text-sm mt-0.5">Pure Client-Side</span>
+            <span className="text-chalk-500 uppercase text-[10px]">SIMULATION</span>
+            <span className="font-bold text-chalk-200 text-sm mt-0.5">Client-Side Execution</span>
           </div>
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* SECTION 02: CONTINUOUS MARQUEE TICKER (Typography Flow)                   */}
-      {/* ========================================================================= */}
+      {/* SECTION 02: TICKER */}
       <div className="w-full border-b border-hairline py-4 bg-obsidian-950 overflow-hidden flex select-none">
-        <div className="flex shrink-0 items-center gap-12 animate-marquee font-mono text-xs uppercase tracking-widest text-chalk-400">
-          <span>01. GREEDY HUFFMAN PREFIX CODES</span>
+        <div className="flex shrink-0 items-center gap-10 animate-marquee font-mono text-xs uppercase tracking-wider text-chalk-400">
+          <span>Huffman Coding</span>
           <span className="text-amber">✦</span>
-          <span>02. DYNAMIC PROGRAMMING RECURRENCE & LCS</span>
+          <span>Longest Common Subsequence</span>
           <span className="text-acid-500">✦</span>
-          <span>03. MATRIX CHAIN MULTIPLICATION TABULATION</span>
+          <span>Matrix Chain Multiplication</span>
           <span className="text-electric-400">✦</span>
-          <span>04. N-QUEENS BACKTRACKING STATE SEARCH</span>
+          <span>N-Queens Backtracking</span>
           <span className="text-amber">✦</span>
-          <span>05. BRANCH & BOUND 0-1 KNAPSACK PRUNING</span>
+          <span>0-1 Knapsack Branch & Bound</span>
           <span className="text-acid-500">✦</span>
-          <span>06. FLOYD-WARSHALL ALL-PAIRS SHORTEST PATHS</span>
+          <span>Floyd-Warshall Algorithm</span>
           <span className="text-electric-400">✦</span>
-          <span>07. KMP STRING PATTERN MATCHER & LPS ARRAY</span>
+          <span>KMP String Matcher</span>
           <span className="text-amber">✦</span>
-          <span>08. JOB SELECTION BRANCH & BOUND MIN-COST</span>
+          <span>Job Assignment Branch & Bound</span>
         </div>
-        <div className="flex shrink-0 items-center gap-12 animate-marquee font-mono text-xs uppercase tracking-widest text-chalk-400" aria-hidden="true">
-          <span>01. GREEDY HUFFMAN PREFIX CODES</span>
+        <div className="flex shrink-0 items-center gap-10 animate-marquee font-mono text-xs uppercase tracking-wider text-chalk-400" aria-hidden="true">
+          <span>Huffman Coding</span>
           <span className="text-amber">✦</span>
-          <span>02. DYNAMIC PROGRAMMING RECURRENCE & LCS</span>
+          <span>Longest Common Subsequence</span>
           <span className="text-acid-500">✦</span>
-          <span>03. MATRIX CHAIN MULTIPLICATION TABULATION</span>
+          <span>Matrix Chain Multiplication</span>
           <span className="text-electric-400">✦</span>
-          <span>04. N-QUEENS BACKTRACKING STATE SEARCH</span>
+          <span>N-Queens Backtracking</span>
           <span className="text-amber">✦</span>
-          <span>05. BRANCH & BOUND 0-1 KNAPSACK PRUNING</span>
+          <span>0-1 Knapsack Branch & Bound</span>
           <span className="text-acid-500">✦</span>
-          <span>06. FLOYD-WARSHALL ALL-PAIRS SHORTEST PATHS</span>
+          <span>Floyd-Warshall Algorithm</span>
           <span className="text-electric-400">✦</span>
-          <span>07. KMP STRING PATTERN MATCHER & LPS ARRAY</span>
+          <span>KMP String Matcher</span>
           <span className="text-amber">✦</span>
-          <span>08. JOB SELECTION BRANCH & BOUND MIN-COST</span>
+          <span>Job Assignment Branch & Bound</span>
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* SECTION 03: HUD FILTER & SEARCH BAR (Minimal Editorial Control)           */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 pt-16 pb-8">
-        <div className="flex items-center justify-between font-mono text-xs text-chalk-500 uppercase tracking-widest pb-6">
-          <div className="flex items-center gap-2">
-            <span className="text-amber font-bold">[ 02 // SEARCH & FILTERS ]</span>
-            <span>/ CATALOG DISSECTION</span>
-          </div>
-          <span>MATCHING: {filteredAlgorithms.length} / {totalAlgorithms}</span>
+      {/* SECTION 03: FILTER & SEARCH */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 pt-14 pb-8">
+        <div className="flex items-center justify-between font-mono text-xs text-chalk-400 uppercase tracking-wider pb-5">
+          <span className="font-bold text-chalk-200">Search & Filter</span>
+          <span>Showing {filteredAlgorithms.length} of {totalAlgorithms} algorithms</span>
         </div>
 
         <div className="flex flex-col lg:flex-row items-stretch gap-4 p-2 bg-obsidian-950 border border-hairline">
@@ -270,7 +259,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
               >
                 {modules.map((m) => (
                   <option key={m} value={m} className="bg-obsidian-950 text-chalk-200">
-                    {m === 'All' ? 'All Modules (1-8)' : m}
+                    {m === 'All' ? 'All Modules' : m}
                   </option>
                 ))}
               </select>
@@ -279,13 +268,11 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* SECTION 04: SYLLABUS LEDGER INDEX (Editorial Numbered Chapters 01 - 08)   */}
-      {/* ========================================================================= */}
-      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 py-12 flex flex-col gap-20">
+      {/* SECTION 04: ALGORITHM LIST */}
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 py-12 flex flex-col gap-16">
         {groupedByModule.length === 0 ? (
-          <div className="p-16 text-center text-chalk-500 font-mono text-xs border border-hairline bg-obsidian-950">
-            NO ALGORITHMS MATCH THE ACTIVE CRITERIA. ADJUST SEARCH QUERY OR PARADIGM FILTER.
+          <div className="p-16 text-center text-chalk-400 font-mono text-xs border border-hairline bg-obsidian-950">
+            No algorithms match the current filters. Adjust your search query or filters.
           </div>
         ) : (
           groupedByModule.map(([moduleName, algos], moduleIdx) => {
@@ -301,7 +288,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
                 transition={{ duration: 0.6 }}
                 className="relative flex flex-col gap-6"
               >
-                {/* Chapter Section Header (Editorial Style with Numeral Watermark) */}
+                {/* Section Header */}
                 <div className="relative flex flex-col sm:flex-row sm:items-baseline justify-between border-b border-hairline pb-4 gap-2">
                   <div className="flex items-baseline gap-4">
                     <span className="font-display font-black text-3xl sm:text-4xl text-amber">
@@ -312,8 +299,8 @@ export const Home: React.FC<HomeProps> = ({ onSelectAlgorithm, onNavigateCompari
                     </h2>
                   </div>
 
-                  <span className="font-mono text-xs text-chalk-500 uppercase tracking-widest">
-                    [ {algos.length} ALGORITHM{algos.length > 1 ? 'S' : ''} ]
+                  <span className="font-mono text-xs text-chalk-400 uppercase tracking-wider">
+                    {algos.length} {algos.length === 1 ? 'Algorithm' : 'Algorithms'}
                   </span>
                 </div>
 

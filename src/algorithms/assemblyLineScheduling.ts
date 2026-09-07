@@ -100,6 +100,10 @@ export function* assemblyLineSchedulingSteps(
     },
     highlights: {
       nodes: ['L1-S1', 'L2-S1'],
+      cells: [
+        { r: 0, c: 0, status: 'active' },
+        { r: 1, c: 0, status: 'active' },
+      ],
     },
     metrics: { comparisons, iterations },
   };
@@ -149,6 +153,11 @@ export function* assemblyLineSchedulingSteps(
       },
       highlights: {
         nodes: [`L1-S${j + 1}`],
+        cells: [
+          { r: 0, c: j, status: 'active' },
+          { r: 0, c: j - 1, status: 'source' },
+          { r: 1, c: j - 1, status: 'source' },
+        ],
       },
       metrics: { comparisons, iterations },
     };
@@ -194,6 +203,11 @@ export function* assemblyLineSchedulingSteps(
       },
       highlights: {
         nodes: [`L2-S${j + 1}`],
+        cells: [
+          { r: 1, c: j, status: 'active' },
+          { r: 1, c: j - 1, status: 'source' },
+          { r: 0, c: j - 1, status: 'source' },
+        ],
       },
       metrics: { comparisons, iterations },
     };
@@ -235,6 +249,11 @@ export function* assemblyLineSchedulingSteps(
     },
     highlights: {
       nodes: [`L${winningLine}-S${n}`],
+      cells: [
+        { r: 0, c: n - 1, status: 'source' },
+        { r: 1, c: n - 1, status: 'source' },
+        { r: winningLine - 1, c: n - 1, status: 'path' },
+      ],
     },
     metrics: { comparisons, iterations },
   };
@@ -288,6 +307,11 @@ export function* assemblyLineSchedulingSteps(
       },
       highlights: {
         nodes: fullPath.map((p) => `L${p.line}-S${p.station}`),
+        cells: fullPath.map((p) => ({
+          r: p.line - 1,
+          c: p.station - 1,
+          status: 'path' as const,
+        })),
       },
       metrics: { comparisons, iterations },
     };
@@ -325,6 +349,11 @@ export function* assemblyLineSchedulingSteps(
     },
     highlights: {
       nodes: fullPath.map((p) => `L${p.line}-S${p.station}`),
+      cells: fullPath.map((p) => ({
+        r: p.line - 1,
+        c: p.station - 1,
+        status: 'path' as const,
+      })),
     },
     metrics: { comparisons, iterations },
     isFinal: true,
