@@ -21,7 +21,8 @@ export type VisualizerType =
   | 'StringMatchVisualizer'
   | 'RecursionTreeVisualizer'
   | 'FractionalKnapsackVisualizer'
-  | 'AssemblyLineVisualizer';
+  | 'AssemblyLineVisualizer'
+  | 'TspVisualizer';
 
 export interface ComplexityInfo {
   timeBest?: string;

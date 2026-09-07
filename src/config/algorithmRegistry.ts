@@ -15,6 +15,7 @@ import { fractionalKnapsackSteps } from '../algorithms/fractionalKnapsack';
 import { matrixChainMultiplicationSteps } from '../algorithms/matrixChainMultiplication';
 import { karatsubaSteps } from '../algorithms/karatsuba';
 import { assemblyLineSchedulingSteps } from '../algorithms/assemblyLineScheduling';
+import { tspSteps } from '../algorithms/tsp';
 import { subsetSumSteps } from '../algorithms/subsetSum';
 import { graphColoringSteps } from '../algorithms/graphColoring';
 import { jobSelectionBBSteps } from '../algorithms/jobSelectionBB';
@@ -676,6 +677,119 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     stepGenerator: assemblyLineSchedulingSteps,
+  },
+
+  // Module 2: Dynamic Programming — Travelling Salesman Problem
+  {
+    id: 'tsp',
+    module: 2,
+    moduleName: 'Module 2: Dynamic Programming',
+    name: 'Travelling Salesman Problem (Held-Karp DP)',
+    paradigm: 'Dynamic Programming',
+    complexity: {
+      timeBest: 'O(n² · 2ⁿ)',
+      timeAverage: 'O(n² · 2ⁿ)',
+      timeWorst: 'O(n² · 2ⁿ)',
+      spaceWorst: 'O(n · 2ⁿ)',
+      description: 'Held-Karp dynamic programming memoizing subproblems indexed by (subset S, ending city j)',
+    },
+    problemStatement:
+      'Given a list of cities and pairwise travel costs, find the minimum-weight Hamiltonian cycle that visits every city exactly once and returns to the origin.',
+    explanation:
+      'The Held-Karp algorithm uses dynamic programming with bitmask state compression. DP[S, j] stores the minimum cost of a path visiting all cities in subset S and ending at city j. Optimal subproblems are built bottom-up by subset size |S| = 2 to n, before closing the cycle back to start city 0 and backtracking the optimal tour.',
+    pseudocode: [
+      'function TSP_HeldKarp(cost, n):',
+      '  DP[{0}, 0] = 0; parent[{0}, 0] = null',
+      '  for s = 2 to n:',
+      '    for each subset S ⊆ V with |S| = s and 0 ∈ S:',
+      '      for each j ∈ S, j ≠ 0:',
+      '        DP[S, j] = min_{i ∈ S, i ≠ j} (DP[S \\ {j}, i] + cost[i][j])',
+      '        parent[S, j] = argmin_{i ∈ S, i ≠ j} (DP[S \\ {j}, i] + cost[i][j])',
+      '  minTour = min_{j ≠ 0} (DP[V, j] + cost[j, 0])',
+      '  tour = reconstructTour(parent, winningLastCity)',
+      '  return (minTour, tour)',
+    ],
+    visualizer: 'TspVisualizer',
+    inputSchema: [
+      {
+        name: 'numCities',
+        label: 'Number of Cities (3–6)',
+        type: 'number',
+        defaultValue: 4,
+        min: 3,
+        max: 6,
+        helperText: 'Number of vertices in the TSP graph (capped at 6 for interactive visualization).',
+      },
+      {
+        name: 'costMatrix',
+        label: 'City Distance Matrix',
+        type: 'matrix',
+        defaultValue: [
+          [0, 10, 15, 20],
+          [10, 0, 35, 25],
+          [15, 35, 0, 30],
+          [20, 25, 30, 0],
+        ],
+        helperText: 'Symmetric travel distances between cities. Diagonal is fixed at 0.',
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic 4-City Textbook',
+        description: 'Standard 4-city symmetric problem with optimal tour cost 80',
+        data: {
+          costMatrix: [
+            [0, 10, 15, 20],
+            [10, 0, 35, 25],
+            [15, 35, 0, 30],
+            [20, 25, 30, 0],
+          ],
+          cityNames: ['A', 'B', 'C', 'D'],
+          numCities: 4,
+        },
+      },
+      {
+        name: '3-City Triangle',
+        description: 'Simple 3-node cyclic tour with cost 21',
+        data: {
+          costMatrix: [
+            [0, 5, 10],
+            [5, 0, 6],
+            [10, 6, 0],
+          ],
+          cityNames: ['A', 'B', 'C'],
+          numCities: 3,
+        },
+      },
+      {
+        name: '5-City Metro Network',
+        description: '5-city interconnected metropolitan route',
+        data: {
+          costMatrix: [
+            [0, 12, 10, 19, 8],
+            [12, 0, 3, 7, 6],
+            [10, 3, 0, 2, 20],
+            [19, 7, 2, 0, 4],
+            [8, 6, 20, 4, 0],
+          ],
+          cityNames: ['A', 'B', 'C', 'D', 'E'],
+          numCities: 5,
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      const n = 4;
+      const matrix: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const cost = Math.floor(Math.random() * 25) + 5;
+          matrix[i][j] = cost;
+          matrix[j][i] = cost;
+        }
+      }
+      return { costMatrix: matrix, cityNames: ['A', 'B', 'C', 'D'], numCities: n };
+    },
+    stepGenerator: tspSteps,
   },
 
   // Module 2: Backtracking — N-Queens

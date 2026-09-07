@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlgorithmConfig } from '../../types/algorithm';
 import { Dices, SlidersHorizontal, Play } from 'lucide-react';
 
@@ -16,10 +16,33 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({
   const [formData, setFormData] = useState<Record<string, any>>({ ...currentInputs });
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
+  // Keep formData in sync when currentInputs changes
+  useEffect(() => {
+    setFormData({ ...currentInputs });
+  }, [currentInputs]);
+
   const handleInputChange = (name: string, value: any, type: string) => {
     let parsedVal = value;
     if (type === 'number') {
       parsedVal = parseFloat(value);
+      if (name === 'numCities') {
+        const targetN = Math.min(Math.max(parsedVal || 4, 3), 6);
+        setFormData((prev) => {
+          const currentMat = prev.costMatrix;
+          const newMat = Array.isArray(currentMat)
+            ? Array.from({ length: targetN }, (_, r) =>
+                Array.from({ length: targetN }, (_, c) => {
+                  if (r === c) return 0;
+                  const v = currentMat[r]?.[c] ?? currentMat[c]?.[r];
+                  return typeof v === 'number' && v > 0 ? v : Math.abs(r - c) * 10 + 5;
+                })
+              )
+            : undefined;
+          return { ...prev, numCities: targetN, ...(newMat ? { costMatrix: newMat } : {}) };
+        });
+        setActivePreset(null);
+        return;
+      }
     } else if (type === 'array') {
       parsedVal = value
         .split(',')
@@ -27,6 +50,22 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({
         .filter((n: number) => !isNaN(n));
     }
     setFormData((prev) => ({ ...prev, [name]: parsedVal }));
+    setActivePreset(null);
+  };
+
+  const handleMatrixCellChange = (fieldName: string, r: number, c: number, val: string) => {
+    if (r === c) return;
+    const num = parseFloat(val);
+    const validNum = isNaN(num) ? 0 : Math.max(0, Math.round(num));
+
+    setFormData((prev) => {
+      const mat = prev[fieldName];
+      if (!Array.isArray(mat)) return prev;
+      const copy = mat.map((row: any[]) => [...row]);
+      copy[r][c] = validNum;
+      copy[c][r] = validNum; // Symmetric update
+      return { ...prev, [fieldName]: copy };
+    });
     setActivePreset(null);
   };
 
@@ -98,7 +137,10 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({
             const displayVal = Array.isArray(rawVal) ? rawVal.join(', ') : rawVal ?? '';
 
             return (
-              <div key={field.name} className="flex flex-col gap-1.5">
+              <div
+                key={field.name}
+                className={`flex flex-col gap-1.5 ${field.type === 'matrix' ? 'md:col-span-2' : ''}`}
+              >
                 <label className="font-mono text-xs text-chalk-300 flex items-center justify-between">
                   <span>{field.label}</span>
                   <span className="text-[10px] text-chalk-500 uppercase">{field.type}</span>
@@ -115,6 +157,68 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({
                       </option>
                     ))}
                   </select>
+                ) : field.type === 'matrix' ? (
+                  <div className="flex flex-col gap-2 p-3 bg-obsidian-950 border border-hairline rounded overflow-x-auto">
+                    {Array.isArray(rawVal) && rawVal.length > 0 ? (
+                      <table className="border-collapse mx-auto text-center font-mono text-xs">
+                        <thead>
+                          <tr>
+                            <th className="p-1 text-[10px] text-chalk-500 font-normal border-b border-r border-hairline w-10">
+                              \
+                            </th>
+                            {rawVal.map((_, cIdx) => (
+                              <th
+                                key={cIdx}
+                                className="p-1.5 font-bold text-xs uppercase border-b border-r border-hairline min-w-[50px] text-chalk-200 bg-obsidian-900/80"
+                              >
+                                {String.fromCharCode(65 + cIdx)}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rawVal.map((row: any[], rIdx: number) => (
+                            <tr key={rIdx}>
+                              <th className="p-1.5 font-bold text-xs uppercase border-b border-r border-hairline text-chalk-200 bg-obsidian-900/80">
+                                {String.fromCharCode(65 + rIdx)}
+                              </th>
+                              {row.map((cellVal: any, cIdx: number) => {
+                                const isDiagonal = rIdx === cIdx;
+                                if (isDiagonal) {
+                                  return (
+                                    <td
+                                      key={cIdx}
+                                      className="p-1 border-b border-r border-hairline bg-obsidian-950/70 text-chalk-600 font-bold"
+                                      title="Diagonal distance is 0"
+                                    >
+                                      0
+                                    </td>
+                                  );
+                                }
+                                return (
+                                  <td key={cIdx} className="p-1 border-b border-r border-hairline">
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      max={999}
+                                      value={cellVal ?? ''}
+                                      onChange={(e) =>
+                                        handleMatrixCellChange(field.name, rIdx, cIdx, e.target.value)
+                                      }
+                                      title={`Distance between ${String.fromCharCode(65 + rIdx)} and ${String.fromCharCode(65 + cIdx)}`}
+                                      className="w-14 py-1 px-1 text-center font-mono text-xs font-bold bg-obsidian-900 border border-hairline text-chalk-100 focus:outline-none focus:border-amber hover:border-chalk-500 rounded"
+                                    />
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <span className="text-chalk-500 text-xs">No matrix data available</span>
+                    )}
+                  </div>
                 ) : (
                   <input
                     type={field.type === 'number' ? 'number' : 'text'}

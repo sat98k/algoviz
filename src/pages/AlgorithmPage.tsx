@@ -14,6 +14,7 @@ import { StringMatchVisualizer } from '../components/visualizers/StringMatchVisu
 import { FractionalKnapsackVisualizer } from '../components/visualizers/FractionalKnapsackVisualizer';
 import { RecursionTreeVisualizer } from '../components/visualizers/RecursionTreeVisualizer';
 import { AssemblyLineVisualizer } from '../components/visualizers/AssemblyLineVisualizer';
+import { TspVisualizer } from '../components/visualizers/TspVisualizer';
 import { HuffmanCodecVisualizer } from '../components/visualizers/HuffmanCodecVisualizer';
 import { TreeTraversalOverride } from '../utils/huffmanCodec';
 
@@ -169,6 +170,15 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
         return <RecursionTreeVisualizer step={currentStep} />;
       case 'AssemblyLineVisualizer':
         return <AssemblyLineVisualizer step={currentStep} />;
+      case 'TspVisualizer':
+        return (
+          <TspVisualizer
+            step={currentStep}
+            inputs={inputs}
+            onApplyInputs={(newInputs) => setInputs(newInputs)}
+            presets={config.presets}
+          />
+        );
       default:
         return (
           <div className="p-12 text-center font-mono text-xs text-chalk-500 border border-hairline bg-obsidian-950">

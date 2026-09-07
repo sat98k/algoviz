@@ -4,7 +4,7 @@ Interactive, web-based algorithm visualizer covering core paradigms from the **B
 
 Built with **React, TypeScript, Tailwind CSS, and Vitest**, utilizing a **step-generator snapshot architecture** for deterministic forward and backward stepping.
 
-> **Viva scope note**: The home catalog currently shows **Modules 1–4** (15 algorithms). Ford-Fulkerson (Mod 4 partial) through Module 7 are implemented and tested but temporarily hidden — see §2 for full status.
+> **Viva scope note**: The home catalog currently shows **Modules 1–4** (16 algorithms). Ford-Fulkerson (Mod 4 partial) through Module 7 are implemented and tested but temporarily hidden — see §2 for full status.
 
 ---
 
@@ -38,7 +38,7 @@ Built with **React, TypeScript, Tailwind CSS, and Vitest**, utilizing a **step-g
 | 2.02 | Longest Common Subsequence (LCS) | Dynamic Programming | $O(m \cdot n)$ | $O(m \cdot n)$ | `GridTableVisualizer` | ✅ |
 | 2.03 | Matrix Chain Multiplication | Dynamic Programming | $O(n^3)$ | $O(n^2)$ | `GridTableVisualizer` | ✅ |
 | 2.04 | Assembly Line Scheduling | Dynamic Programming | $O(n)$ | $O(n)$ | `AssemblyLineVisualizer` | ✅ |
-| 2.05 | Travelling Salesman Problem (Held-Karp DP) | Dynamic Programming | $O(2^n \cdot n^2)$ | $O(2^n \cdot n)$ | — | 📋 |
+| 2.05 | Travelling Salesman Problem (Held-Karp DP) | Dynamic Programming | $O(n^2 \cdot 2^n)$ | $O(n \cdot 2^n)$ | `TspVisualizer` | ✅ |
 | 2.06 | N-Queens | Backtracking | $O(N!)$ | $O(N)$ | `BoardVisualizer` | ✅ |
 | 2.07 | Subset Sum | Backtracking | $O(2^n)$ | $O(n)$ | `TreeVisualizer` | ✅ |
 | 2.08 | Graph Coloring (m-Coloring) | Backtracking | $O(k^n)$ | $O(n)$ | `GraphVisualizer` | ✅ |
@@ -114,9 +114,9 @@ Built with **React, TypeScript, Tailwind CSS, and Vitest**, utilizing a **step-g
 
 | Category | Count |
 |----------|-------|
-| ✅ **Implemented & visible** (Modules 1–4) | **15** |
+| ✅ **Implemented & visible** (Modules 1–4) | **16** |
 | 🔒 **Implemented & tested, hidden from catalog** | **4** |
-| 📋 **Syllabus topic, not implemented** | **20** |
+| 📋 **Syllabus topic, not implemented** | **19** |
 | **Total syllabus entries covered** | **39** |
 
 ### Hidden algorithms (🔒)
@@ -138,7 +138,9 @@ const HIDDEN_ALGORITHM_IDS = new Set([
 
 - **Discrete Step Generator Architecture**: Every algorithm is implemented from scratch as a generator yielding immutable state snapshots (`AlgorithmStep`).
 - **Bidirectional Playback**: Step forward, step backward, scrubbing slider, speed control ($0.5\times$ to $4\times$), pause, and auto-play.
-- **10 Parameterized Reusable Visualizers**:
+- **12 Parameterized Reusable Visualizers**:
+  - `TspVisualizer` — Circular graph canvas with user-editable symmetric distance matrix (single source of truth), step-by-step subproblem candidate evaluation, cycle return edge closing, and synchronized Held-Karp DP table (`TspDpMatrix`) with real-time active cell, predecessor source, and optimal path highlights.
+  - `HuffmanCodecVisualizer` — Interactive encoding & decoding studio with real-time bitstream generation, tree traversal animation, and decode verification.
   - `RecursionTreeVisualizer` — D&C call trees, subproblem breakdown, bottom-up combine phase (Max Subarray, Karatsuba).
   - `AssemblyLineVisualizer` — Dual-lane pipeline with transfer penalties and optimal route back-propagation.
   - `FractionalKnapsackVisualizer` — Capacity gauge, ratio-sorted item cards, fractional slice indicators.
@@ -159,7 +161,7 @@ const HIDDEN_ALGORITHM_IDS = new Set([
 ```
 /Algoviz
 ├── src/
-│   ├── algorithms/               # 19 pure step-generator functions
+│   ├── algorithms/               # 20 pure step-generator functions
 │   │   ├── fractionalKnapsack.ts
 │   │   ├── huffman.ts
 │   │   ├── maxSubarray.ts
@@ -168,6 +170,7 @@ const HIDDEN_ALGORITHM_IDS = new Set([
 │   │   ├── lcs.ts
 │   │   ├── matrixChainMultiplication.ts
 │   │   ├── assemblyLineScheduling.ts
+│   │   ├── tsp.ts                # Held-Karp DP with user-configurable distances
 │   │   ├── nQueens.ts
 │   │   ├── subsetSum.ts
 │   │   ├── graphColoring.ts
@@ -182,17 +185,18 @@ const HIDDEN_ALGORITHM_IDS = new Set([
 │   ├── components/
 │   │   ├── common/               # PlaybackControls, MetricsPanel, ResultPanel, InputControlPanel
 │   │   ├── layout/               # Navbar, Footer
-│   │   └── visualizers/          # Reusable visualizer components (10 total)
+│   │   └── visualizers/          # Reusable visualizers (TspVisualizer, TspDpMatrix, TspDistanceMatrixEditor, etc.)
 │   ├── config/
-│   │   └── algorithmRegistry.ts  # Central metadata & step-generator bindings (19 entries)
+│   │   └── algorithmRegistry.ts  # Central metadata & step-generator bindings (20 entries)
 │   ├── pages/
 │   │   ├── Home.tsx              # Syllabus catalog & filter dashboard (HIDDEN_ALGORITHM_IDS here)
 │   │   ├── AlgorithmPage.tsx     # Generic visualizer driver page
 │   │   └── ComparisonPage.tsx    # DP vs Branch & Bound comparison
-│   ├── tests/                    # Vitest unit test suite (20 suites, 56 tests — all passing)
+│   ├── tests/                    # Vitest unit test suite (22 suites, 67 tests — all passing)
 │   ├── utils/
 │   │   ├── treeLayout.ts         # 2-pass layout engine (bottom-up widths, top-down coordinates)
-│   │   └── treeTheme.ts          # WCAG AA contrast colour theme utility
+│   │   ├── treeTheme.ts          # WCAG AA contrast colour theme utility
+│   │   └── huffmanCodec.ts       # Huffman encode/decode bit-level engine
 │   ├── types/
 │   │   └── algorithm.ts          # Shared TypeScript type definitions
 │   ├── App.tsx
@@ -213,12 +217,14 @@ All implemented algorithms are covered by automated unit tests validating textbo
 |---|---|---|---|
 | **Fractional Knapsack** | `fractionalKnapsack.test.ts` | Ratio-descending greedy fill, $W=50 \to V=240$, fractional slice | ✅ PASSED |
 | **Huffman Coding** | `huffman.test.ts` | Prefix-free code property, `ABRACADABRA`, compression ratio | ✅ PASSED |
+| **Huffman Codec Studio** | `huffmanCodec.test.ts` | Encode bitstream, tree traversal decode, arbitrary text roundtrip | ✅ PASSED |
 | **Max Subarray (D&C)** | `maxSubarray.test.ts` | `[-2,1,-3,4,-1,2,1,-5,4] → 6`, all-negatives edge case | ✅ PASSED |
 | **Karatsuba** | `karatsuba.test.ts` | 4-digit, asymmetric, single-digit base case, 16-digit large numbers | ✅ PASSED |
 | **0-1 Knapsack DP** | `knapsackDP.test.ts` | Capacity 5 & 10 item sets, table values & item backtracking | ✅ PASSED |
 | **LCS** | `lcs.test.ts` | `ABCBDAB & BDCAB → 4`, `AGGTAB & GXTXAYB` | ✅ PASSED |
 | **Matrix Chain Mult** | `matrixChainMultiplication.test.ts` | CLRS `[10,20,30,40,30] → 30000`, reconstructed parens | ✅ PASSED |
 | **Assembly Line Scheduling** | `assemblyLineScheduling.test.ts` | 2-line textbook ($T=35$, route 1-2-1-1-2-1), forward DP & backtrack | ✅ PASSED |
+| **Travelling Salesman Problem** | `tsp.test.ts` | Textbook 4-city ($OPT=80$), 3-city ($OPT=21$), user distance editing, symmetry sync | ✅ PASSED |
 | **N-Queens** | `nQueens.test.ts` | $N=4$ (2 solutions), $N=8$ non-attacking row/col/diagonal checks | ✅ PASSED |
 | **Subset Sum** | `subsetSum.test.ts` | Solvable subsets, unreachable sums with pruning, include/exclude paths | ✅ PASSED |
 | **Graph Coloring** | `graphColoring.test.ts` | 5-node planar 3-coloring, K4 chromatic number conflict, C5 vs C6 cycles | ✅ PASSED |
@@ -232,7 +238,7 @@ All implemented algorithms are covered by automated unit tests validating textbo
 | **Vertex Cover Approx** 🔒 | `vertexCoverApprox.test.ts` | Valid edge cover + $\|C\| = 2\|M\| \le 2 \cdot OPT$ bound | ✅ PASSED |
 | **Tree Layout** | `treeLayout.test.ts` | Zero sibling overlap, parent centered over children, correct depth assignment | ✅ PASSED |
 
-**Total: 20 test suites / 56 tests — all passing** (`npm test`)
+**Total: 22 test suites / 67 tests — all passing** (`npm test`)
 
 ---
 
