@@ -15,8 +15,8 @@ export const PointCanvasVisualizer: React.FC<PointCanvasVisualizerProps> = ({ st
   const turnOrientation = state.turnOrientation;
   const isComplete = state.phase === 'complete';
 
-  const svgWidth = 650;
-  const svgHeight = 420;
+  const svgWidth = 720;
+  const svgHeight = 460;
   const padding = 50;
 
   // Compute bounding box of points for coordinate normalization
@@ -58,7 +58,7 @@ export const PointCanvasVisualizer: React.FC<PointCanvasVisualizerProps> = ({ st
 
       {/* SVG Canvas */}
       <div className="w-full flex justify-center bg-obsidian-950 border border-hairline p-4">
-        <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full max-w-2xl h-[380px] select-none">
+        <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full max-w-3xl h-[420px] select-none">
           {/* Coordinate Grid Lines */}
           <line x1={padding} y1={svgHeight - padding} x2={svgWidth - padding} y2={svgHeight - padding} stroke="#1c1f26" strokeWidth="1.5" />
           <line x1={padding} y1={padding} x2={padding} y2={svgHeight - padding} stroke="#1c1f26" strokeWidth="1.5" />

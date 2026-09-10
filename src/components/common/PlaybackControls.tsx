@@ -155,21 +155,42 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           </button>
         </div>
 
-        {/* Speed Controls */}
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-500 flex items-center gap-1">
-            <Gauge className="w-3 h-3 text-chalk-400" /> SPEED:
-          </span>
-          <div className="flex items-center border border-hairline bg-obsidian-850">
+        {/* Speed Controls: Interactive continuous slider */}
+        <div className="flex items-center gap-3 bg-obsidian-950 border border-hairline px-3 py-1.5 shadow-inner">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Gauge className="w-3.5 h-3.5 text-amber" />
+            <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-400 font-semibold">
+              SPEED:
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min="0.25"
+              max="4.0"
+              step="0.25"
+              value={speed}
+              onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
+              aria-label="Playback speed slider"
+              className="w-24 sm:w-28 h-1.5 bg-obsidian-800 rounded-lg appearance-none cursor-pointer accent-amber focus:outline-none"
+            />
+            <span className="font-mono text-xs font-bold text-amber px-2 py-0.5 bg-amber/15 border border-amber/30 min-w-[42px] text-center shadow-sm">
+              {speed.toFixed(speed % 1 === 0 ? 1 : 2)}x
+            </span>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-1 border-l border-hairline pl-2">
             {[0.5, 1, 2, 4].map((s) => (
               <button
                 key={s}
                 onClick={() => onSpeedChange(s)}
-                className={`px-3 py-1 font-mono text-xs font-medium transition-all ${
+                className={`px-1.5 py-0.5 font-mono text-[10px] transition-colors ${
                   speed === s
-                    ? 'bg-amber text-obsidian-950 font-bold'
-                    : 'text-chalk-400 hover:text-chalk-100'
+                    ? 'text-amber font-bold'
+                    : 'text-chalk-500 hover:text-chalk-200'
                 }`}
+                title={`Set speed to ${s}x`}
               >
                 {s}x
               </button>

@@ -72,4 +72,24 @@ describe('Maximum Subarray (M1 Divide & Conquer)', () => {
     expect(callCount).toBeGreaterThan(0);
     expect(returnCount).toBeGreaterThan(0);
   });
+
+  it('verifies tree nodes carry physical element boxes and range data for real array splitting', () => {
+    const array = [-2, 1, -3, 4, -1, 2, 1, -5, 4];
+    const steps = Array.from(maxSubarraySteps({ array }));
+    const finalStep = steps[steps.length - 1];
+
+    const rootNode = finalStep.state.treeNodes[0];
+    expect(rootNode).toBeDefined();
+    expect(rootNode.range).toEqual([0, 8]);
+    expect(rootNode.elements).toBeDefined();
+    expect(rootNode.elements?.length).toBe(9);
+    expect(rootNode.elements?.[0]).toEqual({ index: 0, value: -2 });
+    expect(rootNode.elements?.[3]).toEqual({ index: 3, value: 4 });
+
+    // Verify child nodes have partitioned subsets of elements
+    const childNodes = finalStep.state.treeNodes.filter((n: any) => n.parentId === rootNode.id);
+    expect(childNodes.length).toBe(2);
+    expect(childNodes[0].elements?.length).toBe(5); // [0..4]
+    expect(childNodes[1].elements?.length).toBe(4); // [5..8]
+  });
 });

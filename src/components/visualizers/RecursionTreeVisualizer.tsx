@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
 import { Check, Split, Calculator } from 'lucide-react';
 
@@ -15,6 +15,13 @@ export interface TreeNodeData {
   status: 'active' | 'dividing' | 'base_case' | 'combining' | 'resolved' | 'optimal' | 'normal';
   details?: string;
   edgeLabel?: string;
+  range?: [number, number];
+  elements?: Array<{ index: number; value: number }>;
+  lSum?: number;
+  rSum?: number;
+  crossSum?: number;
+  crossRange?: [number, number];
+  winner?: 'LSum' | 'RSum' | 'CrossSum';
 }
 
 interface LayoutNode extends TreeNodeData {
@@ -47,6 +54,65 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
   // Karatsuba specific properties
   const karatsubaData = state.karatsubaDetails || {};
 
+  // Real-time reactive theme detection for SVG color tokens
+  const [isDark, setIsDark] = useState<boolean>(() =>
+    typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : true
+  );
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  // Max Subarray helpers
+  const getElements = (node: TreeNodeData): Array<{ index: number; value: number }> => {
+    if (node.elements && node.elements.length > 0) {
+      return node.elements;
+    }
+    let low: number | undefined = node.range?.[0];
+    let high: number | undefined = node.range?.[1];
+
+    if (low === undefined || high === undefined) {
+      const match = node.label.match(/\[(\d+)\.\.(\d+)\]/);
+      if (match) {
+        low = parseInt(match[1], 10);
+        high = parseInt(match[2], 10);
+      }
+    }
+
+    if (low !== undefined && high !== undefined && fullArray.length > 0) {
+      const result: Array<{ index: number; value: number }> = [];
+      for (let i = low; i <= high; i++) {
+        if (i >= 0 && i < fullArray.length) {
+          result.push({ index: i, value: fullArray[i] });
+        }
+      }
+      return result;
+    }
+    return [];
+  };
+
+  const getNodeWidth = (node: LayoutNode): number => {
+    if (isMaxSubarray) {
+      const elems = getElements(node);
+      const count = Math.max(1, elems.length);
+      const calculated = count * 24 + Math.max(0, count - 1) * 2.5 + 16;
+      return Math.max(52, calculated);
+    }
+    return 114;
+  };
+
+  const getNodeHeight = (_node: LayoutNode): number => {
+    if (isMaxSubarray) {
+      return 56;
+    }
+    return 42;
+  };
+
   // Build responsive, non-overlapping tree layout using two-pass subtree width calculation
   const buildLayout = (): {
     nodes: LayoutNode[];
@@ -58,15 +124,14 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
       return { nodes: [], edges: [], width: 800, height: 260 };
     }
 
-    const nodeWidth = 104;
-    const minSiblingGap = 24;
-    const levelHeight = 68;
+    const minSiblingGap = isMaxSubarray ? 16 : 20;
+    const levelHeight = isMaxSubarray ? 86 : 74;
 
     const nodeMap = new Map<string, LayoutNode>();
     const rootNodes: LayoutNode[] = [];
 
     treeNodes.forEach((n) => {
-      nodeMap.set(n.id, { ...n, x: 0, y: 0, depth: 0, subtreeWidth: nodeWidth, children: [] });
+      nodeMap.set(n.id, { ...n, x: 0, y: 0, depth: 0, subtreeWidth: 0, children: [] });
     });
 
     treeNodes.forEach((n) => {
@@ -84,16 +149,17 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
     // Pass 1: Compute required subtree width bottom-up
     const computeSubtreeWidth = (node: LayoutNode, depth: number): number => {
       if (depth > maxDepth) maxDepth = depth;
+      const selfWidth = getNodeWidth(node);
       if (node.children.length === 0) {
-        node.subtreeWidth = nodeWidth;
-        return nodeWidth;
+        node.subtreeWidth = selfWidth;
+        return selfWidth;
       }
       let totalChildrenWidth = 0;
       node.children.forEach((child, idx) => {
         totalChildrenWidth += computeSubtreeWidth(child, depth + 1);
         if (idx > 0) totalChildrenWidth += minSiblingGap;
       });
-      node.subtreeWidth = Math.max(nodeWidth, totalChildrenWidth);
+      node.subtreeWidth = Math.max(selfWidth, totalChildrenWidth);
       return node.subtreeWidth;
     };
 
@@ -109,11 +175,20 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
       if (node.children.length === 0) {
         node.x = startX + node.subtreeWidth / 2;
       } else {
-        let currentChildX = startX;
+        let totalChildrenSpan = 0;
+        node.children.forEach((child, idx) => {
+          totalChildrenSpan += child.subtreeWidth;
+          if (idx > 0) totalChildrenSpan += minSiblingGap;
+        });
+
+        const extraOffset = Math.max(0, (node.subtreeWidth - totalChildrenSpan) / 2);
+        let currentChildX = startX + extraOffset;
+
         node.children.forEach((child) => {
           assignPositions(child, currentChildX, depth + 1);
           currentChildX += child.subtreeWidth + minSiblingGap;
         });
+
         const firstChild = node.children[0];
         const lastChild = node.children[node.children.length - 1];
         node.x = (firstChild.x + lastChild.x) / 2;
@@ -130,12 +205,14 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
 
     const collectNodesAndEdges = (node: LayoutNode) => {
       allNodes.push(node);
+      const parentH = getNodeHeight(node);
       node.children.forEach((child) => {
+        const childH = getNodeHeight(child);
         edges.push({
           x1: node.x,
-          y1: node.y + 18,
+          y1: node.y + parentH / 2,
           x2: child.x,
-          y2: child.y - 18,
+          y2: child.y - childH / 2,
           label: child.edgeLabel,
           status: child.id === activeNodeId ? 'active' : child.status,
         });
@@ -230,6 +307,256 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
     );
   };
 
+  const renderGenericNode = (node: LayoutNode) => {
+    const styles = getNodeColor(node);
+    const rectWidth = 114;
+    const rectHeight = 42;
+
+    const resultColor = isDark
+      ? (node.result !== undefined ? '#34D399' : '#94A3B8')
+      : (node.result !== undefined ? '#047857' : '#475569');
+
+    return (
+      <g
+        key={node.id}
+        id={`tree-node-${node.id}`}
+        data-tree-node-id={node.id}
+        transform={`translate(${node.x - rectWidth / 2}, ${node.y - rectHeight / 2})`}
+        className="transition-all duration-300"
+      >
+        {/* Node Box */}
+        <rect
+          width={rectWidth}
+          height={rectHeight}
+          rx={5}
+          className={`${styles.bg}`}
+          strokeWidth={styles.strokeWidth}
+        />
+
+        {/* Primary Label */}
+        <text
+          x={rectWidth / 2}
+          y={16}
+          textAnchor="middle"
+          className={`text-[11px] font-bold ${styles.text}`}
+          fill="currentColor"
+        >
+          {node.label}
+        </text>
+
+        {/* Sub / Result Label */}
+        <text
+          x={rectWidth / 2}
+          y={32}
+          textAnchor="middle"
+          className="text-[10px] font-mono font-medium"
+          fill={resultColor}
+        >
+          {node.result !== undefined
+            ? `ans: ${typeof node.result === 'object' ? node.result.maxSum ?? JSON.stringify(node.result) : node.result}`
+            : node.subLabel || node.status.toUpperCase()}
+        </text>
+      </g>
+    );
+  };
+
+  const renderMaxSubarrayNode = (node: LayoutNode, elems: Array<{ index: number; value: number }>) => {
+    const isActive = node.id === activeNodeId;
+    const nodeW = getNodeWidth(node);
+    const nodeH = getNodeHeight(node);
+
+    // Card boundary & fill adapted to Dark vs Light Mode
+    let borderStroke = isDark ? '#334155' : '#CBD5E1';
+    let strokeW = 1;
+    let strokeDash: string | undefined = undefined;
+    let bgFill = isDark ? '#030712' : '#FFFFFF';
+
+    if (isActive) {
+      borderStroke = isDark ? '#F59E0B' : '#D97706';
+      strokeW = 2;
+      bgFill = isDark ? '#0F172A' : '#FEF3C7';
+    } else if (node.status === 'optimal') {
+      borderStroke = isDark ? '#10B981' : '#059669';
+      strokeW = 2;
+      bgFill = isDark ? 'rgba(16, 185, 129, 0.08)' : '#ECFDF5';
+    } else if (node.status === 'combining') {
+      borderStroke = isDark ? '#A855F7' : '#7C3AED';
+      strokeW = 1.8;
+      bgFill = isDark ? 'rgba(168, 85, 247, 0.08)' : '#FAF5FF';
+    } else if (node.status === 'resolved') {
+      borderStroke = isDark ? '#38BDF8' : '#0284C7';
+      strokeW = 1.5;
+      bgFill = isDark ? '#0B132B' : '#F0F9FF';
+    } else if (node.status === 'base_case') {
+      borderStroke = isDark ? '#22D3EE' : '#0891B2';
+      strokeW = 1.5;
+      bgFill = isDark ? '#081D26' : '#ECFEFF';
+    } else if (node.status === 'dividing') {
+      borderStroke = isDark ? '#F59E0B' : '#D97706';
+      strokeW = 1.2;
+      strokeDash = '3 2';
+      bgFill = isDark ? '#030712' : '#FFFBEB';
+    }
+
+    const boxW = 24;
+    const boxH = 22;
+    const gap = 2.5;
+    const count = elems.length;
+    const boxesTotalW = count * boxW + Math.max(0, count - 1) * gap;
+    const startBoxesX = (nodeW - boxesTotalW) / 2;
+
+    // Determine bottom sub-label
+    let bottomText = '';
+    let bottomFill = isDark ? '#94A3B8' : '#475569';
+    if (node.result !== undefined) {
+      const sumVal = typeof node.result === 'object' ? node.result.maxSum : node.result;
+      bottomText = `max = ${sumVal}`;
+      bottomFill = node.status === 'optimal'
+        ? (isDark ? '#10B981' : '#047857')
+        : (isDark ? '#38BDF8' : '#0284C7');
+    } else if (node.status === 'combining') {
+      bottomText = `L:${node.lSum ?? '?'} R:${node.rSum ?? '?'} X:${node.crossSum ?? '?'}`;
+      bottomFill = isDark ? '#C084FC' : '#6D28D9';
+    } else if (node.status === 'dividing') {
+      bottomText = node.subLabel || 'split';
+      bottomFill = isDark ? '#FCD34D' : '#B45309';
+    } else {
+      bottomText = node.subLabel || node.status;
+    }
+
+    return (
+      <g
+        key={node.id}
+        id={`tree-node-${node.id}`}
+        data-tree-node-id={node.id}
+        transform={`translate(${node.x - nodeW / 2}, ${node.y - nodeH / 2})`}
+        className="transition-all duration-300"
+      >
+        {/* Node Bounding Card */}
+        <rect
+          width={nodeW}
+          height={nodeH}
+          rx={6}
+          fill={bgFill}
+          stroke={borderStroke}
+          strokeWidth={strokeW}
+          strokeDasharray={strokeDash}
+        />
+
+        {/* Array Element Boxes */}
+        {elems.map((elem, i) => {
+          const bx = startBoxesX + i * (boxW + gap);
+          const by = 15;
+
+          let cellFill = isDark ? '#0B0F17' : '#FFFFFF';
+          let cellStroke = isDark ? '#334155' : '#CBD5E1';
+          let cellTextFill = isDark ? '#E2E8F0' : '#0F172A';
+          let cellFontWeight = 'normal';
+
+          const isOptimalRange =
+            (node.status === 'optimal' || (step.isFinal && optimalRange)) &&
+            optimalRange &&
+            elem.index >= optimalRange[0] &&
+            elem.index <= optimalRange[1];
+
+          const isCrossRange =
+            node.status === 'combining' &&
+            node.crossRange &&
+            elem.index >= node.crossRange[0] &&
+            elem.index <= node.crossRange[1];
+
+          const isResolvedOptimal =
+            node.result &&
+            typeof node.result === 'object' &&
+            node.result.low !== undefined &&
+            node.result.high !== undefined &&
+            elem.index >= node.result.low &&
+            elem.index <= node.result.high;
+
+          if (isOptimalRange) {
+            cellFill = isDark ? 'rgba(16, 185, 129, 0.3)' : '#A7F3D0';
+            cellStroke = isDark ? '#10B981' : '#059669';
+            cellTextFill = isDark ? '#34D399' : '#064E3B';
+            cellFontWeight = 'bold';
+          } else if (isCrossRange) {
+            cellFill = isDark ? 'rgba(168, 85, 247, 0.25)' : '#E9D5FF';
+            cellStroke = isDark ? '#C084FC' : '#7C3AED';
+            cellTextFill = isDark ? '#E9D5FF' : '#581C87';
+            cellFontWeight = 'bold';
+          } else if (node.status === 'base_case') {
+            cellFill = isDark ? 'rgba(6, 182, 212, 0.2)' : '#BAE6FD';
+            cellStroke = isDark ? '#22D3EE' : '#0284C7';
+            cellTextFill = isDark ? '#67E8F9' : '#0C4A6E';
+            cellFontWeight = 'bold';
+          } else if (isResolvedOptimal) {
+            cellFill = isDark ? 'rgba(56, 189, 248, 0.2)' : '#E0F2FE';
+            cellStroke = isDark ? '#38BDF8' : '#0284C7';
+            cellTextFill = isDark ? '#7DD3FC' : '#075985';
+            cellFontWeight = 'bold';
+          } else if (isActive) {
+            cellFill = isDark ? 'rgba(245, 158, 11, 0.15)' : '#FDE68A';
+            cellStroke = isDark ? '#F59E0B' : '#B45309';
+            cellTextFill = isDark ? '#FCD34D' : '#78350F';
+          }
+
+          return (
+            <g key={`cell-${elem.index}`}>
+              {/* Index label above box */}
+              <text
+                x={bx + boxW / 2}
+                y={11}
+                textAnchor="middle"
+                fill="#64748B"
+                fontSize="7.5"
+                className="font-mono select-none"
+              >
+                i={elem.index}
+              </text>
+
+              {/* Cell Box */}
+              <rect
+                x={bx}
+                y={by}
+                width={boxW}
+                height={boxH}
+                rx={3}
+                fill={cellFill}
+                stroke={cellStroke}
+                strokeWidth={1}
+              />
+
+              {/* Element Value inside box */}
+              <text
+                x={bx + boxW / 2}
+                y={by + 14.5}
+                textAnchor="middle"
+                fill={cellTextFill}
+                fontSize="10"
+                fontWeight={cellFontWeight}
+                className="font-mono select-none"
+              >
+                {elem.value}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Bottom Result / Telemetry Label */}
+        <text
+          x={nodeW / 2}
+          y={49}
+          textAnchor="middle"
+          fill={bottomFill}
+          fontSize="8.5"
+          fontWeight="bold"
+          className="font-mono select-none"
+        >
+          {bottomText}
+        </text>
+      </g>
+    );
+  };
+
   return (
     <div className="flex flex-col items-center w-full min-h-[460px] p-4 sm:p-6 bg-obsidian-900 border border-hairline transition-all gap-5">
       {/* ========================================================================= */}
@@ -238,7 +565,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
 
       {/* --- Max Subarray Visual Split & Combine Deck --- */}
       {isMaxSubarray && fullArray.length > 0 && (
-        <div className="w-full max-w-5xl flex flex-col gap-3 p-4 bg-obsidian-950 border border-hairline">
+        <div className="w-full flex flex-col gap-3 p-4 bg-obsidian-950 border border-hairline">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-2">
             <div className="flex items-center gap-2 font-mono text-xs text-amber-glow">
               <Split className="w-3.5 h-3.5 text-amber" />
@@ -348,7 +675,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
 
       {/* --- Karatsuba Explicit 4-Step Mathematical Ledger --- */}
       {isKaratsuba && (
-        <div className="w-full max-w-5xl flex flex-col gap-3 p-4 bg-obsidian-950 border border-hairline font-mono">
+        <div className="w-full flex flex-col gap-3 p-4 bg-obsidian-950 border border-hairline font-mono">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-2">
             <div className="flex items-center gap-2 text-xs text-amber-glow">
               <Calculator className="w-3.5 h-3.5 text-amber" />
@@ -403,10 +730,10 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
       {/* ========================================================================= */}
       {/* BOTTOM DECK: COMPACT RESPONSIVE RECURSION TREE SVG (ZERO HORIZONTAL SCROLL)*/}
       {/* ========================================================================= */}
-      <div className="w-full max-w-5xl bg-obsidian-950 border border-hairline p-2 sm:p-4 relative flex items-center justify-center overflow-hidden">
+      <div className="w-full bg-obsidian-950 border border-hairline p-2 sm:p-4 relative flex items-center justify-center overflow-hidden min-h-[320px]">
         <svg
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-          className="w-full h-auto max-h-[380px] font-mono select-none"
+          className="w-full h-auto min-h-[300px] max-h-[460px] font-mono select-none"
         >
           {/* Connecting Branch Edges with Distinct Label Badges */}
           {edges.map((edge, idx) => {
@@ -415,31 +742,36 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
             const midY = (edge.y1 + edge.y2) / 2;
             const pathD = `M ${edge.x1} ${edge.y1} C ${edge.x1} ${midY}, ${edge.x2} ${midY}, ${edge.x2} ${edge.y2}`;
 
+            const edgeStroke = isDark
+              ? (isEdgeActive ? '#F59E0B' : '#334155')
+              : (isEdgeActive ? '#D97706' : '#CBD5E1');
+
             return (
               <g key={`edge-${idx}`}>
                 <path
                   d={pathD}
                   fill="none"
-                  stroke={isEdgeActive ? '#F59E0B' : '#334155'}
-                  strokeWidth={isEdgeActive ? 2.2 : 1.2}
+                  stroke={edgeStroke}
+                  strokeWidth={isEdgeActive ? 2.4 : 1.4}
                   strokeDasharray={edge.status === 'dividing' ? '3 2' : undefined}
                 />
                 {edge.label && (
                   <g transform={`translate(${midX}, ${midY})`}>
                     <rect
-                      x={-28}
-                      y={-8}
-                      width={56}
-                      height={14}
-                      rx={2}
-                      className="fill-obsidian-950 stroke-hairline"
+                      x={-30}
+                      y={-9}
+                      width={60}
+                      height={16}
+                      rx={3}
+                      fill={isDark ? '#030712' : '#FFFFFF'}
+                      stroke={isDark ? '#334155' : '#CBD5E1'}
                       strokeWidth={0.8}
                     />
                     <text
                       x={0}
-                      y={3}
-                      fill="#94A3B8"
-                      fontSize="8"
+                      y={3.5}
+                      fill={isDark ? '#94A3B8' : '#475569'}
+                      fontSize="9"
                       textAnchor="middle"
                       className="font-mono font-semibold"
                     >
@@ -453,52 +785,14 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
 
           {/* Tree Nodes */}
           {layoutNodes.map((node) => {
-            const styles = getNodeColor(node);
-            const rectWidth = 104;
-            const rectHeight = 36;
-
-            return (
-              <g
-                key={node.id}
-                id={`tree-node-${node.id}`}
-                data-tree-node-id={node.id}
-                transform={`translate(${node.x - rectWidth / 2}, ${node.y - rectHeight / 2})`}
-                className="transition-all duration-300"
-              >
-                {/* Node Box */}
-                <rect
-                  width={rectWidth}
-                  height={rectHeight}
-                  rx={4}
-                  className={`${styles.bg}`}
-                  strokeWidth={styles.strokeWidth}
-                />
-
-                {/* Primary Label */}
-                <text
-                  x={rectWidth / 2}
-                  y={14}
-                  textAnchor="middle"
-                  className={`text-[10px] font-bold ${styles.text}`}
-                  fill="currentColor"
-                >
-                  {node.label}
-                </text>
-
-                {/* Sub / Result Label */}
-                <text
-                  x={rectWidth / 2}
-                  y={28}
-                  textAnchor="middle"
-                  className="text-[9px] font-mono"
-                  fill={node.result !== undefined ? '#34D399' : '#94A3B8'}
-                >
-                  {node.result !== undefined
-                    ? `ans: ${typeof node.result === 'object' ? node.result.maxSum ?? JSON.stringify(node.result) : node.result}`
-                    : node.subLabel || node.status.toUpperCase()}
-                </text>
-              </g>
-            );
+            if (isMaxSubarray) {
+              const elems = getElements(node);
+              if (elems.length === 0) {
+                return renderGenericNode(node);
+              }
+              return renderMaxSubarrayNode(node, elems);
+            }
+            return renderGenericNode(node);
           })}
         </svg>
       </div>

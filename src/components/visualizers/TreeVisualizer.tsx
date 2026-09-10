@@ -21,8 +21,25 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Active traversal override (from prop or embedded codecStep)
+  const activeTraversal: TreeTraversalOverride | null =
+    traversalOverride ||
+    (state.codecStep
+      ? {
+          activeNodeId: state.codecStep.activeNodeId,
+          activeEdge: state.codecStep.activeEdge,
+          visitedNodeIds: state.codecStep.visitedNodeIds,
+          visitedEdgeIds: state.codecStep.visitedEdgeIds,
+          treeRootOverride: state.treeRoot,
+          explanationOverride: state.codecStep.explanation,
+        }
+      : null);
+
   // Check algorithm type
-  const isHuffman = state.frequencyMap !== undefined || traversalOverride?.treeRootOverride !== undefined;
+  const isHuffman =
+    state.frequencyMap !== undefined ||
+    activeTraversal?.treeRootOverride !== undefined ||
+    state.mode === 'decode';
   const isKnapsackBB =
     state.items !== undefined && state.capacity !== undefined && state.frequencyMap === undefined;
   const isSubsetSum = state.targetSum !== undefined;
@@ -31,9 +48,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
   // Convert state trees into standardized TreeNodeInput format for two-pass layout
   const convertToTreeInputs = (): TreeNodeInput[] => {
     if (isHuffman) {
-      const forest = (traversalOverride?.treeRootOverride ? [traversalOverride.treeRootOverride] : null)
-        || state.forest 
-        || (state.treeRoot ? [state.treeRoot] : []);
+      const forest =
+        (activeTraversal?.treeRootOverride ? [activeTraversal.treeRootOverride] : null) ||
+        state.forest ||
+        (state.treeRoot ? [state.treeRoot] : []);
       const convertHuffmanNode = (node: any): TreeNodeInput | null => {
         if (!node) return null;
         const isHighlighted = highlights.nodes?.includes(node.id);
@@ -42,10 +60,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
         let nodeStatus: 'active' | 'best' | 'explored' | 'normal' =
           isActiveMerge ? 'active' : isHighlighted ? 'best' : 'normal';
 
-        if (traversalOverride) {
-          if (traversalOverride.activeNodeId === node.id) {
+        if (activeTraversal) {
+          if (activeTraversal.activeNodeId === node.id) {
             nodeStatus = 'active';
-          } else if (traversalOverride.visitedNodeIds?.includes(node.id)) {
+          } else if (activeTraversal.visitedNodeIds?.includes(node.id)) {
             nodeStatus = 'best';
           } else {
             nodeStatus = 'normal';
@@ -153,12 +171,12 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
 
   const treeInputs = convertToTreeInputs();
   const layout = computeTreeLayout(treeInputs, {
-    nodeWidth: 84,
-    nodeHeight: 38,
+    nodeWidth: 88,
+    nodeHeight: 42,
     minSiblingGap: 24,
-    levelHeight: 76,
-    paddingX: 40,
-    paddingY: 36,
+    levelHeight: 82,
+    paddingX: 44,
+    paddingY: 44,
   });
 
   // Reset zoom on step / algo change if desired, or fit on reset
@@ -264,11 +282,53 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
         </div>
       )}
 
+      {/* Huffman Decoding Live Bitstream Traversal Banner */}
+      {isHuffman && state.mode === 'decode' && state.encodedBits && (
+        <div className="w-full max-w-4xl mb-4 p-3.5 bg-obsidian-950 border border-amber/40 flex flex-col gap-2 font-mono text-xs shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-amber uppercase font-bold text-[11px] tracking-wider">[ BITSTREAM TRAVERSAL ]:</span>
+              <span className="text-chalk-400 text-[11px]">
+                Bit {state.bitIndex !== undefined ? state.bitIndex + 1 : 0} / {state.totalBits || state.encodedBits.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-chalk-500 uppercase text-[11px]">[ DECODED TEXT ]:</span>
+              <span className="text-acid-400 font-bold px-2 py-0.5 bg-acid-500/10 border border-acid-500/30">
+                "{state.accumulatedText || ''}"
+              </span>
+            </div>
+          </div>
+
+          {/* Interactive Bit Ribbon */}
+          <div className="flex items-center gap-1 overflow-x-auto py-1.5 px-2 bg-obsidian-900 border border-hairline">
+            {state.encodedBits.split('').map((bit: string, idx: number) => {
+              const isCurrent = state.bitIndex === idx;
+              const isPast = state.bitIndex !== undefined && idx < state.bitIndex;
+              return (
+                <span
+                  key={idx}
+                  className={`w-6 h-6 shrink-0 flex items-center justify-center font-mono text-xs font-bold transition-all ${
+                    isCurrent
+                      ? 'bg-amber text-obsidian-950 scale-110 shadow-sm shadow-amber/40 ring-1 ring-amber'
+                      : isPast
+                      ? 'bg-acid-500/20 text-acid-400 border border-acid-500/40'
+                      : 'bg-obsidian-850 text-chalk-400 border border-hairline'
+                  }`}
+                >
+                  {bit}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Narrative callout */}
-      {(traversalOverride?.explanationOverride || state.explanation) && (
+      {(activeTraversal?.explanationOverride || state.explanation) && (
         <div className="w-full max-w-4xl mb-4 px-4 py-1.5 bg-obsidian-950 border border-amber/30 text-xs font-mono text-amber-glow flex items-center gap-2">
           <span className="font-semibold text-chalk-500 uppercase">[ STATE ]:</span>
-          <span>{traversalOverride?.explanationOverride || state.explanation}</span>
+          <span>{activeTraversal?.explanationOverride || state.explanation}</span>
         </div>
       )}
 
@@ -318,7 +378,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          className={`w-full h-[420px] flex items-center justify-center cursor-${
+          className={`w-full h-[480px] sm:h-[520px] flex items-center justify-center cursor-${
             isDragging ? 'grabbing' : 'grab'
           } select-none`}
         >
@@ -337,11 +397,11 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
               const midY = (edge.y1 + edge.y2) / 2;
 
               const isEdgeActive =
-                traversalOverride?.activeEdge &&
-                traversalOverride.activeEdge.from === edge.u &&
-                traversalOverride.activeEdge.to === edge.v;
+                activeTraversal?.activeEdge &&
+                activeTraversal.activeEdge.from === edge.u &&
+                activeTraversal.activeEdge.to === edge.v;
 
-              const isEdgeVisited = traversalOverride?.visitedEdgeIds?.includes(
+              const isEdgeVisited = activeTraversal?.visitedEdgeIds?.includes(
                 `${edge.u}->${edge.v}`
               );
 
@@ -418,10 +478,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                   {/* Pulsing Active Ring */}
                   {isActive && (
                     <rect
-                      x={-46}
-                      y={-23}
-                      width={92}
-                      height={46}
+                      x={-48}
+                      y={-25}
+                      width={96}
+                      height={50}
                       rx={8}
                       fill="none"
                       stroke="#f59e0b"
@@ -432,10 +492,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
 
                   {/* Node Box */}
                   <rect
-                    x={-42}
-                    y={-19}
-                    width={84}
-                    height={38}
+                    x={-44}
+                    y={-21}
+                    width={88}
+                    height={42}
                     rx={6}
                     fill={theme.bg}
                     stroke={theme.border}
@@ -446,10 +506,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                   {/* Primary Node Text (WCAG AA Compliant Contrast) */}
                   <text
                     x={0}
-                    y={node.subLabel ? -4 : 4}
+                    y={node.subLabel ? -4 : 5}
                     textAnchor="middle"
                     fill={theme.primaryText}
-                    fontSize="11"
+                    fontSize="12"
                     fontWeight="bold"
                     className="font-mono pointer-events-none tracking-tight"
                   >
@@ -460,10 +520,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                   {node.subLabel && (
                     <text
                       x={0}
-                      y={10}
+                      y={12}
                       textAnchor="middle"
                       fill={theme.subText}
-                      fontSize="9"
+                      fontSize="9.5"
                       fontWeight="600"
                       className="font-mono pointer-events-none"
                     >

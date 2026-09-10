@@ -20,7 +20,25 @@ export interface HuffmanState {
   originalBits?: number;
   compressedBits?: number;
   compressionRatio?: number;
+  mode?: 'encode' | 'decode';
+  currentBit?: string;
+  bitIndex?: number;
+  totalBits?: number;
+  accumulatedText?: string;
+  codecStep?: any;
 }
+
+export const HUFFMAN_DECODING_PSEUDOCODE = [
+  'function HuffmanDecode(root, bitStream):',
+  '  currentNode = root; decodedText = "" // Start at tree root with empty output',
+  '  for each bit in bitStream: // Read input bit-by-bit from left to right',
+  '    if bit == "0": currentNode = currentNode.left // Traverse left branch on "0"',
+  '    else: currentNode = currentNode.right // Traverse right branch on "1"',
+  '    if isLeaf(currentNode): // Leaf reached: symbol identified',
+  '      decodedText += currentNode.character // Append character to output',
+  '      currentNode = root // Reset traversal back to root for next symbol',
+  '  return decodedText // Full message recovered losslessly',
+];
 
 export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep<HuffmanState>> {
   const text = inputs.text || 'ABRACADABRA';

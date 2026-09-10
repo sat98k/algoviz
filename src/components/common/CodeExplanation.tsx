@@ -86,7 +86,7 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
 
           <div
             ref={containerRef}
-            className="p-3 bg-obsidian-950 border border-hairline font-mono text-xs overflow-x-auto max-h-72 sm:max-h-80 leading-relaxed rounded-none shadow-inner"
+            className="p-3 bg-obsidian-950 border border-hairline font-mono text-xs overflow-y-auto overflow-x-hidden max-h-72 sm:max-h-80 leading-relaxed rounded-none shadow-inner"
           >
             {pseudocode.map((line, idx) => {
               const lineNum = idx + 1;
@@ -106,27 +106,31 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
                   key={lineNum}
                   id={`pseudocode-line-${lineNum}`}
                   data-line-num={lineNum}
-                  className={`flex items-start px-2 py-1 transition-all duration-200 rounded-none ${
+                  className={`grid grid-cols-[auto_1fr] items-start px-2 py-1 transition-all duration-200 rounded-none group ${
                     isActive
                       ? 'bg-amber/20 text-amber-glow font-semibold border-l-4 border-amber pl-2.5 shadow-sm shadow-amber/10'
                       : 'text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-900/50'
                   }`}
                 >
                   <span
-                    className={`w-7 shrink-0 text-[10px] select-none mr-2 font-mono tabular-nums text-right pr-2 ${
-                      isActive ? 'text-amber font-bold' : 'text-chalk-600'
+                    className={`w-7 shrink-0 text-[10px] select-none mr-2 font-mono tabular-nums text-right pr-1 pt-0.5 ${
+                      isActive ? 'text-amber font-bold' : 'text-chalk-600 group-hover:text-chalk-400'
                     }`}
                   >
                     {String(lineNum).padStart(2, '0')}
                   </span>
-                  <span className="whitespace-pre overflow-x-visible">
-                    <span>{codePart}</span>
+                  <div className="whitespace-pre-wrap break-words min-w-0 pl-1">
+                    <span className="font-mono text-[11px] sm:text-xs">{codePart}</span>
                     {commentPart && (
-                      <span className={isActive ? 'text-amber-glow/90 italic' : 'text-chalk-500 italic'}>
+                      <span
+                        className={`font-sans block sm:inline sm:ml-2 text-[10px] sm:text-[11px] font-medium leading-normal transition-colors ${
+                          isActive ? 'text-chalk-100 italic drop-shadow-sm' : 'text-chalk-400 italic font-normal'
+                        }`}
+                      >
                         {commentPart}
                       </span>
                     )}
-                  </span>
+                  </div>
                 </div>
               );
             })}

@@ -64,6 +64,7 @@ export function* maxSubarraySteps(inputs: {
         mode: 'divideAndConquer',
         treeNodes: treeNodes.map((node) => ({
           ...node,
+          elements: node.elements ? [...node.elements] : undefined,
           result: node.result ? { ...node.result } : undefined,
         })),
         activeNodeId,
@@ -95,6 +96,11 @@ export function* maxSubarraySteps(inputs: {
     const nodeId = `call-${++callCounter}-[${low}..${high}]`;
     const label = `arr[${low}..${high}]`;
 
+    const elements = arr.slice(low, high + 1).map((val, relIdx) => ({
+      index: low + relIdx,
+      value: val,
+    }));
+
     // 1. Spawning node in tree
     const node: TreeNodeData = {
       id: nodeId,
@@ -103,6 +109,8 @@ export function* maxSubarraySteps(inputs: {
       subLabel: low === high ? `val: ${arr[low]}` : `len: ${high - low + 1}`,
       status: low === high ? 'base_case' : 'dividing',
       edgeLabel,
+      range: [low, high],
+      elements,
     };
     treeNodes.push(node);
 
@@ -219,6 +227,11 @@ export function* maxSubarraySteps(inputs: {
       high: maxRightIdx,
     };
 
+    node.lSum = leftRes.maxSum;
+    node.rSum = rightRes.maxSum;
+    node.crossSum = crossSumVal;
+    node.crossRange = [maxLeftIdx, maxRightIdx];
+
     yield makeSnapshot(
       `Cross-Midpoint Scan: CrossSum = ${crossSumVal}`,
       `Scanned outward across midpoint ${mid}: Max Left Wing [${maxLeftIdx}..${mid}] (sum ${maxLeftSum}) + Max Right Wing [${mid + 1}..${maxRightIdx}] (sum ${maxRightSum}) = CrossSum ${crossSumVal}.`,
@@ -254,6 +267,7 @@ export function* maxSubarraySteps(inputs: {
 
     node.status = 'resolved';
     node.result = { maxSum: bestRes.maxSum, low: bestRes.low, high: bestRes.high };
+    node.winner = winnerName;
     node.subLabel = `max = ${bestRes.maxSum}`;
 
     yield makeSnapshot(

@@ -43,14 +43,14 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
   }, []);
 
   const svgWidth = 920;
-  const svgHeight = 340;
+  const svgHeight = 360;
   const startX = 130;
   const endX = svgWidth - 130;
   const stationSpacing = (endX - startX) / Math.max(n - 1, 1);
 
-  const line1Y = 100;
-  const line2Y = 220;
-  const radius = 24;
+  const line1Y = 105;
+  const line2Y = 235;
+  const radius = 26;
 
   const isStationOnPath = (line: 1 | 2, stationIdx: number) => {
     return optimalPath.some((p) => p.line === line && p.station === stationIdx + 1);
@@ -458,7 +458,7 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
                     x={cx}
                     y={line1Y - 4}
                     fill={colors.nodeUnexploredText}
-                    fontSize="10"
+                    fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
@@ -466,9 +466,9 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
                   </text>
                   <text
                     x={cx}
-                    y={line1Y + 9}
+                    y={line1Y + 10}
                     fill={colors.costL1Text}
-                    fontSize="9"
+                    fontSize="10"
                     fontWeight="600"
                     textAnchor="middle"
                   >
@@ -477,9 +477,9 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
                   {isL1Computed && (
                     <text
                       x={cx}
-                      y={line1Y - radius - 6}
+                      y={line1Y - radius - 7}
                       fill={isL1OnPath ? colors.dpValueOptimal : colors.dpValueNormal}
-                      fontSize="9"
+                      fontSize="10"
                       fontWeight="bold"
                       textAnchor="middle"
                     >
@@ -515,7 +515,7 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
                     x={cx}
                     y={line2Y - 4}
                     fill={colors.nodeUnexploredText}
-                    fontSize="10"
+                    fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
                   >
@@ -523,9 +523,9 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
                   </text>
                   <text
                     x={cx}
-                    y={line2Y + 9}
+                    y={line2Y + 10}
                     fill={colors.costL2Text}
-                    fontSize="9"
+                    fontSize="10"
                     fontWeight="600"
                     textAnchor="middle"
                   >
@@ -534,9 +534,9 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
                   {isL2Computed && (
                     <text
                       x={cx}
-                      y={line2Y + radius + 14}
+                      y={line2Y + radius + 15}
                       fill={isL2OnPath ? colors.dpValueOptimal : colors.dpValueNormal}
-                      fontSize="9"
+                      fontSize="10"
                       fontWeight="bold"
                       textAnchor="middle"
                     >
