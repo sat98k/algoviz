@@ -15,6 +15,8 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
   const matchIndices: number[] = state.matchIndices || [];
   const phase = state.phase || 'lps';
   const comparison = state.currentComparison;
+  const hasLps = lpsTable.length > 0;
+  const hashInfo = state.hashInfo;
 
   return (
     <div className="flex flex-col items-center w-full min-h-[420px] p-6 bg-obsidian-900 border border-hairline transition-all">
@@ -22,7 +24,7 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
       <div className="flex flex-wrap items-center justify-between w-full max-w-3xl mb-5 gap-3">
         <div className="flex items-center gap-3 text-xs font-mono">
           <span className="px-3 py-1 bg-obsidian-950 border border-hairline text-chalk-300">
-            PHASE: <strong className="text-amber-glow">{phase === 'lps' ? '1. CONSTRUCT LPS (π) TABLE' : '2. KMP SEARCH SCAN'}</strong>
+            PHASE: <strong className="text-amber-glow">{hashInfo ? 'RABIN-KARP: ROLLING HASH' : !hasLps ? 'NAIVE: SLIDE & COMPARE' : phase === 'lps' ? '1. CONSTRUCT LPS (π) TABLE' : '2. KMP SEARCH SCAN'}</strong>
           </span>
           <span className="px-3 py-1 bg-obsidian-950 border border-acid-500/40 text-acid-500">
             MATCHES: <strong>{matchIndices.length}</strong>
@@ -115,30 +117,67 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
         </div>
 
         {/* LPS Table Preview */}
-        <div className="flex flex-col gap-2 pt-4 border-t border-hairline">
-          <span className="text-xs font-mono uppercase tracking-wider text-amber-glow">LPS π[j] Prefix-Suffix Array:</span>
-          <div className="flex items-center gap-1.5">
-            {pattern.split('').map((char, idx) => {
-              const lpsVal = lpsTable[idx] !== undefined ? lpsTable[idx] : '-';
-              const isLpsActive = phase === 'lps' && patternIndex === idx;
+        {hasLps && (
+          <div className="flex flex-col gap-2 pt-4 border-t border-hairline">
+            <span className="text-xs font-mono uppercase tracking-wider text-amber-glow">LPS π[j] Prefix-Suffix Array:</span>
+            <div className="flex items-center gap-1.5">
+              {pattern.split('').map((char, idx) => {
+                const lpsVal = lpsTable[idx] !== undefined ? lpsTable[idx] : '-';
+                const isLpsActive = phase === 'lps' && patternIndex === idx;
 
-              return (
-                <div key={idx} className="flex flex-col items-center">
-                  <div
-                    className={`w-9 h-8 flex items-center justify-center border text-xs font-mono font-bold transition-all ${
-                      isLpsActive
-                        ? 'bg-amber/25 border-amber text-amber-glow shadow-sm'
-                        : 'bg-obsidian-850 border-hairline text-chalk-400'
-                    }`}
-                  >
-                    {lpsVal}
+                return (
+                  <div key={idx} className="flex flex-col items-center">
+                    <div
+                      className={`w-9 h-8 flex items-center justify-center border text-xs font-mono font-bold transition-all ${
+                        isLpsActive
+                          ? 'bg-amber/25 border-amber text-amber-glow shadow-sm'
+                          : 'bg-obsidian-850 border-hairline text-chalk-400'
+                      }`}
+                    >
+                      {lpsVal}
+                    </div>
+                    <span className="text-[9px] font-mono text-chalk-500 mt-0.5">'{char}'</span>
                   </div>
-                  <span className="text-[9px] font-mono text-chalk-500 mt-0.5">'{char}'</span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Rolling Hash Panel (Rabin-Karp) */}
+        {hashInfo && (
+          <div className="flex flex-col gap-2 pt-4 border-t border-hairline">
+            <span className="text-xs font-mono uppercase tracking-wider text-amber-glow">
+              Rolling Hash — base d = {hashInfo.base}, prime q = {hashInfo.prime}, h = d^(m-1) mod q = {hashInfo.highOrder}
+            </span>
+            <div className="flex flex-wrap items-center gap-2.5 font-mono text-xs">
+              <span className="px-3 py-1.5 bg-obsidian-850 border border-hairline text-chalk-300">
+                hash(P) = <strong className="text-chalk-100">{hashInfo.patternHash}</strong>
+              </span>
+              <span className="text-chalk-500 font-bold">{hashInfo.hashMatch ? '==' : '!='}</span>
+              <span
+                className={`px-3 py-1.5 border ${
+                  hashInfo.hashMatch
+                    ? 'bg-acid-500/15 border-acid-500/60 text-acid-500'
+                    : 'bg-obsidian-850 border-hairline text-chalk-300'
+                }`}
+              >
+                hash(window) = <strong>{hashInfo.windowHash}</strong>
+              </span>
+              {hashInfo.hashMatch && (
+                <span
+                  className={`px-3 py-1.5 border text-[11px] uppercase tracking-wide ${
+                    hashInfo.spurious
+                      ? 'bg-rose-500/15 border-rose-500/60 text-rose-300'
+                      : 'bg-acid-500/15 border-acid-500/60 text-acid-500'
+                  }`}
+                >
+                  {hashInfo.spurious ? 'Spurious hit — chars differ' : 'Hash hit — verifying chars'}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Legend */}
@@ -151,10 +190,18 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
           <span className="w-2.5 h-2.5 bg-rose-500 border border-rose-400"></span>
           <span>Character Mismatch</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-amber border border-amber-glow"></span>
-          <span>Active LPS Element</span>
-        </div>
+        {hasLps && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 bg-amber border border-amber-glow"></span>
+            <span>Active LPS Element</span>
+          </div>
+        )}
+        {hashInfo && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 bg-amber border border-amber-glow"></span>
+            <span>Rolling Hash Value</span>
+          </div>
+        )}
       </div>
     </div>
   );

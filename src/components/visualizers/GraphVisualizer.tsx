@@ -29,6 +29,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
   const isFordFulkerson = state.flowMatrix !== undefined;
   const isVertexCover = state.coveredVertices !== undefined;
   const isGraphColoring = state.isGraphColoring === true || state.colorAssignment !== undefined;
+  const isBellmanFord = state.distances !== undefined && state.source !== undefined && state.totalPasses !== undefined;
 
   const svgWidth = 600;
   const svgHeight = 380;
@@ -90,6 +91,37 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               COVER SIZE |C|: <strong>{state.coveredVertices?.length || 0}</strong>
             </span>
           )}
+          {isBellmanFord && (
+            <>
+              <span className="px-3 py-1 bg-obsidian-950 border border-hairline text-chalk-300">
+                SOURCE:{' '}
+                <strong className="text-amber-glow">
+                  {nodes.find((x) => x.id === state.source)?.label ?? state.source}
+                </strong>
+              </span>
+              {state.pass > 0 && state.pass <= state.totalPasses && (
+                <span className="px-3 py-1 bg-obsidian-950 border border-amber/30 text-amber-glow">
+                  PASS: <strong>{state.pass} / {state.totalPasses}</strong>
+                </span>
+              )}
+              {state.pass > state.totalPasses && !step.isFinal && (
+                <span className="px-3 py-1 bg-obsidian-950 border border-amber/30 text-amber-glow">
+                  VERIFICATION PASS
+                </span>
+              )}
+              {step.isFinal && (
+                <span
+                  className={`px-3 py-1 font-bold border ${
+                    state.hasNegativeCycle
+                      ? 'bg-red-950/60 border-red-500 text-red-400'
+                      : 'bg-emerald-950/60 border-emerald-500 text-emerald-400'
+                  }`}
+                >
+                  {state.hasNegativeCycle ? '✕ NEGATIVE CYCLE DETECTED' : '✓ SHORTEST PATHS FOUND'}
+                </span>
+              )}
+            </>
+          )}
           {isGraphColoring && (
             <>
               <span className="px-3 py-1 bg-obsidian-950 border border-hairline text-chalk-300">
@@ -129,8 +161,8 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
           )}
         </div>
 
-        {/* View toggle for Floyd-Warshall / Ford-Fulkerson */}
-        {(isFloyd || isFordFulkerson) && (
+        {/* View toggle for Floyd-Warshall / Ford-Fulkerson / Bellman-Ford */}
+        {(isFloyd || isFordFulkerson || isBellmanFord) && (
           <div className="flex bg-obsidian-950 p-0.5 border border-hairline text-xs font-mono">
             <button
               onClick={() => setActiveTab('graph')}
@@ -146,7 +178,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 activeTab === 'matrix' ? 'bg-amber text-obsidian-950 font-bold' : 'text-chalk-400 hover:text-chalk-200'
               }`}
             >
-              {isFloyd ? 'DISTANCE MATRIX' : 'CAPACITY MATRIX'}
+              {isFloyd ? 'DISTANCE MATRIX' : isBellmanFord ? 'DISTANCE TABLE' : 'CAPACITY MATRIX'}
             </button>
           </div>
         )}
@@ -188,7 +220,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               if (!p1 || !p2) return null;
 
               const edgeStatus = isEdgeHighlighted(`${edge.u}`, `${edge.v}`);
-              const isDirected = isFloyd || isFordFulkerson;
+              const isDirected = isFloyd || isFordFulkerson || isBellmanFord;
               const isConflictEdge =
                 edgeStatus === 'conflict' ||
                 (isGraphColoring &&
@@ -202,10 +234,11 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               let strokeDasharray: string | undefined = undefined;
               let marker = isDirected ? 'url(#graph-arrow)' : undefined;
 
-              if (isConflictEdge) {
+              if (isConflictEdge || edgeStatus === 'negcycle') {
                 strokeColor = '#ef4444';
                 strokeWidth = 3;
                 strokeDasharray = '5 3';
+                marker = isDirected ? 'url(#graph-arrow-active)' : undefined;
               } else if (edgeStatus === 'active') {
                 strokeColor = '#f59e0b';
                 strokeWidth = 2.5;
@@ -343,6 +376,8 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               if (nodeStatus === 'highlight') fillClass = 'fill-acid-500/80 stroke-acid-400 stroke-2';
               if (nodeStatus === 'special') fillClass = 'fill-electric-500/80 stroke-electric-400 stroke-2';
 
+              const bfDist = isBellmanFord ? state.distances?.[node.id] : undefined;
+
               return (
                 <g key={node.id} transform={`translate(${pos.x}, ${pos.y})`} className="cursor-pointer">
                   <circle r={20} className={`${fillClass} shadow-md transition-all`} />
@@ -353,10 +388,54 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                   >
                     {node.label}
                   </text>
+                  {isBellmanFord && (
+                    <text
+                      y={34}
+                      textAnchor="middle"
+                      className="text-[9px] font-mono font-bold pointer-events-none"
+                      fill={state.source === `${node.id}` ? '#fbbf24' : '#94a3b8'}
+                    >
+                      d={bfDist === null || bfDist === undefined ? '∞' : bfDist}
+                    </text>
+                  )}
                 </g>
               );
             })}
           </svg>
+        </div>
+      ) : isBellmanFord ? (
+        /* Distance / predecessor table for Bellman-Ford */
+        <div className="w-full overflow-x-auto max-h-[360px] p-4 bg-obsidian-950 border border-hairline">
+          <table className="w-full border-collapse text-center text-xs font-mono">
+            <thead>
+              <tr>
+                <th className="p-2.5 border-b border-hairline text-chalk-500 uppercase tracking-wider text-[10px]">Vertex</th>
+                <th className="p-2.5 border-b border-hairline text-chalk-500 uppercase tracking-wider text-[10px]">Distance from {nodes.find((x) => x.id === state.source)?.label ?? state.source}</th>
+                <th className="p-2.5 border-b border-hairline text-chalk-500 uppercase tracking-wider text-[10px]">Predecessor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {nodes.map((nd) => {
+                const d = state.distances?.[nd.id];
+                const p = state.predecessors?.[nd.id];
+                const isTouched = state.consideringEdge?.v === nd.id;
+                return (
+                  <tr key={nd.id} className={isTouched ? 'bg-amber/10' : 'hover:bg-obsidian-850/60'}>
+                    <th className="p-2.5 border border-hairline text-chalk-300 text-[11px]">
+                      {nd.label}
+                      {state.source === nd.id && <span className="text-amber-glow"> (src)</span>}
+                    </th>
+                    <td className={`p-2.5 border border-hairline tabular-nums ${isTouched ? 'text-amber-glow font-bold' : 'text-chalk-200'}`}>
+                      {d === null || d === undefined ? '∞' : d}
+                    </td>
+                    <td className="p-2.5 border border-hairline text-chalk-400">
+                      {p ? nodes.find((x) => x.id === p)?.label ?? p : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       ) : (
         /* Matrix View for Floyd-Warshall or Ford-Fulkerson */
@@ -415,6 +494,18 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
             <span className="w-2.5 h-2.5 bg-acid-500 border border-acid-400"></span>
             <span>Augmented Flow</span>
           </div>
+        )}
+        {isBellmanFord && (
+          <>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 bg-acid-500 border border-acid-400"></span>
+              <span>Relaxed / Updated</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-0 border-t-2 border-dashed border-red-500"></span>
+              <span>Negative-Cycle Edge</span>
+            </div>
+          </>
         )}
         {isGraphColoring && (
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-chalk-400">

@@ -27,9 +27,23 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
     state.items !== undefined && state.capacity !== undefined && state.frequencyMap === undefined;
   const isSubsetSum = state.targetSum !== undefined;
   const isJobSelection = state.jobs !== undefined;
+  const isSuffixTree = state.suffixTree !== undefined;
 
   // Convert state trees into standardized TreeNodeInput format for two-pass layout
   const convertToTreeInputs = (): TreeNodeInput[] => {
+    if (isSuffixTree && state.suffixTree) {
+      const convertSuffixNode = (node: any): TreeNodeInput => ({
+        id: node.id,
+        label: node.id === 'root' ? 'root' : node.isLeaf ? String(node.suffixIndex) : '•',
+        subLabel: node.isLeaf && node.suffixIndex >= 0 ? `start ${node.suffixIndex}` : undefined,
+        status: (node.status || 'normal') as any,
+        edgeLabel: node.edgeLabel || undefined,
+        children: (node.children || []).map(convertSuffixNode),
+        rawNode: node,
+      });
+      return [convertSuffixNode(state.suffixTree)];
+    }
+
     if (isHuffman) {
       const forest = (traversalOverride?.treeRootOverride ? [traversalOverride.treeRootOverride] : null)
         || state.forest 
@@ -152,14 +166,26 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
   };
 
   const treeInputs = convertToTreeInputs();
-  const layout = computeTreeLayout(treeInputs, {
-    nodeWidth: 84,
-    nodeHeight: 38,
-    minSiblingGap: 24,
-    levelHeight: 76,
-    paddingX: 40,
-    paddingY: 36,
-  });
+  const layout = computeTreeLayout(
+    treeInputs,
+    isSuffixTree
+      ? {
+          nodeWidth: 92,
+          nodeHeight: 38,
+          minSiblingGap: 46,
+          levelHeight: 88,
+          paddingX: 52,
+          paddingY: 40,
+        }
+      : {
+          nodeWidth: 84,
+          nodeHeight: 38,
+          minSiblingGap: 24,
+          levelHeight: 76,
+          paddingX: 40,
+          paddingY: 36,
+        }
+  );
 
   // Reset zoom on step / algo change if desired, or fit on reset
   const handleResetZoom = () => {
@@ -264,6 +290,37 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
         </div>
       )}
 
+      {/* Top Banner Details for Suffix Tree */}
+      {isSuffixTree && (
+        <div className="w-full max-w-4xl mb-4 p-3 bg-obsidian-950 border border-hairline flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-chalk-500 uppercase">[ TEXT + $ ]:</span>
+            <span className="text-amber-glow font-bold tracking-[0.35em]">{state.text}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-chalk-500 uppercase">[ PATTERN ]:</span>
+            <span className="text-chalk-100 font-bold tracking-[0.35em]">{state.pattern || '—'}</span>
+          </div>
+          {state.phase === 'build' && state.activePointLabel && (
+            <div className="flex items-center gap-2">
+              <span className="text-chalk-500 uppercase">[ ACTIVE POINT ]:</span>
+              <span className="text-chalk-300">{state.activePointLabel}</span>
+              {typeof state.remainingSuffixCount === 'number' && (
+                <span className="text-chalk-500">· remaining {state.remainingSuffixCount}</span>
+              )}
+            </div>
+          )}
+          {state.matchIndices && state.matchIndices.length > 0 && (
+            <div className="flex items-center gap-2 text-acid-400">
+              <span className="text-chalk-500 uppercase">[ OCCURRENCES ]:</span>
+              <strong className="bg-acid-500/20 px-2 py-0.5 border border-acid-500">
+                [{state.matchIndices.join(', ')}]
+              </strong>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Narrative callout */}
       {(traversalOverride?.explanationOverride || state.explanation) && (
         <div className="w-full max-w-4xl mb-4 px-4 py-1.5 bg-obsidian-950 border border-amber/30 text-xs font-mono text-amber-glow flex items-center gap-2">
@@ -335,6 +392,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
               const isExclude = edge.status === 'exclude';
               const midX = (edge.x1 + edge.x2) / 2;
               const midY = (edge.y1 + edge.y2) / 2;
+              const labelW = edge.label ? Math.max(36, edge.label.length * 6.4 + 12) : 36;
 
               const isEdgeActive =
                 traversalOverride?.activeEdge &&
@@ -373,9 +431,9 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                   {edge.label && (
                     <g transform={`translate(${midX}, ${midY})`}>
                       <rect
-                        x={-18}
+                        x={-labelW / 2}
                         y={-9}
-                        width={36}
+                        width={labelW}
                         height={18}
                         rx={4}
                         fill={isEdgeActive ? '#f59e0b' : '#0b0d13'}

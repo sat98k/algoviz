@@ -7,6 +7,10 @@ import { lcsSteps } from '../algorithms/lcs';
 import { nQueensSteps } from '../algorithms/nQueens';
 import { knapsackBBSteps } from '../algorithms/knapsackBB';
 import { kmpSteps } from '../algorithms/kmp';
+import { naiveStringMatchSteps } from '../algorithms/naiveStringMatch';
+import { rabinKarpSteps } from '../algorithms/rabinKarp';
+import { suffixTreeSteps } from '../algorithms/suffixTree';
+import { bellmanFordSteps } from '../algorithms/bellmanFord';
 import { floydWarshallSteps } from '../algorithms/floydWarshall';
 import { fordFulkersonSteps } from '../algorithms/fordFulkerson';
 import { grahamScanSteps } from '../algorithms/grahamScan';
@@ -907,6 +911,63 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     stepGenerator: knapsackBBSteps,
   },
 
+  // Module 3: String Matching — Naive / Brute-Force Algorithm
+  {
+    id: 'naive-string-match',
+    module: 3,
+    moduleName: 'Module 3: String Matching',
+    name: 'Naive (Brute-Force) String Matching',
+    paradigm: 'String Matching',
+    complexity: {
+      timeBest: 'O(n)',
+      timeAverage: 'O(n·m)',
+      timeWorst: 'O((n−m+1)·m)',
+      spaceWorst: 'O(1)',
+      description: 'Checks every text alignment; no preprocessing',
+    },
+    problemStatement:
+      'Find all occurrences of a pattern P of length m in a text T of length n by testing every possible alignment of P against T.',
+    explanation:
+      'Slides the pattern across the text one position at a time. At each shift s it compares the pattern against the aligned window T[s..s+m-1] character by character, abandoning the alignment on the first mismatch. Simple and preprocessing-free, but repeats comparisons — worst case (n−m+1)·m.',
+    pseudocode: [
+      'function NAIVE(T, P):',
+      '  for s = 0 to length(T) - length(P):',
+      '    for j = 0 to length(P) - 1:',
+      '      if T[s + j] != P[j]: break   // slide window',
+      '    if j == length(P): recordMatch(s)',
+      '  return matches',
+    ],
+    visualizer: 'StringMatchVisualizer',
+    inputSchema: [
+      {
+        name: 'text',
+        label: 'Target Text (T)',
+        type: 'text',
+        defaultValue: 'ABABDABACDABABCABAB',
+        placeholder: 'e.g. ABABDABACDABABCABAB',
+      },
+      {
+        name: 'pattern',
+        label: 'Pattern String (P)',
+        type: 'text',
+        defaultValue: 'ABABCABAB',
+        placeholder: 'e.g. ABABCABAB',
+      },
+    ],
+    presets: [
+      { name: 'Textbook Example', data: { text: 'ABABDABACDABABCABAB', pattern: 'ABABCABAB' } },
+      { name: 'Multiple Overlapping', data: { text: 'AABAACAADAABAABA', pattern: 'AABA' } },
+      { name: 'Repeated Characters', data: { text: 'AAAAABAAABA', pattern: 'AAAA' } },
+    ],
+    generateRandomInput: () => {
+      return {
+        text: 'AABABBAABABAAABABBA',
+        pattern: 'AABAB',
+      };
+    },
+    stepGenerator: naiveStringMatchSteps,
+  },
+
   // Module 3: String Matching — KMP Algorithm
   {
     id: 'kmp',
@@ -964,6 +1025,125 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     stepGenerator: kmpSteps,
+  },
+
+  // Module 3: String Matching — Rabin-Karp Algorithm
+  {
+    id: 'rabin-karp',
+    module: 3,
+    moduleName: 'Module 3: String Matching',
+    name: 'Rabin-Karp Algorithm',
+    paradigm: 'String Matching',
+    complexity: {
+      timeBest: 'O(n + m)',
+      timeAverage: 'O(n + m)',
+      timeWorst: 'O((n−m+1)·m)',
+      spaceWorst: 'O(1)',
+      description: 'Rolling hash filters alignments; verify only on a hash hit',
+    },
+    problemStatement:
+      'Find all occurrences of a pattern P of length m in a text T of length n by comparing a rolling hash of each text window against the hash of the pattern.',
+    explanation:
+      'Hashes the pattern and the first text window in O(m). Each subsequent window hash is derived from the previous one in O(1) by removing the leading character and appending the next (a "rolling" hash). Only when a window hash equals the pattern hash is a full character comparison performed, which rules out spurious hits (hash collisions). Expected linear time; worst case degrades to the naive bound when every window collides.',
+    pseudocode: [
+      'function RABIN-KARP(T, P, d, q):',
+      '  m = length(P);  n = length(T)',
+      '  h = d^(m-1) mod q',
+      '  p = 0;  t = 0                       // pattern hash, window hash',
+      '  for i = 0 to m-1:',
+      '    p = (d*p + P[i]) mod q;  t = (d*t + T[i]) mod q',
+      '  for s = 0 to n-m:',
+      '    if p == t:                        // hashes match — verify chars',
+      '      if T[s..s+m-1] == P: recordMatch(s)  else spuriousHit',
+      '    if s < n-m:',
+      '      t = (d*(t - T[s]*h) + T[s+m]) mod q   // roll to next window',
+    ],
+    visualizer: 'StringMatchVisualizer',
+    inputSchema: [
+      {
+        name: 'text',
+        label: 'Target Text (T)',
+        type: 'text',
+        defaultValue: 'ABABDABACDABABCABAB',
+        placeholder: 'e.g. ABABDABACDABABCABAB',
+      },
+      {
+        name: 'pattern',
+        label: 'Pattern String (P)',
+        type: 'text',
+        defaultValue: 'ABABCABAB',
+        placeholder: 'e.g. ABABCABAB',
+      },
+    ],
+    presets: [
+      { name: 'Textbook Example', data: { text: 'ABABDABACDABABCABAB', pattern: 'ABABCABAB' } },
+      { name: 'Multiple Overlapping', data: { text: 'AABAACAADAABAABA', pattern: 'AABA' } },
+      { name: 'Numeric Pattern', data: { text: '3141592653589793', pattern: '26' } },
+    ],
+    generateRandomInput: () => {
+      return {
+        text: 'AABABBAABABAAABABBA',
+        pattern: 'AABAB',
+      };
+    },
+    stepGenerator: rabinKarpSteps,
+  },
+
+  // Module 3: String Matching — Suffix Tree (Ukkonen)
+  {
+    id: 'suffix-tree',
+    module: 3,
+    moduleName: 'Module 3: String Matching',
+    name: 'Suffix Tree String Matching (Ukkonen)',
+    paradigm: 'String Matching',
+    complexity: {
+      timeBest: 'O(n) build',
+      timeAverage: 'O(n + m + z)',
+      timeWorst: 'O(n + m + z)',
+      spaceWorst: 'O(n)',
+      description: "Ukkonen O(n) construction; each query O(m + occ)",
+    },
+    problemStatement:
+      'Preprocess the text T (length n) into a suffix tree so that every occurrence of any pattern P (length m) can be reported in O(m + z), where z is the number of occurrences.',
+    explanation:
+      "Ukkonen's algorithm builds the suffix tree online in linear time using an active point (node, edge, length), a global leaf end, suffix links and the skip/count trick — applying extension rules 1–3 once per phase. Each root-to-leaf path spells a suffix of T$, and every leaf label is a suffix start index. Matching walks P down from the root; if P is fully consumed, every leaf beneath the stopping point is an occurrence.",
+    pseudocode: [
+      'function SUFFIX-TREE-MATCH(T, P):',
+      '  S = T + "$"',
+      '  tree = UKKONEN(S)                    // O(|S|) online build',
+      '    for each phase i (adds S[i]):',
+      '      Rule 1: existing leaf edges grow via the global end',
+      '      Rule 2: branch a new leaf (splitting an edge if needed)',
+      '      Rule 3: S[i] already present -> stop the phase (show-stopper)',
+      '  node = root;  k = 0',
+      '  while k < |P|: match the next char along the edge; mismatch -> return {}',
+      '  collect suffixIndex of every leaf under the stop point',
+      '  return the sorted occurrences',
+    ],
+    visualizer: 'TreeVisualizer',
+    inputSchema: [
+      {
+        name: 'text',
+        label: 'Target Text (T)',
+        type: 'text',
+        defaultValue: 'BANANA',
+        placeholder: 'e.g. BANANA',
+      },
+      {
+        name: 'pattern',
+        label: 'Pattern String (P)',
+        type: 'text',
+        defaultValue: 'ANA',
+        placeholder: 'e.g. ANA',
+      },
+    ],
+    presets: [
+      { name: 'Classic BANANA', data: { text: 'BANANA', pattern: 'ANA' } },
+      { name: 'Multiple Overlapping', data: { text: 'AABAACAADAABAABA', pattern: 'AABA' } },
+      { name: 'Pattern Absent', data: { text: 'ABABDABACDABAB', pattern: 'XYZ' } },
+    ],
+    generateRandomInput: () => ({ text: 'MISSISSIPPI', pattern: 'ISSI' }),
+    stepGenerator: suffixTreeSteps,
   },
 
   // Module 4: Graph / Shortest Path — Floyd-Warshall
@@ -1040,6 +1220,102 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     stepGenerator: floydWarshallSteps,
+  },
+
+  // Module 4: Graph / Shortest Path — Bellman-Ford
+  {
+    id: 'bellman-ford',
+    module: 4,
+    moduleName: 'Module 4: Graph Algorithms',
+    name: 'Bellman-Ford (Single-Source Shortest Path)',
+    paradigm: 'Graph',
+    complexity: {
+      timeBest: 'O(V + E)',
+      timeAverage: 'O(V · E)',
+      timeWorst: 'O(V · E)',
+      spaceWorst: 'O(V)',
+      description: 'Relax every edge V−1 times; handles negative weights',
+    },
+    problemStatement:
+      'Compute the shortest-path distance from a single source vertex to every other vertex in a directed, weighted graph that may contain negative edge weights, and report whether a negative-weight cycle is reachable from the source.',
+    explanation:
+      'Initializes the source distance to 0 and all others to ∞, then relaxes every edge V−1 times: a shortest path visits at most V−1 edges, so after V−1 passes all distances are final. One extra pass over the edges detects a reachable negative-weight cycle — if any edge can still be relaxed, no shortest path exists.',
+    pseudocode: [
+      'function BELLMAN-FORD(V, E, w, source):',
+      '  dist[source] = 0;  dist[v] = ∞ for v ≠ source',
+      '  repeat V - 1 times:',
+      '    for each edge (u, v) in E:',
+      '      if dist[u] + w(u, v) < dist[v]:',
+      '        dist[v] = dist[u] + w(u, v);  pred[v] = u',
+      '  for each edge (u, v) in E:                 // verification',
+      '    if dist[u] + w(u, v) < dist[v]: report NEGATIVE CYCLE',
+      '  return dist, pred',
+    ],
+    visualizer: 'GraphVisualizer',
+    inputSchema: [
+      {
+        name: 'source',
+        label: 'Source Node Index (0-based)',
+        type: 'number',
+        defaultValue: 0,
+        min: 0,
+        max: 4,
+      },
+    ],
+    presets: [
+      {
+        name: 'CLRS Textbook (S, T, X, Y, Z)',
+        data: {
+          source: 0,
+          nodeLabels: ['S', 'T', 'X', 'Y', 'Z'],
+          matrix: [
+            [0, 6, null, 7, null],
+            [null, 0, 5, 8, -4],
+            [null, -2, 0, null, null],
+            [null, null, -3, 0, 9],
+            [2, null, 7, null, 0],
+          ],
+        },
+      },
+      {
+        name: 'Negative Cycle (B → C → D → B)',
+        data: {
+          source: 0,
+          nodeLabels: ['A', 'B', 'C', 'D'],
+          matrix: [
+            [0, 1, null, null],
+            [null, 0, 2, null],
+            [null, null, 0, 3],
+            [null, -6, null, 0],
+          ],
+        },
+      },
+      {
+        name: 'Simple DAG (no negatives)',
+        data: {
+          source: 0,
+          nodeLabels: ['A', 'B', 'C', 'D'],
+          matrix: [
+            [0, 4, 5, null],
+            [null, 0, null, 3],
+            [null, -2, 0, 4],
+            [null, null, null, 0],
+          ],
+        },
+      },
+    ],
+    generateRandomInput: () => ({
+      source: 0,
+      nodeLabels: ['S', 'T', 'X', 'Y', 'Z'],
+      matrix: [
+        [0, 6, null, 7, null],
+        [null, 0, 5, 8, -4],
+        [null, -2, 0, null, null],
+        [null, null, -3, 0, 9],
+        [2, null, 7, null, 0],
+      ],
+    }),
+    stepGenerator: bellmanFordSteps,
   },
 
   // Module 4: Network Flow — Ford-Fulkerson
