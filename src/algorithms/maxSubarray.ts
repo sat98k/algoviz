@@ -44,19 +44,21 @@ export function* maxSubarraySteps(inputs: {
   const makeSnapshot = (
     title: string,
     description: string,
-    codeLine: number,
+    codeLine: number | number[],
     activeNodeId: string,
     activeRange: [number, number],
     explanation: string,
     extra: Partial<MaxSubarrayState> = {},
     isFinal = false,
-    finalResult?: any
+    finalResult?: any,
+    callFlow?: { type: 'call' | 'return'; nodeId: string | number }
   ): AlgorithmStep<MaxSubarrayState> => {
     return {
       stepIndex: stepIndex++,
       title,
       description,
       codeLine,
+      callFlow,
       state: {
         array: [...arr],
         mode: 'divideAndConquer',
@@ -104,15 +106,27 @@ export function* maxSubarraySteps(inputs: {
     };
     treeNodes.push(node);
 
+    const isLeftChild = edgeLabel?.startsWith('L');
+    const isRecursiveCall = !!parentId;
+    const initialCodeLine = isRecursiveCall ? (isLeftChild ? 4 : 5) : 1;
+    const initialCallFlow = isRecursiveCall ? { type: 'call' as const, nodeId } : undefined;
+
     // Initial subproblem frame
     yield makeSnapshot(
-      `Divide: Subarray [${low}..${high}]`,
-      `Examining subarray range from index ${low} to ${high}: [${arr.slice(low, high + 1).join(', ')}].`,
-      1,
+      isRecursiveCall
+        ? `Recursive Call: ${isLeftChild ? 'Left' : 'Right'} Half [${low}..${high}]`
+        : `Divide: Subarray [${low}..${high}]`,
+      isRecursiveCall
+        ? `Invoking MaxSubarrayDC on ${isLeftChild ? 'left' : 'right'} half [${low}..${high}]: [${arr.slice(low, high + 1).join(', ')}]. Spawning child call tree branch.`
+        : `Examining subarray range from index ${low} to ${high}: [${arr.slice(low, high + 1).join(', ')}].`,
+      initialCodeLine,
       nodeId,
       [low, high],
       `Divide Step: Range [${low}..${high}] (length ${high - low + 1}).`,
-      { currentLow: low, currentHigh: high }
+      { currentLow: low, currentHigh: high },
+      false,
+      undefined,
+      initialCallFlow
     );
 
     // Base Case: 1 element
@@ -129,12 +143,15 @@ export function* maxSubarraySteps(inputs: {
 
       yield makeSnapshot(
         `Base Case: arr[${low}] = ${arr[low]}`,
-        `Base case reached (length 1). Maximum subarray sum is the single element itself: ${arr[low]}.`,
+        `Base case reached (length 1). Maximum subarray sum is the single element itself: ${arr[low]}. Returning up call tree.`,
         2,
         nodeId,
         [low, high],
         `Base Case at index ${low}: Sum = ${arr[low]}.`,
-        { currentLow: low, currentHigh: high }
+        { currentLow: low, currentHigh: high },
+        false,
+        undefined,
+        { type: 'return', nodeId }
       );
 
       return baseResult;
@@ -205,7 +222,7 @@ export function* maxSubarraySteps(inputs: {
     yield makeSnapshot(
       `Cross-Midpoint Scan: CrossSum = ${crossSumVal}`,
       `Scanned outward across midpoint ${mid}: Max Left Wing [${maxLeftIdx}..${mid}] (sum ${maxLeftSum}) + Max Right Wing [${mid + 1}..${maxRightIdx}] (sum ${maxRightSum}) = CrossSum ${crossSumVal}.`,
-      4,
+      6,
       nodeId,
       [maxLeftIdx, maxRightIdx],
       `Cross-Sum: Left Wing (${maxLeftSum}) + Right Wing (${maxRightSum}) = ${crossSumVal} across [${maxLeftIdx}..${maxRightIdx}].`,
@@ -241,8 +258,8 @@ export function* maxSubarraySteps(inputs: {
 
     yield makeSnapshot(
       `Combine: Winner is ${winnerName} -> Max Sum ${bestRes.maxSum}`,
-      `Comparing LSum (${leftRes.maxSum}), RSum (${rightRes.maxSum}), and CrossSum (${crossRes.maxSum}). Selected ${winnerName} (${bestRes.maxSum}) spanning [${bestRes.low}..${bestRes.high}].`,
-      5,
+      `Comparing LSum (${leftRes.maxSum}), RSum (${rightRes.maxSum}), and CrossSum (${crossRes.maxSum}). Returning ${winnerName} (${bestRes.maxSum}) spanning [${bestRes.low}..${bestRes.high}] up to caller.`,
+      7,
       nodeId,
       [bestRes.low, bestRes.high],
       `Winner: ${winnerName} with max sum ${bestRes.maxSum} across indices [${bestRes.low}..${bestRes.high}].`,
@@ -253,7 +270,10 @@ export function* maxSubarraySteps(inputs: {
         rSum: rightRes.maxSum,
         crossSum: crossSumVal,
         winner: winnerName,
-      }
+      },
+      false,
+      undefined,
+      { type: 'return', nodeId }
     );
 
     return bestRes;
@@ -270,20 +290,18 @@ export function* maxSubarraySteps(inputs: {
   yield makeSnapshot(
     'Maximum Subarray Complete: Global Optimal Highlighted',
     `Global maximum contiguous subarray is [${optimalSubarray.join(', ')}] with sum ${rootResult.maxSum} spanning indices [${rootResult.low}..${rootResult.high}].`,
-    6,
+    7,
     treeNodes[0]?.id || '',
     [rootResult.low, rootResult.high],
     `Optimal answer highlighted directly on full array: Sum = ${rootResult.maxSum} at [${rootResult.low}..${rootResult.high}].`,
     {
       optimalRange: [rootResult.low, rootResult.high],
-      lSum: undefined,
-      rSum: undefined,
-      crossSum: undefined,
-      winner: undefined,
     },
     true,
     {
       maxSum: rootResult.maxSum,
+      low: rootResult.low,
+      high: rootResult.high,
       indices: [rootResult.low, rootResult.high],
       subarray: optimalSubarray,
       totalCalls: recursiveCalls,

@@ -46,19 +46,21 @@ export function* karatsubaSteps(inputs: {
   const makeSnapshot = (
     title: string,
     description: string,
-    codeLine: number,
+    codeLine: number | number[],
     activeNodeId: string,
     explanation: string,
     details: KaratsubaDetails = {},
     formulaExplanation?: string,
     isFinal = false,
-    finalResult?: any
+    finalResult?: any,
+    callFlow?: { type: 'call' | 'return'; nodeId: string | number }
   ): AlgorithmStep<KaratsubaState> => {
     return {
       stepIndex: stepIndex++,
       title,
       description,
       codeLine,
+      callFlow,
       state: {
         num1: xStr,
         num2: yStr,
@@ -103,6 +105,9 @@ export function* karatsubaSteps(inputs: {
     };
     treeNodes.push(node);
 
+    const isRecursiveCall = !!parentId;
+    const initialCallFlow = isRecursiveCall ? { type: 'call' as const, nodeId } : undefined;
+
     // Initial recursive call frame
     yield makeSnapshot(
       `Recursive Call: ${xText} × ${yText}`,
@@ -111,7 +116,10 @@ export function* karatsubaSteps(inputs: {
       nodeId,
       `Evaluating subproblem ${label} (${edgeLabel || 'Root'}).`,
       {},
-      `Subproblem: X = ${xText}, Y = ${yText}`
+      `Subproblem: X = ${xText}, Y = ${yText}`,
+      false,
+      undefined,
+      initialCallFlow
     );
 
     // Base Case: single digit (< 10)
@@ -124,7 +132,7 @@ export function* karatsubaSteps(inputs: {
 
       yield makeSnapshot(
         `Base Case: ${xText} × ${yText} = ${prod}`,
-        `Single-digit base case reached (X < 10 or Y < 10). Directly computed product: ${xText} × ${yText} = ${prod}.`,
+        `Single-digit base case reached (X < 10 or Y < 10). Directly computed product: ${xText} × ${yText} = ${prod}. Returning up call tree.`,
         2,
         nodeId,
         `Base case multiplication: ${xText} × ${yText} = ${prod}.`,
@@ -132,7 +140,10 @@ export function* karatsubaSteps(inputs: {
           p1: prod.toString(),
           finalResult: prod.toString(),
         },
-        `${xText} × ${yText} = ${prod}`
+        `${xText} × ${yText} = ${prod}`,
+        false,
+        undefined,
+        { type: 'return', nodeId }
       );
 
       return prod;
@@ -162,7 +173,7 @@ export function* karatsubaSteps(inputs: {
     yield makeSnapshot(
       `Step 1: Split Numbers X and Y (m=${m})`,
       `For X = ${xText}: Higher part a = ${a}, Lower part b = ${b} (X = ${a}·10^${m} + ${b}). For Y = ${yText}: Higher part c = ${c}, Lower part d = ${d} (Y = ${c}·10^${m} + ${d}).`,
-      3,
+      [3, 4],
       nodeId,
       `Step 1 (Split): X = (${a}·10^${m} + ${b}), Y = (${c}·10^${m} + ${d})`,
       detailsStep1,
@@ -174,7 +185,7 @@ export function* karatsubaSteps(inputs: {
     yield makeSnapshot(
       `Step 2A: Compute P1 = a · c = ${a} × ${c}`,
       `Spawning recursive branch to compute P1 = a · c = ${a} × ${c}.`,
-      4,
+      5,
       nodeId,
       `Step 2A: P1 = a · c = ${a} × ${c}`,
       detailsStep1,
@@ -187,7 +198,7 @@ export function* karatsubaSteps(inputs: {
     yield makeSnapshot(
       `Step 2B: Compute P2 = b · d = ${b} × ${d}`,
       `Spawning recursive branch to compute P2 = b · d = ${b} × ${d}.`,
-      4,
+      6,
       nodeId,
       `Step 2B: P2 = b · d = ${b} × ${d}`,
       detailsStep1,
@@ -202,7 +213,7 @@ export function* karatsubaSteps(inputs: {
     yield makeSnapshot(
       `Step 2C: Compute P3 = (a + b) · (c + d) = ${aPlusB} × ${cPlusD}`,
       `Spawning recursive branch to compute P3 = (${a} + ${b}) × (${c} + ${d}) = ${aPlusB} × ${cPlusD}.`,
-      4,
+      7,
       nodeId,
       `Step 2C: P3 = (a+b) · (c+d) = ${aPlusB} × ${cPlusD}`,
       detailsStep1,
@@ -218,7 +229,7 @@ export function* karatsubaSteps(inputs: {
     yield makeSnapshot(
       `Step 3: Compute Cross-Term = P3 - P1 - P2 = ${crossTerm}`,
       `Calculated middle cross-term: cross-term = P3 - P1 - P2 = ${p3} - ${p1} - ${p2} = ${crossTerm}.`,
-      5,
+      8,
       nodeId,
       `Step 3 (Cross-Term): ${p3} - ${p1} - ${p2} = ${crossTerm}`,
       detailsStep1,
@@ -242,12 +253,15 @@ export function* karatsubaSteps(inputs: {
 
     yield makeSnapshot(
       `Step 4: Combine Results -> ${finalProduct}`,
-      `Combining via Karatsuba formula: Result = P1·10^${2 * m} + (cross-term)·10^${m} + P2 = (${p1}·10^${2 * m}) + (${crossTerm}·10^${m}) + (${p2}) = ${term1} + ${term2} + ${term3} = ${finalProduct}.`,
-      6,
+      `Combining via Karatsuba formula: Result = P1·10^${2 * m} + (cross-term)·10^${m} + P2 = (${p1}·10^${2 * m}) + (${crossTerm}·10^${m}) + (${p2}) = ${term1} + ${term2} + ${term3} = ${finalProduct}. Returning up call tree.`,
+      9,
       nodeId,
       `Step 4 (Combine): Result = ${term1} + ${term2} + ${term3} = ${finalProduct}`,
       detailsStep1,
-      `Result = ${term1} + ${term2} + ${term3} = ${finalProduct}`
+      `Result = ${term1} + ${term2} + ${term3} = ${finalProduct}`,
+      false,
+      undefined,
+      { type: 'return', nodeId }
     );
 
     return finalProduct;
@@ -262,7 +276,7 @@ export function* karatsubaSteps(inputs: {
   yield makeSnapshot(
     'Karatsuba Multiplication Complete: Final Product at Root',
     `Karatsuba fast multiplication finished. Final product of ${xStr} × ${yStr} = ${rootProduct.toString()}. Total recursive calls: ${recursiveCalls}.`,
-    7,
+    9,
     treeNodes[0]?.id || '',
     `Final solution successfully computed and verified: ${xStr} × ${yStr} = ${rootProduct.toString()}.`,
     {

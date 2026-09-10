@@ -269,7 +269,13 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                   state.currentColor && state.currentColor > 0 ? COLOR_PALETTE[state.currentColor] : null;
 
                 return (
-                  <g key={node.id} transform={`translate(${pos.x}, ${pos.y})`} className="cursor-pointer">
+                  <g
+                    key={node.id}
+                    id={`tree-node-${node.id}`}
+                    data-tree-node-id={node.id}
+                    transform={`translate(${pos.x}, ${pos.y})`}
+                    className="cursor-pointer"
+                  >
                     {/* Pulsing ring for current node being colored */}
                     {isCurrent && (
                       <circle
@@ -344,7 +350,13 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               if (nodeStatus === 'special') fillClass = 'fill-electric-500/80 stroke-electric-400 stroke-2';
 
               return (
-                <g key={node.id} transform={`translate(${pos.x}, ${pos.y})`} className="cursor-pointer">
+                <g
+                  key={node.id}
+                  id={`tree-node-${node.id}`}
+                  data-tree-node-id={node.id}
+                  transform={`translate(${pos.x}, ${pos.y})`}
+                  className="cursor-pointer"
+                >
                   <circle r={20} className={`${fillClass} shadow-md transition-all`} />
                   <text
                     textAnchor="middle"

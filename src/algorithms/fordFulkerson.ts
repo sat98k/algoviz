@@ -77,7 +77,7 @@ export function* fordFulkersonSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Initialize Flow Network',
     description: `Initialized network with Source ${nodes[s].label} and Sink ${nodes[t].label}. All flows set to 0.`,
-    codeLine: 1,
+    codeLine: 2,
     state: {
       nodes,
       edges: getEdges(),
@@ -151,7 +151,7 @@ export function* fordFulkersonSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Augmenting Path Found: ${pathLabelStr}`,
       description: `Discovered augmenting path with bottleneck capacity Δf = ${bottleneck}.`,
-      codeLine: 2,
+      codeLine: [3, 4],
       state: {
         nodes,
         edges: getEdges(),
@@ -188,7 +188,7 @@ export function* fordFulkersonSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Augmented Flow by +${bottleneck} (Total Flow: ${totalFlow})`,
       description: `Updated flow and residual capacities along path ${pathLabelStr}.`,
-      codeLine: 3,
+      codeLine: [5, 6, 7, 8],
       state: {
         nodes,
         edges: getEdges(),
@@ -214,7 +214,7 @@ export function* fordFulkersonSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Ford-Fulkerson Complete',
     description: `No more augmenting paths exist in the residual network. Maximum flow value is ${totalFlow}.`,
-    codeLine: 4,
+    codeLine: 9,
     state: {
       nodes,
       edges: getEdges(),

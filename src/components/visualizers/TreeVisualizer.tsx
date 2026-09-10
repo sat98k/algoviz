@@ -410,6 +410,8 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
               return (
                 <g
                   key={node.id}
+                  id={`tree-node-${node.id}`}
+                  data-tree-node-id={node.id}
                   transform={`translate(${node.x}, ${node.y})`}
                   className="transition-all duration-300"
                 >

@@ -65,7 +65,8 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
         stepIndex: stepIndex++,
         title: `Valid ${n}-Queens Solution #${solutions.length} Found!`,
         description: `Successfully placed all ${n} queens on the board without conflicts. Positions: [${board.map((c, r) => `(${r},${c})`).join(', ')}].`,
-        codeLine: 5,
+        codeLine: 2,
+        callFlow: row > 0 ? { type: 'return', nodeId: `${row - 1}-${board[row - 1]}` } : undefined,
         state: {
           n,
           board: [...board],
@@ -94,7 +95,8 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
           stepIndex: stepIndex++,
           title: `Place Queen at (${row}, ${col})`,
           description: `Row ${row}, Col ${col} is safe from attacking lines of previously placed queens. Proceeding to row ${row + 1}.`,
-          codeLine: 2,
+          codeLine: [4, 5, 6],
+          callFlow: { type: 'call', nodeId: `${row}-${col}` },
           state: {
             n,
             board: [...board],
@@ -124,7 +126,8 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
           stepIndex: stepIndex++,
           title: `Backtrack from Row ${row}, Col ${col}`,
           description: `Backtracking: removed queen from (${row}, ${col}) to try subsequent column placements.`,
-          codeLine: 4,
+          codeLine: 7,
+          callFlow: { type: 'return', nodeId: `${row}-${col}` },
           state: {
             n,
             board: [...board],
@@ -146,7 +149,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
           stepIndex: stepIndex++,
           title: `Conflict at (${row}, ${col})`,
           description: `Cannot place queen at (${row}, ${col}) — attacked by existing queen at (${confRow}, ${board[confRow]}).`,
-          codeLine: 3,
+          codeLine: 4,
           state: {
             n,
             board: [...board],
@@ -181,7 +184,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
     stepIndex: stepIndex++,
     title: 'N-Queens Search Complete',
     description: `Search completed. Found ${solutions.length} valid solution(s) with ${backtracks} backtracks and ${recursiveCalls} recursive calls.`,
-    codeLine: 6,
+    codeLine: 8,
     state: {
       n,
       board: finalBoard,

@@ -97,7 +97,7 @@ export function* knapsackBBSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Initialize Branch & Bound Tree',
     description: `Sorted items by value/weight ratio. Root node bound calculated as ${rootNode.bound} (theoretical upper bound).`,
-    codeLine: 1,
+    codeLine: [2, 3, 4],
     state: {
       items,
       capacity,
@@ -127,7 +127,8 @@ export function* knapsackBBSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Explore Node (${curr.id}) at Level ${curr.level}`,
       description: `Exploring node at level ${curr.level} (Weight: ${curr.weight}, Value: ${curr.value}, Bound: ${curr.bound}). Current best value = ${bestValue}.`,
-      codeLine: 2,
+      codeLine: 6,
+      callFlow: { type: 'call', nodeId: curr.id },
       state: {
         items,
         capacity,
@@ -157,7 +158,8 @@ export function* knapsackBBSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Prune Node ${curr.id} by Bound`,
         description: `Pruning branch at node ${curr.id} because bound ${curr.bound} cannot beat best known value ${bestValue}.`,
-        codeLine: 3,
+        codeLine: 7,
+        callFlow: { type: 'return', nodeId: curr.id },
         state: {
           items,
           capacity,
@@ -214,7 +216,8 @@ export function* knapsackBBSteps(inputs: {
           stepIndex: stepIndex++,
           title: `New Best Solution Found!`,
           description: `Including Item ${nextItem.id} yields a feasible solution with value ${bestValue} (weight ${bestWeight}/${capacity}). Updated best value!`,
-          codeLine: 4,
+          codeLine: 9,
+          callFlow: { type: 'call', nodeId: leftNode.id },
           state: {
             items,
             capacity,
@@ -253,7 +256,8 @@ export function* knapsackBBSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Prune Infeasible Left Branch`,
         description: `Including Item ${nextItem.id} causes weight (${inclWeight}) to exceed capacity (${capacity}). Node pruned.`,
-        codeLine: 5,
+        codeLine: 10,
+        callFlow: { type: 'return', nodeId: leftNode.id },
         state: {
           items,
           capacity,
@@ -303,7 +307,8 @@ export function* knapsackBBSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Prune Right Branch by Bound`,
         description: `Excluding Item ${nextItem.id} gives bound ${exclBound} <= best value ${bestValue}. Node pruned.`,
-        codeLine: 6,
+        codeLine: 12,
+        callFlow: { type: 'return', nodeId: rightNode.id },
         state: {
           items,
           capacity,
@@ -328,7 +333,8 @@ export function* knapsackBBSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Branch & Bound Complete',
     description: `Optimal solution verified! Max Value = ${bestValue}, Total Weight = ${bestWeight}/${capacity}. Selected Items: [${bestItems.sort().join(', ')}]. Explored ${nodesExplored} nodes and pruned ${prunedNodes} branches.`,
-    codeLine: 7,
+    codeLine: 13,
+    callFlow: { type: 'return', nodeId: rootNode.id },
     state: {
       items,
       capacity,

@@ -49,7 +49,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
     stepIndex: stepIndex++,
     title: 'Frequency Analysis & Initial Forest',
     description: `Computed character frequencies for text of length ${text.length}. Created ${forest.length} initial leaf nodes.`,
-    codeLine: 1,
+    codeLine: [2, 3],
     state: {
       inputText: text,
       frequencyMap: { ...freqMap },
@@ -79,7 +79,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
       stepIndex: stepIndex++,
       title: `Select 2 Lowest Frequency Trees`,
       description: `Selected node '${left.char || left.id}' (freq: ${left.freq}) and node '${right.char || right.id}' (freq: ${right.freq}) to merge.`,
-      codeLine: 2,
+      codeLine: [4, 5, 6],
       state: {
         inputText: text,
         frequencyMap: { ...freqMap },
@@ -108,7 +108,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
       stepIndex: stepIndex++,
       title: `Merged Nodes into Subtree`,
       description: `Created parent node with combined frequency ${parentNode.freq} = ${left.freq} + ${right.freq}.`,
-      codeLine: 3,
+      codeLine: [7, 8],
       state: {
         inputText: text,
         frequencyMap: { ...freqMap },
@@ -156,7 +156,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
     stepIndex: stepIndex++,
     title: 'Huffman Tree & Prefix Codes Complete',
     description: `Optimal prefix tree constructed. Assigned binary codes to all ${Object.keys(codeTable).length} characters. Compression: ${originalBits} bits -> ${compressedBits} bits (${compressionRatio}% space saved).`,
-    codeLine: 4,
+    codeLine: [9, 10],
     state: {
       inputText: text,
       frequencyMap: { ...freqMap },

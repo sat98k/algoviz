@@ -62,7 +62,7 @@ export function* subsetSumSteps(inputs: {
   const makeSnapshot = (
     title: string,
     description: string,
-    codeLine: number,
+    codeLine: number | number[],
     activeNodeId: string,
     currentSum: number,
     includedElements: number[],
@@ -71,7 +71,8 @@ export function* subsetSumSteps(inputs: {
     currentIndex: number,
     currentElement?: number,
     isFinal = false,
-    finalResult?: any
+    finalResult?: any,
+    callFlow?: { type: 'call' | 'return'; nodeId: string | number }
   ): AlgorithmStep<SubsetSumState> => {
     // Clone tree deeply
     const cloneTree = (node?: SubsetSumTreeNode): SubsetSumTreeNode | undefined => {
@@ -88,6 +89,7 @@ export function* subsetSumSteps(inputs: {
       title,
       description,
       codeLine,
+      callFlow,
       state: {
         numbers: [...numbers],
         targetSum,
@@ -153,7 +155,10 @@ export function* subsetSumSteps(inputs: {
         `Solution found with sum ${currentSum} matching target ${targetSum}!`,
         `[${included.join(' + ')}] = ${targetSum} (MATCH)`,
         index - 1,
-        numbers[index - 1]
+        numbers[index - 1],
+        false,
+        undefined,
+        { type: 'return', nodeId: parentNode.id }
       );
       return true;
     }
@@ -190,14 +195,17 @@ export function* subsetSumSteps(inputs: {
       yield makeSnapshot(
         `Prune: +${elem} Exceeds Target`,
         `Including element ${elem} makes current sum ${includeSum}, which exceeds target ${targetSum}. Pruning branch.`,
-        3,
+        5,
         includeNode.id,
         currentSum,
         included,
         `Sum (${currentSum} + ${elem} = ${includeSum}) > ${targetSum} ➔ PRUNED`,
         `Include ${elem}: ${includeSum} > ${targetSum} (OVERFLOW)`,
         index,
-        elem
+        elem,
+        false,
+        undefined,
+        { type: 'return', nodeId: includeNode.id }
       );
     } else if (includeSum + newRemaining < targetSum) {
       // Prune: remaining elements insufficient
@@ -209,27 +217,33 @@ export function* subsetSumSteps(inputs: {
       yield makeSnapshot(
         `Prune: +${elem} Insufficient Remaining`,
         `Including ${elem} gives sum ${includeSum}, but even taking all remaining elements yields max sum ${includeSum + newRemaining} < target ${targetSum}. Pruning.`,
-        4,
+        6,
         includeNode.id,
         currentSum,
         included,
         `Max achievable sum (${includeSum} + ${newRemaining} = ${includeSum + newRemaining}) < ${targetSum} ➔ PRUNED`,
         `Include ${elem}: Max ${includeSum + newRemaining} < ${targetSum}`,
         index,
-        elem
+        elem,
+        false,
+        undefined,
+        { type: 'return', nodeId: includeNode.id }
       );
     } else {
       yield makeSnapshot(
         `Include Element ${elem}`,
         `Including element ${elem} gives current sum = ${includeSum}. Exploring deeper.`,
-        5,
+        7,
         includeNode.id,
         includeSum,
         includeNode.includedElements,
         `Include ${elem} ➔ New running sum: ${includeSum}/${targetSum}.`,
         `Running Sum: ${includeSum} / ${targetSum}`,
         index,
-        elem
+        elem,
+        false,
+        undefined,
+        { type: 'call', nodeId: includeNode.id }
       );
 
       const found = yield* backtrack(index + 1, includeSum, newRemaining, includeNode.includedElements, includeNode);
@@ -263,27 +277,33 @@ export function* subsetSumSteps(inputs: {
       yield makeSnapshot(
         `Prune: Exclude ${elem} (Remaining Insufficient)`,
         `Excluding ${elem} leaves sum ${currentSum}. Max achievable with remaining elements is ${currentSum + newRemaining} < target ${targetSum}. Pruning.`,
-        6,
+        9,
         excludeNode.id,
         currentSum,
         included,
         `Excluding ${elem}: Max reachable ${currentSum + newRemaining} < ${targetSum} ➔ PRUNED`,
         `Exclude ${elem}: ${currentSum} + ${newRemaining} = ${currentSum + newRemaining} < ${targetSum}`,
         index,
-        elem
+        elem,
+        false,
+        undefined,
+        { type: 'return', nodeId: excludeNode.id }
       );
     } else {
       yield makeSnapshot(
         `Exclude Element ${elem}`,
         `Excluding element ${elem}. Current sum remains ${currentSum}. Exploring alternative path.`,
-        7,
+        10,
         excludeNode.id,
         currentSum,
         included,
         `Exclude ${elem} ➔ Running sum remains ${currentSum}/${targetSum}.`,
         `Running Sum: ${currentSum} / ${targetSum}`,
         index,
-        elem
+        elem,
+        false,
+        undefined,
+        { type: 'call', nodeId: excludeNode.id }
       );
 
       const found = yield* backtrack(index + 1, currentSum, newRemaining, included, excludeNode);
@@ -314,7 +334,7 @@ export function* subsetSumSteps(inputs: {
     hasSolution
       ? `Search complete: Target sum ${targetSum} achieved by subset [${finalSubset.join(', ')}] (sum = ${targetSum}).`
       : `Search complete: No subset of [${numbers.join(', ')}] sums to target ${targetSum}.`,
-    8,
+    hasSolution ? 2 : 3,
     treeRoot.id,
     hasSolution ? targetSum : 0,
     finalSubset,
@@ -334,6 +354,7 @@ export function* subsetSumSteps(inputs: {
       totalSum: hasSolution ? targetSum : 0,
       nodesExplored,
       backtracks,
-    }
+    },
+    hasSolution ? { type: 'return', nodeId: treeRoot.id } : undefined
   );
 }

@@ -460,6 +460,8 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
             return (
               <g
                 key={node.id}
+                id={`tree-node-${node.id}`}
+                data-tree-node-id={node.id}
                 transform={`translate(${node.x - rectWidth / 2}, ${node.y - rectHeight / 2})`}
                 className="transition-all duration-300"
               >

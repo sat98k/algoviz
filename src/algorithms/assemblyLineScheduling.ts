@@ -76,7 +76,7 @@ export function* assemblyLineSchedulingSteps(
     stepIndex: stepIndex++,
     title: 'Initialize Assembly Line Entry Costs',
     description: `Station 1 base cases: Line 1 entry cost f1[1] = e1 (${e1}) + a1[1] (${a1[0]}) = ${f1[0]}. Line 2 entry cost f2[1] = e2 (${e2}) + a2[1] (${a2[0]}) = ${f2[0]}.`,
-    codeLine: 1,
+    codeLine: 2,
     state: {
       numStations: n,
       a1,
@@ -129,7 +129,7 @@ export function* assemblyLineSchedulingSteps(
       stepIndex: stepIndex++,
       title: `Compute Station ${j + 1} on Line 1`,
       description: `Line 1 (Station ${j + 1}): Option 1 (Stay on Line 1) = f1[${j}] (${f1[j - 1]}) + a1[${j + 1}] (${a1[j]}) = ${stayLine1}. Option 2 (Transfer from Line 2) = f2[${j}] (${f2[j - 1]}) + t2[${j}] (${t2[j - 1]}) + a1[${j + 1}] (${a1[j]}) = ${transferFrom2}. Selected: f1[${j + 1}] = ${f1[j]} via Line ${l1[j]}.`,
-      codeLine: 2,
+      codeLine: 4,
       state: {
         numStations: n,
         a1,
@@ -179,7 +179,7 @@ export function* assemblyLineSchedulingSteps(
       stepIndex: stepIndex++,
       title: `Compute Station ${j + 1} on Line 2`,
       description: `Line 2 (Station ${j + 1}): Option 1 (Stay on Line 2) = f2[${j}] (${f2[j - 1]}) + a2[${j + 1}] (${a2[j]}) = ${stayLine2}. Option 2 (Transfer from Line 1) = f1[${j}] (${f1[j - 1]}) + t1[${j}] (${t1[j - 1]}) + a2[${j + 1}] (${a2[j]}) = ${transferFrom1}. Selected: f2[${j + 1}] = ${f2[j]} via Line ${l2[j]}.`,
-      codeLine: 2,
+      codeLine: 5,
       state: {
         numStations: n,
         a1,
@@ -224,7 +224,7 @@ export function* assemblyLineSchedulingSteps(
     stepIndex: stepIndex++,
     title: 'Forward DP Pass Complete: Choose Optimal Exit Line',
     description: `Exit comparison: Line 1 exit = f1[${n}] (${f1[n - 1]}) + x1 (${x1}) = ${exitLine1}. Line 2 exit = f2[${n}] (${f2[n - 1]}) + x2 (${x2}) = ${exitLine2}. Minimum total time: ${minTotalTime} exiting from Line ${winningLine}.`,
-    codeLine: 3,
+    codeLine: 6,
     state: {
       numStations: n,
       a1,
@@ -281,7 +281,7 @@ export function* assemblyLineSchedulingSteps(
       stepIndex: stepIndex++,
       title: `Backtrack: Station ${j + 1} ➔ Station ${j}`,
       description: `Station ${j + 1} was reached on Line ${currLine} from Line ${prevLine} at Station ${j} (${isTransfer ? `Line Transfer: Line ${prevLine} ➔ Line ${currLine}` : `Stay on Line ${currLine}`}).`,
-      codeLine: 4,
+      codeLine: 7,
       state: {
         numStations: n,
         a1,
@@ -324,7 +324,7 @@ export function* assemblyLineSchedulingSteps(
     stepIndex: stepIndex++,
     title: 'Assembly Line Scheduling Complete',
     description: `Optimal manufacturing path verified: Total Minimum Time = ${minTotalTime}. Path sequence: [${fullPath.map((p) => `Station ${p.station} on Line ${p.line}`).join(' ➔ ')}].`,
-    codeLine: 5,
+    codeLine: 8,
     state: {
       numStations: n,
       a1,

@@ -45,4 +45,31 @@ describe('Maximum Subarray (M1 Divide & Conquer)', () => {
     expect(finalStep.result.indices).toEqual([0, 0]);
     expect(finalStep.result.subarray).toEqual([42]);
   });
+
+  it('verifies all steps yield valid pseudocode lines and callFlow references', () => {
+    const steps = Array.from(maxSubarraySteps({ array: [-2, 1, -3, 4, -1, 2, 1, -5, 4] }));
+    expect(steps.length).toBeGreaterThan(0);
+
+    let callCount = 0;
+    let returnCount = 0;
+
+    for (const step of steps) {
+      expect(step.codeLine).toBeDefined();
+      const lines = Array.isArray(step.codeLine) ? step.codeLine : [step.codeLine!];
+      for (const line of lines) {
+        expect(line).toBeGreaterThanOrEqual(1);
+        expect(line).toBeLessThanOrEqual(7);
+      }
+
+      if (step.callFlow) {
+        expect(['call', 'return']).toContain(step.callFlow.type);
+        expect(step.callFlow.nodeId).toBeDefined();
+        if (step.callFlow.type === 'call') callCount++;
+        if (step.callFlow.type === 'return') returnCount++;
+      }
+    }
+
+    expect(callCount).toBeGreaterThan(0);
+    expect(returnCount).toBeGreaterThan(0);
+  });
 });

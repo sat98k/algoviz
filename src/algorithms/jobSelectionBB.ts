@@ -136,18 +136,20 @@ export function* jobSelectionBBSteps(inputs: {
   const makeStep = (
     title: string,
     description: string,
-    codeLine: number,
+    codeLine: number | number[],
     explanation: string,
     activeNodeId?: string,
     prunedId?: string,
     isFinal = false,
-    result?: any
+    result?: any,
+    callFlow?: { type: 'call' | 'return'; nodeId: string | number }
   ): AlgorithmStep<JobSelectionBBState> => {
     return {
       stepIndex: stepIndex++,
       title,
       description,
       codeLine,
+      callFlow,
       state: {
         jobs,
         maxDeadline,
@@ -179,7 +181,7 @@ export function* jobSelectionBBSteps(inputs: {
   yield makeStep(
     'Initialize Job Selection Branch & Bound',
     `Sorted ${n} jobs by profit descending. Root node initialized with Upper Bound = ${initialBound} across max deadline ${maxDeadline}.`,
-    1,
+    [2, 3, 4],
     `Jobs: [${jobs.map((j) => `J${j.id}(d=${j.deadline},p=${j.profit})`).join(', ')}] | Max D=${maxDeadline}`,
     rootNode.id
   );
@@ -199,10 +201,13 @@ export function* jobSelectionBBSteps(inputs: {
       yield makeStep(
         `Prune Node ${curr.id} by Bound`,
         `Upper bound ${curr.bound} cannot beat current best profit ${bestProfit}. Node pruned.`,
-        2,
+        7,
         `Node ${curr.id} pruned: UB (${curr.bound}) <= Best (${bestProfit})`,
         curr.id,
-        curr.id
+        curr.id,
+        false,
+        undefined,
+        { type: 'return', nodeId: curr.id }
       );
       continue;
     }
@@ -210,9 +215,13 @@ export function* jobSelectionBBSteps(inputs: {
     yield makeStep(
       `Explore Node ${curr.id} (Level ${curr.level})`,
       `De-queued node ${curr.id} at level ${curr.level} with Profit = ${curr.profit}, Upper Bound = ${curr.bound}. Current best profit = ${bestProfit}.`,
-      3,
+      6,
       `Exploring node ${curr.id}: Profit=${curr.profit}, UB=${curr.bound}`,
-      curr.id
+      curr.id,
+      undefined,
+      false,
+      undefined,
+      { type: 'call', nodeId: curr.id }
     );
 
     if (curr.level === n) {
@@ -225,9 +234,13 @@ export function* jobSelectionBBSteps(inputs: {
         yield makeStep(
           `New Best Solution at Leaf Node ${curr.id}`,
           `Reached leaf node with Profit ${curr.profit} > previous best. Updated best profit = ${bestProfit}, Jobs: [${bestJobs.map((id) => `J${id}`).join(', ')}].`,
-          4,
+          9,
           `New best profit = ${bestProfit} [${bestJobs.map((id) => `J${id}`).join(', ')}]`,
-          curr.id
+          curr.id,
+          undefined,
+          false,
+          undefined,
+          { type: 'call', nodeId: curr.id }
         );
       }
       continue;
@@ -272,10 +285,13 @@ export function* jobSelectionBBSteps(inputs: {
       yield makeStep(
         `Prune Left Branch (+J${nextJob.id}): Infeasible`,
         `Adding Job J${nextJob.id} (deadline=${nextJob.deadline}) makes schedule infeasible. Branch pruned.`,
-        5,
+        10,
         `+J${nextJob.id} infeasible — deadline conflict`,
         leftNode.id,
-        leftNode.id
+        leftNode.id,
+        false,
+        undefined,
+        { type: 'return', nodeId: leftNode.id }
       );
     } else {
       if (inclProfit > bestProfit) {
@@ -286,9 +302,13 @@ export function* jobSelectionBBSteps(inputs: {
         yield makeStep(
           `New Best Profit Found: ${bestProfit}`,
           `Feasible schedule with Job J${nextJob.id} achieves profit ${bestProfit}. Schedule: [${bestSchedule.map((id, slot) => `Slot ${slot + 1}: J${id ?? 'empty'}`).join(', ')}].`,
-          6,
+          9,
           `New best profit = ${bestProfit} with J${nextJob.id}`,
-          leftNode.id
+          leftNode.id,
+          undefined,
+          false,
+          undefined,
+          { type: 'call', nodeId: leftNode.id }
         );
       }
 
@@ -302,19 +322,26 @@ export function* jobSelectionBBSteps(inputs: {
         yield makeStep(
           `Prune Left Branch (+J${nextJob.id}) by Bound`,
           `Including J${nextJob.id} yields UB ${inclBound} <= best profit ${bestProfit}. Branch pruned.`,
-          7,
+          10,
           `+J${nextJob.id} pruned: UB (${inclBound}) <= Best (${bestProfit})`,
           leftNode.id,
-          leftNode.id
+          leftNode.id,
+          false,
+          undefined,
+          { type: 'return', nodeId: leftNode.id }
         );
       } else {
         queue.push(leftNode);
         yield makeStep(
           `Include J${nextJob.id} Added to Queue`,
           `Feasible node with J${nextJob.id} added (Profit = ${inclProfit}, UB = ${inclBound}).`,
-          8,
+          11,
           `+J${nextJob.id} active: Profit=${inclProfit}, UB=${inclBound}`,
-          leftNode.id
+          leftNode.id,
+          undefined,
+          false,
+          undefined,
+          { type: 'call', nodeId: leftNode.id }
         );
       }
     }
@@ -354,19 +381,26 @@ export function* jobSelectionBBSteps(inputs: {
       yield makeStep(
         `Prune Right Branch (-J${nextJob.id}) by Bound`,
         `Excluding J${nextJob.id} yields UB ${exclBound} <= best profit ${bestProfit}. Branch pruned.`,
-        9,
+        13,
         `-J${nextJob.id} pruned: UB (${exclBound}) <= Best (${bestProfit})`,
         rightNode.id,
-        rightNode.id
+        rightNode.id,
+        false,
+        undefined,
+        { type: 'return', nodeId: rightNode.id }
       );
     } else {
       queue.push(rightNode);
       yield makeStep(
         `Exclude J${nextJob.id} Added to Queue`,
         `Node excluding J${nextJob.id} added (Profit = ${exclProfit}, UB = ${exclBound}).`,
-        10,
+        14,
         `-J${nextJob.id} active: Profit=${exclProfit}, UB=${exclBound}`,
-        rightNode.id
+        rightNode.id,
+        undefined,
+        false,
+        undefined,
+        { type: 'call', nodeId: rightNode.id }
       );
     }
   }
@@ -400,7 +434,7 @@ export function* jobSelectionBBSteps(inputs: {
   yield makeStep(
     'Branch & Bound Job Selection Complete',
     `Optimal job selection found! Max Profit = ${bestProfit}. Optimal Jobs: [${bestJobs.map((id) => `J${id}`).join(', ')}]. Schedule: [${bestSchedule.map((id, s) => `Slot ${s + 1}: J${id ?? 'empty'}`).join(', ')}]. Explored ${nodesExplored} nodes, pruned ${prunedNodes} branches.`,
-    11,
+    15,
     `Optimal: Profit = ${bestProfit}, Jobs: [${bestJobs.map((id) => `J${id}`).join(', ')}]`,
     undefined,
     undefined,
@@ -412,6 +446,7 @@ export function* jobSelectionBBSteps(inputs: {
       maxDeadline,
       nodesExplored,
       prunedNodes,
-    }
+    },
+    { type: 'return', nodeId: rootNode.id }
   );
 }
