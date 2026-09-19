@@ -61,6 +61,8 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
               return (
                 <div
                   key={`${r}-${c}`}
+                  id={`tree-node-${r}-${c}`}
+                  data-tree-node-id={`${r}-${c}`}
                   className={`relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 transition-all duration-200 select-none ${
                     hasConflict
                       ? 'bg-rose-950/80 border border-rose-500'

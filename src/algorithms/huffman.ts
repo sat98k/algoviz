@@ -20,7 +20,25 @@ export interface HuffmanState {
   originalBits?: number;
   compressedBits?: number;
   compressionRatio?: number;
+  mode?: 'encode' | 'decode';
+  currentBit?: string;
+  bitIndex?: number;
+  totalBits?: number;
+  accumulatedText?: string;
+  codecStep?: any;
 }
+
+export const HUFFMAN_DECODING_PSEUDOCODE = [
+  'function HuffmanDecode(root, bitStream):',
+  '  currentNode = root; decodedText = "" // Start at tree root with empty output',
+  '  for each bit in bitStream: // Read input bit-by-bit from left to right',
+  '    if bit == "0": currentNode = currentNode.left // Traverse left branch on "0"',
+  '    else: currentNode = currentNode.right // Traverse right branch on "1"',
+  '    if isLeaf(currentNode): // Leaf reached: symbol identified',
+  '      decodedText += currentNode.character // Append character to output',
+  '      currentNode = root // Reset traversal back to root for next symbol',
+  '  return decodedText // Full message recovered losslessly',
+];
 
 export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep<HuffmanState>> {
   const text = inputs.text || 'ABRACADABRA';
@@ -49,7 +67,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
     stepIndex: stepIndex++,
     title: 'Frequency Analysis & Initial Forest',
     description: `Computed character frequencies for text of length ${text.length}. Created ${forest.length} initial leaf nodes.`,
-    codeLine: 1,
+    codeLine: [2, 3],
     state: {
       inputText: text,
       frequencyMap: { ...freqMap },
@@ -79,7 +97,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
       stepIndex: stepIndex++,
       title: `Select 2 Lowest Frequency Trees`,
       description: `Selected node '${left.char || left.id}' (freq: ${left.freq}) and node '${right.char || right.id}' (freq: ${right.freq}) to merge.`,
-      codeLine: 2,
+      codeLine: [4, 5, 6],
       state: {
         inputText: text,
         frequencyMap: { ...freqMap },
@@ -108,7 +126,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
       stepIndex: stepIndex++,
       title: `Merged Nodes into Subtree`,
       description: `Created parent node with combined frequency ${parentNode.freq} = ${left.freq} + ${right.freq}.`,
-      codeLine: 3,
+      codeLine: [7, 8],
       state: {
         inputText: text,
         frequencyMap: { ...freqMap },
@@ -156,7 +174,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
     stepIndex: stepIndex++,
     title: 'Huffman Tree & Prefix Codes Complete',
     description: `Optimal prefix tree constructed. Assigned binary codes to all ${Object.keys(codeTable).length} characters. Compression: ${originalBits} bits -> ${compressedBits} bits (${compressionRatio}% space saved).`,
-    codeLine: 4,
+    codeLine: [9, 10],
     state: {
       inputText: text,
       frequencyMap: { ...freqMap },

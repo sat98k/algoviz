@@ -72,7 +72,11 @@ export interface AlgorithmStep<T = any> {
   stepIndex: number;
   title: string;
   description: string;
-  codeLine?: number;
+  codeLine?: number | number[];
+  callFlow?: {
+    type: 'call' | 'return';
+    nodeId: string | number;
+  };
   state: T;
   highlights: HighlightInfo;
   metrics: MetricData;

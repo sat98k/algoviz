@@ -56,7 +56,7 @@ export function* vertexCoverApproxSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Initialize 2-Approximation for Vertex Cover',
     description: `Loaded graph with ${nodes.length} vertices and ${allEdges.length} edges. Initialized empty cover C = {}.`,
-    codeLine: 1,
+    codeLine: 2,
     state: {
       nodes,
       edges: allEdges,
@@ -81,7 +81,7 @@ export function* vertexCoverApproxSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Pick Arbitrary Uncovered Edge (${uLabel}, ${vLabel})`,
       description: `Selected edge (${uLabel}, ${vLabel}) from remaining uncovered set E'.`,
-      codeLine: 2,
+      codeLine: [3, 4],
       state: {
         nodes,
         edges: allEdges,
@@ -104,7 +104,7 @@ export function* vertexCoverApproxSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Add Endpoints {${uLabel}, ${vLabel}} to Cover C`,
       description: `Added both endpoints of edge (${uLabel}, ${vLabel}) into the vertex cover set C. Cover size is now ${coveredVertices.size}.`,
-      codeLine: 3,
+      codeLine: 5,
       state: {
         nodes,
         edges: allEdges,
@@ -140,7 +140,7 @@ export function* vertexCoverApproxSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Remove ${removed.length} Incident Edges from E'`,
       description: `Removed all edges touching ${uLabel} or ${vLabel} since they are now covered. Remaining uncovered edges: ${uncoveredEdges.length}.`,
-      codeLine: 4,
+      codeLine: 6,
       state: {
         nodes,
         edges: allEdges,
@@ -165,7 +165,7 @@ export function* vertexCoverApproxSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Vertex Cover 2-Approximation Complete',
     description: `Found valid vertex cover of size ${finalCoverList.length}: {${finalCoverLabels.join(', ')}}. Lower bound OPT >= ${pickedMatchingEdges.length} (size of maximal matching), proving |C| <= 2 * OPT.`,
-    codeLine: 5,
+    codeLine: 7,
     state: {
       nodes,
       edges: allEdges,

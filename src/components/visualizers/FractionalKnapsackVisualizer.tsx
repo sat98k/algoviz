@@ -116,7 +116,7 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
       )}
 
       {/* Item Cards Grid / List */}
-      <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
         {items.map((item, idx) => {
           const cardClasses = getItemCardClasses(item, idx);
           const percentTaken = Math.round(item.fractionTaken * 100);

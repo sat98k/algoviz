@@ -326,7 +326,7 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
           stepIndex: stepIndex++,
           title: `DP(${subsetLabel}, ${cities[j].label}) = ${minCost}`,
           description: `Subset ${subsetLabel} (size ${s}): Computing DP for ending city ${cities[j].label} = ${minCost} via predecessor ${bestPredLabel}.`,
-          codeLine: 6,
+          codeLine: [6, 7],
           state: {
             numCities: n,
             cities,
@@ -412,7 +412,7 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
     stepIndex: stepIndex++,
     title: `Close Tour: Return to ${cities[0].label}`,
     description: `Tour Closing: Evaluating return edges from full subset ${fullSubsetLabel} to start city ${cities[0].label}. Minimum full tour cost = ${optimalCost} via last city ${cities[bestLastCity].label}.`,
-    codeLine: 8,
+    codeLine: [8, 9],
     state: {
       numCities: n,
       cities,
@@ -473,7 +473,7 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
     stepIndex: stepIndex++,
     title: 'Backtrack Optimal Tour',
     description: `Tour Reconstruction: Backtracking through parent pointers reveals optimal tour: ${tourString} with total cost ${optimalCost}.`,
-    codeLine: 9,
+    codeLine: 10,
     state: {
       numCities: n,
       cities,
@@ -509,7 +509,7 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
     stepIndex: stepIndex++,
     title: `Optimal Tour Complete: ${tourString} (Cost ${optimalCost})`,
     description: `Execution Complete: Minimum Hamiltonian Cycle is ${tourString} with optimal cost ${optimalCost}.`,
-    codeLine: 10,
+    codeLine: 11,
     state: {
       numCities: n,
       cities,

@@ -590,3 +590,65 @@ export function generateDecodingSteps(
 
   return steps;
 }
+
+/**
+ * Converts decoding steps into AlgorithmStep instances with synchronized
+ * line numbers corresponding to HUFFMAN_DECODING_PSEUDOCODE.
+ */
+export function createHuffmanDecodingAlgorithmSteps(
+  treeRoot: HuffmanNode,
+  encodedBits: string,
+  inputText: string = ''
+): any[] {
+  const codecSteps = generateDecodingSteps(treeRoot, encodedBits, inputText);
+  return codecSteps.map((cs) => {
+    let codeLine: number | number[] = 2;
+    if (cs.stepType === 'init') {
+      codeLine = [1, 2];
+    } else if (cs.stepType === 'traverse') {
+      codeLine = cs.currentBit === '0' ? [3, 4] : [3, 5];
+    } else if (cs.stepType === 'leaf-reached') {
+      codeLine = [6, 7];
+    } else if (cs.stepType === 'reset-to-root') {
+      codeLine = 8;
+    } else if (cs.stepType === 'complete') {
+      codeLine = 9;
+    }
+
+    return {
+      stepIndex: cs.stepIndex,
+      title: cs.title,
+      description: cs.description,
+      codeLine,
+      state: {
+        mode: 'decode',
+        treeRoot,
+        forest: [treeRoot],
+        inputText,
+        encodedBits,
+        currentBit: cs.currentBit,
+        bitIndex: cs.bitIndex,
+        totalBits: cs.totalBits,
+        accumulatedText: cs.accumulatedText,
+        progressPercent: cs.progressPercent,
+        explanation: cs.explanation,
+        codecStep: cs,
+      },
+      highlights: {
+        nodes: cs.visitedNodeIds,
+        activeNodeId: cs.activeNodeId,
+      },
+      metrics: {
+        bitIndex: cs.bitIndex !== undefined ? cs.bitIndex + 1 : 0,
+        totalBits: cs.totalBits || encodedBits.length,
+        decodedChars: cs.accumulatedText.length,
+      },
+      isFinal: cs.stepType === 'complete',
+      result: cs.stepType === 'complete' ? {
+        decodedText: cs.accumulatedText,
+        originalBits: encodedBits.length,
+        outputChars: cs.accumulatedText.length,
+      } : undefined,
+    };
+  });
+}

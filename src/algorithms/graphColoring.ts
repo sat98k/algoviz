@@ -75,13 +75,14 @@ export function* graphColoringSteps(inputs: {
   const makeStep = (
     title: string,
     description: string,
-    codeLine: number,
+    codeLine: number | number[],
     explanation: string,
     currentVertex?: string,
     currentColor?: number,
     conflictVertex?: string,
     isFinal = false,
-    result?: any
+    result?: any,
+    callFlow?: { type: 'call' | 'return'; nodeId: string | number }
   ): AlgorithmStep<GraphColoringState> => {
     const highlightNodes: string[] = [];
     const highlightEdges: {
@@ -103,6 +104,7 @@ export function* graphColoringSteps(inputs: {
       title,
       description,
       codeLine,
+      callFlow,
       state: {
         nodes: nodes.map((n) => ({ ...n })),
         edges: allEdges.map((e) => ({ ...e })),
@@ -162,7 +164,7 @@ export function* graphColoringSteps(inputs: {
     yield makeStep(
       `Considering Vertex ${vertexLabel}`,
       `Attempting to assign a valid color to vertex ${vertexLabel} (vertex ${vertexIndex + 1} of ${sortedIds.length}).`,
-      2,
+      3,
       `Trying colors 1..${k} for ${vertexLabel}`,
       vertexId
     );
@@ -176,7 +178,7 @@ export function* graphColoringSteps(inputs: {
         yield makeStep(
           `Conflict: ${vertexLabel} ← ${colorName}`,
           `Color ${colorName} (${c}) conflicts with adjacent vertex ${conflictLabel} which already has ${colorName}. Trying next color.`,
-          3,
+          4,
           `${vertexLabel} ← ${colorName} CONFLICTS with ${conflictLabel}`,
           vertexId,
           c,
@@ -191,10 +193,14 @@ export function* graphColoringSteps(inputs: {
       yield makeStep(
         `Assign: ${vertexLabel} ← ${colorName}`,
         `Color ${colorName} (${c}) is safe for vertex ${vertexLabel}. No adjacent vertex has this color. Proceeding to next vertex.`,
-        4,
+        [4, 5, 6],
         `${vertexLabel} = ${colorName} ✓`,
         vertexId,
-        c
+        c,
+        undefined,
+        false,
+        undefined,
+        { type: 'call', nodeId: vertexId }
       );
 
       const result = yield* solve(vertexIndex + 1);
@@ -207,9 +213,14 @@ export function* graphColoringSteps(inputs: {
       yield makeStep(
         `Backtrack: Uncolor ${vertexLabel}`,
         `Backtracking from vertex ${vertexLabel}. Removing color ${colorName} (${c}) and trying the next color.`,
-        5,
+        7,
         `Backtrack: ${vertexLabel} uncolored (was ${colorName})`,
-        vertexId
+        vertexId,
+        undefined,
+        undefined,
+        false,
+        undefined,
+        { type: 'return', nodeId: vertexId }
       );
     }
 
@@ -227,7 +238,7 @@ export function* graphColoringSteps(inputs: {
     yield makeStep(
       `Valid ${k}-Coloring Found!`,
       `Successfully colored all ${nodes.length} vertices with ${k} colors. Assignment: ${colorSummary}.`,
-      6,
+      2,
       colorSummary,
       undefined,
       undefined,
@@ -240,13 +251,14 @@ export function* graphColoringSteps(inputs: {
         colorSummary,
         nodesExplored,
         backtracks,
-      }
+      },
+      sortedIds.length > 0 ? { type: 'return', nodeId: sortedIds[sortedIds.length - 1] } : undefined
     );
   } else {
     yield makeStep(
       `No Valid ${k}-Coloring Exists`,
       `Exhaustive backtracking search confirmed that the graph cannot be colored with ${k} colors without adjacent vertices sharing the same color.`,
-      7,
+      8,
       `Not ${k}-colorable`,
       undefined,
       undefined,

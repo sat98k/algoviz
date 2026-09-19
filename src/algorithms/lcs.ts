@@ -30,7 +30,7 @@ export function* lcsSteps(inputs: { str1: string; str2: string }): Generator<Alg
     stepIndex: stepIndex++,
     title: 'Initialize LCS DP Table',
     description: `Created ${(m + 1)} x ${(n + 1)} DP table for string 1 ("${str1}") and string 2 ("${str2}"). Initialized row 0 and column 0 with 0.`,
-    codeLine: 1,
+    codeLine: 2,
     state: {
       str1,
       str2,
@@ -61,7 +61,7 @@ export function* lcsSteps(inputs: { str1: string; str2: string }): Generator<Alg
           stepIndex: stepIndex++,
           title: `Match: '${char1}' == '${char2}'`,
           description: `Characters match at str1[${i - 1}] and str2[${j - 1}] ('${char1}'). dp[${i}][${j}] = 1 + dp[${i - 1}][${j - 1}] = 1 + ${dp[i - 1][j - 1]} = ${dp[i][j]}.`,
-          codeLine: 2,
+          codeLine: [5, 6],
           state: {
             str1,
             str2,
@@ -88,7 +88,7 @@ export function* lcsSteps(inputs: { str1: string; str2: string }): Generator<Alg
           stepIndex: stepIndex++,
           title: `Mismatch: '${char1}' != '${char2}'`,
           description: `Characters do not match ('${char1}' != '${char2}'). dp[${i}][${j}] = max(top: ${topVal}, left: ${leftVal}) = ${dp[i][j]}.`,
-          codeLine: 3,
+          codeLine: [7, 8],
           state: {
             str1,
             str2,
@@ -141,7 +141,7 @@ export function* lcsSteps(inputs: { str1: string; str2: string }): Generator<Alg
     stepIndex: stepIndex++,
     title: 'LCS Backtracking Complete',
     description: `Reconstructed Longest Common Subsequence: "${finalLCS}" of length ${dp[m][n]}.`,
-    codeLine: 4,
+    codeLine: [9, 10],
     state: {
       str1,
       str2,

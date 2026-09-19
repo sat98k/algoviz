@@ -169,7 +169,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
         stepIndex: stepIndex++,
         title: `Check Orientation: ${nextToTop.label} -> ${top.label} -> ${pt.label}`,
         description: `Evaluating turn from (${nextToTop.label} to ${top.label} to ${pt.label}). Cross product = ${o}. Turn is ${turnType.toUpperCase()} (${o > 0 ? 'Valid CCW Left Turn' : 'Invalid Non-Left Turn'}).`,
-        codeLine: 5,
+        codeLine: [5, 6],
         state: {
           points: [...points],
           pivot,
@@ -193,7 +193,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
           stepIndex: stepIndex++,
           title: `Pop ${popped.label} from Hull Stack`,
           description: `Popped ${popped.label} because it creates a clockwise/collinear dent in the convex hull.`,
-          codeLine: 6,
+          codeLine: 7,
           state: {
             points: [...points],
             pivot,
@@ -218,7 +218,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
       stepIndex: stepIndex++,
       title: `Push ${pt.label} onto Hull Stack`,
       description: `Added point ${pt.label} (${pt.x}, ${pt.y}) to current convex hull stack.`,
-      codeLine: 7,
+      codeLine: 8,
       state: {
         points: [...points],
         pivot,
@@ -238,7 +238,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
     stepIndex: stepIndex++,
     title: 'Graham’s Scan Complete',
     description: `Convex Hull successfully computed! Enclosing polygon contains ${stack.length} vertices: [${stack.map((p) => p.label).join(' → ')}].`,
-    codeLine: 8,
+    codeLine: 9,
     state: {
       points: [...points],
       pivot,

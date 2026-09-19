@@ -65,7 +65,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Initialize MCM Tables & Base Cases (Length 1)',
     description: `Initialized ${n}x${n} Dynamic Programming cost table m and split table s. For chain length L=1, m[i][i] = 0 (zero cost to multiply a single matrix).`,
-    codeLine: 1,
+    codeLine: 2,
     state: {
       dimensions: [...p],
       matrices,
@@ -93,7 +93,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Compute Cell m[${i}, ${j}] (Chain Length L=${L})`,
         description: `Evaluating optimal split point for subchain A${i} through A${j} (${matrices.slice(i - 1, j).map((mat) => `${mat.name}[${mat.rows}x${mat.cols}]`).join(' × ')}).`,
-        codeLine: 2,
+        codeLine: [4, 5],
         state: {
           dimensions: [...p],
           matrices,
@@ -127,7 +127,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
           stepIndex: stepIndex++,
           title: `Evaluate Split Point k=${k} for m[${i}, ${j}]`,
           description: `Testing split (A${i}..A${k})(A${k + 1}..A${j}): Left cost m[${i},${k}]=${costLeft}, Right cost m[${k + 1},${j}]=${costRight}, Multiplications ${p[i - 1]}×${p[k]}×${p[j]}=${multCost}. Total = ${totalCost}.${isNewMin ? ' (New Minimum Cost!)' : ''}`,
-          codeLine: 3,
+          codeLine: [6, 7, 8, 9],
           state: {
             dimensions: [...p],
             matrices,
@@ -160,7 +160,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'DP Table Complete: Begin Optimal Parenthesization Backtrack',
     description: `DP cost table is complete with minimum scalar multiplication cost m[1, ${n}] = ${m[1][n]}. Now backtracking through split table s[i, j] to reconstruct the optimal matrix grouping one step at a time.`,
-    codeLine: 4,
+    codeLine: 10,
     state: {
       dimensions: [...p],
       matrices,
@@ -194,7 +194,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Backtrack: Query Split Table s[${i}, ${j}] = ${k}`,
       description: `For subchain A${i}..A${j}, stored split point in table s[${i}, ${j}] is k = ${k}. This divides the problem into Left subchain A${i}..A${k} and Right subchain A${k + 1}..A${j}.`,
-      codeLine: 4,
+      codeLine: 10,
       state: {
         dimensions: [...p],
         matrices,
@@ -240,7 +240,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Merge Group: (${leftStr} × ${rightStr})`,
       description: `Combined optimal parenthesization for subchain A${i}..A${j} at split k=${k}: "${mergedStr}".`,
-      codeLine: 4,
+      codeLine: 10,
       state: {
         dimensions: [...p],
         matrices,
@@ -263,13 +263,13 @@ export function* matrixChainMultiplicationSteps(inputs: {
         },
         optimalParenthesization: mergedStr,
         partialParenthesesList: [...partialParentheses],
-        formulaExplanation: `Merged subchain: ${mergedStr} (from cell m[${i},${j}] with split k=${k})`,
+        formulaExplanation: `Merged Subchain A${i}..A${j} = ${mergedStr}`,
       },
       highlights: {
         cells: [
           { r: i, c: j, status: 'active' },
-          { r: i, c: k, status: 'path' },
-          { r: k + 1, c: j, status: 'path' },
+          { r: i, c: k, status: 'visited' },
+          { r: k + 1, c: j, status: 'visited' },
         ],
       },
       metrics: { comparisons, iterations },
@@ -285,7 +285,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Matrix Chain Multiplication Complete',
     description: `Optimal chain multiplication fully evaluated and reconstructed. Minimum scalar multiplications: ${m[1][n]}. Optimal multiplication order: ${finalOptimalParens}.`,
-    codeLine: 4,
+    codeLine: 11,
     state: {
       dimensions: [...p],
       matrices,

@@ -81,7 +81,7 @@ export function* floydWarshallSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Initialize Floyd-Warshall Distance Matrix',
     description: `Initialized ${n}x${n} distance matrix D(0) from direct edge weights. Unconnected pairs set to ∞.`,
-    codeLine: 1,
+    codeLine: 2,
     state: {
       nodes,
       edges,
@@ -101,7 +101,7 @@ export function* floydWarshallSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Starting Iteration k = ${k} (Intermediate Node V${k + 1})`,
       description: `Testing if paths between all vertex pairs (i, j) can be shortened by routing through intermediate vertex V${k + 1}.`,
-      codeLine: 2,
+      codeLine: 3,
       state: {
         nodes,
         edges,
@@ -139,7 +139,7 @@ export function* floydWarshallSteps(inputs: {
               stepIndex: stepIndex++,
               title: `Relax Distance D[V${i + 1}][V${j + 1}] via V${k + 1}`,
               description: `Shortened path: D[${i + 1}][${j + 1}] updated from ${dij === null ? '∞' : dij} to ${throughK} (D[${i + 1}][${k + 1}] = ${dik} + D[${k + 1}][${j + 1}] = ${dkj}).`,
-              codeLine: 3,
+              codeLine: [6, 7, 8],
               state: {
                 nodes,
                 edges,
@@ -200,7 +200,7 @@ export function* floydWarshallSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Floyd-Warshall Complete',
     description: `All-Pairs Shortest Path computation finished in O(V³) time with ${relaxations} edge relaxations.`,
-    codeLine: 4,
+    codeLine: 9,
     state: {
       nodes,
       edges,

@@ -46,7 +46,7 @@ export function* knapsackDPSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Initialize DP Table',
     description: `Created ${(n + 1)} x ${(capacity + 1)} DP table initialized with 0 for base cases (0 items or 0 capacity).`,
-    codeLine: 1,
+    codeLine: 2,
     state: {
       items,
       capacity,
@@ -78,7 +78,7 @@ export function* knapsackDPSteps(inputs: {
           stepIndex: stepIndex++,
           title: `Item ${i} Exceeds Weight ${w}`,
           description: `Item ${i} (wt: ${item.weight}, val: ${item.value}) is heavier than current capacity ${w}. dp[${i}][${w}] = dp[${i - 1}][${w}] = ${dp[i][w]}.`,
-          codeLine: 2,
+          codeLine: [6, 7],
           state: {
             items,
             capacity,
@@ -106,7 +106,7 @@ export function* knapsackDPSteps(inputs: {
           stepIndex: stepIndex++,
           title: `Evaluate Item ${i} at Weight ${w}`,
           description: `Option 1 (Exclude): dp[${i - 1}][${w}] = ${excludeVal}. Option 2 (Include): ${item.value} + dp[${i - 1}][${w - item.weight}] = ${includeVal}. Selected: ${dp[i][w]}.`,
-          codeLine: 3,
+          codeLine: [8, 9, 10, 11],
           state: {
             items,
             capacity,
@@ -138,7 +138,7 @@ export function* knapsackDPSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'DP Table Complete: Begin Item Backtracking',
     description: `DP table fill completed with optimal value dp[${n}][${capacity}] = ${dp[n][capacity]}. Starting backtrack from cell (${n}, ${capacity}) to identify which items were selected.`,
-    codeLine: 4,
+    codeLine: 12,
     state: {
       items,
       capacity,
@@ -172,7 +172,7 @@ export function* knapsackDPSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Backtrack: Item ${i} INCLUDED`,
         description: `At cell (i=${i}, w=${currW}): dp[${i}][${currW}] = ${valCurr} vs dp[${i - 1}][${currW}] = ${valPrev} (NOT EQUAL). Item ${i} (weight: ${item.weight}, value: ${item.value}) was INCLUDED! Moving cursor to (i=${i - 1}, w=${nextW}).`,
-        codeLine: 4,
+        codeLine: 12,
         state: {
           items,
           capacity,
@@ -203,7 +203,7 @@ export function* knapsackDPSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Backtrack: Item ${i} NOT Included`,
         description: `At cell (i=${i}, w=${currW}): dp[${i}][${currW}] = ${valCurr} vs dp[${i - 1}][${currW}] = ${valPrev} (EQUAL). Item ${i} was NOT included. Moving cursor directly up to (i=${i - 1}, w=${currW}).`,
-        codeLine: 5,
+        codeLine: 12,
         state: {
           items,
           capacity,
@@ -239,7 +239,7 @@ export function* knapsackDPSteps(inputs: {
     stepIndex: stepIndex++,
     title: '0-1 Knapsack Complete',
     description: `Backtrack completed. Optimal solution achieved: Total Value = ${totalVal}, Total Weight = ${totalWeight}/${capacity}. Selected Items: [${selectedItems.map((id) => `Item ${id}`).join(', ')}].`,
-    codeLine: 6,
+    codeLine: 13,
     state: {
       items,
       capacity,

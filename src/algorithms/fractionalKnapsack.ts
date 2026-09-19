@@ -56,7 +56,7 @@ export function* fractionalKnapsackSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Initialize Items & Ratios',
     description: `Initialized ${n} items with capacity W = ${capacity}. Computed value-to-weight ratio (v/w) for each item.`,
-    codeLine: 1,
+    codeLine: 2,
     state: {
       items: initialItems.map((it) => ({ ...it })),
       capacity,
@@ -84,7 +84,7 @@ export function* fractionalKnapsackSteps(inputs: {
     description: `Sorted items by greedy heuristic ratio: [${sortedItems
       .map((it) => `Item ${it.id} (${it.ratio})`)
       .join(' > ')}].`,
-    codeLine: 2,
+    codeLine: 3,
     state: {
       items: sortedItems.map((it) => ({ ...it, status: 'sorting' })),
       capacity,
@@ -115,7 +115,7 @@ export function* fractionalKnapsackSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Examining Item ${item.id} (Ratio: ${item.ratio})`,
       description: `Examining Item ${item.id} with weight ${item.weight}, value ${item.value}. Remaining knapsack capacity: ${remainingCap} / ${capacity}.`,
-      codeLine: 3,
+      codeLine: 5,
       state: {
         items: sortedItems.map((it) => ({ ...it })),
         capacity,
@@ -144,7 +144,7 @@ export function* fractionalKnapsackSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Skip Item ${item.id} (Capacity Saturated)`,
         description: `Knapsack capacity is fully saturated (current weight = ${currentWeight}/${capacity}). Skipping Item ${item.id}.`,
-        codeLine: 4,
+        codeLine: 10,
         state: {
           items: sortedItems.map((it) => ({ ...it })),
           capacity,
@@ -178,7 +178,7 @@ export function* fractionalKnapsackSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Take 100% of Item ${item.id}`,
         description: `Item ${item.id} fits entirely (${item.weight} <= ${remainingCap}). Added weight +${item.weight}, value +${item.value}. Cumulative Weight: ${currentWeight}/${capacity}, Cumulative Value: ${currentValue}.`,
-        codeLine: 5,
+        codeLine: [6, 7],
         state: {
           items: sortedItems.map((it) => ({ ...it })),
           capacity,
@@ -214,7 +214,7 @@ export function* fractionalKnapsackSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Take ${(fraction * 100).toFixed(1)}% Fraction of Item ${item.id}`,
         description: `Item ${item.id} (weight ${item.weight}) exceeds remaining capacity ${remainingCap}. Sliced item to take fraction ${remainingCap}/${item.weight} (${(fraction * 100).toFixed(1)}%). Added weight +${weightTaken}, value +${valueTaken}. Knapsack is now 100% full.`,
-        codeLine: 6,
+        codeLine: [8, 9, 10],
         state: {
           items: sortedItems.map((it) => ({ ...it })),
           capacity,
@@ -238,7 +238,7 @@ export function* fractionalKnapsackSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Fractional Knapsack Complete',
     description: `Greedy selection completed. Maximum achievable value: ${currentValue} with total knapsack weight ${currentWeight} / ${capacity}.`,
-    codeLine: 7,
+    codeLine: 11,
     state: {
       items: sortedItems.map((it) => ({ ...it })),
       capacity,

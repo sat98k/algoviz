@@ -108,3 +108,16 @@
   }
 }
 
+@keyframes flowDash {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-flow-dash {
+  animation: flowDash 0.75s linear infinite;
+}
+
