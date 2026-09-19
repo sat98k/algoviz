@@ -44,9 +44,23 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
     state.items !== undefined && state.capacity !== undefined && state.frequencyMap === undefined;
   const isSubsetSum = state.targetSum !== undefined;
   const isJobSelection = state.jobs !== undefined;
+  const isSuffixTree = state.suffixTree !== undefined;
 
   // Convert state trees into standardized TreeNodeInput format for two-pass layout
   const convertToTreeInputs = (): TreeNodeInput[] => {
+    if (isSuffixTree && state.suffixTree) {
+      const convertSuffixNode = (node: any): TreeNodeInput => ({
+        id: node.id,
+        label: node.id === 'root' ? 'root' : node.isLeaf ? String(node.suffixIndex) : '•',
+        subLabel: node.isLeaf && node.suffixIndex >= 0 ? `start ${node.suffixIndex}` : undefined,
+        status: (node.status || 'normal') as any,
+        edgeLabel: node.edgeLabel || undefined,
+        children: (node.children || []).map(convertSuffixNode),
+        rawNode: node,
+      });
+      return [convertSuffixNode(state.suffixTree)];
+    }
+
     if (isHuffman) {
       const forest =
         (activeTraversal?.treeRootOverride ? [activeTraversal.treeRootOverride] : null) ||
@@ -170,14 +184,26 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
   };
 
   const treeInputs = convertToTreeInputs();
-  const layout = computeTreeLayout(treeInputs, {
-    nodeWidth: 88,
-    nodeHeight: 42,
-    minSiblingGap: 24,
-    levelHeight: 82,
-    paddingX: 44,
-    paddingY: 44,
-  });
+  const layout = computeTreeLayout(
+    treeInputs,
+    isSuffixTree
+      ? {
+          nodeWidth: 92,
+          nodeHeight: 42,
+          minSiblingGap: 46,
+          levelHeight: 88,
+          paddingX: 52,
+          paddingY: 44,
+        }
+      : {
+          nodeWidth: 88,
+          nodeHeight: 42,
+          minSiblingGap: 24,
+          levelHeight: 82,
+          paddingX: 44,
+          paddingY: 44,
+        }
+  );
 
   // Reset zoom on step / algo change if desired, or fit on reset
   const handleResetZoom = () => {
@@ -279,6 +305,37 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Top Banner Details for Suffix Tree */}
+      {isSuffixTree && (
+        <div className="w-full max-w-4xl mb-4 p-3 bg-obsidian-950 border border-hairline flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-chalk-500 uppercase">[ TEXT + $ ]:</span>
+            <span className="text-amber-glow font-bold tracking-[0.35em]">{state.text}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-chalk-500 uppercase">[ PATTERN ]:</span>
+            <span className="text-chalk-100 font-bold tracking-[0.35em]">{state.pattern || '—'}</span>
+          </div>
+          {state.phase === 'build' && state.activePointLabel && (
+            <div className="flex items-center gap-2">
+              <span className="text-chalk-500 uppercase">[ ACTIVE POINT ]:</span>
+              <span className="text-chalk-300">{state.activePointLabel}</span>
+              {typeof state.remainingSuffixCount === 'number' && (
+                <span className="text-chalk-500">· remaining {state.remainingSuffixCount}</span>
+              )}
+            </div>
+          )}
+          {state.matchIndices && state.matchIndices.length > 0 && (
+            <div className="flex items-center gap-2 text-acid-400">
+              <span className="text-chalk-500 uppercase">[ OCCURRENCES ]:</span>
+              <strong className="bg-acid-500/20 px-2 py-0.5 border border-acid-500">
+                [{state.matchIndices.join(', ')}]
+              </strong>
+            </div>
+          )}
         </div>
       )}
 
@@ -430,32 +487,35 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                   />
 
                   {/* Edge Label Badge with protective high-contrast background */}
-                  {edge.label && (
-                    <g transform={`translate(${midX}, ${midY})`}>
-                      <rect
-                        x={-18}
-                        y={-9}
-                        width={36}
-                        height={18}
-                        rx={4}
-                        fill={isEdgeActive ? '#f59e0b' : '#0b0d13'}
-                        stroke={isEdgeActive ? '#fbbf24' : '#334155'}
-                        strokeWidth={isEdgeActive ? 1.5 : 0.8}
-                        className="shadow-sm"
-                      />
-                      <text
-                        x={0}
-                        y={3}
-                        textAnchor="middle"
-                        fill={isEdgeActive ? '#0a0a0c' : '#e2e8f0'}
-                        fontSize="9"
-                        fontWeight="bold"
-                        className="font-mono pointer-events-none"
-                      >
-                        {edge.label}
-                      </text>
-                    </g>
-                  )}
+                  {edge.label && (() => {
+                    const labelW = Math.max(36, edge.label.length * 6.4 + 12);
+                    return (
+                      <g transform={`translate(${midX}, ${midY})`}>
+                        <rect
+                          x={-labelW / 2}
+                          y={-9}
+                          width={labelW}
+                          height={18}
+                          rx={4}
+                          fill={isEdgeActive ? '#f59e0b' : '#0b0d13'}
+                          stroke={isEdgeActive ? '#fbbf24' : '#334155'}
+                          strokeWidth={isEdgeActive ? 1.5 : 0.8}
+                          className="shadow-sm"
+                        />
+                        <text
+                          x={0}
+                          y={3}
+                          textAnchor="middle"
+                          fill={isEdgeActive ? '#0a0a0c' : '#e2e8f0'}
+                          fontSize="9"
+                          fontWeight="bold"
+                          className="font-mono pointer-events-none"
+                        >
+                          {edge.label}
+                        </text>
+                      </g>
+                    );
+                  })()}
                 </g>
               );
             })}

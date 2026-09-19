@@ -57,7 +57,7 @@ export interface HighlightInfo {
   nodes?: (string | number)[];
   activeNode?: string | number;
   prunedNodes?: (string | number)[];
-  edges?: { u: string | number; v: string | number; status?: 'active' | 'flow' | 'residual' | 'visited' | 'cover' | 'conflict' }[];
+  edges?: { u: string | number; v: string | number; status?: 'active' | 'flow' | 'residual' | 'visited' | 'cover' | 'conflict' | 'negcycle' }[];
   points?: number[];
   activePoint?: number;
   hullPoints?: number[];
