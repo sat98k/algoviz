@@ -8,6 +8,7 @@ export interface NaiveState {
   patternIndex: number;
   shift: number;
   matchIndices: number[];
+  verifiedIndices?: number[];
   currentComparison?: {
     textChar?: string;
     patternChar?: string;
@@ -33,8 +34,8 @@ export function* naiveStringMatchSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Naive String Matching',
-    description: `Target Text of length ${n}, Pattern of length ${m}. Slide the pattern across every alignment s = 0 … ${Math.max(n - m, 0)} and compare character by character.`,
-    codeLine: 1,
+    description: `Target text length n = ${n}, pattern length m = ${m}. Slide pattern across all window alignments shift = 0 … ${Math.max(n - m, 0)} and compare character by character.`,
+    codeLine: [1, 2, 3],
     state: {
       text,
       pattern,
@@ -43,6 +44,7 @@ export function* naiveStringMatchSteps(inputs: {
       patternIndex: 0,
       shift: 0,
       matchIndices: [],
+      verifiedIndices: [],
     },
     highlights: {},
     metrics: { comparisons, iterations },
@@ -52,9 +54,9 @@ export function* naiveStringMatchSteps(inputs: {
     for (let s = 0; s <= n - m; s++) {
       yield {
         stepIndex: stepIndex++,
-        title: `Align pattern at shift s = ${s}`,
-        description: `Position the pattern so P[0] lines up with text[${s}]. Compare P[0…${m - 1}] against text[${s}…${s + m - 1}].`,
-        codeLine: 2,
+        title: `Align Pattern at Shift ${s}`,
+        description: `Position pattern P[0…${m - 1}] directly under text window T[${s}…${s + m - 1}]. Assume matchFound = true and verify characters sequentially.`,
+        codeLine: [4, 5],
         state: {
           text,
           pattern,
@@ -63,6 +65,7 @@ export function* naiveStringMatchSteps(inputs: {
           patternIndex: 0,
           shift: s,
           matchIndices: [...matchIndices],
+          verifiedIndices: [],
         },
         highlights: {
           textIndex: s,
@@ -72,6 +75,7 @@ export function* naiveStringMatchSteps(inputs: {
         metrics: { comparisons, iterations },
       };
 
+      const verified: number[] = [];
       let j = 0;
       for (; j < m; j++) {
         iterations++;
@@ -81,9 +85,9 @@ export function* naiveStringMatchSteps(inputs: {
 
         yield {
           stepIndex: stepIndex++,
-          title: `Compare text[${s + j}] vs pattern[${j}]`,
+          title: `Compare Character: text[${s + j}] vs pattern[${j}]`,
           description: `Comparing text[${s + j}] ('${text[s + j]}') with pattern[${j}] ('${pattern[j]}'). Result: ${isMatch ? 'MATCH' : 'MISMATCH'}.`,
-          codeLine: 3,
+          codeLine: [6, 7],
           state: {
             text,
             pattern,
@@ -92,6 +96,7 @@ export function* naiveStringMatchSteps(inputs: {
             patternIndex: j,
             shift: s,
             matchIndices: [...matchIndices],
+            verifiedIndices: [...verified],
             currentComparison: {
               textChar: text[s + j],
               patternChar: pattern[j],
@@ -110,9 +115,9 @@ export function* naiveStringMatchSteps(inputs: {
         if (!isMatch) {
           yield {
             stepIndex: stepIndex++,
-            title: `Mismatch — slide window to shift s = ${s + 1}`,
-            description: `Characters differ at pattern index ${j}. Abandon this alignment and shift the pattern one position right${s + 1 <= n - m ? '.' : ' (end of text reached).'}`,
-            codeLine: 4,
+            title: `Mismatch Detected at Offset ${j} — Slide Window`,
+            description: `Characters differ ('${text[s + j]}' != '${pattern[j]}'). Set matchFound = false, break out of loop, and advance to shift ${s + 1}.`,
+            codeLine: [8, 9],
             state: {
               text,
               pattern,
@@ -121,6 +126,12 @@ export function* naiveStringMatchSteps(inputs: {
               patternIndex: j,
               shift: s,
               matchIndices: [...matchIndices],
+              verifiedIndices: [...verified],
+              currentComparison: {
+                textChar: text[s + j],
+                patternChar: pattern[j],
+                isMatch: false,
+              },
             },
             highlights: {
               type: 'mismatch',
@@ -132,15 +143,17 @@ export function* naiveStringMatchSteps(inputs: {
           };
           break;
         }
+
+        verified.push(j);
       }
 
       if (j === m) {
         matchIndices.push(s);
         yield {
           stepIndex: stepIndex++,
-          title: `Pattern Match Found at Index ${s}!`,
-          description: `All ${m} characters matched. Pattern "${pattern}" occurs at text position ${s}. Continue scanning from shift s = ${s + 1}.`,
-          codeLine: 5,
+          title: `Pattern Match Confirmed at Shift ${s}!`,
+          description: `matchFound is true! All ${m} pattern characters matched text window T[${s}…${s + m - 1}]. Recording occurrence index ${s}.`,
+          codeLine: [10, 11],
           state: {
             text,
             pattern,
@@ -149,6 +162,7 @@ export function* naiveStringMatchSteps(inputs: {
             patternIndex: m - 1,
             shift: s,
             matchIndices: [...matchIndices],
+            verifiedIndices: Array.from({ length: m }, (_, idx) => idx),
           },
           highlights: {
             type: 'match',
@@ -164,8 +178,8 @@ export function* naiveStringMatchSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Naive Search Complete',
-    description: `Search completed. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. Total character comparisons: ${comparisons}.`,
-    codeLine: 6,
+    description: `Search complete. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. Total character comparisons: ${comparisons}.`,
+    codeLine: 12,
     state: {
       text,
       pattern,
@@ -174,6 +188,7 @@ export function* naiveStringMatchSteps(inputs: {
       patternIndex: 0,
       shift: Math.max(n - m, 0),
       matchIndices: [...matchIndices],
+      verifiedIndices: [],
     },
     highlights: {
       matchIndices: [...matchIndices],

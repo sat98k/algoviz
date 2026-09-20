@@ -27,14 +27,15 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
   const highlights = step.highlights || {};
 
   const isFloyd = state.distMatrix !== undefined;
-  const isFordFulkerson = state.flowMatrix !== undefined;
+  const isPushRelabel = state.isPushRelabel === true || state.heights !== undefined;
+  const isFordFulkerson = state.flowMatrix !== undefined && !isPushRelabel;
   const isVertexCover = state.coveredVertices !== undefined;
   const isGraphColoring = state.isGraphColoring === true || state.colorAssignment !== undefined;
   const isBellmanFord = state.hasNegativeCycle !== undefined || state.distances !== undefined;
 
-  // Default to dual split view for Bellman-Ford and Floyd-Warshall so user sees both immediately
+  // Default to dual split view for Bellman-Ford, Floyd-Warshall, and Push-Relabel
   const [activeTab, setActiveTab] = useState<ViewTab>(
-    isBellmanFord || isFloyd ? 'both' : 'graph'
+    isBellmanFord || isFloyd || isPushRelabel ? 'both' : 'graph'
   );
 
   const svgWidth = 600;
@@ -143,7 +144,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
         if (!p1 || !p2) return null;
 
         const edgeStatus = isEdgeHighlighted(`${edge.u}`, `${edge.v}`);
-        const isDirected = isFloyd || isFordFulkerson || isBellmanFord;
+        const isDirected = isFloyd || isFordFulkerson || isBellmanFord || isPushRelabel;
         const isConflictEdge =
           edgeStatus === 'conflict' ||
           (isGraphColoring &&
@@ -499,6 +500,47 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 </text>
               </g>
             )}
+
+            {/* Push-Relabel Height and Excess Badge Below Node */}
+            {isPushRelabel && (
+              <g transform="translate(0, 32)">
+                <rect
+                  x="-32"
+                  y="-9"
+                  width="64"
+                  height="18"
+                  rx="4"
+                  fill={
+                    (state.excess?.[node.id] || 0) > 0 && `${node.id}` !== state.source && `${node.id}` !== state.sink
+                      ? '#2d1e08'
+                      : '#181f2c'
+                  }
+                  stroke={
+                    (state.excess?.[node.id] || 0) > 0 && `${node.id}` !== state.source && `${node.id}` !== state.sink
+                      ? '#fbbf24'
+                      : '#475569'
+                  }
+                  strokeWidth={
+                    (state.excess?.[node.id] || 0) > 0 && `${node.id}` !== state.source && `${node.id}` !== state.sink
+                      ? 1.6
+                      : 1
+                  }
+                  className="shadow-sm transition-all"
+                />
+                <text
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="text-[9.5px] font-mono font-bold"
+                  fill={
+                    (state.excess?.[node.id] || 0) > 0 && `${node.id}` !== state.source && `${node.id}` !== state.sink
+                      ? '#fef08a'
+                      : '#cbd5e1'
+                  }
+                >
+                  h:{state.heights?.[node.id] ?? 0} | e:{state.excess?.[node.id] ?? 0}
+                </text>
+              </g>
+            )}
           </g>
         );
       })}
@@ -570,6 +612,92 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                     </span>
                   ) : (
                     <span className="text-chalk-600">—</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  // Render Push-Relabel Vertex Height & Excess Table
+  const renderPushRelabelTable = () => (
+    <div className="w-full overflow-x-auto max-h-[360px] p-4 bg-obsidian-950 border border-hairline">
+      <table className="w-full border-collapse text-center text-xs font-mono">
+        <thead>
+          <tr className="bg-obsidian-900/90 border-b border-hairline">
+            <th className="p-2.5 text-chalk-300 uppercase tracking-wider text-[11px] font-bold">
+              Vertex
+            </th>
+            <th className="p-2.5 text-chalk-300 uppercase tracking-wider text-[11px] font-bold">
+              Height h(u)
+            </th>
+            <th className="p-2.5 text-chalk-300 uppercase tracking-wider text-[11px] font-bold">
+              Excess e(u)
+            </th>
+            <th className="p-2.5 text-chalk-300 uppercase tracking-wider text-[11px] font-bold">
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {nodes.map((nd) => {
+            const h = state.heights?.[nd.id] ?? 0;
+            const e = state.excess?.[nd.id] ?? 0;
+            const isSource = nd.id === state.source;
+            const isSink = nd.id === state.sink;
+            const isOverflowing = e > 0 && !isSource && !isSink;
+            const isCurrent = nd.id === state.currentVertex;
+
+            return (
+              <tr
+                key={nd.id}
+                className={`transition-colors ${
+                  isCurrent
+                    ? 'bg-amber/20 border-l-4 border-l-amber'
+                    : isOverflowing
+                    ? 'bg-amber/10'
+                    : 'hover:bg-obsidian-850/70'
+                }`}
+              >
+                <th className="p-2.5 border border-hairline text-chalk-200 text-[11px] font-bold">
+                  <span className="inline-flex items-center gap-1.5">
+                    {nd.label}
+                    {isSource && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] bg-sky-950/80 text-sky-300 border border-sky-600/40">
+                        SRC
+                      </span>
+                    )}
+                    {isSink && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] bg-emerald-950/80 text-emerald-300 border border-emerald-600/40">
+                        SNK
+                      </span>
+                    )}
+                  </span>
+                </th>
+                <td className="p-2.5 border border-hairline tabular-nums text-chalk-100 font-semibold">
+                  {h}
+                </td>
+                <td
+                  className={`p-2.5 border border-hairline tabular-nums font-bold ${
+                    isOverflowing ? 'text-amber-glow text-sm scale-105' : 'text-chalk-300'
+                  }`}
+                >
+                  {e}
+                </td>
+                <td className="p-2.5 border border-hairline">
+                  {isSource ? (
+                    <span className="text-sky-400 font-semibold">Source (|V|)</span>
+                  ) : isSink ? (
+                    <span className="text-emerald-400 font-semibold">Sink (Flow: {e})</span>
+                  ) : isOverflowing ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-amber/20 text-amber font-bold uppercase">
+                      Overflowing
+                    </span>
+                  ) : (
+                    <span className="text-chalk-500">Balanced (0)</span>
                   )}
                 </td>
               </tr>
@@ -688,6 +816,21 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               COVER SIZE |C|: <strong>{state.coveredVertices?.length || 0}</strong>
             </span>
           )}
+          {isPushRelabel && (
+            <>
+              <span className="px-3 py-1 bg-obsidian-950 border border-acid-500/40 text-acid-500 font-bold">
+                SINK FLOW: <strong>{state.currentFlowToSink ?? 0}</strong>
+              </span>
+              <span className="px-3 py-1 bg-obsidian-950 border border-amber/30 text-amber-glow">
+                OVERFLOWING: <strong>{state.overflowingNodes?.length ?? 0}</strong>
+              </span>
+              {state.activeOperation && (
+                <span className="px-3 py-1 bg-obsidian-950 border border-electric-500/40 text-electric-400 font-bold uppercase">
+                  {state.activeOperation}
+                </span>
+              )}
+            </>
+          )}
           {isBellmanFord && (
             <>
               <span className="px-3 py-1 bg-obsidian-950 border border-hairline text-chalk-200">
@@ -759,7 +902,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
         </div>
 
         {/* 3-Way View Selector: GRAPH ONLY | TABLE/MATRIX ONLY | BOTH (SPLIT) */}
-        {(isFloyd || isFordFulkerson || isBellmanFord) && (
+        {(isFloyd || isFordFulkerson || isBellmanFord || isPushRelabel) && (
           <div className="flex bg-obsidian-950 p-1 border border-hairline text-xs font-mono gap-1">
             <button
               onClick={() => setActiveTab('graph')}
@@ -779,7 +922,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                   : 'text-chalk-400 hover:text-chalk-200'
               }`}
             >
-              {isFloyd ? 'MATRIX ONLY' : isBellmanFord ? 'TABLE ONLY' : 'CAPACITY ONLY'}
+              {isFloyd ? 'MATRIX ONLY' : isBellmanFord ? 'DISTANCES ONLY' : isPushRelabel ? 'HEIGHTS ONLY' : 'CAPACITY ONLY'}
             </button>
             <button
               onClick={() => setActiveTab('both')}
@@ -796,7 +939,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
       </div>
 
       {/* Main View Area */}
-      {activeTab === 'both' && (isFloyd || isFordFulkerson || isBellmanFord) ? (
+      {activeTab === 'both' && (isFloyd || isFordFulkerson || isBellmanFord || isPushRelabel) ? (
         /* Dual Split Layout: Graph on Left, Table/Matrix on Right */
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full items-stretch">
           {/* Graph Section */}
@@ -820,7 +963,9 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-hairline/60">
               <span className="text-[11px] font-mono uppercase tracking-wider text-chalk-300 font-bold flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-acid-500 inline-block"></span>
-                {isBellmanFord
+                {isPushRelabel
+                  ? 'VERTEX HEIGHTS & EXCESS FLOW'
+                  : isBellmanFord
                   ? 'DISTANCE & PREDECESSOR TABLE'
                   : isFloyd
                   ? 'DISTANCE MATRIX D(k)'
@@ -838,14 +983,22 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               )}
             </div>
             <div className="w-full flex-1 overflow-x-auto flex items-start justify-center">
-              {isBellmanFord ? renderBellmanFordTable() : renderMatrixTable()}
+              {isPushRelabel
+                ? renderPushRelabelTable()
+                : isBellmanFord
+                ? renderBellmanFordTable()
+                : renderMatrixTable()}
             </div>
           </div>
         </div>
       ) : activeTab === 'matrix' ? (
         /* Standalone Table / Matrix View */
         <div className="w-full max-w-2xl flex justify-center">
-          {isBellmanFord ? renderBellmanFordTable() : renderMatrixTable()}
+          {isPushRelabel
+            ? renderPushRelabelTable()
+            : isBellmanFord
+            ? renderBellmanFordTable()
+            : renderMatrixTable()}
         </div>
       ) : (
         /* Standalone Graph View */

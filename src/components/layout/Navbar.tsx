@@ -60,7 +60,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
           <button
             onClick={() => onNavigate('home')}
             className={`group relative px-3 sm:px-4 py-2 text-xs font-mono tracking-wider uppercase transition-all duration-200 ${
-              currentView === 'home'
+              currentView === 'home' || currentView === 'module'
                 ? 'text-chalk-100 bg-obsidian-800 border border-hairline font-bold'
                 : 'text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-850'
             }`}

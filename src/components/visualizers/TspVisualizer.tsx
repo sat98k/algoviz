@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
 import { TspState } from '../../algorithms/tsp';
+import { TspApproxState } from '../../algorithms/tspApprox';
 import { TspDpMatrix } from './TspDpMatrix';
 import { TspDistanceMatrixEditor } from './TspDistanceMatrixEditor';
 import { Table, Compass, CheckCircle, MapPin, SlidersHorizontal } from 'lucide-react';
@@ -12,12 +13,17 @@ interface TspVisualizerProps {
   presets?: any[];
 }
 
+type CombinedTspState = Omit<TspState, 'currentPhase'> &
+  Partial<Omit<TspApproxState, 'currentPhase'>> & {
+    currentPhase?: string;
+  };
+
 export const TspVisualizer: React.FC<TspVisualizerProps> = ({
   step,
   onApplyInputs,
   presets,
 }) => {
-  const state = (step.state || {}) as TspState;
+  const state = (step.state || {}) as CombinedTspState;
   const numCities = state.numCities || 4;
   const cities = state.cities || [];
   const costMatrix = state.costMatrix || [];
@@ -136,8 +142,26 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
       bg: 'bg-acid-500/15',
       border: 'border-acid-500/40',
     },
+    mst: {
+      label: 'PHASE 1: BUILD MST (PRIM)',
+      color: 'text-sky-400',
+      bg: 'bg-sky-950/40',
+      border: 'border-sky-500/40',
+    },
+    double: {
+      label: 'PHASE 2: DOUBLE MST EDGES',
+      color: 'text-amber-glow',
+      bg: 'bg-amber/20',
+      border: 'border-amber/40',
+    },
+    shortcut: {
+      label: 'PHASE 3: DFS PREORDER & SHORTCUT',
+      color: 'text-purple-400',
+      bg: 'bg-purple-950/40',
+      border: 'border-purple-500/40',
+    },
     complete: {
-      label: 'OPTIMAL CYCLE VERIFIED',
+      label: 'TOUR COMPLETE',
       color: 'text-acid-500',
       bg: 'bg-acid-500/20',
       border: 'border-acid-500',
@@ -551,10 +575,69 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Dynamic Programming State Matrix Pane */}
-        {showDpMatrix && (
+        {/* Right Column: Dynamic Programming State Matrix Pane or Approx Telemetry */}
+        {showDpMatrix && !state.isApprox && (
           <div className="flex flex-col w-full xl:col-span-5">
             <TspDpMatrix step={step} onClose={() => setShowDpMatrix(false)} />
+          </div>
+        )}
+
+        {showDpMatrix && state.isApprox && (
+          <div className="flex flex-col w-full xl:col-span-5 p-4 bg-obsidian-950 border border-hairline font-mono text-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-hairline pb-2.5">
+              <span className="font-bold text-chalk-200 uppercase tracking-wider">
+                MST 2-Approximation Telemetry
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] bg-amber/20 text-amber-glow border border-amber/30 font-bold uppercase">
+                2.0 × OPT Bound
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between py-1 border-b border-hairline/50 text-chalk-400">
+                <span>MST Weight W(T):</span>
+                <strong className="text-sky-400 font-bold">{state.mstWeight || 0}</strong>
+              </div>
+              <div className="flex justify-between py-1 border-b border-hairline/50 text-chalk-400">
+                <span>Doubled Eulerian Weight:</span>
+                <strong className="text-amber-glow font-bold">{(state.mstWeight || 0) * 2}</strong>
+              </div>
+              <div className="flex justify-between py-1 border-b border-hairline/50 text-chalk-400">
+                <span>Current Tour Cost:</span>
+                <strong className="text-acid-500 font-bold">{state.optimalCost || 0}</strong>
+              </div>
+              <div className="flex justify-between py-1 text-chalk-400">
+                <span>Theoretical Guarantee:</span>
+                <strong className="text-chalk-200">Cost(Tour) ≤ 2 · W(T) ≤ 2 · OPT</strong>
+              </div>
+            </div>
+
+            {/* Step Explanation Card */}
+            <div className="p-3 bg-obsidian-900 border border-hairline text-chalk-300 font-sans text-xs">
+              <div className="font-mono text-[11px] font-bold text-amber mb-1 uppercase tracking-wider">
+                Procedure Phase:
+              </div>
+              <div>{state.explanation || 'Constructing 2-approximation Hamiltonian cycle via MST-Doubling.'}</div>
+            </div>
+
+            {/* MST Edges List */}
+            {state.mstEdges && state.mstEdges.length > 0 && (
+              <div className="p-3 bg-obsidian-900 border border-hairline">
+                <div className="font-mono text-[11px] font-bold text-sky-400 mb-1.5 uppercase">
+                  MST Edges ({state.mstEdges.length}):
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {state.mstEdges.map((e: any, idx: number) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 rounded bg-sky-950/60 border border-sky-600/40 text-sky-300 font-mono text-[10px]"
+                    >
+                      ({cities[e.u]?.label || e.u}, {cities[e.v]?.label || e.v}): {e.weight}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

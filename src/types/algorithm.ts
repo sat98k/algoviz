@@ -22,7 +22,9 @@ export type VisualizerType =
   | 'RecursionTreeVisualizer'
   | 'FractionalKnapsackVisualizer'
   | 'AssemblyLineVisualizer'
-  | 'TspVisualizer';
+  | 'TspVisualizer'
+  | 'SetCoverVisualizer'
+  | 'SweepLineVisualizer';
 
 export interface ComplexityInfo {
   timeBest?: string;

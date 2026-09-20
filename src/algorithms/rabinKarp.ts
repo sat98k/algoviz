@@ -8,6 +8,7 @@ export interface RabinKarpState {
   patternIndex: number;
   shift: number;
   matchIndices: number[];
+  verifiedIndices?: number[];
   currentComparison?: {
     textChar?: string;
     patternChar?: string;
@@ -22,10 +23,22 @@ export interface RabinKarpState {
     hashMatch: boolean;
     spurious?: boolean;
   };
+  rollingInfo?: {
+    removedChar: string;
+    removedAscii: number;
+    removedTerm: number;
+    removedIndex: number;
+    addedChar: string;
+    addedAscii: number;
+    addedIndex: number;
+    prevHash: number;
+    nextHash: number;
+    calculationText: string;
+  };
 }
 
-const D = 256; // radix — size of the character set
-const Q = 101; // a prime modulus that keeps the hash small
+const D = 256; // radix — size of the character set (extended ASCII)
+const Q = 101; // a prime modulus that keeps the hash bounded
 
 export function* rabinKarpSteps(inputs: {
   text: string;
@@ -44,7 +57,7 @@ export function* rabinKarpSteps(inputs: {
   let spuriousHits = 0;
   let hashChecks = 0;
 
-  // h = D^(m-1) % Q — the weight of the leading character, used to roll the hash
+  // h = D^(m-1) % Q — the high-order digit weight used to remove the outgoing character
   let h = 1;
   for (let i = 0; i < m - 1; i++) {
     h = (h * D) % Q;
@@ -68,8 +81,8 @@ export function* rabinKarpSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Rabin-Karp Algorithm',
-    description: `Target Text of length ${n}, Pattern of length ${m}. Using radix d = ${D} and prime modulus q = ${Q}. Leading-digit weight h = d^(m-1) mod q = ${h}.`,
-    codeLine: 1,
+    description: `Target text length n = ${n}, pattern length m = ${m}. Base radix d = ${D}, prime modulus q = ${Q}. Leading-digit weight h = d^(m-1) mod q = ${h}.`,
+    codeLine: [1, 2, 3, 4],
     state: {
       text,
       pattern,
@@ -78,6 +91,7 @@ export function* rabinKarpSteps(inputs: {
       patternIndex: 0,
       shift: 0,
       matchIndices: [],
+      verifiedIndices: [],
       hashInfo: hashInfo(0, 0, false),
     },
     highlights: {},
@@ -95,9 +109,9 @@ export function* rabinKarpSteps(inputs: {
 
     yield {
       stepIndex: stepIndex++,
-      title: 'Compute pattern hash and first window hash',
-      description: `hash(P) = ${p}. hash(T[0…${m - 1}]) = ${t}. Both computed in O(m) using Horner's rule.`,
-      codeLine: 6,
+      title: 'Compute Initial Pattern & First Window Hashes',
+      description: `Pattern hash P = ${p}. First window hash T[0…${m - 1}] = ${t}. Both computed in O(m) time using Horner's polynomial rule.`,
+      codeLine: [5, 6],
       state: {
         text,
         pattern,
@@ -106,6 +120,7 @@ export function* rabinKarpSteps(inputs: {
         patternIndex: 0,
         shift: 0,
         matchIndices: [],
+        verifiedIndices: [],
         hashInfo: hashInfo(p, t, p === t),
       },
       highlights: { textIndex: 0, patternIndex: 0, shiftAmount: 0 },
@@ -119,11 +134,11 @@ export function* rabinKarpSteps(inputs: {
 
       yield {
         stepIndex: stepIndex++,
-        title: `Shift s = ${s}: compare window hash ${t} vs pattern hash ${p}`,
+        title: `Shift ${s}: Compare Window Hash (${t}) vs Pattern Hash (${p})`,
         description: hashMatch
-          ? `Hashes match (${t} == ${p}). Verify the window character by character to rule out a collision.`
-          : `Hashes differ (${t} != ${p}). No match possible at this alignment — skip verification.`,
-        codeLine: 8,
+          ? `Hashes match (${t} == ${p})! Candidate alignment found at shift ${s}. Performing character-by-character verification to rule out a hash collision.`
+          : `Hashes differ (${t} != ${p}). No match possible at shift ${s}. Skipping character checks and rolling window right.`,
+        codeLine: [7, 8],
         state: {
           text,
           pattern,
@@ -132,6 +147,7 @@ export function* rabinKarpSteps(inputs: {
           patternIndex: 0,
           shift: s,
           matchIndices: [...matchIndices],
+          verifiedIndices: [],
           hashInfo: hashInfo(p, t, hashMatch),
         },
         highlights: {
@@ -144,6 +160,7 @@ export function* rabinKarpSteps(inputs: {
       };
 
       if (hashMatch) {
+        const verified: number[] = [];
         let j = 0;
         for (; j < m; j++) {
           comparisons++;
@@ -151,7 +168,7 @@ export function* rabinKarpSteps(inputs: {
 
           yield {
             stepIndex: stepIndex++,
-            title: `Verify text[${s + j}] vs pattern[${j}]`,
+            title: `Verify Character: text[${s + j}] vs pattern[${j}]`,
             description: `Comparing text[${s + j}] ('${text[s + j]}') with pattern[${j}] ('${pattern[j]}'). Result: ${isMatch ? 'MATCH' : 'MISMATCH'}.`,
             codeLine: 9,
             state: {
@@ -162,6 +179,7 @@ export function* rabinKarpSteps(inputs: {
               patternIndex: j,
               shift: s,
               matchIndices: [...matchIndices],
+              verifiedIndices: [...verified],
               currentComparison: {
                 textChar: text[s + j],
                 patternChar: pattern[j],
@@ -178,16 +196,19 @@ export function* rabinKarpSteps(inputs: {
             metrics: { comparisons, iterations },
           };
 
-          if (!isMatch) break;
+          if (!isMatch) {
+            break;
+          }
+          verified.push(j);
         }
 
         if (j === m) {
           matchIndices.push(s);
           yield {
             stepIndex: stepIndex++,
-            title: `Pattern Match Found at Index ${s}!`,
-            description: `All ${m} characters matched. Pattern "${pattern}" occurs at text position ${s}.`,
-            codeLine: 9,
+            title: `Full Pattern Match Confirmed at Shift ${s}!`,
+            description: `All ${m} characters matched! Pattern "${pattern}" occurs at text position ${s}.`,
+            codeLine: 10,
             state: {
               text,
               pattern,
@@ -196,6 +217,7 @@ export function* rabinKarpSteps(inputs: {
               patternIndex: m - 1,
               shift: s,
               matchIndices: [...matchIndices],
+              verifiedIndices: Array.from({ length: m }, (_, idx) => idx),
               hashInfo: hashInfo(p, t, true),
             },
             highlights: {
@@ -209,9 +231,9 @@ export function* rabinKarpSteps(inputs: {
           spuriousHits++;
           yield {
             stepIndex: stepIndex++,
-            title: `Spurious Hit at Index ${s}`,
-            description: `Hashes collided (${t} == ${p}) but the strings differ at offset ${j}. This is a false positive — keep scanning.`,
-            codeLine: 9,
+            title: `Spurious Hit (Hash Collision) at Shift ${s}`,
+            description: `Hashes matched (${t} == ${p}), but characters differed at pattern offset ${j} ('${text[s + j]}' != '${pattern[j]}'). False positive recorded.`,
+            codeLine: 12,
             state: {
               text,
               pattern,
@@ -220,6 +242,12 @@ export function* rabinKarpSteps(inputs: {
               patternIndex: j,
               shift: s,
               matchIndices: [...matchIndices],
+              verifiedIndices: [...verified],
+              currentComparison: {
+                textChar: text[s + j],
+                patternChar: pattern[j],
+                isMatch: false,
+              },
               hashInfo: hashInfo(p, t, true, true),
             },
             highlights: {
@@ -235,15 +263,22 @@ export function* rabinKarpSteps(inputs: {
 
       if (s < n - m) {
         const removed = text[s];
+        const removedAscii = text.charCodeAt(s);
+        const removedTerm = (removedAscii * h) % Q;
         const added = text[s + m];
-        t = (D * (t - text.charCodeAt(s) * h) + text.charCodeAt(s + m)) % Q;
+        const addedAscii = text.charCodeAt(s + m);
+        const prevT = t;
+
+        t = (D * (t - removedAscii * h) + addedAscii) % Q;
         if (t < 0) t += Q;
+
+        const formula = `(${D} × (${prevT} − '${removed}'(${removedAscii}) × ${h}) + '${added}'(${addedAscii})) mod ${Q} = ${t}`;
 
         yield {
           stepIndex: stepIndex++,
-          title: `Roll hash to window at shift s = ${s + 1}`,
-          description: `Slide right: drop leading '${removed}' (weight h = ${h}) and append '${added}'. New window hash = ${t}, computed in O(1).`,
-          codeLine: 11,
+          title: `Roll Hash to Shift ${s + 1}`,
+          description: `Slide window 1 position right: subtract outgoing '${removed}' (weight ${h}) and add incoming '${added}'. New window hash = ${t} computed in O(1) time.`,
+          codeLine: [13, 14],
           state: {
             text,
             pattern,
@@ -252,7 +287,20 @@ export function* rabinKarpSteps(inputs: {
             patternIndex: 0,
             shift: s + 1,
             matchIndices: [...matchIndices],
+            verifiedIndices: [],
             hashInfo: hashInfo(p, t, p === t),
+            rollingInfo: {
+              removedChar: removed,
+              removedAscii,
+              removedTerm,
+              removedIndex: s,
+              addedChar: added,
+              addedAscii,
+              addedIndex: s + m,
+              prevHash: prevT,
+              nextHash: t,
+              calculationText: formula,
+            },
           },
           highlights: {
             textIndex: s + 1,
@@ -268,8 +316,8 @@ export function* rabinKarpSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Rabin-Karp Search Complete',
-    description: `Search completed. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. Hash checks: ${hashChecks}, spurious hits: ${spuriousHits}, character comparisons: ${comparisons}.`,
-    codeLine: 12,
+    description: `Search complete. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. Total hash checks: ${hashChecks}, spurious hits: ${spuriousHits}, verified comparisons: ${comparisons}.`,
+    codeLine: 15,
     state: {
       text,
       pattern,
@@ -278,6 +326,7 @@ export function* rabinKarpSteps(inputs: {
       patternIndex: 0,
       shift: Math.max(n - m, 0),
       matchIndices: [...matchIndices],
+      verifiedIndices: [],
       hashInfo: hashInfo(0, 0, false),
     },
     highlights: {
