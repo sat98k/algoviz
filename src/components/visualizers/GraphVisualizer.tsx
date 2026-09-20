@@ -33,10 +33,11 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
   const isGraphColoring = state.isGraphColoring === true || state.colorAssignment !== undefined;
   const isBellmanFord = state.hasNegativeCycle !== undefined || state.distances !== undefined;
 
-  // Default to dual split view for Bellman-Ford, Floyd-Warshall, and Push-Relabel
+  // Default to dual split view for Bellman-Ford, Floyd-Warshall, Push-Relabel, and Ford-Fulkerson / Edmonds-Karp
   const [activeTab, setActiveTab] = useState<ViewTab>(
-    isBellmanFord || isFloyd || isPushRelabel ? 'both' : 'graph'
+    isBellmanFord || isFloyd || isPushRelabel || isFordFulkerson ? 'both' : 'graph'
   );
+  const [flowMatrixMode, setFlowMatrixMode] = useState<'residual' | 'flow'>('residual');
 
   const svgWidth = 600;
   const svgHeight = 380;
@@ -708,91 +709,215 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
     </div>
   );
 
-  // Render Floyd-Warshall Distance Matrix or Ford-Fulkerson Capacity Matrix
-  const renderMatrixTable = () => (
-    <div className="w-full overflow-x-auto max-h-[360px] p-4 bg-obsidian-950 border border-hairline">
-      <table className="w-full border-collapse text-center text-xs font-mono">
-        <thead>
-          <tr className="bg-obsidian-900/90">
-            <th className="p-2.5 border-b border-r border-hairline text-chalk-400 uppercase tracking-wider text-[11px] font-bold">
-              Src \ Dst
-            </th>
-            {nodes.map((n, colIdx) => {
-              const isColDest = isFloyd && state.j === colIdx;
-              const isColPivot = isFloyd && state.k === colIdx;
+  // Render Floyd-Warshall Distance Matrix or Ford-Fulkerson / Edmonds-Karp Residual & Flow Matrix
+  const renderMatrixTable = () => {
+    const isResidualMode = flowMatrixMode === 'residual';
+    const matrixData: (number | null)[][] = isFloyd
+      ? state.distMatrix
+      : isFordFulkerson
+      ? (isResidualMode ? state.residualMatrix : state.flowMatrix) || state.capacityMatrix
+      : state.capacityMatrix;
 
-              return (
-                <th
-                  key={n.id}
-                  className={`p-2.5 border-b border-hairline text-[11px] font-bold transition-colors ${
-                    isColDest
-                      ? 'bg-purple-950/60 text-purple-300 border-b-2 border-b-purple-400'
-                      : isColPivot
-                      ? 'bg-amber-950/50 text-amber-300 border-b-2 border-b-amber-400'
-                      : 'text-chalk-300'
+    const getAugmentingRelation = (r: number, c: number): 'forward' | 'backward' | null => {
+      if (!isFordFulkerson || !state.currentAugmentingPath) return null;
+      const path: string[] = state.currentAugmentingPath;
+      for (let i = 0; i < path.length - 1; i++) {
+        if (path[i] === `${r}` && path[i + 1] === `${c}`) return 'forward';
+        if (path[i] === `${c}` && path[i + 1] === `${r}`) return 'backward';
+      }
+      return null;
+    };
+
+    return (
+      <div className="w-full flex flex-col gap-2.5 p-4 bg-obsidian-950 border border-hairline">
+        {/* Sub-header controls for Ford-Fulkerson / Edmonds-Karp */}
+        {isFordFulkerson && (
+          <div className="flex flex-wrap items-center justify-between pb-2 border-b border-hairline/60 gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-chalk-400 uppercase font-semibold">
+                Table Mode:
+              </span>
+              <div className="flex items-center bg-obsidian-900 border border-hairline p-0.5 rounded text-[11px] font-mono">
+                <button
+                  onClick={() => setFlowMatrixMode('residual')}
+                  className={`px-2.5 py-1 rounded transition-all ${
+                    isResidualMode
+                      ? 'bg-acid-500/20 text-acid-400 font-bold border border-acid-500/40'
+                      : 'text-chalk-400 hover:text-chalk-200'
                   }`}
+                  title="Residual capacity R[u][v] = c_f(u, v) available to push flow"
                 >
-                  {n.label}
-                  {isColPivot && <span className="block text-[8px] text-amber-400 font-normal">PIVOT</span>}
-                  {isColDest && <span className="block text-[8px] text-purple-300 font-normal">DST</span>}
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {(isFloyd ? state.distMatrix : state.capacityMatrix)?.map((row: any[], r: number) => {
-            const isRowSrc = isFloyd && state.i === r;
-            const isRowPivot = isFloyd && state.k === r;
-
-            return (
-              <tr key={r} className="hover:bg-obsidian-850/60 transition-colors">
-                <th
-                  className={`p-2.5 border-r border-b border-hairline text-[11px] font-bold transition-colors ${
-                    isRowSrc
-                      ? 'bg-sky-950/60 text-sky-300 border-r-2 border-r-sky-400'
-                      : isRowPivot
-                      ? 'bg-amber-950/50 text-amber-300 border-r-2 border-r-amber-400'
-                      : 'text-chalk-300'
+                  Residual R[u][v]
+                </button>
+                <button
+                  onClick={() => setFlowMatrixMode('flow')}
+                  className={`px-2.5 py-1 rounded transition-all ${
+                    !isResidualMode
+                      ? 'bg-amber/20 text-amber-glow font-bold border border-amber/40'
+                      : 'text-chalk-400 hover:text-chalk-200'
                   }`}
+                  title="Current edge flow vs original capacity f(u, v) / c(u, v)"
                 >
-                  {nodes[r]?.label}
-                  {isRowSrc && <span className="block text-[8px] text-sky-300 font-normal">SRC</span>}
-                  {isRowPivot && !isRowSrc && (
-                    <span className="block text-[8px] text-amber-400 font-normal">PIVOT</span>
-                  )}
-                </th>
-                {row.map((val: any, c: number) => {
-                  const isUpdated = state.updatedCell?.i === r && state.updatedCell?.j === c;
-                  const isSubpathIK = isFloyd && state.i === r && state.k === c;
-                  const isSubpathKJ = isFloyd && state.k === r && state.j === c;
+                  Flow / Capacity (f / c)
+                </button>
+              </div>
+            </div>
+            {state.bottleneckCapacity !== undefined && (state.phase === 'augment' || state.phase === 'path_found') && (
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-acid-500/20 border border-acid-500/40 text-acid-400 font-bold">
+                Augment Δf = {state.bottleneckCapacity}
+              </span>
+            )}
+          </div>
+        )}
 
-                  let cellStyle = 'text-chalk-300';
-                  if (isUpdated) {
-                    cellStyle =
-                      'bg-amber/30 text-amber-glow font-extrabold border-2 border-amber shadow-sm scale-105';
-                  } else if (isSubpathIK) {
-                    cellStyle = 'bg-sky-950/50 text-sky-300 font-semibold border border-sky-600/40';
-                  } else if (isSubpathKJ) {
-                    cellStyle = 'bg-purple-950/50 text-purple-300 font-semibold border border-purple-600/40';
-                  }
+        <div className="w-full overflow-x-auto max-h-[340px]">
+          <table className="w-full border-collapse text-center text-xs font-mono">
+            <thead>
+              <tr className="bg-obsidian-900/90">
+                <th className="p-2.5 border-b border-r border-hairline text-chalk-400 uppercase tracking-wider text-[11px] font-bold">
+                  Src \ Dst
+                </th>
+                {nodes.map((n, colIdx) => {
+                  const isColDest = isFloyd && state.j === colIdx;
+                  const isColPivot = isFloyd && state.k === colIdx;
+                  const isColSource = isFordFulkerson && `${colIdx}` === state.source;
+                  const isColSink = isFordFulkerson && `${colIdx}` === state.sink;
 
                   return (
-                    <td
-                      key={c}
-                      className={`p-2.5 border border-hairline tabular-nums text-xs transition-all ${cellStyle}`}
+                    <th
+                      key={n.id}
+                      className={`p-2.5 border-b border-hairline text-[11px] font-bold transition-colors ${
+                        isColDest
+                          ? 'bg-purple-950/60 text-purple-300 border-b-2 border-b-purple-400'
+                          : isColPivot
+                          ? 'bg-amber-950/50 text-amber-300 border-b-2 border-b-amber-400'
+                          : isColSource
+                          ? 'bg-sky-950/40 text-sky-300'
+                          : isColSink
+                          ? 'bg-emerald-950/40 text-emerald-300'
+                          : 'text-chalk-300'
+                      }`}
                     >
-                      {val === null ? '∞' : val}
-                    </td>
+                      {n.label}
+                      {isColPivot && <span className="block text-[8px] text-amber-400 font-normal">PIVOT</span>}
+                      {isColDest && <span className="block text-[8px] text-purple-300 font-normal">DST</span>}
+                      {isColSource && <span className="block text-[8px] text-sky-400 font-normal">SRC</span>}
+                      {isColSink && <span className="block text-[8px] text-emerald-400 font-normal">SNK</span>}
+                    </th>
                   );
                 })}
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
+            </thead>
+            <tbody>
+              {matrixData?.map((row: any[], r: number) => {
+                const isRowSrc = isFloyd && state.i === r;
+                const isRowPivot = isFloyd && state.k === r;
+                const isRowSource = isFordFulkerson && `${r}` === state.source;
+                const isRowSink = isFordFulkerson && `${r}` === state.sink;
+
+                return (
+                  <tr key={r} className="hover:bg-obsidian-850/60 transition-colors">
+                    <th
+                      className={`p-2.5 border-r border-b border-hairline text-[11px] font-bold transition-colors ${
+                        isRowSrc
+                          ? 'bg-sky-950/60 text-sky-300 border-r-2 border-r-sky-400'
+                          : isRowPivot
+                          ? 'bg-amber-950/50 text-amber-300 border-r-2 border-r-amber-400'
+                          : isRowSource
+                          ? 'bg-sky-950/40 text-sky-300'
+                          : isRowSink
+                          ? 'bg-emerald-950/40 text-emerald-300'
+                          : 'text-chalk-300'
+                      }`}
+                    >
+                      {nodes[r]?.label}
+                      {isRowSrc && <span className="block text-[8px] text-sky-300 font-normal">SRC</span>}
+                      {isRowPivot && !isRowSrc && (
+                        <span className="block text-[8px] text-amber-400 font-normal">PIVOT</span>
+                      )}
+                      {isRowSource && <span className="block text-[8px] text-sky-400 font-normal">SRC</span>}
+                      {isRowSink && <span className="block text-[8px] text-emerald-400 font-normal">SNK</span>}
+                    </th>
+                    {row.map((val: any, c: number) => {
+                      const isUpdated = state.updatedCell?.i === r && state.updatedCell?.j === c;
+                      const isSubpathIK = isFloyd && state.i === r && state.k === c;
+                      const isSubpathKJ = isFloyd && state.k === r && state.j === c;
+                      const augRel = getAugmentingRelation(r, c);
+
+                      let cellStyle = 'text-chalk-300';
+                      let cellContent: React.ReactNode = val === null ? '∞' : val;
+
+                      if (isUpdated) {
+                        cellStyle =
+                          'bg-amber/30 text-amber-glow font-extrabold border-2 border-amber shadow-sm scale-105';
+                      } else if (isSubpathIK) {
+                        cellStyle = 'bg-sky-950/50 text-sky-300 font-semibold border border-sky-600/40';
+                      } else if (isSubpathKJ) {
+                        cellStyle = 'bg-purple-950/50 text-purple-300 font-semibold border border-purple-600/40';
+                      } else if (augRel === 'forward') {
+                        cellStyle =
+                          'bg-acid-500/25 text-acid-400 font-bold border-2 border-acid-500/70 shadow-sm';
+                      } else if (augRel === 'backward') {
+                        cellStyle =
+                          'bg-purple-950/60 text-purple-300 font-bold border border-purple-500/60';
+                      }
+
+                      if (isFordFulkerson) {
+                        if (!isResidualMode) {
+                          // Flow / Capacity mode
+                          const originalCap = state.capacityMatrix?.[r]?.[c] ?? 0;
+                          const currentFlow = state.flowMatrix?.[r]?.[c] ?? 0;
+                          if (originalCap > 0) {
+                            const isSaturated = currentFlow >= originalCap;
+                            cellContent = (
+                              <span
+                                className={
+                                  isSaturated
+                                    ? 'text-acid-400 font-bold'
+                                    : currentFlow > 0
+                                    ? 'text-amber font-semibold'
+                                    : 'text-chalk-300'
+                                }
+                              >
+                                {currentFlow}/{originalCap}
+                              </span>
+                            );
+                          } else {
+                            cellContent = <span className="text-chalk-600">—</span>;
+                          }
+                        } else {
+                          // Residual capacity mode
+                          const resCap = Number(val) || 0;
+                          if (resCap === 0) {
+                            cellContent = <span className="text-chalk-600">0</span>;
+                          } else {
+                            cellContent = (
+                              <span className={augRel ? 'font-extrabold text-acid-300' : 'text-chalk-200'}>
+                                {resCap}
+                              </span>
+                            );
+                          }
+                        }
+                      }
+
+                      return (
+                        <td
+                          key={c}
+                          className={`p-2.5 border border-hairline tabular-nums text-xs transition-all ${cellStyle}`}
+                        >
+                          {cellContent}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col items-center w-full min-h-[420px] p-4 sm:p-6 bg-obsidian-900 border border-hairline transition-all">
@@ -922,7 +1047,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                   : 'text-chalk-400 hover:text-chalk-200'
               }`}
             >
-              {isFloyd ? 'MATRIX ONLY' : isBellmanFord ? 'DISTANCES ONLY' : isPushRelabel ? 'HEIGHTS ONLY' : 'CAPACITY ONLY'}
+              {isFloyd ? 'MATRIX ONLY' : isBellmanFord ? 'DISTANCES ONLY' : isPushRelabel ? 'HEIGHTS ONLY' : 'MATRIX ONLY'}
             </button>
             <button
               onClick={() => setActiveTab('both')}
@@ -969,6 +1094,8 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                   ? 'DISTANCE & PREDECESSOR TABLE'
                   : isFloyd
                   ? 'DISTANCE MATRIX D(k)'
+                  : isFordFulkerson
+                  ? (flowMatrixMode === 'residual' ? 'RESIDUAL CAPACITY MATRIX R[u][v]' : 'EDGE FLOW MATRIX f(u,v) / c(u,v)')
                   : 'CAPACITY MATRIX'}
               </span>
               {isFloyd && state.k >= 0 && (

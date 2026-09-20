@@ -227,7 +227,7 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({
                     placeholder={field.placeholder}
                     value={displayVal}
                     onChange={(e) => handleInputChange(field.name, e.target.value, field.type)}
-                    className="px-3 py-2 bg-obsidian-950 border border-hairline text-xs font-mono text-chalk-200 placeholder-chalk-600 focus:outline-none focus:border-amber"
+                    className="px-3 py-2 bg-obsidian-950 border border-hairline text-xs font-mono text-chalk-100 placeholder:text-chalk-400 focus:outline-none focus:border-amber"
                   />
                 )}
                 {field.helperText && (

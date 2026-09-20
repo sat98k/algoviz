@@ -186,7 +186,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
       case 'BoardVisualizer':
         return <BoardVisualizer step={currentStep} />;
       case 'GraphVisualizer':
-        return <GraphVisualizer step={currentStep} />;
+        return <GraphVisualizer key={config.id} step={currentStep} />;
       case 'PointCanvasVisualizer':
         return <PointCanvasVisualizer step={currentStep} />;
       case 'StringMatchVisualizer':

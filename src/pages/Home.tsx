@@ -5,7 +5,6 @@ import {
   Search,
   ArrowRight,
   ArrowUpRight,
-  GitCompare,
   Terminal,
   BookOpen,
 } from 'lucide-react';
@@ -14,13 +13,11 @@ import { MODULE_DESCRIPTIONS } from './ModulePage';
 interface HomeProps {
   onSelectModule: (moduleNumber: number) => void;
   onSelectAlgorithm: (id: string) => void;
-  onNavigateComparison: () => void;
 }
 
 export const Home: React.FC<HomeProps> = ({
   onSelectModule,
   onSelectAlgorithm,
-  onNavigateComparison,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const shouldReduceMotion = useReducedMotion();
@@ -102,35 +99,23 @@ export const Home: React.FC<HomeProps> = ({
               live code execution, recurrence metrics, and invariant proofs.
             </p>
           </motion.div>
-
-          {/* Direct Action: Compare DP vs B&B */}
-          <div className="shrink-0 flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={onNavigateComparison}
-              className="group flex items-center gap-2.5 px-5 py-3.5 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-200 border border-hairline hover:border-amber/60 text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200"
-            >
-              <GitCompare className="w-4 h-4 text-amber" />
-              <span>Compare DP vs B&B</span>
-              <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </button>
-          </div>
         </div>
 
         {/* Global Quick Search Bar */}
-        <div className="mt-6 pt-5 border-t border-hairline/60 relative">
-          <div className="relative flex items-center w-full">
-            <Search className="w-4 h-4 text-chalk-500 absolute left-4 pointer-events-none" />
+        <div className="mt-6 pt-5 border-t border-hairline relative">
+          <div className="relative flex items-center w-full group">
+            <Search className="w-4 h-4 text-chalk-400 absolute left-4 pointer-events-none transition-colors group-focus-within:text-amber" />
             <input
               type="text"
               placeholder="Quick search any algorithm across all modules (e.g., 'Rabin-Karp', 'Held-Karp', 'Push-Relabel', 'KMP')..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-10 py-3 bg-obsidian-950 text-xs sm:text-sm font-mono text-chalk-100 placeholder-chalk-600 border border-hairline focus:border-amber focus:outline-none transition-colors"
+              className="w-full pl-12 pr-20 py-3.5 bg-obsidian-950 text-xs sm:text-sm font-mono text-chalk-100 placeholder:text-chalk-400 border border-hairline hover:border-chalk-400/40 focus:border-amber focus:ring-1 focus:ring-amber/40 focus:outline-none transition-all shadow-sm"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-4 font-mono text-xs text-chalk-500 hover:text-chalk-300"
+                className="absolute right-4 px-2.5 py-1 font-mono text-[11px] text-chalk-400 hover:text-amber hover:bg-obsidian-850 border border-hairline rounded transition-all"
               >
                 CLEAR
               </button>

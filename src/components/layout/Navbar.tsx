@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { GitCompare, BookOpen, Sun, Moon } from 'lucide-react';
+import { BookOpen, Sun, Moon } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: string;
-  onNavigate: (view: string) => void;
+  currentView: 'home' | 'module' | 'algorithm' | 'compare';
+  onNavigate: (view: 'home' | 'compare') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
@@ -71,19 +71,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             </span>
           </button>
 
-          <button
-            onClick={() => onNavigate('compare')}
-            className={`group relative px-3 sm:px-4 py-2 text-xs font-mono tracking-wider uppercase transition-all duration-200 ${
-              currentView === 'compare'
-                ? 'text-amber-glow bg-amber-dim/10 border border-amber/30 font-bold'
-                : 'text-chalk-400 hover:text-amber-glow hover:bg-obsidian-850'
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              <GitCompare className="w-3.5 h-3.5 text-amber" />
-              <span>Compare</span>
-            </span>
-          </button>
 
           {/* Theme Toggle Button */}
           <button

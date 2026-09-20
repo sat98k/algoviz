@@ -77,7 +77,6 @@ export function App() {
           <Home
             onSelectModule={selectModule}
             onSelectAlgorithm={selectAlgorithm}
-            onNavigateComparison={() => navigateTo('compare')}
           />
         )}
 

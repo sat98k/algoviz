@@ -160,19 +160,19 @@ export const ModulePage: React.FC<ModulePageProps> = ({
         </div>
 
         {/* In-Module Search Filter */}
-        <div className="mt-8 pt-6 border-t border-hairline/60 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-96 flex items-center">
-            <Search className="w-4 h-4 text-chalk-500 absolute left-3.5 pointer-events-none" />
+        <div className="mt-8 pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="relative w-full sm:w-96 flex items-center group">
+            <Search className="w-4 h-4 text-chalk-400 absolute left-3.5 pointer-events-none transition-colors group-focus-within:text-amber" />
             <input
               type="text"
               placeholder={`Search ${moduleAlgorithms.length} algorithms in Module ${moduleNumber}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-obsidian-900 text-xs font-mono text-chalk-200 placeholder-chalk-500 border border-hairline focus:border-amber/60 focus:outline-none transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 bg-obsidian-950 text-xs font-mono text-chalk-100 placeholder:text-chalk-400 border border-hairline hover:border-chalk-400/40 focus:border-amber focus:ring-1 focus:ring-amber/40 focus:outline-none transition-all shadow-sm"
             />
           </div>
 
-          <span className="font-mono text-xs text-chalk-500 self-end sm:self-center">
+          <span className="font-mono text-xs text-chalk-400 self-end sm:self-center">
             Showing {filteredAlgorithms.length} of {moduleAlgorithms.length} algorithms
           </span>
         </div>
