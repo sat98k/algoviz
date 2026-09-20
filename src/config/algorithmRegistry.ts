@@ -19,7 +19,8 @@ import { tspSteps } from '../algorithms/tsp';
 import { subsetSumSteps } from '../algorithms/subsetSum';
 import { graphColoringSteps } from '../algorithms/graphColoring';
 import { jobSelectionBBSteps } from '../algorithms/jobSelectionBB';
-
+import { edmondsKarpSteps } from "../algorithms/edmondsKarp";
+import { bellmanFordSteps } from "../algorithms/bellmanFord";
 export const algorithmRegistry: AlgorithmConfig[] = [
   // Module 1: Greedy — Fractional Knapsack
   {
@@ -1041,7 +1042,182 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     },
     stepGenerator: floydWarshallSteps,
   },
+  // Module 4: Graph / Shortest Path — Bellman-Ford
+{
+  id: 'bellman-ford',
+  module: 4,
+  moduleName: 'Module 4: Graph Algorithms',
+  name: 'Bellman-Ford (Single-Source Shortest Path)',
+  paradigm: 'Graph',
+  complexity: {
+    timeAverage: 'O(V · E)',
+    timeWorst: 'O(V · E)',
+    spaceWorst: 'O(V)',
+    description: 'Edge relaxation repeated V-1 times',
+  },
+  problemStatement:
+    'Compute the shortest path distances from a single source vertex to all other vertices in a weighted graph, allowing negative edge weights.',
+  explanation:
+    'Initializes distances from the source and repeatedly relaxes all edges. For each edge (u, v), if dist[u] + weight < dist[v], update dist[v]. This is done V-1 times to ensure shortest paths are found.',
+  pseudocode: [
+    'function BellmanFord(V, edges, source):',
+    '  dist = array of size V filled with ∞',
+    '  dist[source] = 0',
+    '  for i = 1 to V - 1:',
+    '    for each edge (u, v, w):',
+    '      if dist[u] + w < dist[v]:',
+    '        dist[v] = dist[u] + w',
+    '  return dist',
+  ],
+  visualizer: 'GraphVisualizer',
+  inputSchema: [
+    {
+      name: 'numNodes',
+      label: 'Number of Nodes (3–6)',
+      type: 'number',
+      defaultValue: 5,
+      min: 3,
+      max: 6,
+    },
+  ],
+  presets: [
+    {
+      name: 'Classic Graph with Negatives',
+      data: {
+        edges: [
+          { u: "0", v: "1", weight: 6 },
+          { u: "0", v: "2", weight: 7 },
+          { u: "1", v: "2", weight: 8 },
+          { u: "1", v: "3", weight: 5 },
+          { u: "1", v: "4", weight: -4 },
+          { u: "2", v: "3", weight: -3 },
+          { u: "2", v: "4", weight: 9 },
+          { u: "3", v: "1", weight: -2 },
+          { u: "4", v: "3", weight: 7 },
+        ],
+        source: 0,
+      },
+    },
+    {
+      name: 'Simple 4-Node Graph',
+      data: {
+        edges: [
+          { u: "0", v: "1", weight: 4 },
+          { u: "0", v: "2", weight: 5 },
+          { u: "1", v: "2", weight: -2 },
+          { u: "2", v: "3", weight: 3 },
+        ],
+        source: 0,
+      },
+    },
+  ],
+  generateRandomInput: () => {
+    return {
+      edges: [
+        { u: "0", v: "1", weight: 5 },
+        { u: "0", v: "2", weight: 3 },
+        { u: "1", v: "3", weight: 6 },
+        { u: "2", v: "3", weight: 2 },
+      ],
+      source: 0,
+    };
+  },
+  stepGenerator: bellmanFordSteps,
+},
+//Module-4: Graph / Maximum Flow — EdmndsKarp
+  {
+  id: 'edmonds-Karp',
+  module: 4,
+  moduleName: 'Module 4: Graph Algorithms',
+  name: 'Edmonds-Karp (Max Flow)',
+  paradigm: 'Max Flow',
+  complexity: {
+    timeAverage: 'O(V · E²)',
+    timeWorst: 'O(V · E²)',
+    spaceWorst: 'O(V + E)',
+    description: 'Uses BFS to find shortest augmenting paths in residual graph',
+  },
+  problemStatement:
+    'Compute the maximum possible flow from a source vertex to a sink vertex in a directed graph with capacity constraints on edges.',
 
+  explanation:
+    'An implementation of Ford-Fulkerson using BFS to find augmenting paths. It repeatedly finds the shortest path (in terms of edges) from source to sink in the residual graph, computes the bottleneck capacity, and updates the flow until no augmenting path exists.',
+
+  pseudocode: [
+    'function EdmondsKarp(capacity, source, sink):',
+    '  flow = 0',
+    '  while there exists a path from source to sink using BFS:',
+    '    bottleneck = minimum capacity in the path',
+    '    for each edge (u, v) in path:',
+    '      capacity[u][v] -= bottleneck',
+    '      capacity[v][u] += bottleneck',
+    '    flow += bottleneck',
+    '  return flow',
+  ],
+
+  visualizer: 'GraphVisualizer',
+
+  inputSchema: [
+    {
+      name: 'source',
+      label: 'Source Node Index',
+      type: 'number',
+      defaultValue: 0,
+    },
+    {
+      name: 'sink',
+      label: 'Sink Node Index',
+      type: 'number',
+      defaultValue: 3,
+    },
+  ],
+
+  presets: [
+    {
+      name: 'Classic 6-Node Network',
+      data: {
+        capacities: [
+          [0, 16, 13, 0, 0, 0],
+          [0, 0, 10, 12, 0, 0],
+          [0, 4, 0, 0, 14, 0],
+          [0, 0, 9, 0, 0, 20],
+          [0, 0, 0, 7, 0, 4],
+          [0, 0, 0, 0, 0, 0],
+        ],
+        source: 0,
+        sink: 5,
+      },
+    },
+    {
+      name: 'Simple 4-Node Network',
+      data: {
+        capacities: [
+          [0, 10, 10, 0],
+          [0, 0, 2, 8],
+          [0, 0, 0, 9],
+          [0, 0, 0, 0],
+        ],
+        source: 0,
+        sink: 3,
+      },
+    },
+  ],
+
+  generateRandomInput: () => {
+    return {
+      capacities: [
+        [0, 8, 5, 0],
+        [0, 0, 3, 9],
+        [0, 0, 0, 4],
+        [0, 0, 0, 0],
+      ],
+      source: 0,
+      sink: 3,
+    };
+  },
+
+  stepGenerator: edmondsKarpSteps,
+},
   // Module 4: Network Flow — Ford-Fulkerson
   {
     id: 'ford-fulkerson',
@@ -1653,7 +1829,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     },
     stepGenerator: jobSelectionBBSteps,
   },
+ 
+
 ];
+
 
 export const getAlgorithmById = (id: string): AlgorithmConfig | undefined => {
   return algorithmRegistry.find((algo) => algo.id === id);

@@ -31,6 +31,7 @@ export function* floydWarshallSteps(inputs: {
   numNodes?: number;
   matrix?: (number | null)[][];
 }): Generator<AlgorithmStep<FloydWarshallState>> {
+
   const defaultMatrix: (number | null)[][] = [
     [0, 3, 8, null, -4],
     [null, 0, null, 1, 7],
@@ -57,7 +58,7 @@ export function* floydWarshallSteps(inputs: {
     }
   }
 
-  // Initialize dist and next matrices
+  // Initialize distance and next matrices
   const dist: (number | null)[][] = Array.from({ length: n }, (_, r) =>
     Array.from({ length: n }, (_, c) => {
       if (r === c) return 0;
@@ -77,16 +78,17 @@ export function* floydWarshallSteps(inputs: {
   let relaxations = 0;
   let iterations = 0;
 
+  // 🔹 Initial Step
   yield {
     stepIndex: stepIndex++,
-    title: 'Initialize Floyd-Warshall Distance Matrix',
-    description: `Initialized ${n}x${n} distance matrix D(0) from direct edge weights. Unconnected pairs set to ∞.`,
+    title: 'Initialize Distance Matrix',
+    description: `Initialized ${n}×${n} matrix. Unreachable paths are treated as ∞ (shown as null).`,
     codeLine: 1,
     state: {
       nodes,
       edges,
-      distMatrix: dist.map((row) => [...row]),
-      nextMatrix: next.map((row) => [...row]),
+      distMatrix: dist.map(row => [...row]),
+      nextMatrix: next.map(row => [...row]),
       k: -1,
       i: -1,
       j: -1,
@@ -95,30 +97,30 @@ export function* floydWarshallSteps(inputs: {
     metrics: { comparisons, relaxations, iterations },
   };
 
-  // 3 nested loops: k from 0 to n-1, i from 0 to n-1, j from 0 to n-1
+  // 🔹 Main algorithm
   for (let k = 0; k < n; k++) {
+
     yield {
       stepIndex: stepIndex++,
-      title: `Starting Iteration k = ${k} (Intermediate Node V${k + 1})`,
-      description: `Testing if paths between all vertex pairs (i, j) can be shortened by routing through intermediate vertex V${k + 1}.`,
+      title: `Iteration k = ${k} (via V${k + 1})`,
+      description: `Checking if going through V${k + 1} gives shorter paths.`,
       codeLine: 2,
       state: {
         nodes,
         edges,
-        distMatrix: dist.map((row) => [...row]),
-        nextMatrix: next.map((row) => [...row]),
+        distMatrix: dist.map(row => [...row]),
+        nextMatrix: next.map(row => [...row]),
         k,
         i: -1,
         j: -1,
       },
-      highlights: {
-        activeNode: `${k}`,
-      },
+      highlights: { activeNode: `${k}` },
       metrics: { comparisons, relaxations, iterations },
     };
 
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
+
         iterations++;
         comparisons++;
 
@@ -128,28 +130,31 @@ export function* floydWarshallSteps(inputs: {
 
         if (dik !== null && dkj !== null) {
           const throughK = dik + dkj;
-          const isShorter = dij === null || throughK < dij;
 
-          if (isShorter) {
+          if (dij === null || throughK < dij) {
             relaxations++;
+
             dist[i][j] = throughK;
-            next[i][j] = next[i][k];
+
+            if (next[i][k] !== null) {
+              next[i][j] = next[i][k];
+            }
 
             yield {
               stepIndex: stepIndex++,
-              title: `Relax Distance D[V${i + 1}][V${j + 1}] via V${k + 1}`,
-              description: `Shortened path: D[${i + 1}][${j + 1}] updated from ${dij === null ? '∞' : dij} to ${throughK} (D[${i + 1}][${k + 1}] = ${dik} + D[${k + 1}][${j + 1}] = ${dkj}).`,
+              title: `Update D[V${i + 1}][V${j + 1}]`,
+              description: `Improved via V${k + 1}: ${dij ?? '∞'} → ${throughK}`,
               codeLine: 3,
               state: {
                 nodes,
                 edges,
-                distMatrix: dist.map((row) => [...row]),
-                nextMatrix: next.map((row) => [...row]),
+                distMatrix: dist.map(row => [...row]),
+                nextMatrix: next.map(row => [...row]),
                 k,
                 i,
                 j,
                 updatedCell: { i, j },
-                explanation: `D[${i + 1}][${j + 1}] = min(${dij ?? '∞'}, ${dik} + ${dkj}) = ${throughK}`,
+                explanation: `min(${dij ?? '∞'}, ${dik} + ${dkj}) = ${throughK}`,
               },
               highlights: {
                 cells: [
@@ -171,41 +176,28 @@ export function* floydWarshallSteps(inputs: {
     }
   }
 
-  // Format path reconstruction helper
-  function reconstructPath(u: number, v: number): number[] {
-    if (dist[u][v] === null) return [];
-    const path: number[] = [u];
-    let curr = u;
-    while (curr !== v) {
-      const nxt = next[curr][v];
-      if (nxt === null) return [];
-      curr = nxt;
-      path.push(curr);
-    }
-    return path;
-  }
-
-  const allPairsPaths: Record<string, { distance: number | null; path: string }> = {};
-  for (let r = 0; r < n; r++) {
-    for (let c = 0; c < n; c++) {
-      const p = reconstructPath(r, c);
-      allPairsPaths[`V${r + 1} -> V${c + 1}`] = {
-        distance: dist[r][c],
-        path: p.map((idx) => `V${idx + 1}`).join(' → '),
-      };
+  // 🔹 Negative cycle detection
+  let hasNegativeCycle = false;
+  for (let i = 0; i < n; i++) {
+    if (dist[i][i] !== null && dist[i][i]! < 0) {
+      hasNegativeCycle = true;
+      break;
     }
   }
 
+  // 🔹 Final Step
   yield {
     stepIndex: stepIndex++,
-    title: 'Floyd-Warshall Complete',
-    description: `All-Pairs Shortest Path computation finished in O(V³) time with ${relaxations} edge relaxations.`,
+    title: hasNegativeCycle ? 'Negative Cycle Detected' : 'Floyd-Warshall Complete',
+    description: hasNegativeCycle
+      ? 'Graph contains a negative cycle.'
+      : `All-pairs shortest paths computed successfully.`,
     codeLine: 4,
     state: {
       nodes,
       edges,
-      distMatrix: dist.map((row) => [...row]),
-      nextMatrix: next.map((row) => [...row]),
+      distMatrix: dist.map(row => [...row]),
+      nextMatrix: next.map(row => [...row]),
       k: n - 1,
       i: n - 1,
       j: n - 1,
@@ -215,7 +207,7 @@ export function* floydWarshallSteps(inputs: {
     isFinal: true,
     result: {
       distanceMatrix: dist,
-      paths: allPairsPaths,
+      hasNegativeCycle,
     },
   };
 }
