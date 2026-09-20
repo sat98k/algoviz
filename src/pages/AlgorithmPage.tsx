@@ -15,6 +15,8 @@ import { FractionalKnapsackVisualizer } from '../components/visualizers/Fraction
 import { RecursionTreeVisualizer } from '../components/visualizers/RecursionTreeVisualizer';
 import { AssemblyLineVisualizer } from '../components/visualizers/AssemblyLineVisualizer';
 import { TspVisualizer } from '../components/visualizers/TspVisualizer';
+import { SetCoverVisualizer } from '../components/visualizers/SetCoverVisualizer';
+import { SweepLineVisualizer } from '../components/visualizers/SweepLineVisualizer';
 import { TreeTraversalOverride, createHuffmanDecodingAlgorithmSteps } from '../utils/huffmanCodec';
 import { HUFFMAN_DECODING_PSEUDOCODE } from '../algorithms/huffman';
 
@@ -204,6 +206,10 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
             presets={config.presets}
           />
         );
+      case 'SetCoverVisualizer':
+        return <SetCoverVisualizer step={currentStep} />;
+      case 'SweepLineVisualizer':
+        return <SweepLineVisualizer step={currentStep} />;
       default:
         return (
           <div className="p-12 text-center font-mono text-xs text-chalk-500 border border-hairline bg-obsidian-950">

@@ -23,6 +23,28 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
   const range = Math.max(maxVal - minVal, 1);
 
   const getBarColor = (index: number) => {
+    if (state.mode === 'hiring') {
+      if (index === state.currentBestIndex) {
+        return 'bg-purple-500 border-purple-300 shadow-purple-500/50';
+      }
+      if (index === state.currentIndex && state.currentDecision === 'hire') {
+        return 'bg-emerald-500 border-emerald-300 shadow-emerald-500/40 animate-pulse';
+      }
+      if (index === state.currentIndex && state.currentDecision === 'skip') {
+        return 'bg-rose-500 border-rose-300 shadow-rose-500/50';
+      }
+      if (index === state.currentIndex) {
+        return 'bg-amber-400 border-amber-200 shadow-amber-400/50';
+      }
+      if (state.hiredIndices?.includes(index)) {
+        return 'bg-emerald-600 border-emerald-400';
+      }
+      if (index < state.currentIndex) {
+        return 'bg-slate-700 border-slate-600 opacity-60';
+      }
+      return 'bg-slate-800 border-slate-700';
+    }
+
     if (index === pivotIndex) {
       return 'bg-purple-500 border-purple-300 shadow-purple-500/50';
     }
@@ -45,6 +67,14 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
   };
 
   const getBarBadge = (index: number) => {
+    if (state.mode === 'hiring') {
+      if (index === state.currentBestIndex) return 'BEST';
+      if (index === state.currentIndex && state.currentDecision === 'hire') return 'HIRED';
+      if (index === state.currentIndex && state.currentDecision === 'skip') return 'SKIP';
+      if (index === state.currentIndex) return 'INTV';
+      if (state.hiredIndices?.includes(index)) return 'HIRED';
+      return null;
+    }
     if (index === pivotIndex) return 'PIVOT';
     if (swapIndices.includes(index)) return 'SWAP';
     if (compareIndices.includes(index)) return 'CMP';
@@ -55,6 +85,19 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
 
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-[380px] p-6 bg-obsidian-900 border border-hairline transition-all">
+      {/* Hiring Problem status banner */}
+      {state.mode === 'hiring' && (
+        <div className="mb-4 text-xs font-mono px-4 py-1.5 bg-obsidian-950 border border-amber/30 text-amber-glow flex flex-wrap items-center gap-3">
+          <span>PROGRESS: <strong>{state.currentIndex >= 0 ? Math.min(state.currentIndex + 1, array.length) : 0} / {array.length}</strong></span>
+          <span>|</span>
+          <span>BEST SO FAR: <strong>{state.currentBestScore !== undefined ? `${state.currentBestScore} (C${state.currentBestIndex})` : 'None'}</strong></span>
+          <span>|</span>
+          <span>HIRED: <strong className="text-acid-500">{state.hiredIndices?.length || 0}</strong></span>
+          <span>|</span>
+          <span>TOTAL COST: <strong className="text-amber">${state.totalCost || 0}</strong></span>
+        </div>
+      )}
+
       {/* Subarray / Window status indicator */}
       {windowRange && (
         <div className="mb-4 text-xs font-mono px-4 py-1.5 bg-obsidian-950 border border-amber/30 text-amber-glow flex items-center gap-3">

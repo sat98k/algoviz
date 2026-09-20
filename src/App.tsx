@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { Home } from './pages/Home';
+import { ModulePage } from './pages/ModulePage';
 import { AlgorithmPage } from './pages/AlgorithmPage';
 import { ComparisonPage } from './pages/ComparisonPage';
+import { algorithmRegistry } from './config/algorithmRegistry';
 
 export function App() {
-  const [view, setView] = useState<'home' | 'algorithm' | 'compare'>('home');
+  const [view, setView] = useState<'home' | 'module' | 'algorithm' | 'compare'>('home');
+  const [selectedModuleNumber, setSelectedModuleNumber] = useState<number>(1);
   const [selectedAlgoId, setSelectedAlgoId] = useState<string>('randomized-quicksort');
 
   // Handle URL hash for easy bookmarking and viva demo navigation
@@ -16,7 +19,15 @@ export function App() {
       if (hash.startsWith('algorithm/')) {
         const id = hash.replace('algorithm/', '');
         setSelectedAlgoId(id);
+        const algo = algorithmRegistry.find((a) => a.id === id);
+        if (algo) {
+          setSelectedModuleNumber(algo.module);
+        }
         setView('algorithm');
+      } else if (hash.startsWith('module/')) {
+        const modNum = parseInt(hash.replace('module/', ''), 10) || 1;
+        setSelectedModuleNumber(modNum);
+        setView('module');
       } else if (hash === 'compare') {
         setView('compare');
       } else {
@@ -39,8 +50,19 @@ export function App() {
     }
   };
 
+  const selectModule = (moduleNum: number) => {
+    setSelectedModuleNumber(moduleNum);
+    window.location.hash = `#/module/${moduleNum}`;
+    setView('module');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const selectAlgorithm = (id: string) => {
     setSelectedAlgoId(id);
+    const algo = algorithmRegistry.find((a) => a.id === id);
+    if (algo) {
+      setSelectedModuleNumber(algo.module);
+    }
     window.location.hash = `#/algorithm/${id}`;
     setView('algorithm');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -53,15 +75,31 @@ export function App() {
       <main className="flex-1">
         {view === 'home' && (
           <Home
+            onSelectModule={selectModule}
             onSelectAlgorithm={selectAlgorithm}
             onNavigateComparison={() => navigateTo('compare')}
+          />
+        )}
+
+        {view === 'module' && (
+          <ModulePage
+            moduleNumber={selectedModuleNumber}
+            onSelectAlgorithm={selectAlgorithm}
+            onSelectModule={selectModule}
+            onBack={() => navigateTo('home')}
           />
         )}
 
         {view === 'algorithm' && (
           <AlgorithmPage
             algorithmId={selectedAlgoId}
-            onBack={() => navigateTo('home')}
+            onBack={() => {
+              if (selectedModuleNumber) {
+                selectModule(selectedModuleNumber);
+              } else {
+                navigateTo('home');
+              }
+            }}
           />
         )}
 

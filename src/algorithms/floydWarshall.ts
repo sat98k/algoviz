@@ -118,7 +118,11 @@ export function* floydWarshallSteps(inputs: {
     };
 
     for (let i = 0; i < n; i++) {
+      if (i === k) continue; // Skip routing through self as intermediate
+
       for (let j = 0; j < n; j++) {
+        if (j === k || i === j) continue; // Skip self-loop or duplicate endpoint
+
         iterations++;
         comparisons++;
 
@@ -126,20 +130,58 @@ export function* floydWarshallSteps(inputs: {
         const dkj = dist[k][j];
         const dij = dist[i][j];
 
-        if (dik !== null && dkj !== null) {
+        if (dik === null || dkj === null) {
+          yield {
+            stepIndex: stepIndex++,
+            title: `Check D[V${i + 1}][V${j + 1}] via V${k + 1}: Unreachable Leg`,
+            description: `Cannot route from V${i + 1} to V${j + 1} through intermediate V${k + 1}: ${
+              dik === null ? `D[V${i + 1}][V${k + 1}] = ∞` : `D[V${k + 1}][V${j + 1}] = ∞`
+            }. Distance remains ${dij === null ? '∞' : dij}.`,
+            codeLine: 7,
+            state: {
+              nodes,
+              edges,
+              distMatrix: dist.map((row) => [...row]),
+              nextMatrix: next.map((row) => [...row]),
+              k,
+              i,
+              j,
+              explanation: `D[V${i + 1}][V${k + 1}] + D[V${k + 1}][V${j + 1}] = ${
+                dik === null ? '∞' : dik
+              } + ${dkj === null ? '∞' : dkj} = ∞`,
+            },
+            highlights: {
+              cells: [
+                { r: i, c: j, status: 'active' as const },
+                ...(dik !== null ? [{ r: i, c: k, status: 'source' as const }] : []),
+                ...(dkj !== null ? [{ r: k, c: j, status: 'source' as const }] : []),
+              ],
+              edges: [
+                ...(dik !== null ? [{ u: `${i}`, v: `${k}`, status: 'active' as const }] : []),
+                ...(dkj !== null ? [{ u: `${k}`, v: `${j}`, status: 'active' as const }] : []),
+              ],
+              activeNode: `${k}`,
+              nodes: [`${i}`, `${j}`, `${k}`],
+            },
+            metrics: { comparisons, relaxations, iterations },
+          };
+        } else {
           const throughK = dik + dkj;
           const isShorter = dij === null || throughK < dij;
 
           if (isShorter) {
             relaxations++;
+            const oldDij = dij;
             dist[i][j] = throughK;
             next[i][j] = next[i][k];
 
             yield {
               stepIndex: stepIndex++,
               title: `Relax Distance D[V${i + 1}][V${j + 1}] via V${k + 1}`,
-              description: `Shortened path: D[${i + 1}][${j + 1}] updated from ${dij === null ? '∞' : dij} to ${throughK} (D[${i + 1}][${k + 1}] = ${dik} + D[${k + 1}][${j + 1}] = ${dkj}).`,
-              codeLine: [6, 7, 8],
+              description: `Shortened path found! D[V${i + 1}][V${j + 1}] updated from ${
+                oldDij === null ? '∞' : oldDij
+              } to ${throughK} (D[V${i + 1}][V${k + 1}] = ${dik} + D[V${k + 1}][V${j + 1}] = ${dkj}).`,
+              codeLine: [7, 8],
               state: {
                 nodes,
                 edges,
@@ -149,7 +191,7 @@ export function* floydWarshallSteps(inputs: {
                 i,
                 j,
                 updatedCell: { i, j },
-                explanation: `D[${i + 1}][${j + 1}] = min(${dij ?? '∞'}, ${dik} + ${dkj}) = ${throughK}`,
+                explanation: `D[V${i + 1}][V${j + 1}] = min(${oldDij ?? '∞'}, ${dik} + ${dkj}) = ${throughK}`,
               },
               highlights: {
                 cells: [
@@ -162,6 +204,38 @@ export function* floydWarshallSteps(inputs: {
                   { u: `${k}`, v: `${j}`, status: 'active' },
                 ],
                 activeNode: `${k}`,
+                nodes: [`${i}`, `${j}`, `${k}`],
+              },
+              metrics: { comparisons, relaxations, iterations },
+            };
+          } else {
+            yield {
+              stepIndex: stepIndex++,
+              title: `Check D[V${i + 1}][V${j + 1}] via V${k + 1}: No Improvement`,
+              description: `Routing via intermediate V${k + 1} gives ${dik} + ${dkj} = ${throughK} ≥ current D[V${i + 1}][V${j + 1}] = ${dij}. Distance remains ${dij}.`,
+              codeLine: 7,
+              state: {
+                nodes,
+                edges,
+                distMatrix: dist.map((row) => [...row]),
+                nextMatrix: next.map((row) => [...row]),
+                k,
+                i,
+                j,
+                explanation: `min(${dij}, ${dik} + ${dkj}) = ${dij} (no change)`,
+              },
+              highlights: {
+                cells: [
+                  { r: i, c: j, status: 'active' },
+                  { r: i, c: k, status: 'source' },
+                  { r: k, c: j, status: 'source' },
+                ],
+                edges: [
+                  { u: `${i}`, v: `${k}`, status: 'active' },
+                  { u: `${k}`, v: `${j}`, status: 'active' },
+                ],
+                activeNode: `${k}`,
+                nodes: [`${i}`, `${j}`, `${k}`],
               },
               metrics: { comparisons, relaxations, iterations },
             };

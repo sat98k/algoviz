@@ -13,8 +13,16 @@ import { suffixTreeSteps } from '../algorithms/suffixTree';
 import { bellmanFordSteps } from '../algorithms/bellmanFord';
 import { floydWarshallSteps } from '../algorithms/floydWarshall';
 import { fordFulkersonSteps } from '../algorithms/fordFulkerson';
+import { edmondsKarpSteps } from '../algorithms/edmondsKarp';
+import { pushRelabelSteps } from '../algorithms/pushRelabel';
 import { grahamScanSteps } from '../algorithms/grahamScan';
+import { jarvisMarchSteps } from '../algorithms/jarvisMarch';
+import { lineSegmentIntersectionSteps } from '../algorithms/lineSegmentIntersection';
+import { hiringProblemSteps } from '../algorithms/hiringProblem';
+import { kargerMinCutSteps } from '../algorithms/kargerMinCut';
 import { vertexCoverApproxSteps } from '../algorithms/vertexCoverApprox';
+import { setCoverSteps } from '../algorithms/setCover';
+import { tspApproxSteps } from '../algorithms/tspApprox';
 import { fractionalKnapsackSteps } from '../algorithms/fractionalKnapsack';
 import { matrixChainMultiplicationSteps } from '../algorithms/matrixChainMultiplication';
 import { karatsubaSteps } from '../algorithms/karatsuba';
@@ -944,11 +952,17 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Slides the pattern across the text one position at a time. At each shift s it compares the pattern against the aligned window T[s..s+m-1] character by character, abandoning the alignment on the first mismatch. Simple and preprocessing-free, but repeats comparisons — worst case (n−m+1)·m.',
     pseudocode: [
       'function NaiveStringMatch(text, pattern):',
-      '  for s = 0 to length(text) - length(pattern):  // Slide pattern across text window',
-      '    for j = 0 to length(pattern) - 1:  // Compare characters at shift s',
-      '      if text[s + j] != pattern[j]: break  // Mismatch detected; slide window',
-      '    if j == length(pattern): recordMatch(s)  // All characters matched',
-      '  return matches  // Return all matched occurrence indices',
+      '  textLength = length(text)',
+      '  patternLength = length(pattern)',
+      '  for shift = 0 to (textLength - patternLength): // Test each alignment window',
+      '    matchFound = true',
+      '    for patternIndex = 0 to (patternLength - 1): // Compare characters sequentially',
+      '      if text[shift + patternIndex] != pattern[patternIndex]:',
+      '        matchFound = false // Character mismatch detected',
+      '        break // Abandon alignment and slide window',
+      '    if matchFound == true:',
+      '      recordMatch(shift) // All pattern characters matched window',
+      '  return matchedIndices',
     ],
     visualizer: 'StringMatchVisualizer',
     inputSchema: [
@@ -999,17 +1013,41 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     explanation:
       'Precomputes a Longest Proper Prefix which is also Suffix (LPS) table in O(m) time. When a mismatch occurs during search, uses LPS to slide the pattern to the next potential alignment position.',
     pseudocode: [
+      'function computeLPS(pattern):',
+      '  patternLength = length(pattern)',
+      '  lpsTable = array of zeros of size patternLength',
+      '  longestPrefixLength = 0',
+      '  currentIndex = 1',
+      '  while currentIndex < patternLength:',
+      '    if pattern[currentIndex] == pattern[longestPrefixLength]:',
+      '      longestPrefixLength = longestPrefixLength + 1',
+      '      lpsTable[currentIndex] = longestPrefixLength',
+      '      currentIndex = currentIndex + 1',
+      '    else:',
+      '      if longestPrefixLength != 0:',
+      '        longestPrefixLength = lpsTable[longestPrefixLength - 1] // Fall back to prior prefix',
+      '      else:',
+      '        lpsTable[currentIndex] = 0',
+      '        currentIndex = currentIndex + 1',
+      '  return lpsTable',
+      '',
       'function KMP_Search(text, pattern):',
-      '  lps = computeLPS(pattern)  // Precompute longest proper prefix-suffix array',
-      '  i = 0, j = 0  // i tracks text pointer, j tracks pattern pointer',
-      '  while i < length(text):  // Zero-backtracking linear scan through text',
-      '    if pattern[j] == text[i]: i++, j++  // Character match: advance both pointers',
-      '    if j == length(pattern):  // Complete pattern matched!',
-      '      recordMatch(i - j);  j = lps[j - 1]  // Shift pattern via LPS fallback',
-      '    else if i < length(text) and pattern[j] != text[i]:  // Mismatch encountered',
-      '      if j != 0: j = lps[j - 1]  // Fall back pattern pointer without moving text i',
-      '      else: i++  // First character mismatched: advance text pointer',
-      '  return matchIndices  // Return all 0-indexed start positions',
+      '  lpsTable = computeLPS(pattern) // Phase 1: Build LPS prefix-suffix table',
+      '  textIndex = 0',
+      '  patternIndex = 0',
+      '  while textIndex < length(text): // Phase 2: Scan text without backtracking',
+      '    if pattern[patternIndex] == text[textIndex]:',
+      '      textIndex = textIndex + 1',
+      '      patternIndex = patternIndex + 1',
+      '    if patternIndex == length(pattern):',
+      '      recordMatch(textIndex - patternIndex) // Full pattern matched',
+      '      patternIndex = lpsTable[patternIndex - 1] // Shift pattern via LPS fallback',
+      '    else if textIndex < length(text) and pattern[patternIndex] != text[textIndex]:',
+      '      if patternIndex != 0:',
+      '        patternIndex = lpsTable[patternIndex - 1] // Shift pattern without moving text pointer',
+      '      else:',
+      '        textIndex = textIndex + 1 // Advance text pointer',
+      '  return matchIndices',
     ],
     visualizer: 'StringMatchVisualizer',
     inputSchema: [
@@ -1061,18 +1099,21 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     explanation:
       'Hashes the pattern and the first text window in O(m). Each subsequent window hash is derived from the previous one in O(1) by removing the leading character and appending the next (a "rolling" hash). Only when a window hash equals the pattern hash is a full character comparison performed, which rules out spurious hits (hash collisions). Expected linear time; worst case degrades to the naive bound when every window collides.',
     pseudocode: [
-      'function RABIN-KARP(T, P, d, q):',
-      '  m = length(P);  n = length(T)',
-      '  h = d^(m-1) mod q',
-      '  p = 0;  t = 0                       // pattern hash, window hash',
-      '  for i = 0 to m-1:',
-      '    p = (d*p + P[i]) mod q;  t = (d*t + T[i]) mod q',
-      '  for s = 0 to n-m:',
-      '    if p == t:                        // hashes match — verify chars',
-      '      if T[s..s+m-1] == P: recordMatch(s)  else spuriousHit',
-      '    if s < n-m:',
-      '      t = (d*(t - T[s]*h) + T[s+m]) mod q   // roll to next window',
-      '  return matches',
+      'function RabinKarp(text, pattern, baseRadix = 256, primeModulus = 101):',
+      '  patternLength = length(pattern)',
+      '  textLength = length(text)',
+      '  highOrderWeight = (baseRadix ^ (patternLength - 1)) mod primeModulus',
+      '  patternHash = computeHash(pattern, patternLength, baseRadix, primeModulus)',
+      '  windowHash = computeHash(text[0 .. patternLength - 1], patternLength, baseRadix, primeModulus)',
+      '  for shift = 0 to (textLength - patternLength):',
+      '    if windowHash == patternHash: // Candidate match found via hash equality',
+      '      if verifyCharacters(text, shift, pattern): // Check character by character',
+      '        recordMatch(shift) // Confirmed true occurrence',
+      '      else:',
+      '        recordSpuriousHit(shift) // False positive: hash collision',
+      '    if shift < (textLength - patternLength):',
+      '      windowHash = rollHash(windowHash, text[shift], text[shift + patternLength], highOrderWeight)',
+      '  return matchedIndices',
     ],
     visualizer: 'StringMatchVisualizer',
     inputSchema: [
@@ -1124,17 +1165,19 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     explanation:
       "Ukkonen's algorithm builds the suffix tree online in linear time using an active point (node, edge, length), a global leaf end, suffix links and the skip/count trick — applying extension rules 1–3 once per phase. Each root-to-leaf path spells a suffix of T$, and every leaf label is a suffix start index. Matching walks P down from the root; if P is fully consumed, every leaf beneath the stopping point is an occurrence.",
     pseudocode: [
-      'function SUFFIX-TREE-MATCH(T, P):',
-      '  S = T + "$"',
-      '  tree = UKKONEN(S)                    // O(|S|) online build',
-      '    for each phase i (adds S[i]):',
-      '      Rule 1: existing leaf edges grow via the global end',
-      '      Rule 2: branch a new leaf (splitting an edge if needed)',
-      '      Rule 3: S[i] already present -> stop the phase (show-stopper)',
-      '  node = root;  k = 0',
-      '  while k < |P|: match the next char along the edge; mismatch -> return {}',
-      '  collect suffixIndex of every leaf under the stop point',
-      '  return the sorted occurrences',
+      'function SuffixTreeMatch(text, pattern):',
+      '  terminalText = text + "$"',
+      '  tree = buildUkkonenSuffixTree(terminalText) // O(n) online construction',
+      '    for each phase i (insert terminalText[i]):',
+      '      Rule 1: extend existing leaf edges via global leaf end',
+      '      Rule 2: create new leaf branch (split internal edge if required)',
+      '      Rule 3: character already present -> terminate current phase',
+      '  currentNode = root',
+      '  patternIndex = 0',
+      '  while patternIndex < length(pattern):',
+      '    match next character along edge; return empty on mismatch',
+      '  collect suffix indices of all leaves beneath search stopping point',
+      '  return sortedMatchIndices',
     ],
     visualizer: 'TreeVisualizer',
     inputSchema: [
@@ -1426,6 +1469,192 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     stepGenerator: fordFulkersonSteps,
   },
 
+  // Module 4: Graph — Edmonds-Karp (BFS Max Flow)
+  {
+    id: 'edmonds-karp',
+    module: 4,
+    moduleName: 'Module 4: Graph Algorithms & Network Flow',
+    name: 'Edmonds-Karp (BFS Maximum Flow)',
+    paradigm: 'Max Flow',
+    complexity: {
+      timeBest: 'O(V · E²)',
+      timeAverage: 'O(V · E²)',
+      timeWorst: 'O(V · E²)',
+      spaceWorst: 'O(V + E)',
+      description: 'Polynomial time bound by finding the shortest augmenting path using BFS',
+    },
+    problemStatement:
+      'Compute the maximum feasible flow from source S to sink T through a directed capacity network using Edmonds-Karp with explicit breadth-first search path discovery.',
+    explanation:
+      'Edmonds-Karp is an explicit BFS implementation of the Ford-Fulkerson method. By always choosing the augmenting path with the fewest edges, it guarantees termination in polynomial O(V · E²) time, completely avoiding infinite loops with irrational capacities.',
+    pseudocode: [
+      'function EdmondsKarp(network, source s, sink t):',
+      '  initialize flow = 0 for all edges  // Empty initial flow assignment',
+      '  while (path = BFS_ShortestPath(residualNetwork, s, t)) exists:  // Breadth-First Search',
+      '    bottleneck = min_capacity_along(path)  // Find bottleneck residual capacity',
+      '    for each edge (u, v) in path:  // Augment along shortest path',
+      '      flow[u][v] += bottleneck; flow[v][u] -= bottleneck  // Update residual network',
+      '  return totalFlow  // Max flow achieved in at most O(V · E) augmentations',
+    ],
+    visualizer: 'GraphVisualizer',
+    inputSchema: [
+      {
+        name: 'capacities',
+        label: 'Flow Network Topologies',
+        type: 'select',
+        defaultValue: 'classic6',
+        options: [
+          { label: 'Classic 6-Node Network (Max Flow = 23)', value: 'classic6' },
+          { label: '4-Node Diamond Network (Max Flow = 17)', value: 'diamond4' },
+        ],
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic 6-Node Network (Max Flow = 23)',
+        description: 'Standard CLRS 6-node flow network with capacity bottleneck 23',
+        data: {
+          capacities: [
+            [0, 16, 13, 0, 0, 0],
+            [0, 0, 10, 12, 0, 0],
+            [0, 4, 0, 0, 14, 0],
+            [0, 0, 9, 0, 0, 20],
+            [0, 0, 0, 7, 0, 4],
+            [0, 0, 0, 0, 0, 0],
+          ],
+          source: 0,
+          sink: 5,
+          nodeLabels: ['S', 'A', 'B', 'C', 'D', 'T'],
+        },
+      },
+      {
+        name: 'Simple 4-Node Diamond (Max Flow = 17)',
+        description: '4-node network with two parallel paths and cross edge',
+        data: {
+          capacities: [
+            [0, 10, 10, 0],
+            [0, 0, 2, 8],
+            [0, 0, 0, 9],
+            [0, 0, 0, 0],
+          ],
+          source: 0,
+          sink: 3,
+          nodeLabels: ['S', 'A', 'B', 'T'],
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      return {
+        capacities: [
+          [0, 16, 13, 0, 0, 0],
+          [0, 0, 10, 12, 0, 0],
+          [0, 4, 0, 0, 14, 0],
+          [0, 0, 9, 0, 0, 20],
+          [0, 0, 0, 7, 0, 4],
+          [0, 0, 0, 0, 0, 0],
+        ],
+        source: 0,
+        sink: 5,
+        nodeLabels: ['S', 'A', 'B', 'C', 'D', 'T'],
+      };
+    },
+    stepGenerator: edmondsKarpSteps,
+  },
+
+  // Module 4: Graph — Push-Relabel (Preflow-Push Max Flow)
+  {
+    id: 'push-relabel',
+    module: 4,
+    moduleName: 'Module 4: Graph Algorithms & Network Flow',
+    name: 'Push-Relabel (Goldberg-Tarjan Max Flow)',
+    paradigm: 'Max Flow',
+    complexity: {
+      timeBest: 'O(V² · E)',
+      timeAverage: 'O(V² · E)',
+      timeWorst: 'O(V² · E)',
+      spaceWorst: 'O(V + E)',
+      description: 'Preflow-push algorithm running in O(V²E) time, superior to Ford-Fulkerson on dense networks',
+    },
+    problemStatement:
+      'Compute maximum feasible flow from source S to sink T using localized push and relabel operations on an active preflow network.',
+    explanation:
+      'Unlike augmenting path algorithms that push flow along entire paths from source to sink at once, Goldberg-Tarjan’s Push-Relabel operates locally. It maintains a preflow where excess flow accumulates at internal vertices, pushing flow downward along steep residual edges (height h(u) = h(v) + 1) and relabeling vertex heights whenever an overflowing vertex has no downward exit.',
+    pseudocode: [
+      'function PushRelabel(network, source s, sink t):',
+      '  h[s] = |V|; h[v] = 0 for all v != s  // Source elevated to |V|; sink and others at 0',
+      '  for each edge (s, v): preflowPush(s, v, c(s, v))  // Saturate source outgoing edges',
+      '  while exists overflowing vertex u in V \\ {s, t} with e(u) > 0:  // Localized work',
+      '    if exists residual neighbor v with h[u] == h[v] + 1:  // Admissible slope exists',
+      '      push(u, v, min(e(u), c_f(u, v)))  // Push excess flow down to neighbor v',
+      '    else:  // No downhill exit: vertex is trapped with excess',
+      '      relabel(u): h[u] = 1 + min{h[v] | c_f(u, v) > 0}  // Raise height to permit future pushes',
+      '  return e(t)  // Final accumulated excess at sink equals maximum flow',
+    ],
+    visualizer: 'GraphVisualizer',
+    inputSchema: [
+      {
+        name: 'capacities',
+        label: 'Network Capacities',
+        type: 'select',
+        defaultValue: 'classic6',
+        options: [
+          { label: 'Classic 6-Node Network (Max Flow = 23)', value: 'classic6' },
+          { label: '4-Node Diamond Network (Max Flow = 17)', value: 'diamond4' },
+        ],
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic 6-Node Network (Max Flow = 23)',
+        description: 'Standard CLRS benchmark network with maximum flow 23',
+        data: {
+          capacities: [
+            [0, 16, 13, 0, 0, 0],
+            [0, 0, 10, 12, 0, 0],
+            [0, 4, 0, 0, 14, 0],
+            [0, 0, 9, 0, 0, 20],
+            [0, 0, 0, 7, 0, 4],
+            [0, 0, 0, 0, 0, 0],
+          ],
+          source: 0,
+          sink: 5,
+          nodeLabels: ['S', 'A', 'B', 'C', 'D', 'T'],
+        },
+      },
+      {
+        name: '4-Node Diamond (Max Flow = 17)',
+        description: 'Diamond network with dual parallel routes',
+        data: {
+          capacities: [
+            [0, 10, 10, 0],
+            [0, 0, 2, 8],
+            [0, 0, 0, 9],
+            [0, 0, 0, 0],
+          ],
+          source: 0,
+          sink: 3,
+          nodeLabels: ['S', 'A', 'B', 'T'],
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      return {
+        capacities: [
+          [0, 16, 13, 0, 0, 0],
+          [0, 0, 10, 12, 0, 0],
+          [0, 4, 0, 0, 14, 0],
+          [0, 0, 9, 0, 0, 20],
+          [0, 0, 0, 7, 0, 4],
+          [0, 0, 0, 0, 0, 0],
+        ],
+        source: 0,
+        sink: 5,
+        nodeLabels: ['S', 'A', 'B', 'C', 'D', 'T'],
+      };
+    },
+    stepGenerator: pushRelabelSteps,
+  },
+
   // Module 5: Geometric — Graham's Scan
   {
     id: 'graham-scan',
@@ -1513,6 +1742,201 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     stepGenerator: grahamScanSteps,
   },
 
+  // Module 5: Geometric — Jarvis' March (Gift Wrapping)
+  {
+    id: 'jarvis-march',
+    module: 5,
+    moduleName: 'Module 5: Computational Geometry',
+    name: 'Jarvis’ March (Gift Wrapping)',
+    paradigm: 'Geometric',
+    complexity: {
+      timeBest: 'O(n · h)',
+      timeAverage: 'O(n · h)',
+      timeWorst: 'O(n · h)',
+      spaceWorst: 'O(h)',
+      description: 'Output-sensitive O(nh) where h is the number of vertices on the convex hull',
+    },
+    problemStatement:
+      'Compute the 2D convex hull of a point set by gift wrapping: start from the lowest point and repeatedly find the next hull point that forms the smallest counter-clockwise turn.',
+    explanation:
+      'Starting from the lowest-y anchor pivot, Jarvis’ March tests each point to find the most counter-clockwise candidate relative to the current hull point. It wraps around the exterior until returning to the start pivot.',
+    pseudocode: [
+      'function JarvisMarch(points):',
+      '  pivot = findLowestPoint(points)  // Anchor: lowest y-coordinate (tiebreaker: lowest x)',
+      '  hull = [pivot], current = pivot',
+      '  repeat:  // Wrap around perimeter until returning to anchor pivot',
+      '    nextPoint = selectInitialCandidate(points, current)  // Start with any other point',
+      '    for each point in points:  // Find point with smallest CCW turn',
+      '      if orientation(current, nextPoint, point) > 0: nextPoint = point  // Left turn updates candidate',
+      '    hull.push(nextPoint); current = nextPoint  // Confirm hull vertex',
+      '  until current == pivot  // Complete loop around perimeter',
+      '  return hull  // Convex hull in counter-clockwise order',
+    ],
+    visualizer: 'PointCanvasVisualizer',
+    inputSchema: [
+      {
+        name: 'points',
+        label: '2D Points Array',
+        type: 'points',
+        defaultValue: [
+          { x: 100, y: 100 },
+          { x: 150, y: 250 },
+          { x: 250, y: 300 },
+          { x: 350, y: 220 },
+          { x: 400, y: 120 },
+          { x: 280, y: 180 },
+          { x: 200, y: 150 },
+          { x: 220, y: 80 },
+        ],
+      },
+    ],
+    presets: [
+      {
+        name: '8-Point Cloud',
+        data: {
+          points: [
+            { x: 100, y: 100 },
+            { x: 150, y: 250 },
+            { x: 250, y: 300 },
+            { x: 350, y: 220 },
+            { x: 400, y: 120 },
+            { x: 280, y: 180 },
+            { x: 200, y: 150 },
+            { x: 220, y: 80 },
+          ],
+        },
+      },
+      {
+        name: 'Square with Interior Points (4 Corners Hull)',
+        data: {
+          points: [
+            { x: 80, y: 80 },
+            { x: 80, y: 320 },
+            { x: 320, y: 320 },
+            { x: 320, y: 80 },
+            { x: 200, y: 200 },
+            { x: 150, y: 150 },
+          ],
+        },
+      },
+      {
+        name: 'Triangle with Interior Point',
+        data: {
+          points: [
+            { x: 100, y: 80 },
+            { x: 250, y: 320 },
+            { x: 400, y: 80 },
+            { x: 250, y: 160 },
+          ],
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      const count = 7;
+      const pts = Array.from({ length: count }, () => ({
+        x: Math.floor(Math.random() * 320) + 60,
+        y: Math.floor(Math.random() * 260) + 60,
+      }));
+      return { points: pts };
+    },
+    stepGenerator: jarvisMarchSteps,
+  },
+
+  // Module 5: Geometric — Line Segment Intersection (Sweep-Line)
+  {
+    id: 'line-segment-intersection',
+    module: 5,
+    moduleName: 'Module 5: Computational Geometry',
+    name: 'Line Segment Intersection (Sweep-Line)',
+    paradigm: 'Geometric',
+    complexity: {
+      timeBest: 'O(1)',
+      timeAverage: 'O(n log n)',
+      timeWorst: 'O(n log n)',
+      spaceWorst: 'O(n)',
+      description: 'O(n log n) sweep-line procedure detecting whether ANY pair of segments intersect',
+    },
+    problemStatement:
+      'Given a collection of 2D line segments, determine whether any two segments intersect using a vertical sweep line moving left to right.',
+    explanation:
+      'The Bentley-Ottmann sweep-line paradigm sorts all segment endpoints by x-coordinate. As the sweep line moves left to right, segments currently cutting the sweep line are stored in an active status structure T ordered by y-coordinate. New segments are tested for intersection only with their immediate above/below neighbors in T, reducing naive O(n²) comparisons to O(n log n).',
+    pseudocode: [
+      'function AnySegmentsIntersect(segments):',
+      '  events = sortEndpointsByX(segments)  // Event queue: left & right endpoints sorted by x',
+      '  T = BalancedBinarySearchTree()  // Active status structure ordered by current y(x)',
+      '  for each event in events:  // Sweep line advances left to right across plane',
+      '    if event.type == LEFT_ENDPOINT:  // Segment starts: insert into active status',
+      '      insert(T, event.segment)',
+      '      if intersects(event.segment, above(T, event.segment)): return true  // Adjacent check',
+      '      if intersects(event.segment, below(T, event.segment)): return true',
+      '    else:  // RIGHT_ENDPOINT: segment ends: delete from active status',
+      '      aboveSeg = above(T, event.segment); belowSeg = below(T, event.segment)',
+      '      delete(T, event.segment)',
+      '      if intersects(aboveSeg, belowSeg): return true  // Former neighbors are now adjacent',
+      '  return false  // No intersecting pairs found across entire plane',
+    ],
+    visualizer: 'SweepLineVisualizer',
+    inputSchema: [
+      {
+        name: 'segments',
+        label: 'Line Segments Set',
+        type: 'select',
+        defaultValue: 'classic',
+        options: [
+          { label: 'Intersecting Pair (Classic)', value: 'classic' },
+          { label: 'Non-Intersecting Parallel', value: 'parallel' },
+          { label: 'Delayed Adjacency Intersection', value: 'delayed' },
+        ],
+      },
+    ],
+    presets: [
+      {
+        name: 'Intersecting Pair (Classic)',
+        description: '4 segments with S1 and S2 crossing at an interior point',
+        data: {
+          segments: [
+            { id: 'S1', label: 'S1', p1: { x: 50, y: 120 }, p2: { x: 280, y: 260 } },
+            { id: 'S2', label: 'S2', p1: { x: 80, y: 300 }, p2: { x: 320, y: 80 } },
+            { id: 'S3', label: 'S3', p1: { x: 200, y: 350 }, p2: { x: 420, y: 330 } },
+            { id: 'S4', label: 'S4', p1: { x: 300, y: 150 }, p2: { x: 460, y: 220 } },
+          ],
+        },
+      },
+      {
+        name: 'Non-Intersecting Parallel Segments',
+        description: '3 horizontal parallel segments with zero intersections',
+        data: {
+          segments: [
+            { id: 'S1', label: 'S1', p1: { x: 50, y: 100 }, p2: { x: 300, y: 100 } },
+            { id: 'S2', label: 'S2', p1: { x: 50, y: 200 }, p2: { x: 300, y: 200 } },
+            { id: 'S3', label: 'S3', p1: { x: 50, y: 300 }, p2: { x: 300, y: 300 } },
+          ],
+        },
+      },
+      {
+        name: 'Delayed Adjacency Intersection',
+        description: 'Segments become adjacent and intersect only after a middle segment ends',
+        data: {
+          segments: [
+            { id: 'S1', label: 'S1', p1: { x: 50, y: 250 }, p2: { x: 450, y: 190 } },
+            { id: 'S2', label: 'S2', p1: { x: 80, y: 200 }, p2: { x: 240, y: 200 } },
+            { id: 'S3', label: 'S3', p1: { x: 50, y: 150 }, p2: { x: 450, y: 210 } },
+          ],
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      const segs = [
+        { id: 'S1', label: 'S1', p1: { x: 50, y: 120 }, p2: { x: 280, y: 260 } },
+        { id: 'S2', label: 'S2', p1: { x: 80, y: 300 }, p2: { x: 320, y: 80 } },
+        { id: 'S3', label: 'S3', p1: { x: 200, y: 350 }, p2: { x: 420, y: 330 } },
+        { id: 'S4', label: 'S4', p1: { x: 300, y: 150 }, p2: { x: 460, y: 220 } },
+      ];
+      return { segments: segs };
+    },
+    stepGenerator: lineSegmentIntersectionSteps,
+  },
+
   // Module 6: Randomized — Randomized Quicksort
   {
     id: 'randomized-quicksort',
@@ -1566,6 +1990,191 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { array };
     },
     stepGenerator: randomizedQuicksortSteps,
+  },
+
+  // Module 6: Randomized — The Hiring Problem
+  {
+    id: 'hiring-problem',
+    module: 6,
+    moduleName: 'Module 6: Randomized Algorithms',
+    name: 'The Hiring Problem',
+    paradigm: 'Randomized',
+    complexity: {
+      timeBest: 'O(n)',
+      timeAverage: 'O(n)',
+      timeWorst: 'O(n)',
+      spaceWorst: 'O(1)',
+      description: 'O(n) candidate interviews with expected O(ln n) hiring events under random permutation',
+    },
+    problemStatement:
+      'Evaluate candidates sequentially: pay an interview cost c_i for every applicant, but pay a much larger hiring cost c_h only when an applicant is strictly better than everyone interviewed so far.',
+    explanation:
+      'The Hiring Problem models online decision-making under probabilistic input. In the worst case (ascending scores), all n candidates are hired costing O(n · c_h). Under random permutation, candidate i has probability 1/i of being the best so far, leading to expected hiring cost O(c_h · ln n).',
+    pseudocode: [
+      'function HiringProblem(candidates, costInterview, costHire):',
+      '  bestScore = -infinity, totalCost = 0  // Initialize current best score and expenditure',
+      '  for i = 0 to n - 1:  // Interview applicants sequentially in arrival order',
+      '    totalCost += costInterview  // Always pay fixed fee to interview candidate',
+      '    if candidates[i] > bestScore:  // Strictly superior to all previous candidates',
+      '      bestScore = candidates[i]  // Promote candidate i as the new benchmark',
+      '      totalCost += costHire  // Fire previous hire and pay substantial hiring fee',
+      '    else: skip(candidates[i])  // Candidate does not beat current best: rejected',
+      '  return (bestScore, totalCost)  // Final optimal employee and total recruitment expense',
+    ],
+    visualizer: 'ArrayBarVisualizer',
+    inputSchema: [
+      {
+        name: 'candidates',
+        label: 'Candidate Scores Array',
+        type: 'array',
+        defaultValue: [4, 7, 2, 9, 8, 10, 5, 12],
+        placeholder: 'e.g. 4, 7, 2, 9, 8, 10, 5, 12',
+        helperText: 'Applicant skill ratings (comma-separated). Evaluated left to right.',
+      },
+      {
+        name: 'interviewCost',
+        label: 'Interview Cost ($)',
+        type: 'number',
+        defaultValue: 1,
+        min: 1,
+        max: 50,
+      },
+      {
+        name: 'hiringCost',
+        label: 'Hiring Cost ($)',
+        type: 'number',
+        defaultValue: 5,
+        min: 1,
+        max: 100,
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic Textbook Sequence',
+        description: 'Standard 8-candidate stream with mixed quality ratings',
+        data: { candidates: [4, 7, 2, 9, 8, 10, 5, 12], interviewCost: 1, hiringCost: 5 },
+      },
+      {
+        name: 'Worst Case (Ascending - Hire All)',
+        description: 'Monotonically improving candidates: forces hiring on every single interview',
+        data: { candidates: [2, 4, 6, 8, 10, 12, 14, 16], interviewCost: 1, hiringCost: 5 },
+      },
+      {
+        name: 'Best Case (Descending - Hire First Only)',
+        description: 'First applicant is the best: exactly 1 hire occurs, minimizing cost',
+        data: { candidates: [20, 18, 15, 12, 9, 6, 4, 2], interviewCost: 1, hiringCost: 5 },
+      },
+    ],
+    generateRandomInput: () => {
+      const len = 8;
+      const candidates = Array.from({ length: len }, () => Math.floor(Math.random() * 25) + 1);
+      return { candidates, interviewCost: 1, hiringCost: 5 };
+    },
+    stepGenerator: hiringProblemSteps,
+  },
+
+  // Module 6: Randomized — Karger's Min-Cut
+  {
+    id: 'karger-min-cut',
+    module: 6,
+    moduleName: 'Module 6: Randomized Algorithms',
+    name: 'Karger’s Algorithm (Randomized Min-Cut)',
+    paradigm: 'Randomized',
+    complexity: {
+      timeBest: 'O(V²)',
+      timeAverage: 'O(V²)',
+      timeWorst: 'O(V²)',
+      spaceWorst: 'O(V + E)',
+      description: 'O(V²) per contraction run; success probability >= 2 / (V(V-1)), amplified by repeating O(V² ln V) times',
+    },
+    problemStatement:
+      'Find a global minimum cut in a connected undirected graph: a partition of vertices (A, B) minimizing the number of crossing edges, using randomized edge contraction.',
+    explanation:
+      'Karger’s algorithm repeatedly selects an edge uniformly at random from the multigraph and contracts its endpoints into a super-node, discarding self-loops while keeping parallel edges. When exactly two super-nodes remain, the crossing edges form a cut. The probability of finding the true minimum cut in one run is at least 2/(V·(V-1)).',
+    pseudocode: [
+      'function KargerMinCut(G = (V, E)):',
+      '  while |V| > 2:  // Repeat contraction until exactly 2 super-nodes remain',
+      '    e = pickUniformRandomEdge(E)  // Pick edge uniformly at random from multigraph',
+      '    contract(e = (u, v))  // Merge endpoints u and v into single super-node',
+      '    removeSelfLoops(E)  // Eliminate all internal loops between u and v',
+      '  cutEdges = remaining edges between the final 2 super-nodes',
+      '  return (cutEdges, |cutEdges|)  // Candidate minimum cut for this randomized trial',
+    ],
+    visualizer: 'GraphVisualizer',
+    inputSchema: [
+      {
+        name: 'edgeList',
+        label: 'Graph Topology',
+        type: 'select',
+        defaultValue: 'barbell',
+        options: [
+          { label: 'Barbell / Bridge Graph (Min-Cut = 2)', value: 'barbell' },
+          { label: 'Single Bridge Cut (Min-Cut = 1)', value: 'single_bridge' },
+          { label: 'Complete Graph K4 (Min-Cut = 3)', value: 'k4' },
+        ],
+      },
+    ],
+    presets: [
+      {
+        name: 'Barbell / Bridge Graph (Min-Cut = 2)',
+        description: 'Two triangles (0-1-2) and (3-4-5) connected by 2 bridge edges (1-3, 2-4)',
+        data: {
+          edgeList: [
+            ['0', '1'],
+            ['1', '2'],
+            ['2', '0'],
+            ['3', '4'],
+            ['4', '5'],
+            ['5', '3'],
+            ['1', '3'],
+            ['2', '4'],
+          ],
+        },
+      },
+      {
+        name: 'Single Bridge Cut (Min-Cut = 1)',
+        description: 'Two clusters connected by a single critical bottleneck bridge edge',
+        data: {
+          edgeList: [
+            ['0', '1'],
+            ['1', '2'],
+            ['2', '0'],
+            ['3', '4'],
+            ['4', '5'],
+            ['5', '3'],
+            ['2', '3'],
+          ],
+        },
+      },
+      {
+        name: 'Complete Graph K4 (Min-Cut = 3)',
+        description: 'Complete 4-node graph: any partition separates at least 3 edges',
+        data: {
+          edgeList: [
+            ['0', '1'],
+            ['0', '2'],
+            ['0', '3'],
+            ['1', '2'],
+            ['1', '3'],
+            ['2', '3'],
+          ],
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      const edges: [string, string][] = [
+        ['0', '1'],
+        ['1', '2'],
+        ['2', '0'],
+        ['3', '4'],
+        ['4', '5'],
+        ['5', '3'],
+        ['1', '3'],
+        ['2', '4'],
+      ];
+      return { edgeList: edges };
+    },
+    stepGenerator: kargerMinCutSteps,
   },
 
   // Module 7: Complexity & Approximation — Vertex Cover (2-Approx)
@@ -1646,6 +2255,196 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     stepGenerator: vertexCoverApproxSteps,
+  },
+
+  // Module 7: Complexity & Approximation — Set Cover (Greedy Approx)
+  {
+    id: 'set-cover',
+    module: 7,
+    moduleName: 'Module 7: Complexity & Approximation',
+    name: 'Set Cover (Greedy Approximation)',
+    paradigm: 'Approximation',
+    complexity: {
+      timeBest: 'O(m · n)',
+      timeAverage: 'O(m · n)',
+      timeWorst: 'O(m · n)',
+      spaceWorst: 'O(m + n)',
+      description: 'Greedy O(ln |U| + 1) approximation factor for NP-hard Set Cover problem',
+    },
+    problemStatement:
+      'Given a universe of elements U and a family of subsets S, find a minimum number of subsets whose union contains every element in U.',
+    explanation:
+      'Set Cover is a classic NP-hard optimization problem. The greedy heuristic repeatedly picks the subset that covers the maximum number of currently uncovered elements. This yields a provable approximation ratio of H(|U|) <= ln(|U|) + 1.',
+    pseudocode: [
+      'function GreedySetCover(universe U, subsets S):',
+      '  covered = {}, selectedSubsets = []  // Initialize empty element cover and chosen set family',
+      '  while covered != U:  // Repeat until every element in the universe is covered',
+      '    bestSubset = argmax(S_i in S) |S_i ∩ (U \\ covered)|  // Pick set covering most new elements',
+      '    selectedSubsets.push(bestSubset)  // Commit best subset to cover solution',
+      '    covered = covered ∪ bestSubset  // Mark newly encompassed elements as covered',
+      '  return selectedSubsets  // Solution guaranteed |C| <= OPT · (ln |U| + 1)',
+    ],
+    visualizer: 'SetCoverVisualizer',
+    inputSchema: [
+      {
+        name: 'universeSize',
+        label: 'Universe Size (|U|)',
+        type: 'number',
+        defaultValue: 10,
+        min: 5,
+        max: 20,
+        helperText: 'Number of elements {1..|U|} in the universe to cover.',
+      },
+    ],
+    presets: [
+      {
+        name: '10-Element Benchmark (5 Subsets)',
+        description: 'Universe {1..10} with overlapping subsets S1 through S5',
+        data: {
+          universeSize: 10,
+          subsets: [
+            { id: 'S1', label: 'Set S1', elements: [1, 2, 3, 4] },
+            { id: 'S2', label: 'Set S2', elements: [3, 4, 5, 6, 7] },
+            { id: 'S3', label: 'Set S3', elements: [6, 7, 8] },
+            { id: 'S4', label: 'Set S4', elements: [1, 5, 9, 10] },
+            { id: 'S5', label: 'Set S5', elements: [2, 8, 10] },
+          ],
+        },
+      },
+      {
+        name: 'Single Master Set Covers All',
+        description: 'Set S2 contains entire universe {1..5}: greedy finds optimal in 1 step',
+        data: {
+          universeSize: 5,
+          subsets: [
+            { id: 'S1', label: 'Set S1', elements: [1, 2] },
+            { id: 'S2', label: 'Set S2', elements: [1, 2, 3, 4, 5] },
+            { id: 'S3', label: 'Set S3', elements: [3, 4] },
+          ],
+        },
+      },
+      {
+        name: 'Disjoint Partition (3 Pairs)',
+        description: 'Independent disjoint subsets partitioning elements {1..6}',
+        data: {
+          universeSize: 6,
+          subsets: [
+            { id: 'S1', label: 'Set S1', elements: [1, 2] },
+            { id: 'S2', label: 'Set S2', elements: [3, 4] },
+            { id: 'S3', label: 'Set S3', elements: [5, 6] },
+          ],
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      const uSize = 10;
+      const subs = [
+        { id: 'S1', label: 'Set S1', elements: [1, 2, 3, 4] },
+        { id: 'S2', label: 'Set S2', elements: [3, 4, 5, 6, 7] },
+        { id: 'S3', label: 'Set S3', elements: [6, 7, 8] },
+        { id: 'S4', label: 'Set S4', elements: [1, 5, 9, 10] },
+        { id: 'S5', label: 'Set S5', elements: [2, 8, 10] },
+      ];
+      return { universeSize: uSize, subsets: subs };
+    },
+    stepGenerator: setCoverSteps,
+  },
+
+  // Module 7: Complexity & Approximation — TSP 2-Approximation (MST-Doubling)
+  {
+    id: 'tsp-approx',
+    module: 7,
+    moduleName: 'Module 7: Complexity & Approximation',
+    name: 'Travelling Salesman Problem (2-Approximation)',
+    paradigm: 'Approximation',
+    complexity: {
+      timeBest: 'O(V²)',
+      timeAverage: 'O(V²)',
+      timeWorst: 'O(V²)',
+      spaceWorst: 'O(V²)',
+      description: 'Polynomial time MST-doubling algorithm with 2.0x approximation factor for metric TSP',
+    },
+    problemStatement:
+      'Find a minimum-cost Hamiltonian cycle visiting every city exactly once and returning to the origin in a complete metric graph with cost(Tour) <= 2 · OPT.',
+    explanation:
+      'For metric graphs satisfying the triangle inequality, the MST-Doubling heuristic: (1) builds an MST T, (2) doubles all edges to form an Eulerian multigraph with total weight 2 · W(T), and (3) visits cities in preorder DFS while shortcutting already-visited cities. Since OPT >= W(T) and shortcuts never increase distance, Cost(Tour) <= 2 · W(T) <= 2 · OPT.',
+    pseudocode: [
+      'function MetricTspApprox(cities, costMatrix):',
+      '  T = PrimMST(cities, costMatrix)  // Phase 1: Minimum Spanning Tree has W(T) <= OPT',
+      '  multigraph = doubleEdges(T)  // Phase 2: Every vertex has even degree (Eulerian circuit exists)',
+      '  preorderWalk = dfsPreorder(T, startCity = 0)  // Phase 3: DFS traversal order',
+      '  tour = shortcut(preorderWalk) + [startCity]  // Skip previously visited cities via Triangle Ineq',
+      '  return tour  // Guaranteed Cost(tour) <= 2 · W(T) <= 2 · OPT',
+    ],
+    visualizer: 'TspVisualizer',
+    inputSchema: [
+      {
+        name: 'numCities',
+        label: 'Number of Cities (N)',
+        type: 'number',
+        defaultValue: 4,
+        min: 3,
+        max: 6,
+        helperText: 'Number of cities in the TSP tour.',
+      },
+    ],
+    presets: [
+      {
+        name: 'Classic 4-City Benchmark (OPT=80)',
+        description: 'Standard 4-city asymmetric cost matrix (Held-Karp OPT=80, Approx=95)',
+        data: {
+          numCities: 4,
+          costMatrix: [
+            [0, 10, 15, 20],
+            [10, 0, 35, 25],
+            [15, 35, 0, 30],
+            [20, 25, 30, 0],
+          ],
+          cityNames: ['A', 'B', 'C', 'D'],
+        },
+      },
+      {
+        name: '3-City Metric Triangle (OPT=21)',
+        description: 'Triangle with costs 7, 6, 8 (OPT=21, Approx=21)',
+        data: {
+          numCities: 3,
+          costMatrix: [
+            [0, 7, 6],
+            [7, 0, 8],
+            [6, 8, 0],
+          ],
+          cityNames: ['A', 'B', 'C'],
+        },
+      },
+      {
+        name: '5-City Pentagon',
+        description: '5 cities with metric distance layout',
+        data: {
+          numCities: 5,
+          costMatrix: [
+            [0, 12, 18, 25, 15],
+            [12, 0, 22, 19, 28],
+            [18, 22, 0, 14, 20],
+            [25, 19, 14, 0, 16],
+            [15, 28, 20, 16, 0],
+          ],
+          cityNames: ['A', 'B', 'C', 'D', 'E'],
+        },
+      },
+    ],
+    generateRandomInput: () => {
+      const n = 4;
+      const costMatrix: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const c = Math.floor(Math.random() * 25) + 10;
+          costMatrix[i][j] = c;
+          costMatrix[j][i] = c;
+        }
+      }
+      return { numCities: n, costMatrix, cityNames: ['A', 'B', 'C', 'D'] };
+    },
+    stepGenerator: tspApproxSteps,
   },
 
   // Module 2: Backtracking — Subset Sum
