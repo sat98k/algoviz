@@ -992,6 +992,11 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               <span className="px-3 py-1 bg-obsidian-950 border border-hairline text-chalk-300">
                 COLORS: <strong>k = {state.numColors ?? 3}</strong>
               </span>
+              {state.findMode === 'all' && (
+                <span className="px-3 py-1 bg-obsidian-950 border border-acid-500/40 text-acid-400 font-bold flex items-center gap-1.5">
+                  SOLUTIONS: <strong>{state.allSolutions?.length ?? 0}</strong>
+                </span>
+              )}
               {state.currentVertex !== undefined && (
                 <span className="px-3 py-1 bg-obsidian-950 border border-amber/40 text-amber-glow flex items-center gap-1.5">
                   CURRENT: <strong>V{parseInt(state.currentVertex) + 1}</strong>
@@ -1019,7 +1024,11 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                       : 'bg-red-950/60 border-red-500 text-red-400'
                   }`}
                 >
-                  {step.result.solvable ? `✓ VALID ${state.numColors}-COLORING` : `✕ NOT ${state.numColors}-COLORABLE`}
+                  {step.result.solvable
+                    ? state.findMode === 'all'
+                      ? `✓ ${step.result.numSolutions} VALID COLORING(S) FOUND`
+                      : `✓ VALID ${state.numColors}-COLORING`
+                    : `✕ NOT ${state.numColors}-COLORABLE`}
                 </span>
               )}
             </>

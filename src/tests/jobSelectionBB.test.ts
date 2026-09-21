@@ -95,4 +95,123 @@ describe('Job Selection Problem (Branch & Bound)', () => {
     expect(hasInfeasiblePrune).toBe(true);
     expect(hasBoundPrune).toBe(true);
   });
+
+  it('verifies that the optimal solution node is NEVER marked pruned and ancestors are NOT marked optimal', () => {
+    const deadlines = [2, 1, 2, 1, 3];
+    const profits = [100, 19, 27, 25, 15];
+
+    const steps = Array.from(jobSelectionBBSteps({ deadlines, profits }));
+    const finalStep = steps[steps.length - 1];
+    const state = finalStep.state;
+
+    expect(state.optimalNodeId).toBeDefined();
+
+    // Walk tree and collect nodes
+    const allNodes: any[] = [];
+    function collect(n: any) {
+      allNodes.push(n);
+      (n.children || []).forEach(collect);
+    }
+    collect(state.treeRoot);
+
+    const optimalNode = allNodes.find((n) => n.id === state.optimalNodeId);
+    expect(optimalNode).toBeDefined();
+    expect(optimalNode.status).toBe('optimal');
+    expect(optimalNode.profit).toBe(142);
+    expect(state.prunedNodeIds).not.toContain(optimalNode.id);
+
+    // Only ONE node in the entire tree should have status 'optimal'
+    const optimalCount = allNodes.filter((n) => n.status === 'optimal').length;
+    expect(optimalCount).toBe(1);
+
+    // Root node must NOT be marked optimal; it should be explored with onOptimalPath = true
+    const root = state.treeRoot!;
+    expect(root.status).not.toBe('optimal');
+    expect(root.onOptimalPath).toBe(true);
+
+    // Intermediate ancestors must be explored and onOptimalPath
+    const optAncestors = allNodes.filter((n) => n.onOptimalPath && n.id !== optimalNode.id);
+    for (const anc of optAncestors) {
+      expect(anc.status).not.toBe('optimal');
+      expect(anc.status).toBe('explored');
+    }
+  });
+
+  it('correctly distinguishes infeasible prunes from bound prunes in node metadata', () => {
+    const deadlines = [2, 1, 2, 1, 3];
+    const profits = [100, 19, 27, 25, 15];
+
+    const steps = Array.from(jobSelectionBBSteps({ deadlines, profits }));
+    const finalStep = steps[steps.length - 1];
+
+    const allNodes: any[] = [];
+    function collect(n: any) {
+      allNodes.push(n);
+      (n.children || []).forEach(collect);
+    }
+    collect(finalStep.state.treeRoot);
+
+    const infeasiblePrunes = allNodes.filter((n) => n.status === 'pruned' && n.pruneType === 'infeasible');
+    const boundPrunes = allNodes.filter((n) => n.status === 'pruned' && n.pruneType === 'bound');
+
+    expect(infeasiblePrunes.length).toBeGreaterThan(0);
+    expect(boundPrunes.length).toBeGreaterThan(0);
+
+    for (const node of infeasiblePrunes) {
+      expect(node.pruneReason).toContain('Infeasible');
+    }
+    for (const node of boundPrunes) {
+      expect(node.pruneReason).toContain('Bound');
+    }
+  });
+
+  it('handles arbitrary input with tied profits and clashing deadlines', () => {
+    // 6 jobs with ties in profits and deadlines
+    const deadlines = [2, 2, 1, 3, 1, 2];
+    const profits = [50, 50, 40, 40, 30, 20];
+
+    const steps = Array.from(jobSelectionBBSteps({ deadlines, profits }));
+    const finalStep = steps[steps.length - 1];
+    expect(finalStep.isFinal).toBe(true);
+
+    const result = finalStep.result;
+    expect(result.maxProfit).toBeGreaterThanOrEqual(130);
+
+    // Feasibility verification of final schedule
+    const schedule = result.schedule as (number | null)[];
+    expect(schedule.length).toBe(3); // max deadline = 3
+    for (let slot = 0; slot < schedule.length; slot++) {
+      const jobId = schedule[slot];
+      if (jobId !== null) {
+        expect(slot + 1).toBeLessThanOrEqual(deadlines[jobId - 1]);
+      }
+    }
+
+    // Verify optimal node integrity
+    expect(finalStep.state.optimalNodeId).toBeDefined();
+    expect(finalStep.state.prunedNodeIds).not.toContain(finalStep.state.optimalNodeId);
+  });
+
+  it('handles early optimum: single dominant job where optimum occurs at root child', () => {
+    const deadlines = [1, 2, 3];
+    const profits = [500, 10, 5];
+
+    const steps = Array.from(jobSelectionBBSteps({ deadlines, profits }));
+    const finalStep = steps[steps.length - 1];
+    expect(finalStep.isFinal).toBe(true);
+    expect(finalStep.result.maxProfit).toBe(515);
+  });
+
+  it('handles single job input cleanly', () => {
+    const deadlines = [2];
+    const profits = [75];
+
+    const steps = Array.from(jobSelectionBBSteps({ deadlines, profits }));
+    const finalStep = steps[steps.length - 1];
+    expect(finalStep.isFinal).toBe(true);
+    expect(finalStep.result.maxProfit).toBe(75);
+    expect(finalStep.result.selectedJobs).toEqual([1]);
+    expect(finalStep.state.optimalNodeId).toBeDefined();
+    expect(finalStep.state.prunedNodeIds).not.toContain(finalStep.state.optimalNodeId);
+  });
 });

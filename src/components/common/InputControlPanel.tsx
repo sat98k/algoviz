@@ -71,15 +71,17 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({
 
   const handleRandomize = () => {
     const randomData = config.generateRandomInput();
-    setFormData(randomData);
+    const merged = { ...formData, ...randomData };
+    setFormData(merged);
     setActivePreset(null);
-    onApplyInputs(randomData);
+    onApplyInputs(merged);
   };
 
   const handlePresetSelect = (presetName: string, data: Record<string, any>) => {
-    setFormData(data);
+    const merged = { ...formData, ...data };
+    setFormData(merged);
     setActivePreset(presetName);
-    onApplyInputs(data);
+    onApplyInputs(merged);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
