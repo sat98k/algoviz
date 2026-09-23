@@ -11,14 +11,40 @@ export interface GraphColoringState {
   conflictVertex?: string;
   isGraphColoring: boolean; // flag for GraphVisualizer detection
   explanation?: string;
+  findMode?: 'first' | 'all';
+  allSolutions?: Array<Record<string, number>>;
+  solutionCount?: number;
 }
 
-const COLOR_NAMES = ['—', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Cyan', 'Pink'];
+export const COLOR_NAMES = ['—', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Cyan', 'Pink'];
+
+export const GRAPH_COLORING_PSEUDOCODE_FIRST = [
+  'function GraphColoring(vertexIndex, colorAssignment, k):',
+  '  if vertexIndex == |V|: return true  // Base case: all vertices validly colored',
+  '  for c = 1 to k:  // Try each of the k available colors on vertex',
+  '    if isSafe(vertexIndex, c, colorAssignment):  // Check neighbor conflict',
+  '      colorAssignment[vertexIndex] = c  // Tentatively assign color c',
+  '      if GraphColoring(vertexIndex + 1, colorAssignment, k): return true  // Recurse',
+  '      colorAssignment[vertexIndex] = 0  // Backtrack: uncolor vertex on dead end',
+  '  return false  // Exhausted all k colors without a valid configuration',
+];
+
+export const GRAPH_COLORING_PSEUDOCODE_ALL = [
+  'function GraphColoringAll(vertexIndex, colorAssignment, k):',
+  '  if vertexIndex == |V|: recordSolution(colorAssignment); return  // Valid coloring found',
+  '  for c = 1 to k:  // Try each of the k available colors on vertex',
+  '    if isSafe(vertexIndex, c, colorAssignment):  // Check neighbor conflict',
+  '      colorAssignment[vertexIndex] = c  // Tentatively assign color c',
+  '      GraphColoringAll(vertexIndex + 1, colorAssignment, k)  // Continue searching remaining colorings',
+  '      colorAssignment[vertexIndex] = 0  // Backtrack: explore alternative colors for vertex',
+  '  return allSolutions  // Return exhaustive set of all valid colorings',
+];
 
 export function* graphColoringSteps(inputs: {
   edgeList?: [string, string][];
   numColors?: number;
   numNodes?: number;
+  findMode?: 'first' | 'all';
 }): Generator<AlgorithmStep<GraphColoringState>> {
   const defaultEdges: [string, string][] = [
     ['0', '1'],
@@ -30,6 +56,7 @@ export function* graphColoringSteps(inputs: {
 
   const rawEdges = inputs.edgeList || defaultEdges;
   const k = inputs.numColors ?? 3;
+  const findMode = inputs.findMode || 'first';
 
   // Build node set and adjacency list
   const nodeSet = new Set<string>();
@@ -71,6 +98,8 @@ export function* graphColoringSteps(inputs: {
   // Color assignment: 0 = uncolored
   const colorAssignment: Record<string, number> = {};
   for (const id of sortedIds) colorAssignment[id] = 0;
+
+  const allSolutions: Array<Record<string, number>> = [];
 
   const makeStep = (
     title: string,
@@ -115,6 +144,9 @@ export function* graphColoringSteps(inputs: {
         conflictVertex,
         isGraphColoring: true,
         explanation,
+        findMode,
+        allSolutions: allSolutions.map((s) => ({ ...s })),
+        solutionCount: allSolutions.length,
       },
       highlights: {
         nodes: highlightNodes,
@@ -134,7 +166,9 @@ export function* graphColoringSteps(inputs: {
   // Initialize
   yield makeStep(
     'Initialize Graph Coloring',
-    `Graph has ${nodes.length} vertices and ${allEdges.length} edges. Attempting to color with k = ${k} colors: [${COLOR_NAMES.slice(1, k + 1).join(', ')}].`,
+    `Graph has ${nodes.length} vertices and ${allEdges.length} edges. Search mode: ${
+      findMode === 'all' ? 'FIND ALL VALID COLORINGS (exhaustive)' : 'FIND FIRST SOLUTION'
+    }. Available colors k = ${k}: [${COLOR_NAMES.slice(1, k + 1).join(', ')}].`,
     1,
     `${nodes.length} vertices, ${allEdges.length} edges, k = ${k}`
   );
@@ -154,7 +188,31 @@ export function* graphColoringSteps(inputs: {
   // Backtracking solver as a generator
   function* solve(vertexIndex: number): Generator<AlgorithmStep<GraphColoringState>, boolean> {
     if (vertexIndex >= sortedIds.length) {
-      return true;
+      if (findMode === 'all') {
+        const solutionCopy = { ...colorAssignment };
+        allSolutions.push(solutionCopy);
+        const colorSummary = sortedIds
+          .map((id) => `V${parseInt(id) + 1}=${COLOR_NAMES[solutionCopy[id]] || solutionCopy[id]}`)
+          .join(', ');
+
+        yield makeStep(
+          `Valid Coloring #${allSolutions.length} Found!`,
+          `Discovered valid coloring #${allSolutions.length}: ${colorSummary}. Recording solution and continuing search for all remaining valid colorings.`,
+          2,
+          `Solution #${allSolutions.length}: ${colorSummary}`,
+          undefined,
+          undefined,
+          undefined,
+          false,
+          {
+            currentSolution: solutionCopy,
+            totalFoundSoFar: allSolutions.length,
+          }
+        );
+        return false; // Force backtrack to find remaining solutions
+      } else {
+        return true;
+      }
     }
 
     const vertexId = sortedIds[vertexIndex];
@@ -193,7 +251,7 @@ export function* graphColoringSteps(inputs: {
       yield makeStep(
         `Assign: ${vertexLabel} ← ${colorName}`,
         `Color ${colorName} (${c}) is safe for vertex ${vertexLabel}. No adjacent vertex has this color. Proceeding to next vertex.`,
-        [4, 5, 6],
+        findMode === 'all' ? [4, 5] : [4, 5, 6],
         `${vertexLabel} = ${colorName} ✓`,
         vertexId,
         c,
@@ -204,7 +262,7 @@ export function* graphColoringSteps(inputs: {
       );
 
       const result = yield* solve(vertexIndex + 1);
-      if (result) return true;
+      if (findMode === 'first' && result) return true;
 
       // Backtrack: uncolor
       colorAssignment[vertexId] = 0;
@@ -230,47 +288,111 @@ export function* graphColoringSteps(inputs: {
 
   const hasSolution = yield* solve(0);
 
-  if (hasSolution) {
-    const colorSummary = sortedIds
-      .map((id) => `V${parseInt(id) + 1}=${COLOR_NAMES[colorAssignment[id]] || colorAssignment[id]}`)
-      .join(', ');
+  if (findMode === 'all') {
+    if (allSolutions.length > 0) {
+      const solutionsSummary = allSolutions.map((sol, idx) => ({
+        id: idx + 1,
+        assignment: sol,
+        summary: sortedIds
+          .map((id) => `V${parseInt(id) + 1}=${COLOR_NAMES[sol[id]] || sol[id]}`)
+          .join(', '),
+      }));
 
-    yield makeStep(
-      `Valid ${k}-Coloring Found!`,
-      `Successfully colored all ${nodes.length} vertices with ${k} colors. Assignment: ${colorSummary}.`,
-      2,
-      colorSummary,
-      undefined,
-      undefined,
-      undefined,
-      true,
-      {
-        solvable: true,
-        numColors: k,
-        assignment: { ...colorAssignment },
-        colorSummary,
-        nodesExplored,
-        backtracks,
-      },
-      sortedIds.length > 0 ? { type: 'return', nodeId: sortedIds[sortedIds.length - 1] } : undefined
-    );
+      // Display first solution on graph for clean final state
+      Object.assign(colorAssignment, allSolutions[0]);
+
+      yield makeStep(
+        `Exhaustive Search Complete: ${allSolutions.length} Valid Coloring(s) Found!`,
+        `Successfully explored all branches and discovered ${allSolutions.length} distinct valid ${k}-coloring(s). View all assignments in the output pane below.`,
+        8,
+        `Total Valid Colorings: ${allSolutions.length}`,
+        undefined,
+        undefined,
+        undefined,
+        true,
+        {
+          solvable: true,
+          numColors: k,
+          findMode: 'all',
+          numSolutions: allSolutions.length,
+          allSolutions: allSolutions.map((s) => ({ ...s })),
+          solutionsSummary,
+          nodesExplored,
+          backtracks,
+        }
+      );
+    } else {
+      yield makeStep(
+        `No Valid ${k}-Coloring Exists`,
+        `Exhaustive backtracking search confirmed that the graph cannot be colored with ${k} colors without adjacent vertices sharing the same color. Total valid colorings: 0.`,
+        8,
+        `Not ${k}-colorable (0 solutions)`,
+        undefined,
+        undefined,
+        undefined,
+        true,
+        {
+          solvable: false,
+          numColors: k,
+          findMode: 'all',
+          numSolutions: 0,
+          allSolutions: [],
+          solutionsSummary: [],
+          nodesExplored,
+          backtracks,
+        }
+      );
+    }
   } else {
-    yield makeStep(
-      `No Valid ${k}-Coloring Exists`,
-      `Exhaustive backtracking search confirmed that the graph cannot be colored with ${k} colors without adjacent vertices sharing the same color.`,
-      8,
-      `Not ${k}-colorable`,
-      undefined,
-      undefined,
-      undefined,
-      true,
-      {
-        solvable: false,
-        numColors: k,
-        assignment: {},
-        nodesExplored,
-        backtracks,
-      }
-    );
+    // findMode === 'first'
+    if (hasSolution) {
+      const colorSummary = sortedIds
+        .map((id) => `V${parseInt(id) + 1}=${COLOR_NAMES[colorAssignment[id]] || colorAssignment[id]}`)
+        .join(', ');
+
+      yield makeStep(
+        `Valid ${k}-Coloring Found!`,
+        `Successfully colored all ${nodes.length} vertices with ${k} colors. Assignment: ${colorSummary}.`,
+        2,
+        colorSummary,
+        undefined,
+        undefined,
+        undefined,
+        true,
+        {
+          solvable: true,
+          numColors: k,
+          findMode: 'first',
+          numSolutions: 1,
+          assignment: { ...colorAssignment },
+          allSolutions: [{ ...colorAssignment }],
+          colorSummary,
+          nodesExplored,
+          backtracks,
+        },
+        sortedIds.length > 0 ? { type: 'return', nodeId: sortedIds[sortedIds.length - 1] } : undefined
+      );
+    } else {
+      yield makeStep(
+        `No Valid ${k}-Coloring Exists`,
+        `Exhaustive backtracking search confirmed that the graph cannot be colored with ${k} colors without adjacent vertices sharing the same color.`,
+        8,
+        `Not ${k}-colorable`,
+        undefined,
+        undefined,
+        undefined,
+        true,
+        {
+          solvable: false,
+          numColors: k,
+          findMode: 'first',
+          numSolutions: 0,
+          assignment: {},
+          allSolutions: [],
+          nodesExplored,
+          backtracks,
+        }
+      );
+    }
   }
 }

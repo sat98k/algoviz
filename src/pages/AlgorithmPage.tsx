@@ -19,12 +19,15 @@ import { SetCoverVisualizer } from '../components/visualizers/SetCoverVisualizer
 import { SweepLineVisualizer } from '../components/visualizers/SweepLineVisualizer';
 import { TreeTraversalOverride, createHuffmanDecodingAlgorithmSteps } from '../utils/huffmanCodec';
 import { HUFFMAN_DECODING_PSEUDOCODE } from '../algorithms/huffman';
+import { SUBSET_SUM_PSEUDOCODE_FIRST, SUBSET_SUM_PSEUDOCODE_ALL } from '../algorithms/subsetSum';
+import { GRAPH_COLORING_PSEUDOCODE_FIRST, GRAPH_COLORING_PSEUDOCODE_ALL } from '../algorithms/graphColoring';
 
 // Controls & Panels
 import { PlaybackControls } from '../components/common/PlaybackControls';
 import { ComplexityBadge } from '../components/common/ComplexityBadge';
 import { MetricsPanel } from '../components/common/MetricsPanel';
 import { ResultPanel } from '../components/common/ResultPanel';
+import { ColoringSolutionsPanel } from '../components/common/ColoringSolutionsPanel';
 import { InputControlPanel } from '../components/common/InputControlPanel';
 import { CodeExplanation } from '../components/common/CodeExplanation';
 import { CallFlowOverlay } from '../components/common/CallFlowOverlay';
@@ -59,12 +62,12 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
   // Extract initial inputs from schema defaults or preset
   const defaultInputs = useMemo(() => {
     const init: Record<string, any> = {};
-    if (config.presets && config.presets.length > 0) {
-      return { ...config.presets[0].data };
-    }
     config.inputSchema.forEach((field) => {
       init[field.name] = field.defaultValue;
     });
+    if (config.presets && config.presets.length > 0) {
+      return { ...init, ...config.presets[0].data };
+    }
     return init;
   }, [config]);
 
@@ -109,6 +112,14 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
   const activePseudocode =
     config.id === 'huffman' && huffmanPhase === 'decode'
       ? HUFFMAN_DECODING_PSEUDOCODE
+      : config.id === 'subset-sum'
+      ? inputs.findMode === 'all'
+        ? SUBSET_SUM_PSEUDOCODE_ALL
+        : SUBSET_SUM_PSEUDOCODE_FIRST
+      : config.id === 'graph-coloring'
+      ? inputs.findMode === 'all'
+        ? GRAPH_COLORING_PSEUDOCODE_ALL
+        : GRAPH_COLORING_PSEUDOCODE_FIRST
       : config.pseudocode;
 
   // Reset step index when inputs or algorithm change
@@ -182,11 +193,22 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
       case 'GridTableVisualizer':
         return <GridTableVisualizer step={currentStep} />;
       case 'TreeVisualizer':
-        return <TreeVisualizer step={currentStep} traversalOverride={huffmanTraversal} />;
+        return (
+          <TreeVisualizer
+            key={`${config.id}-${inputs.findMode ?? 'first'}-${Array.isArray(inputs.numbers) ? inputs.numbers.join('_') : ''}-${inputs.targetSum}`}
+            step={currentStep}
+            traversalOverride={huffmanTraversal}
+          />
+        );
       case 'BoardVisualizer':
         return <BoardVisualizer step={currentStep} />;
       case 'GraphVisualizer':
-        return <GraphVisualizer step={currentStep} />;
+        return (
+          <GraphVisualizer
+            key={`${config.id}-${inputs.findMode ?? 'first'}-${inputs.numColors ?? 3}-${Array.isArray(inputs.edgeList) ? inputs.edgeList.length : ''}`}
+            step={currentStep}
+          />
+        );
       case 'PointCanvasVisualizer':
         return <PointCanvasVisualizer step={currentStep} />;
       case 'StringMatchVisualizer':
@@ -386,6 +408,96 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
     </div>
   );
 
+  const subsetSumModeSwitch = config.id === 'subset-sum' && (
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-obsidian-950 border border-amber/40 shadow-sm font-mono text-xs">
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] text-chalk-400 uppercase font-bold tracking-wider">
+          SEARCH MODE:
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            setIsPlaying(false);
+            setCurrentStepIndex(0);
+            setInputs((prev) => ({ ...prev, findMode: 'first' }));
+          }}
+          className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
+            (inputs.findMode ?? 'first') === 'first'
+              ? 'bg-amber text-obsidian-950 border-amber shadow-sm'
+              : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
+          }`}
+        >
+          FIND FIRST SOLUTION
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setIsPlaying(false);
+            setCurrentStepIndex(0);
+            setInputs((prev) => ({ ...prev, findMode: 'all' }));
+          }}
+          className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
+            inputs.findMode === 'all'
+              ? 'bg-amber text-obsidian-950 border-amber shadow-sm'
+              : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
+          }`}
+        >
+          FIND ALL SOLUTIONS
+        </button>
+      </div>
+      <span className="text-[11px] text-chalk-500 hidden sm:inline">
+        {inputs.findMode === 'all'
+          ? '⚡ Exhaustive search: continues backtracking to discover all subsets'
+          : '⚡ Fast search: stops immediately upon finding first valid subset'}
+      </span>
+    </div>
+  );
+
+  const graphColoringModeSwitch = config.id === 'graph-coloring' && (
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-obsidian-950 border border-amber/40 shadow-sm font-mono text-xs">
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] text-chalk-400 uppercase font-bold tracking-wider">
+          SEARCH MODE:
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            setIsPlaying(false);
+            setCurrentStepIndex(0);
+            setInputs((prev) => ({ ...prev, findMode: 'first' }));
+          }}
+          className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
+            (inputs.findMode ?? 'first') === 'first'
+              ? 'bg-amber text-obsidian-950 border-amber shadow-sm'
+              : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
+          }`}
+        >
+          FIND FIRST SOLUTION
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setIsPlaying(false);
+            setCurrentStepIndex(0);
+            setInputs((prev) => ({ ...prev, findMode: 'all' }));
+          }}
+          className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
+            inputs.findMode === 'all'
+              ? 'bg-amber text-obsidian-950 border-amber shadow-sm'
+              : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
+          }`}
+        >
+          FIND ALL SOLUTIONS
+        </button>
+      </div>
+      <span className="text-[11px] text-chalk-500 hidden sm:inline">
+        {inputs.findMode === 'all'
+          ? '⚡ Exhaustive search: continues backtracking to discover all valid colorings'
+          : '⚡ Fast search: stops immediately upon finding first valid coloring'}
+      </span>
+    </div>
+  );
+
   const layoutToggle = (
     <div className="flex items-center gap-1 bg-obsidian-950 border border-hairline p-1 font-mono text-xs">
       <button
@@ -506,14 +618,19 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
       <div ref={stageContainerRef} className="relative w-full">
         <CallFlowOverlay step={currentStep} containerRef={stageContainerRef} />
 
-        {layoutMode === 'split' ? (
-          /* Split Mode: 8-col Visualizer Stage on Left, 4-col Pseudocode & Telemetry on Right */
-          <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left: Visualizer Canvas + Controls */}
-            <div className="lg:col-span-8 xl:col-span-8 flex flex-col gap-3">
-              {config.id === 'huffman' && huffmanStageSwitch}
-              {topPlaybackBar}
+        {/* Top Control Deck: Mode Switches & Primary Playback (Full Width) */}
+        <div className="flex flex-col gap-2.5 mb-3 w-full">
+          {config.id === 'huffman' && huffmanStageSwitch}
+          {subsetSumModeSwitch}
+          {graphColoringModeSwitch}
+          {topPlaybackBar}
+        </div>
 
+        {layoutMode === 'split' ? (
+          /* Split Mode: Main Visualizer Stage on Left, Pseudocode directly adjacent on Right */
+          <section className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
+            {/* Left: Visualizer Canvas + Scrubber Controls */}
+            <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-3">
               <div className="w-full relative">
                 {renderVisualizer()}
               </div>
@@ -536,8 +653,8 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
               />
             </div>
 
-            {/* Right: Pseudocode Panel + Live Telemetry */}
-            <div className="lg:col-span-4 xl:col-span-4 flex flex-col gap-4">
+            {/* Right: Pseudocode Panel (Right Adjacent) + Live Telemetry */}
+            <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3">
               <CodeExplanation step={currentStep} pseudocode={activePseudocode} hideStepHeader={true} />
               <MetricsPanel metrics={currentStep.metrics || {}} />
             </div>
@@ -545,9 +662,6 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
         ) : (
           /* Stacked Mode: Full Width Visualizer Stage */
           <section className="flex flex-col gap-3">
-            {config.id === 'huffman' && huffmanStageSwitch}
-            {topPlaybackBar}
-
             <div className="w-full relative">
               {renderVisualizer()}
             </div>
@@ -568,6 +682,11 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
               }}
               onSpeedChange={(newSpeed) => setSpeed(newSpeed)}
             />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
+              <CodeExplanation step={currentStep} pseudocode={activePseudocode} hideStepHeader={true} />
+              <MetricsPanel metrics={currentStep.metrics || {}} />
+            </div>
           </section>
         )}
       </div>
@@ -580,7 +699,14 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
             currentInputs={inputs}
             onApplyInputs={(newInputs) => setInputs(newInputs)}
           />
-          {currentStep.result || currentStep.isFinal || finalStep?.result ? (
+          {config.id === 'graph-coloring' && (inputs.findMode === 'all' || currentStep.state?.allSolutions?.length) ? (
+            <ColoringSolutionsPanel
+              solutions={currentStep.state?.allSolutions || (finalStep?.result?.allSolutions ?? [])}
+              numColors={currentStep.state?.numColors ?? inputs.numColors ?? 3}
+              numVertices={currentStep.state?.nodes?.length}
+              isFinal={currentStep.isFinal}
+            />
+          ) : currentStep.result || currentStep.isFinal || finalStep?.result ? (
             <ResultPanel
               result={currentStep.result || (currentStep.isFinal ? finalStep?.result : undefined)}
               title="COMPUTED SOLUTION ARTIFACT"
@@ -602,7 +728,14 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
           </div>
           <div className="flex flex-col gap-8">
             <MetricsPanel metrics={currentStep.metrics || {}} />
-            {currentStep.result || currentStep.isFinal || finalStep?.result ? (
+            {config.id === 'graph-coloring' && (inputs.findMode === 'all' || currentStep.state?.allSolutions?.length) ? (
+              <ColoringSolutionsPanel
+                solutions={currentStep.state?.allSolutions || (finalStep?.result?.allSolutions ?? [])}
+                numColors={currentStep.state?.numColors ?? inputs.numColors ?? 3}
+                numVertices={currentStep.state?.nodes?.length}
+                isFinal={currentStep.isFinal}
+              />
+            ) : currentStep.result || currentStep.isFinal || finalStep?.result ? (
               <ResultPanel
                 result={currentStep.result || (currentStep.isFinal ? finalStep?.result : undefined)}
                 title="COMPUTED SOLUTION ARTIFACT"

@@ -29,7 +29,10 @@ import { karatsubaSteps } from '../algorithms/karatsuba';
 import { assemblyLineSchedulingSteps } from '../algorithms/assemblyLineScheduling';
 import { tspSteps } from '../algorithms/tsp';
 import { subsetSumSteps } from '../algorithms/subsetSum';
-import { graphColoringSteps } from '../algorithms/graphColoring';
+import {
+  graphColoringSteps,
+  GRAPH_COLORING_PSEUDOCODE_FIRST,
+} from '../algorithms/graphColoring';
 import { jobSelectionBBSteps } from '../algorithms/jobSelectionBB';
 
 export const algorithmRegistry: AlgorithmConfig[] = [
@@ -2494,27 +2497,43 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         max: 200,
         helperText: 'The exact sum to find among subsets.',
       },
+      {
+        name: 'findMode',
+        label: 'Search Mode',
+        type: 'select',
+        defaultValue: 'first',
+        options: [
+          { label: 'Find First Solution (Fast / Decision)', value: 'first' },
+          { label: 'Find All Solutions (Exhaustive)', value: 'all' },
+        ],
+        helperText: 'Choose whether to halt on first match or continue backtracking to discover all matching subsets.',
+      },
     ],
     presets: [
       {
         name: 'Classic Example (Target 9)',
         description: 'Set [3, 34, 4, 12, 5, 2] with target sum 9 → subset [4, 5]',
-        data: { numbers: [3, 34, 4, 12, 5, 2], targetSum: 9 },
+        data: { numbers: [3, 34, 4, 12, 5, 2], targetSum: 9, findMode: 'first' },
+      },
+      {
+        name: 'All Subsets Demo (Target 30)',
+        description: 'Set [5, 10, 12, 13, 15, 18] with target 30 → all 3 subsets: [5, 10, 15], [5, 12, 13], [12, 18]',
+        data: { numbers: [5, 10, 12, 13, 15, 18], targetSum: 30, findMode: 'all' },
       },
       {
         name: 'No Solution (Target 13)',
         description: 'Set [3, 5, 7] with target 13 → no valid subset',
-        data: { numbers: [3, 5, 7], targetSum: 13 },
+        data: { numbers: [3, 5, 7], targetSum: 13, findMode: 'first' },
       },
       {
         name: 'Full Set Match (Target 12)',
         description: 'Set [2, 4, 6] with target 12 → all elements',
-        data: { numbers: [2, 4, 6], targetSum: 12 },
+        data: { numbers: [2, 4, 6], targetSum: 12, findMode: 'first' },
       },
       {
         name: 'Larger Set (Target 21)',
         description: 'Set [1, 5, 3, 7, 4, 8, 2] with target 21',
-        data: { numbers: [1, 5, 3, 7, 4, 8, 2], targetSum: 21 },
+        data: { numbers: [1, 5, 3, 7, 4, 8, 2], targetSum: 21, findMode: 'first' },
       },
     ],
     generateRandomInput: () => {
@@ -2522,7 +2541,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       const numbers = Array.from({ length: n }, () => Math.floor(Math.random() * 15) + 1);
       const totalSum = numbers.reduce((a, b) => a + b, 0);
       const targetSum = Math.floor(Math.random() * (totalSum - 1)) + 1;
-      return { numbers, targetSum };
+      return { numbers, targetSum, findMode: 'first' };
     },
     stepGenerator: subsetSumSteps,
   },
@@ -2543,18 +2562,20 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Given an undirected graph G = (V, E) and an integer k, determine if vertices can be assigned at most k colors such that no two adjacent vertices share the same color.',
     explanation:
       'Assigns colors 1 through k sequentially to vertices. For each vertex, tries each color in order, checking for conflicts with already-colored neighbors. If all k colors conflict, backtracks to uncolor the previous vertex and tries alternative assignments.',
-    pseudocode: [
-      'function GraphColoring(vertexIndex, colorAssignment, k):',
-      '  if vertexIndex == |V|: return true  // Base case: all vertices validly colored',
-      '  for c = 1 to k:  // Try each of the k available colors on vertex',
-      '    if isSafe(vertexIndex, c, colorAssignment):  // Check neighbor conflict',
-      '      colorAssignment[vertexIndex] = c  // Tentatively assign color c',
-      '      if GraphColoring(vertexIndex + 1, colorAssignment, k): return true  // Recurse',
-      '      colorAssignment[vertexIndex] = 0  // Backtrack: uncolor vertex on dead end',
-      '  return false  // Exhausted all k colors without a valid configuration',
-    ],
+    pseudocode: GRAPH_COLORING_PSEUDOCODE_FIRST,
     visualizer: 'GraphVisualizer',
     inputSchema: [
+      {
+        name: 'findMode',
+        label: 'Search Strategy',
+        type: 'select',
+        defaultValue: 'first',
+        options: [
+          { label: 'Find First Solution (Fast / Decision)', value: 'first' },
+          { label: 'Find All Solutions (Exhaustive)', value: 'all' },
+        ],
+        helperText: 'Choose whether to stop at the first valid coloring or exhaustively find all valid colorings.',
+      },
       {
         name: 'numColors',
         label: 'Available Colors (k)',
@@ -2567,9 +2588,25 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     ],
     presets: [
       {
-        name: '5-Node Planar (k=3, Solvable)',
-        description: 'Standard 5-vertex planar graph solvable with 3 colors',
+        name: '5-Node Planar (k=3, First Solution)',
+        description: 'Standard 5-vertex planar graph finding first valid 3-coloring',
         data: {
+          findMode: 'first',
+          numColors: 3,
+          edgeList: [
+            ['0', '1'],
+            ['0', '2'],
+            ['0', '3'],
+            ['1', '2'],
+            ['2', '3'],
+          ],
+        },
+      },
+      {
+        name: '5-Node Planar (All 3-Colorings)',
+        description: 'Exhaustive backtracking to discover all valid 3-colorings for the 5-node planar graph',
+        data: {
+          findMode: 'all',
           numColors: 3,
           edgeList: [
             ['0', '1'],

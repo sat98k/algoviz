@@ -95,15 +95,22 @@ export const CallFlowOverlay: React.FC<CallFlowOverlayProps> = ({ step, containe
       }, 1200);
     };
 
-    // Small delay to allow DOM positions to settle after step state render
-    const frameId = requestAnimationFrame(() => {
-      computeCoordinates();
-    });
+    // Animate arrow tracking for the duration of the camera pan/zoom transition (350ms)
+    let animFrameId: number;
+    const startTime = performance.now();
 
+    const tick = (now: number) => {
+      computeCoordinates();
+      if (now - startTime < 380) {
+        animFrameId = requestAnimationFrame(tick);
+      }
+    };
+
+    animFrameId = requestAnimationFrame(tick);
     window.addEventListener('resize', computeCoordinates);
 
     return () => {
-      cancelAnimationFrame(frameId);
+      cancelAnimationFrame(animFrameId);
       window.removeEventListener('resize', computeCoordinates);
       if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
     };

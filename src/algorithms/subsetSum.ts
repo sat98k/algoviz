@@ -15,6 +15,7 @@ export interface SubsetSumTreeNode {
 export interface SubsetSumState {
   numbers: number[];
   targetSum: number;
+  findMode: 'first' | 'all';
   currentIndex: number;
   currentElement?: number;
   currentSum: number;
@@ -22,17 +23,48 @@ export interface SubsetSumState {
   treeRoot?: SubsetSumTreeNode;
   activeNodeId?: string;
   solutionSubset?: number[];
+  allSolutions?: number[][];
   found: boolean;
   explanation?: string;
   formulaExplanation?: string;
 }
 
-export function* subsetSumSteps(inputs: {
+export interface SubsetSumInputs {
   numbers?: number[];
   targetSum?: number;
-}): Generator<AlgorithmStep<SubsetSumState>> {
+  findMode?: 'first' | 'all';
+}
+
+export const SUBSET_SUM_PSEUDOCODE_FIRST = [
+  'function SubsetSum(index, currentSum, remaining, included):',
+  '  if currentSum == target: return SOLUTION(included)  // Base case: first valid subset matched',
+  '  if index >= n: return FAIL  // Base case: all elements evaluated without match',
+  '  // Option 1: Try including numbers[index]',
+  '  if currentSum + numbers[index] > target: PRUNE  // Overflow cutoff: exceeds target sum',
+  '  else if currentSum + numbers[index] + remaining < target: PRUNE  // Insufficient remaining sum',
+  '  else: if recurse(index+1, currentSum+numbers[index], remaining-numbers[index], included+[numbers[index]]) == true: return true',
+  '  // Option 2: Try excluding numbers[index]',
+  '  if currentSum + remaining - numbers[index] < target: PRUNE  // Insufficient remaining without element',
+  '  else: if recurse(index+1, currentSum, remaining-numbers[index], included) == true: return true',
+];
+
+export const SUBSET_SUM_PSEUDOCODE_ALL = [
+  'function SubsetSumAll(index, currentSum, remaining, included):',
+  '  if currentSum == target: recordSolution(included); return  // Match found: record & backtrack',
+  '  if index >= n: return  // Base case: element choices exhausted',
+  '  // Option 1: Try including numbers[index]',
+  '  if currentSum + numbers[index] > target: PRUNE  // Overflow cutoff: exceeds target sum',
+  '  else if currentSum + numbers[index] + remaining < target: PRUNE  // Insufficient remaining sum',
+  '  else: recurse(index+1, currentSum+numbers[index], remaining-numbers[index], included+[numbers[index]])',
+  '  // Option 2: Try excluding numbers[index]',
+  '  if currentSum + remaining - numbers[index] < target: PRUNE  // Insufficient remaining without element',
+  '  else: recurse(index+1, currentSum, remaining-numbers[index], included)',
+];
+
+export function* subsetSumSteps(inputs: SubsetSumInputs): Generator<AlgorithmStep<SubsetSumState>> {
   const rawNumbers = inputs.numbers && inputs.numbers.length > 0 ? [...inputs.numbers] : [3, 34, 4, 12, 5, 2];
   const targetSum = inputs.targetSum ?? 9;
+  const findMode: 'first' | 'all' = inputs.findMode === 'all' ? 'all' : 'first';
 
   // Filter and sort positive numbers for monotonic pruning
   const numbers = rawNumbers.filter((x) => x > 0).sort((a, b) => a - b);
@@ -45,6 +77,9 @@ export function* subsetSumSteps(inputs: {
   let nodesExplored = 0;
   let prunedNodes = 0;
   let nodeCounter = 0;
+
+  let solutionSubset: number[] | null = null;
+  const allSolutions: number[][] = [];
 
   // Root node
   const treeRoot: SubsetSumTreeNode = {
@@ -93,14 +128,22 @@ export function* subsetSumSteps(inputs: {
       state: {
         numbers: [...numbers],
         targetSum,
+        findMode,
         currentIndex,
         currentElement,
         currentSum,
         includedElements: [...includedElements],
         treeRoot: cloneTree(treeRoot),
         activeNodeId,
-        solutionSubset: finalResult?.subset,
-        found: finalResult?.found ?? false,
+        solutionSubset:
+          finalResult?.subset ||
+          (findMode === 'all'
+            ? allSolutions.length > 0
+              ? allSolutions[allSolutions.length - 1]
+              : undefined
+            : solutionSubset || undefined),
+        allSolutions: allSolutions.map((s) => [...s]),
+        found: finalResult?.found ?? (findMode === 'all' ? allSolutions.length > 0 : solutionSubset !== null),
         explanation,
         formulaExplanation,
       },
@@ -130,8 +173,6 @@ export function* subsetSumSteps(inputs: {
     -1
   );
 
-  let solutionSubset: number[] | null = null;
-
   // Backtracking recursive generator
   function* backtrack(
     index: number,
@@ -140,27 +181,51 @@ export function* subsetSumSteps(inputs: {
     included: number[],
     parentNode: SubsetSumTreeNode
   ): Generator<AlgorithmStep<SubsetSumState>, boolean> {
-    if (solutionSubset !== null) return true; // Stop after finding first valid solution
+    if (findMode === 'first' && solutionSubset !== null) return true; // Stop after finding first valid solution
 
     if (currentSum === targetSum) {
-      solutionSubset = [...included];
-      parentNode.status = 'solution';
-      yield makeSnapshot(
-        `Target Sum ${targetSum} Achieved!`,
-        `Found valid subset: [${included.join(' + ')}] = ${targetSum}.`,
-        2,
-        parentNode.id,
-        currentSum,
-        included,
-        `Solution found with sum ${currentSum} matching target ${targetSum}!`,
-        `[${included.join(' + ')}] = ${targetSum} (MATCH)`,
-        index - 1,
-        numbers[index - 1],
-        false,
-        undefined,
-        { type: 'return', nodeId: parentNode.id }
-      );
-      return true;
+      if (findMode === 'first') {
+        solutionSubset = [...included];
+        parentNode.status = 'solution';
+        yield makeSnapshot(
+          `Target Sum ${targetSum} Achieved!`,
+          `Found valid subset: [${included.join(' + ')}] = ${targetSum}.`,
+          2,
+          parentNode.id,
+          currentSum,
+          included,
+          `Solution found with sum ${currentSum} matching target ${targetSum}!`,
+          `[${included.join(' + ')}] = ${targetSum} (MATCH)`,
+          index - 1,
+          numbers[index - 1],
+          false,
+          undefined,
+          { type: 'return', nodeId: parentNode.id }
+        );
+        return true;
+      } else {
+        const foundSubset = [...included];
+        allSolutions.push(foundSubset);
+        parentNode.status = 'solution';
+        yield makeSnapshot(
+          `Solution #${allSolutions.length} Found!`,
+          `Found valid subset #${allSolutions.length}: [${included.join(' + ')}] = ${targetSum}. Continuing backtrack search for other subsets.`,
+          2,
+          parentNode.id,
+          currentSum,
+          included,
+          `Solution #${allSolutions.length}: [${included.join(' + ')}] = ${targetSum}. Continuing exploration.`,
+          `[${included.join(' + ')}] = ${targetSum} (SOLUTION #${allSolutions.length})`,
+          index - 1,
+          numbers[index - 1],
+          false,
+          undefined,
+          { type: 'return', nodeId: parentNode.id }
+        );
+        // Positive integers only: deeper elements will strictly exceed targetSum.
+        // Return without stopping global search so DFS explores remaining branches.
+        return false;
+      }
     }
 
     if (index >= n) return false;
@@ -247,11 +312,11 @@ export function* subsetSumSteps(inputs: {
       );
 
       const found = yield* backtrack(index + 1, includeSum, newRemaining, includeNode.includedElements, includeNode);
-      if (found) return true;
+      if (findMode === 'first' && found) return true;
     }
 
     // --- OPTION 2: EXCLUDE numbers[index] ---
-    if (solutionSubset !== null) return true;
+    if (findMode === 'first' && solutionSubset !== null) return true;
 
     comparisons++;
     const excludeNode: SubsetSumTreeNode = {
@@ -264,6 +329,7 @@ export function* subsetSumSteps(inputs: {
       status: 'active',
       children: [],
     };
+    parentNode.children = parentNode.children || [];
     parentNode.children.push(excludeNode);
     nodesExplored++;
 
@@ -307,54 +373,87 @@ export function* subsetSumSteps(inputs: {
       );
 
       const found = yield* backtrack(index + 1, currentSum, newRemaining, included, excludeNode);
-      if (found) return true;
+      if (findMode === 'first' && found) return true;
     }
 
     return false;
   }
 
   const hasSolution = yield* backtrack(0, 0, totalSum, [], treeRoot);
+  const isSuccess = findMode === 'all' ? allSolutions.length > 0 : hasSolution;
 
   // Mark all solution path nodes
-  if (hasSolution && solutionSubset) {
-    const markSolutionPath = (node: SubsetSumTreeNode, targetPath: number[]) => {
-      if (node.includedElements.every((val, idx) => val === targetPath[idx])) {
-        node.status = 'solution';
-      }
-      node.children?.forEach((c) => markSolutionPath(c, targetPath));
-    };
+  const markSolutionPath = (node: SubsetSumTreeNode, targetPath: number[]) => {
+    const isPrefix =
+      node.includedElements.length <= targetPath.length &&
+      node.includedElements.every((val, idx) => val === targetPath[idx]);
+    if (isPrefix) {
+      node.status = 'solution';
+    }
+    node.children?.forEach((c) => markSolutionPath(c, targetPath));
+  };
+
+  if (findMode === 'all') {
+    allSolutions.forEach((sol) => markSolutionPath(treeRoot, sol));
+  } else if (hasSolution && solutionSubset) {
     markSolutionPath(treeRoot, solutionSubset);
   }
 
-  const finalSubset: number[] = solutionSubset || [];
+  const finalSubset: number[] =
+    findMode === 'all' ? (allSolutions[0] || []) : (solutionSubset || []);
+
+  const solutionsSummary =
+    allSolutions.length > 0
+      ? `Found ${allSolutions.length} valid subset(s): ${allSolutions.map((s) => `[${s.join(', ')}]`).join(', ')}.`
+      : `No subset of [${numbers.join(', ')}] sums to target ${targetSum}.`;
 
   // Final Step
   yield makeSnapshot(
-    hasSolution ? 'Subset Sum Solution Found' : 'No Valid Subset Sum Found',
-    hasSolution
+    findMode === 'all'
+      ? isSuccess
+        ? `All Solutions Found (${allSolutions.length})`
+        : 'No Valid Subset Sum Found'
+      : hasSolution
+      ? 'Subset Sum Solution Found'
+      : 'No Valid Subset Sum Found',
+    findMode === 'all'
+      ? isSuccess
+        ? `Exhaustive search complete: ${solutionsSummary}`
+        : `Search complete: No subset of [${numbers.join(', ')}] sums to target ${targetSum}.`
+      : hasSolution
       ? `Search complete: Target sum ${targetSum} achieved by subset [${finalSubset.join(', ')}] (sum = ${targetSum}).`
       : `Search complete: No subset of [${numbers.join(', ')}] sums to target ${targetSum}.`,
-    hasSolution ? 2 : 3,
+    isSuccess ? 2 : 3,
     treeRoot.id,
-    hasSolution ? targetSum : 0,
+    isSuccess ? targetSum : 0,
     finalSubset,
-    hasSolution
+    findMode === 'all'
+      ? isSuccess
+        ? `Found ${allSolutions.length} subset(s) matching target ${targetSum}.`
+        : `Exhaustive search confirmed target ${targetSum} is unreachable.`
+      : hasSolution
       ? `Solution subset [${finalSubset.join(' + ')}] = ${targetSum}`
       : `Exhaustive search confirmed target ${targetSum} is unreachable.`,
-    hasSolution
+    findMode === 'all'
+      ? isSuccess
+        ? `${allSolutions.length} Solution(s): ${allSolutions.map((s) => `[${s.join(', ')}]`).join(' ')}`
+        : `No Subset Sums to ${targetSum}`
+      : hasSolution
       ? `Subset [${finalSubset.join(' + ')}] = ${targetSum}`
       : `No Subset Sums to ${targetSum}`,
     n,
     undefined,
     true,
     {
-      found: hasSolution,
+      found: isSuccess,
       targetSum,
       subset: finalSubset,
-      totalSum: hasSolution ? targetSum : 0,
+      allSolutions: findMode === 'all' ? allSolutions : (hasSolution ? [finalSubset] : []),
+      solutionsCount: findMode === 'all' ? allSolutions.length : (hasSolution ? 1 : 0),
+      totalSum: isSuccess ? targetSum : 0,
       nodesExplored,
       backtracks,
     },
-    hasSolution ? { type: 'return', nodeId: treeRoot.id } : undefined
+    isSuccess ? { type: 'return', nodeId: treeRoot.id } : undefined
   );
 }

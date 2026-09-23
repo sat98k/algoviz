@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
 import { computeTreeLayout, TreeNodeInput } from '../../utils/treeLayout';
 import { getNodeTheme } from '../../utils/treeTheme';
 import { TreeTraversalOverride } from '../../utils/huffmanCodec';
-import { ZoomIn, ZoomOut, RotateCcw, Move } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Move, Target } from 'lucide-react';
 
 interface TreeVisualizerProps {
   step: AlgorithmStep;
@@ -120,11 +120,30 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
         if (!node) return null;
 
         const isActive = state.activeNodeId === node.id;
-        const isPruned = state.prunedNodeIds?.includes(node.id) || node.status === 'pruned';
-        const isBest =
-          state.bestItems?.includes(node.id) ||
-          node.status === 'best' ||
-          node.status === 'solution';
+        let nodeStatus: 'active' | 'explored' | 'pruned' | 'best' | 'normal' = 'normal';
+
+        if (isJobSelection) {
+          if (isActive) {
+            nodeStatus = 'active';
+          } else if (node.status === 'optimal') {
+            nodeStatus = 'best';
+          } else if (node.status === 'incumbent') {
+            nodeStatus = 'best';
+          } else if (node.status === 'pruned') {
+            nodeStatus = 'pruned';
+          } else if (node.status === 'explored') {
+            nodeStatus = 'explored';
+          } else {
+            nodeStatus = 'normal';
+          }
+        } else {
+          const isPruned = state.prunedNodeIds?.includes(node.id) || node.status === 'pruned';
+          const isBest =
+            state.bestItems?.includes(node.id) ||
+            node.status === 'best' ||
+            node.status === 'solution';
+          nodeStatus = isActive ? 'active' : isPruned ? 'pruned' : isBest ? 'best' : node.status || 'normal';
+        }
 
         let label = `N:${node.level ?? 0}`;
         let subLabel: string | undefined = undefined;
@@ -156,7 +175,12 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
             } else if (isJobSelection) {
               const jId = child.jobId ?? child.level;
               converted.edgeLabel = child.jobIncluded ? `+J${jId}` : `-J${jId}`;
-              converted.edgeStatus = child.jobIncluded ? 'include' : 'exclude';
+              converted.edgeStatus =
+                child.onOptimalPath && node.onOptimalPath && step.isFinal
+                  ? 'optimal'
+                  : child.jobIncluded
+                  ? 'include'
+                  : 'exclude';
             } else {
               converted.edgeLabel = child.itemIncluded ? `+I${child.level}` : `-I${child.level}`;
               converted.edgeStatus = child.itemIncluded ? 'include' : 'exclude';
@@ -169,7 +193,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
           id: node.id,
           label,
           subLabel,
-          status: isActive ? 'active' : isPruned ? 'pruned' : isBest ? 'best' : node.status || 'normal',
+          status: nodeStatus,
           pruneReason: node.pruneReason,
           children,
           rawNode: node,
@@ -205,18 +229,78 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
         }
   );
 
-  // Reset zoom on step / algo change if desired, or fit on reset
+  // Active node ID from state or traversal override or highlights
+  const activeNodeId =
+    state.activeNodeId ||
+    activeTraversal?.activeNodeId ||
+    highlights.nodes?.[0];
+
+  // Dynamic Auto-Focus state (tracks active branch automatically)
+  const [autoFocus, setAutoFocus] = useState<boolean>(true);
+
+  // Compute active branch ancestors (from root down to active node)
+  const activeBranchNodeIds = useMemo(() => {
+    const branchSet = new Set<string>();
+    if (!activeNodeId) return branchSet;
+
+    // Map each child to its parent
+    const parentMap = new Map<string, string>();
+    layout.edges.forEach((edge) => {
+      parentMap.set(edge.v, edge.u);
+    });
+
+    let curr: string | undefined = activeNodeId;
+    while (curr) {
+      branchSet.add(curr);
+      curr = parentMap.get(curr);
+    }
+    return branchSet;
+  }, [activeNodeId, layout.edges]);
+
+  // Auto-focus camera on active branch whenever step or activeNode changes
+  useEffect(() => {
+    if (!autoFocus) return;
+    if (!activeNodeId) return;
+
+    const activeNode = layout.nodes.find((n) => n.id === activeNodeId);
+    if (!activeNode) return;
+
+    const containerEl = containerRef.current;
+    const cw = containerEl?.clientWidth || 800;
+    const ch = containerEl?.clientHeight || 500;
+
+    // Natural fit scale of the tree inside the SVG viewBox
+    const s0 = Math.min(cw / Math.max(layout.width, 1), ch / Math.max(layout.height, 1));
+
+    // Dynamic zoom: if tree is compressed (< 0.85), zoom in so branch nodes are ~80-100px wide
+    const targetScale = s0 < 0.85 ? Math.min(3.2, Math.max(1.15, 0.92 / s0)) : 1.0;
+
+    // Center viewport on the active node (with slight vertical offset to show ancestor branch above)
+    const targetPanX = -(activeNode.x - layout.width / 2) * s0 * targetScale;
+    const targetPanY = -(activeNode.y - layout.height / 2) * s0 * targetScale + 35;
+
+    setScale(targetScale);
+    setPan({ x: targetPanX, y: targetPanY });
+  }, [step.stepIndex, activeNodeId, autoFocus, layout.width, layout.height]);
+
+  // Reset zoom to full tree overview and disable auto-focus until re-enabled
   const handleResetZoom = () => {
+    setAutoFocus(false);
     setScale(1);
     setPan({ x: 0, y: 0 });
   };
 
   const handleZoomIn = () => {
-    setScale((prev) => Math.min(2.5, prev + 0.15));
+    setScale((prev) => Math.min(3.5, Number((prev + 0.15).toFixed(2))));
   };
 
   const handleZoomOut = () => {
-    setScale((prev) => Math.max(0.4, prev - 0.15));
+    setScale((prev) => Math.max(0.35, Number((prev - 0.15).toFixed(2))));
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const zoomDelta = e.deltaY < 0 ? 0.12 : -0.12;
+    setScale((prev) => Math.min(3.5, Math.max(0.35, Number((prev + zoomDelta).toFixed(2)))));
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -238,10 +322,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-[460px] p-6 bg-obsidian-900 border border-hairline transition-all">
+    <div className="flex flex-col w-full min-h-[460px] p-3 sm:p-4 bg-obsidian-900 border border-hairline transition-all">
       {/* Top Banner Details for Huffman */}
       {isHuffman && state.codeTable && Object.keys(state.codeTable).length > 0 && (
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-2.5">
           {Object.entries(state.codeTable).map(([char, code]) => (
             <span
               key={char}
@@ -255,7 +339,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
 
       {/* Top Banner Details for Subset Sum */}
       {isSubsetSum && (
-        <div className="w-full max-w-4xl mb-4 p-3 bg-obsidian-950 border border-hairline flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+        <div className="w-full mb-2.5 p-2.5 sm:p-3 bg-obsidian-950 border border-hairline flex flex-wrap items-center justify-between gap-2.5 font-mono text-xs">
           <div className="flex items-center gap-2">
             <span className="text-chalk-500 uppercase">[ TARGET SUM ]:</span>
             <span className="text-amber-glow font-bold text-sm">{state.targetSum}</span>
@@ -264,20 +348,33 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
             <span className="text-chalk-500 uppercase">[ RUNNING SUM ]:</span>
             <span className="text-chalk-100 font-bold">{state.currentSum}</span>
           </div>
-          {state.solutionSubset && (
+          {state.allSolutions && state.allSolutions.length > 0 ? (
+            <div className="flex items-center gap-2 text-acid-400">
+              <span className="text-chalk-500 uppercase">
+                [ SOLUTIONS ({state.allSolutions.length}) ]:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {state.allSolutions.map((sol: number[], sIdx: number) => (
+                  <strong key={sIdx} className="bg-acid-500/20 px-2 py-0.5 border border-acid-500">
+                    [{sol.join(', ')}]
+                  </strong>
+                ))}
+              </div>
+            </div>
+          ) : state.solutionSubset ? (
             <div className="flex items-center gap-2 text-acid-400">
               <span className="text-chalk-500 uppercase">[ SOLUTION ]:</span>
               <strong className="bg-acid-500/20 px-2 py-0.5 border border-acid-500">
                 [{state.solutionSubset.join(', ')}] = {state.targetSum}
               </strong>
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
       {/* Top Banner Details for Job Selection */}
       {isJobSelection && (
-        <div className="w-full max-w-4xl mb-4 p-3 bg-obsidian-950 border border-hairline flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+        <div className="w-full mb-2.5 p-2.5 sm:p-3 bg-obsidian-950 border border-hairline flex flex-wrap items-center justify-between gap-2.5 font-mono text-xs">
           <div className="flex items-center gap-2">
             <span className="text-chalk-500 uppercase">[ JOBS ]:</span>
             <div className="flex flex-wrap gap-1.5">
@@ -298,7 +395,9 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
             </div>
             {state.bestJobs && state.bestJobs.length > 0 && (
               <div className="flex items-center gap-1.5 text-acid-400">
-                <span className="text-chalk-500 uppercase">[ OPTIMAL ]:</span>
+                <span className="text-chalk-500 uppercase">
+                  {step.isFinal ? '[ OPTIMAL ]:' : '[ INCUMBENT ]: '}
+                </span>
                 <span className="bg-acid-500/20 px-2 py-0.5 border border-acid-500 font-bold">
                   [{state.bestJobs.map((id: any) => `J${id}`).join(', ')}]
                 </span>
@@ -310,7 +409,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
 
       {/* Top Banner Details for Suffix Tree */}
       {isSuffixTree && (
-        <div className="w-full max-w-4xl mb-4 p-3 bg-obsidian-950 border border-hairline flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+        <div className="w-full mb-2.5 p-2.5 sm:p-3 bg-obsidian-950 border border-hairline flex flex-wrap items-center justify-between gap-2.5 font-mono text-xs">
           <div className="flex items-center gap-2">
             <span className="text-chalk-500 uppercase">[ TEXT + $ ]:</span>
             <span className="text-amber-glow font-bold tracking-[0.35em]">{state.text}</span>
@@ -341,7 +440,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
 
       {/* Huffman Decoding Live Bitstream Traversal Banner */}
       {isHuffman && state.mode === 'decode' && state.encodedBits && (
-        <div className="w-full max-w-4xl mb-4 p-3.5 bg-obsidian-950 border border-amber/40 flex flex-col gap-2 font-mono text-xs shadow-md">
+        <div className="w-full mb-2.5 p-3 bg-obsidian-950 border border-amber/40 flex flex-col gap-2 font-mono text-xs shadow-md">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-amber uppercase font-bold text-[11px] tracking-wider">[ BITSTREAM TRAVERSAL ]:</span>
@@ -383,16 +482,34 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
 
       {/* Narrative callout */}
       {(activeTraversal?.explanationOverride || state.explanation) && (
-        <div className="w-full max-w-4xl mb-4 px-4 py-1.5 bg-obsidian-950 border border-amber/30 text-xs font-mono text-amber-glow flex items-center gap-2">
+        <div className="w-full mb-2.5 px-3 py-1.5 bg-obsidian-950 border border-amber/30 text-xs font-mono text-amber-glow flex items-center gap-2">
           <span className="font-semibold text-chalk-500 uppercase">[ STATE ]:</span>
           <span>{activeTraversal?.explanationOverride || state.explanation}</span>
         </div>
       )}
 
       {/* SVG Canvas Container with Responsive Viewport & Zoom/Pan */}
-      <div className="relative w-full max-w-4xl bg-obsidian-950 border border-hairline overflow-hidden rounded-sm">
+      <div className="relative w-full bg-obsidian-950 border border-hairline overflow-hidden rounded-sm">
         {/* Floating Zoom / Pan Toolbar */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-obsidian-900/90 backdrop-blur-sm border border-hairline p-1 rounded font-mono text-xs text-chalk-300 shadow-lg">
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-obsidian-900/90 backdrop-blur-sm border border-hairline p-1 rounded font-mono text-xs text-chalk-300 shadow-lg">
+          <button
+            onClick={() => setAutoFocus((prev) => !prev)}
+            className={`px-2 py-1 flex items-center gap-1.5 text-[11px] rounded transition-all ${
+              autoFocus
+                ? 'bg-amber/20 text-amber border border-amber/40 font-semibold shadow-sm shadow-amber/10'
+                : 'text-chalk-400 hover:text-chalk-200 hover:bg-obsidian-800'
+            }`}
+            title={
+              autoFocus
+                ? 'Auto-Focus ON: Automatically zooms and pans to follow the active branch. Click to toggle manual view.'
+                : 'Auto-Focus OFF: View is fixed. Click to track active branch.'
+            }
+            type="button"
+          >
+            <Target className={`w-3.5 h-3.5 ${autoFocus ? 'text-amber animate-pulse' : ''}`} />
+            <span>{autoFocus ? 'FOCUS ON' : 'FOCUS OFF'}</span>
+          </button>
+          <div className="h-4 w-px bg-hairline mx-0.5" />
           <button
             onClick={handleZoomIn}
             className="p-1 hover:bg-obsidian-800 hover:text-amber transition-colors rounded"
@@ -412,7 +529,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
           <button
             onClick={handleResetZoom}
             className="p-1 hover:bg-obsidian-800 hover:text-amber transition-colors rounded"
-            title="Reset Zoom & Pan"
+            title="Fit / Reset Overview (turns off auto-focus)"
             type="button"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -423,9 +540,9 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
         </div>
 
         {/* Viewport Instructions Badge */}
-        <div className="absolute bottom-2 left-3 z-10 pointer-events-none text-[10px] font-mono text-chalk-500/80 flex items-center gap-1">
+        <div className="absolute bottom-2 left-3 z-10 pointer-events-none text-[10px] font-mono text-chalk-500/80 flex items-center gap-1.5">
           <Move className="w-3 h-3" />
-          <span>Click & Drag to Pan • Scroll to Zoom</span>
+          <span>Click & Drag to Pan • Scroll to Zoom • {autoFocus ? '🎯 Auto-Tracking Branch' : 'Free Camera'}</span>
         </div>
 
         {/* Interactive SVG Canvas */}
@@ -435,13 +552,16 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
+          onWheel={handleWheel}
           className={`w-full h-[480px] sm:h-[520px] flex items-center justify-center cursor-${
             isDragging ? 'grabbing' : 'grab'
           } select-none`}
         >
           <svg
             viewBox={`0 0 ${layout.width} ${layout.height}`}
-            className="w-full h-full font-mono transition-transform duration-75"
+            className={`w-full h-full font-mono ${
+              isDragging ? 'transition-none' : 'transition-transform duration-300 ease-out'
+            }`}
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
               transformOrigin: 'center center',
@@ -453,17 +573,29 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
               const midX = (edge.x1 + edge.x2) / 2;
               const midY = (edge.y1 + edge.y2) / 2;
 
+              const isEdgeOnActiveBranch =
+                activeBranchNodeIds.has(edge.u) && activeBranchNodeIds.has(edge.v);
+
               const isEdgeActive =
-                activeTraversal?.activeEdge &&
-                activeTraversal.activeEdge.from === edge.u &&
-                activeTraversal.activeEdge.to === edge.v;
+                (activeTraversal?.activeEdge &&
+                  activeTraversal.activeEdge.from === edge.u &&
+                  activeTraversal.activeEdge.to === edge.v) ||
+                isEdgeOnActiveBranch;
 
               const isEdgeVisited = activeTraversal?.visitedEdgeIds?.includes(
                 `${edge.u}->${edge.v}`
               );
 
+              // Dim edges not on active branch when auto-focus is active
+              const isDimmed =
+                autoFocus && activeBranchNodeIds.size > 0 && !isEdgeOnActiveBranch;
+
               return (
-                <g key={`edge-${edge.u}-${edge.v}-${idx}`}>
+                <g
+                  key={`edge-${edge.u}-${edge.v}-${idx}`}
+                  className="transition-opacity duration-300"
+                  style={{ opacity: isDimmed ? 0.2 : 1 }}
+                >
                   {/* Edge connecting line */}
                   <line
                     x1={edge.x1}
@@ -471,7 +603,11 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                     x2={edge.x2}
                     y2={edge.y2}
                     stroke={
-                      isEdgeActive
+                      edge.status === 'optimal'
+                        ? '#10b981'
+                        : isEdgeOnActiveBranch
+                        ? '#f59e0b'
+                        : isEdgeActive
                         ? '#f59e0b'
                         : isEdgeVisited
                         ? '#10b981'
@@ -480,9 +616,19 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                         : '#64748b'
                     }
                     strokeWidth={
-                      isEdgeActive ? 3.5 : isEdgeVisited ? 2.5 : isExclude ? 1.4 : 1.8
+                      edge.status === 'optimal'
+                        ? 3.5
+                        : isEdgeOnActiveBranch
+                        ? 3.5
+                        : isEdgeActive
+                        ? 3.5
+                        : isEdgeVisited
+                        ? 2.5
+                        : isExclude
+                        ? 1.4
+                        : 1.8
                     }
-                    strokeDasharray={isExclude ? '4 3' : undefined}
+                    strokeDasharray={isExclude && !isEdgeOnActiveBranch && edge.status !== 'optimal' ? '4 3' : undefined}
                     className="transition-colors duration-200"
                   />
 
@@ -497,16 +643,16 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                           width={labelW}
                           height={18}
                           rx={4}
-                          fill={isEdgeActive ? '#f59e0b' : '#0b0d13'}
-                          stroke={isEdgeActive ? '#fbbf24' : '#334155'}
-                          strokeWidth={isEdgeActive ? 1.5 : 0.8}
+                          fill={isEdgeOnActiveBranch ? '#f59e0b' : isEdgeActive ? '#f59e0b' : '#0b0d13'}
+                          stroke={isEdgeOnActiveBranch ? '#fbbf24' : isEdgeActive ? '#fbbf24' : '#334155'}
+                          strokeWidth={isEdgeOnActiveBranch || isEdgeActive ? 1.5 : 0.8}
                           className="shadow-sm"
                         />
                         <text
                           x={0}
                           y={3}
                           textAnchor="middle"
-                          fill={isEdgeActive ? '#0a0a0c' : '#e2e8f0'}
+                          fill={isEdgeOnActiveBranch || isEdgeActive ? '#0a0a0c' : '#e2e8f0'}
                           fontSize="9"
                           fontWeight="bold"
                           className="font-mono pointer-events-none"
@@ -523,9 +669,32 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
             {/* Nodes */}
             {layout.nodes.map((node) => {
               const theme = getNodeTheme(node.status);
-              const isActive = node.status === 'active';
-              const isBest = node.status === 'best' || node.status === 'solution';
-              const isPruned = node.status === 'pruned';
+              const isActive = node.status === 'active' || node.id === activeNodeId;
+              const isPruned = isJobSelection
+                ? node.rawNode?.status === 'pruned'
+                : node.status === 'pruned';
+              const isOptimal = isJobSelection
+                ? node.rawNode?.status === 'optimal' ||
+                  (Boolean(step.isFinal) &&
+                    node.rawNode?.status === 'best' &&
+                    !node.rawNode?.children?.some((c: any) => c.onOptimalPath))
+                : node.status === 'best' || node.status === 'solution';
+              const isIncumbent =
+                isJobSelection &&
+                !step.isFinal &&
+                (node.rawNode?.status === 'incumbent' || node.rawNode?.id === state.incumbentNodeId);
+              const isOnOptPath = isJobSelection && Boolean(node.rawNode?.onOptimalPath);
+              const isBest =
+                isOptimal || (!isJobSelection && (node.status === 'best' || node.status === 'solution'));
+              const isOnActiveBranch = activeBranchNodeIds.has(node.id);
+
+              // Dim nodes not on the active branch (keeping solution and optimal path nodes visible)
+              const isDimmed =
+                autoFocus &&
+                activeBranchNodeIds.size > 0 &&
+                !isOnActiveBranch &&
+                !isBest &&
+                !isOnOptPath;
 
               return (
                 <g
@@ -534,6 +703,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                   data-tree-node-id={node.id}
                   transform={`translate(${node.x}, ${node.y})`}
                   className="transition-all duration-300"
+                  style={{ opacity: isDimmed ? 0.24 : 1 }}
                 >
                   {/* Pulsing Active Ring */}
                   {isActive && (
@@ -545,8 +715,24 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                       rx={8}
                       fill="none"
                       stroke="#f59e0b"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       className="animate-pulse"
+                    />
+                  )}
+
+                  {/* Active Branch Path subtle highlight for ancestors */}
+                  {isOnActiveBranch && !isActive && (
+                    <rect
+                      x={-46}
+                      y={-23}
+                      width={92}
+                      height={46}
+                      rx={7}
+                      fill="none"
+                      stroke="#f59e0b"
+                      strokeWidth={1.5}
+                      strokeOpacity={0.7}
+                      strokeDasharray="4 3"
                     />
                   )}
 
@@ -558,8 +744,15 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                     height={42}
                     rx={6}
                     fill={theme.bg}
-                    stroke={theme.border}
-                    strokeWidth={isActive || isBest ? 2.5 : 1.5}
+                    stroke={
+                      isOnOptPath && !isActive && !isOptimal
+                        ? '#34d399'
+                        : isOnActiveBranch && !isActive
+                        ? '#f59e0b'
+                        : theme.border
+                    }
+                    strokeWidth={isActive || isBest ? 2.5 : isOnOptPath ? 2 : isOnActiveBranch ? 2 : 1.5}
+                    strokeDasharray={isOnOptPath && !isOptimal && !isActive ? '4 2' : undefined}
                     className="shadow-md transition-all"
                   />
 
@@ -592,7 +785,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                   )}
 
                   {/* Pruned Callout Pill */}
-                  {isPruned && (
+                  {isPruned && !isOptimal && (
                     <g transform="translate(0, 26)">
                       <rect
                         x={-34}
@@ -613,13 +806,40 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                         fontWeight="bold"
                         className="font-mono uppercase tracking-wider pointer-events-none"
                       >
-                        PRUNED
+                        {node.rawNode?.pruneType === 'infeasible' ? 'INFEASIBLE' : 'PRUNED'}
+                      </text>
+                    </g>
+                  )}
+
+                  {/* Incumbent Callout Pill (during active search) */}
+                  {isIncumbent && !isActive && (
+                    <g transform="translate(0, 26)">
+                      <rect
+                        x={-36}
+                        y={-7}
+                        width={72}
+                        height={14}
+                        rx={3}
+                        fill="#064e3b"
+                        stroke="#34d399"
+                        strokeWidth={0.8}
+                      />
+                      <text
+                        x={0}
+                        y={3}
+                        textAnchor="middle"
+                        fill="#a7f3d0"
+                        fontSize="8"
+                        fontWeight="bold"
+                        className="font-mono uppercase tracking-wider pointer-events-none"
+                      >
+                        INCUMBENT
                       </text>
                     </g>
                   )}
 
                   {/* Best / Optimal Callout Pill */}
-                  {isBest && (
+                  {isOptimal && (
                     <g transform="translate(0, 26)">
                       <rect
                         x={-34}
@@ -655,11 +875,15 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
       <div className="flex flex-wrap items-center justify-center gap-6 mt-4 text-xs font-mono text-chalk-400">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-amber border border-amber-glow" />
-          <span>Active / Exploring</span>
+          <span>Active Node</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-obsidian-900 border-2 border-dashed border-amber" />
+          <span>Active Branch</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-emerald-700 border border-emerald-400" />
-          <span>Optimal / Solution Path</span>
+          <span>Optimal / Solution</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-rose-950 border border-rose-500" />
@@ -667,7 +891,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-obsidian-850 border border-slate-700" />
-          <span>Explored / Normal</span>
+          <span>Inactive Subtree</span>
         </div>
       </div>
     </div>
