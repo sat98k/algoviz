@@ -1,13 +1,16 @@
 import React from 'react';
-import { ComplexityInfo } from '../../types/algorithm';
+import { ComplexityInfo, Paradigm } from '../../types/algorithm';
+import { PARADIGM_TERMS } from '../../config/glossary';
+import { Term } from './Term';
 import { Clock, Cpu, Layers } from 'lucide-react';
 
 interface ComplexityBadgeProps {
   complexity: ComplexityInfo;
-  paradigm: string;
+  paradigm: Paradigm;
 }
 
 export const ComplexityBadge: React.FC<ComplexityBadgeProps> = ({ complexity, paradigm }) => {
+  const paradigmTerm = PARADIGM_TERMS[paradigm];
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-hairline bg-obsidian-900 border border-hairline w-full">
       {/* Paradigm */}
@@ -16,7 +19,7 @@ export const ComplexityBadge: React.FC<ComplexityBadgeProps> = ({ complexity, pa
           <Layers className="w-3 h-3 text-amber" /> PARADIGM
         </span>
         <span className="font-display font-bold text-sm tracking-tight text-chalk-100 mt-1">
-          {paradigm}
+          {paradigmTerm ? <Term termKey={paradigmTerm}>{paradigm}</Term> : paradigm}
         </span>
       </div>
 

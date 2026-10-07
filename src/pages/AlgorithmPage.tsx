@@ -32,6 +32,7 @@ import { InputControlPanel } from '../components/common/InputControlPanel';
 import { CodeExplanation } from '../components/common/CodeExplanation';
 import { CallFlowOverlay } from '../components/common/CallFlowOverlay';
 import { ProblemIntuitionPanel } from '../components/common/ProblemIntuitionPanel';
+import { GlossaryText } from '../components/common/GlossaryText';
 
 import { ArrowLeft, Terminal, Columns, Maximize2, Play, Pause, RotateCcw, SkipBack, SkipForward, RefreshCw } from 'lucide-react';
 
@@ -262,7 +263,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
           </h3>
         </div>
         <span className="hidden lg:inline text-xs text-chalk-300 font-sans border-l border-hairline pl-2.5 truncate max-w-lg">
-          {currentStep.description}
+          <GlossaryText text={currentStep.description} terms={config.glossaryTerms} />
         </span>
       </div>
       {currentStep.codeLine && (
@@ -615,6 +616,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
         <ProblemIntuitionPanel
           problemStatement={config.problemStatement}
           explanation={config.explanation}
+          terms={config.glossaryTerms}
         />
 
         {liveCaptionBanner}
@@ -717,6 +719,8 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
               result={currentStep.result || (currentStep.isFinal ? finalStep?.result : undefined)}
               title="COMPUTED SOLUTION ARTIFACT"
               isFinal={currentStep.isFinal}
+              summarizer={config.summarizeResult}
+              inputs={inputs}
             />
           ) : (
             lowerDeckStatusFallback
@@ -725,7 +729,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
       ) : (
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4 border-t border-hairline">
           <div className="flex flex-col gap-8">
-            <CodeExplanation step={currentStep} pseudocode={activePseudocode} />
+            <CodeExplanation step={currentStep} pseudocode={activePseudocode} glossaryTerms={config.glossaryTerms} />
             <InputControlPanel
               config={config}
               currentInputs={inputs}
@@ -746,6 +750,8 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
                 result={currentStep.result || (currentStep.isFinal ? finalStep?.result : undefined)}
                 title="COMPUTED SOLUTION ARTIFACT"
                 isFinal={currentStep.isFinal}
+                summarizer={config.summarizeResult}
+                inputs={inputs}
               />
             ) : (
               lowerDeckStatusFallback

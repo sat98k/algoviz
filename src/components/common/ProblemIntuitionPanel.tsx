@@ -1,9 +1,13 @@
-import React, { useId, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { BookOpen, ChevronDown, Lightbulb, Target } from 'lucide-react';
+import { GlossaryKey, linkGlossaryTerms } from '../../config/glossary';
+import { GlossaryText } from './GlossaryText';
 
 interface ProblemIntuitionPanelProps {
   problemStatement: string;
   explanation: string;
+  /** Glossary terms to link (first occurrence across both paragraphs). */
+  terms?: readonly GlossaryKey[];
 }
 
 /**
@@ -14,9 +18,20 @@ interface ProblemIntuitionPanelProps {
 export const ProblemIntuitionPanel: React.FC<ProblemIntuitionPanelProps> = ({
   problemStatement,
   explanation,
+  terms,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const contentId = useId();
+  // Terms already linked in the problem statement aren't linked again in the core idea.
+  const linkedInProblem = useMemo(
+    () =>
+      new Set(
+        linkGlossaryTerms(problemStatement, terms)
+          .map((seg) => seg.termKey)
+          .filter((k): k is GlossaryKey => !!k)
+      ),
+    [problemStatement, terms]
+  );
 
   return (
     <section className="bg-obsidian-950 border border-hairline shadow-sm" aria-label="Problem and intuition">
@@ -46,13 +61,17 @@ export const ProblemIntuitionPanel: React.FC<ProblemIntuitionPanelProps> = ({
             <h2 className="font-mono text-[10px] uppercase tracking-widest text-chalk-500 flex items-center gap-1.5">
               <Target className="w-3 h-3 text-amber" /> 1. The Problem
             </h2>
-            <p className="font-sans text-sm leading-relaxed text-chalk-200">{problemStatement}</p>
+            <p className="font-sans text-sm leading-relaxed text-chalk-200">
+              <GlossaryText text={problemStatement} terms={terms} />
+            </p>
           </div>
           <div className="p-3 sm:p-4 flex flex-col gap-1.5">
             <h2 className="font-mono text-[10px] uppercase tracking-widest text-chalk-500 flex items-center gap-1.5">
               <Lightbulb className="w-3 h-3 text-amber-glow" /> 2. Core Idea
             </h2>
-            <p className="font-sans text-sm leading-relaxed text-chalk-300">{explanation}</p>
+            <p className="font-sans text-sm leading-relaxed text-chalk-300">
+              <GlossaryText text={explanation} terms={terms} exclude={linkedInProblem} />
+            </p>
           </div>
         </div>
       )}

@@ -34,6 +34,7 @@ import {
   GRAPH_COLORING_PSEUDOCODE_FIRST,
 } from '../algorithms/graphColoring';
 import { jobSelectionBBSteps } from '../algorithms/jobSelectionBB';
+import * as resultSummaries from './resultSummaries';
 
 export const algorithmRegistry: AlgorithmConfig[] = [
   // Module 1: Greedy — Fractional Knapsack
@@ -54,6 +55,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Given weights and values of n items and a knapsack capacity W, determine the maximum value achievable by taking entire items or fractional portions of items.',
     explanation:
       'The Fractional Knapsack problem exhibits the greedy choice property: items are sorted by their value-to-weight density (v_i / w_i). We greedily consume highest-density items in full, taking a fractional slice of the first item that exceeds remaining capacity.',
+    glossaryTerms: ['greedy-choice-property', 'greedy-algorithm'],
     pseudocode: [
       'function FractionalKnapsack(weights, values, capacity):',
       '  for i = 1 to n: ratio[i] = values[i] / weights[i] // Compute value density (value per unit weight)',
@@ -124,6 +126,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       const capacity = Math.round(totalW * 0.6);
       return { weights, values, capacity };
     },
+    summarizeResult: resultSummaries.summarizeFractionalKnapsack,
     stepGenerator: fractionalKnapsackSteps,
   },
   // Module 1: Greedy — Huffman Coding
@@ -143,6 +146,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Construct a lossless, variable-length prefix code for characters in a given string based on their frequencies, minimizing total encoded bit length.',
     explanation:
       'Huffman Coding repeatedly merges the two lowest-frequency tree nodes in a min-priority queue, creating a full binary tree where more frequent characters receive shorter bit sequences.',
+    glossaryTerms: ['prefix-code', 'priority-queue'],
     pseudocode: [
       'function HuffmanCoding(inputText):',
       '  charFrequencies = countFrequencies(inputText) // Tally occurrences of each unique character',
@@ -180,6 +184,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       }
       return { text: str };
     },
+    summarizeResult: resultSummaries.summarizeHuffman,
     stepGenerator: huffmanSteps,
   },
 
@@ -201,6 +206,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Find the contiguous subarray within a one-dimensional array of numbers which has the largest sum, using the classic Divide & Conquer paradigm.',
     explanation:
       'Recursively split the array at midpoint mid into left half [low..mid] and right half [mid+1..high]. Solve both recursively, compute the maximum crossing subarray spanning the midpoint in O(n) time, and return the maximum of the three subproblem answers.',
+    glossaryTerms: ['divide-and-conquer', 'recursion'],
     pseudocode: [
       'function MaxSubarrayDC(arr, low, high):',
       '  if low == high: return { maxSum: arr[low], low, high } // Base Case: 1 element',
@@ -251,6 +257,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       }
       return { array: arr };
     },
+    summarizeResult: resultSummaries.summarizeMaxSubarray,
     stepGenerator: maxSubarraySteps,
   },
 
@@ -272,6 +279,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Multiply two large n-digit integers faster than standard O(n²) grade-school multiplication using recursive 3-way algebraic decomposition.',
     explanation:
       'Splits X = a·10^m + b and Y = c·10^m + d. Instead of computing 4 subproducts (ac, ad, bc, bd), Karatsuba computes z2 = ac, z0 = bd, and z1 = (a+b)(c+d) - z2 - z0 using only 3 recursive calls, combining them as z2·10^(2m) + z1·10^m + z0 in O(n^1.585) time.',
+    glossaryTerms: ['recursion'],
     pseudocode: [
       'function Karatsuba(X, Y):',
       '  if X < 10 or Y < 10: return X * Y // Base Case: direct single-digit multiplication',
@@ -333,6 +341,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       for (let i = 1; i < len2; i++) s2 += Math.floor(Math.random() * 10);
       return { num1: s1, num2: s2 };
     },
+    summarizeResult: resultSummaries.summarizeKaratsuba,
     stepGenerator: karatsubaSteps,
   },
 
@@ -353,6 +362,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Given weights and values of n items, determine the items to include in a knapsack of capacity W to maximize total value without exceeding capacity.',
     explanation:
       'Constructs a 2D table DP[i][w] representing the max value achievable using a subset of the first i items with weight capacity w. Backtracks through the table to identify chosen items.',
+    glossaryTerms: ['dp-table'],
     pseudocode: [
       'function KnapsackDP(weights, values, capacity, n):',
       '  dpTable = Matrix(rows = n + 1, cols = capacity + 1, init = 0) // Base case: 0 items or 0 capacity = 0 value',
@@ -405,6 +415,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       const capacity = Math.floor(Math.random() * 5) + 5;
       return { weights, values, capacity };
     },
+    summarizeResult: resultSummaries.summarizeKnapsackDp,
     stepGenerator: knapsackDPSteps,
   },
 
@@ -425,6 +436,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Find the longest subsequence common to two sequences X and Y (characters appear in the same relative order, not necessarily contiguous).',
     explanation:
       'Fills an (m+1) × (n+1) table. If X[i-1] == Y[j-1], DP[i][j] = 1 + DP[i-1][j-1]; otherwise DP[i][j] = max(DP[i-1][j], DP[i][j-1]). Backtracks to recover the exact LCS string.',
+    glossaryTerms: ['dp-table'],
     pseudocode: [
       'function LCS(str1, str2, len1, len2):',
       '  dpTable = Matrix(rows = len1 + 1, cols = len2 + 1, init = 0) // Base case: 0 matches with empty string',
@@ -465,6 +477,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
       return { str1: genStr(6), str2: genStr(5) };
     },
+    summarizeResult: resultSummaries.summarizeLcs,
     stepGenerator: lcsSteps,
   },
 
@@ -486,6 +499,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Given a sequence of matrices A1, A2, ..., An with specified dimensions, find the optimal parenthesization that minimizes the total number of scalar multiplications.',
     explanation:
       'Matrix multiplication is associative. We define m[i, j] as the minimum scalar multiplications to compute A_i..A_j. The recurrence tests every split point k (i <= k < j) combining optimal costs m[i, k] + m[k+1, j] + p_{i-1}*p_k*p_j, storing the best split in table s to reconstruct parenthesization.',
+    glossaryTerms: ['recurrence'],
     pseudocode: [
       'function MatrixChainOrder(p, n):',
       '  for i = 1 to n: m[i, i] = 0 // Base case: 0 multiplications for a single matrix',
@@ -540,6 +554,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       }
       return { dimensions: dims };
     },
+    summarizeResult: resultSummaries.summarizeMatrixChainMultiplication,
     stepGenerator: matrixChainMultiplicationSteps,
   },
 
@@ -699,6 +714,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         x2: Math.floor(Math.random() * 4) + 1,
       };
     },
+    summarizeResult: resultSummaries.summarizeAssemblyLineScheduling,
     stepGenerator: assemblyLineSchedulingSteps,
   },
 
@@ -720,6 +736,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Given a list of cities and pairwise travel costs, find the minimum-weight Hamiltonian cycle that visits every city exactly once and returns to the origin.',
     explanation:
       'The Held-Karp algorithm uses dynamic programming with bitmask state compression. DP[S, j] stores the minimum cost of a path visiting all cities in subset S and ending at city j. Optimal subproblems are built bottom-up by subset size |S| = 2 to n, before closing the cycle back to start city 0 and backtracking the optimal tour.',
+    glossaryTerms: ['hamiltonian-cycle', 'dynamic-programming', 'optimal-substructure'],
     pseudocode: [
       'function TSP_HeldKarp(costMatrix, n):',
       '  DP[{startCity}, startCity] = 0  // Base case: starting city at zero cost',
@@ -813,6 +830,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       }
       return { costMatrix: matrix, cityNames: ['A', 'B', 'C', 'D'], numCities: n };
     },
+    summarizeResult: resultSummaries.summarizeTsp,
     stepGenerator: tspSteps,
   },
 
@@ -832,6 +850,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Place N non-attacking queens on an N×N chessboard so that no two queens share the same row, column, or diagonal.',
     explanation:
       'Places queens row by row. If a placement violates column or diagonal constraints, the algorithm immediately backtracks to try another column position.',
+    glossaryTerms: ['backtracking'],
     pseudocode: [
       'function SolveNQueens(row, N, board):',
       '  if row == N: recordSolution(board); return  // Base case: all N queens placed safely',
@@ -864,6 +883,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       const sizes = [4, 5, 6];
       return { n: sizes[Math.floor(Math.random() * sizes.length)] };
     },
+    summarizeResult: resultSummaries.summarizeNQueens,
     stepGenerator: nQueensSteps,
   },
 
@@ -883,6 +903,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Solve 0-1 Knapsack by exploring a state-space decision tree, computing optimistic upper bounds to prune subtrees that cannot beat the current best solution.',
     explanation:
       'Sorts items by value/weight ratio. Calculates an upper bound at each node via fractional knapsack on remaining capacity. Explores promising nodes first (Best-First search) and prunes branches whose bound ≤ best known value.',
+    glossaryTerms: ['state-space-tree', 'bounding-function', 'pruning'],
     pseudocode: [
       'function KnapsackBB(items, W):',
       '  sort items by (value / weight) descending  // Order by greedy efficiency',
@@ -932,6 +953,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       const capacity = Math.floor(Math.random() * 5) + 5;
       return { weights, values, capacity };
     },
+    summarizeResult: resultSummaries.summarizeKnapsackBb,
     stepGenerator: knapsackBBSteps,
   },
 
@@ -995,6 +1017,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         pattern: 'AABAB',
       };
     },
+    summarizeResult: resultSummaries.summarizeNaiveStringMatch,
     stepGenerator: naiveStringMatchSteps,
   },
 
@@ -1015,6 +1038,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Find all occurrences of a pattern P of length m in a text T of length n in linear time without rolling back the text pointer.',
     explanation:
       'Precomputes a Longest Proper Prefix which is also Suffix (LPS) table in O(m) time. When a mismatch occurs during search, uses LPS to slide the pattern to the next potential alignment position.',
+    glossaryTerms: ['lps'],
     pseudocode: [
       'function computeLPS(pattern):',
       '  patternLength = length(pattern)',
@@ -1080,6 +1104,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         pattern: 'AABAB',
       };
     },
+    summarizeResult: resultSummaries.summarizeKmp,
     stepGenerator: kmpSteps,
   },
 
@@ -1101,6 +1126,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Find all occurrences of a pattern P of length m in a text T of length n by comparing a rolling hash of each text window against the hash of the pattern.',
     explanation:
       'Hashes the pattern and the first text window in O(m). Each subsequent window hash is derived from the previous one in O(1) by removing the leading character and appending the next (a "rolling" hash). Only when a window hash equals the pattern hash is a full character comparison performed, which rules out spurious hits (hash collisions). Expected linear time; worst case degrades to the naive bound when every window collides.',
+    glossaryTerms: ['rolling-hash', 'collision', 'hash-function'],
     pseudocode: [
       'function RabinKarp(text, pattern, baseRadix = 256, primeModulus = 101):',
       '  patternLength = length(pattern)',
@@ -1146,6 +1172,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         pattern: 'AABAB',
       };
     },
+    summarizeResult: resultSummaries.summarizeRabinKarp,
     stepGenerator: rabinKarpSteps,
   },
 
@@ -1205,6 +1232,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       { name: 'Pattern Absent', data: { text: 'ABABDABACDABAB', pattern: 'XYZ' } },
     ],
     generateRandomInput: () => ({ text: 'MISSISSIPPI', pattern: 'ISSI' }),
+    summarizeResult: resultSummaries.summarizeSuffixTree,
     stepGenerator: suffixTreeSteps,
   },
 
@@ -1225,6 +1253,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Compute the shortest path distances between every pair of vertices in a directed, weighted graph (which may contain negative edge weights but no negative cycles).',
     explanation:
       'Iteratively updates shortest distance estimates between all pairs (i, j) by testing if routing through an intermediate vertex k improves the path: D[i][j] = min(D[i][j], D[i][k] + D[k][j]).',
+    glossaryTerms: ['shortest-path', 'vertex', 'graph', 'negative-cycle'],
     pseudocode: [
       'function FloydWarshall(V, weightMatrix):',
       '  dist = copy(weightMatrix)  // Initialize distance matrix with direct edge weights',
@@ -1282,6 +1311,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         ],
       };
     },
+    summarizeResult: resultSummaries.summarizeFloydWarshall,
     stepGenerator: floydWarshallSteps,
   },
 
@@ -1303,6 +1333,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Compute the shortest-path distance from a single source vertex to every other vertex in a directed, weighted graph that may contain negative edge weights, and report whether a negative-weight cycle is reachable from the source.',
     explanation:
       'Initializes the source distance to 0 and all others to ∞, then relaxes every edge V−1 times: a shortest path visits at most V−1 edges, so after V−1 passes all distances are final. One extra pass over the edges detects a reachable negative-weight cycle — if any edge can still be relaxed, no shortest path exists.',
+    glossaryTerms: ['shortest-path', 'vertex', 'relaxation', 'negative-cycle'],
     pseudocode: [
       'function BellmanFord(V, E, weight, source):',
       '  dist[source] = 0; dist[v] = ∞ for all v ≠ source  // Initialize single-source distances',
@@ -1378,6 +1409,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         [2, null, 7, null, 0],
       ],
     }),
+    summarizeResult: resultSummaries.summarizeBellmanFord,
     stepGenerator: bellmanFordSteps,
   },
 
@@ -1398,6 +1430,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Compute the maximum feasible flow from a source vertex s to a sink vertex t in a directed flow network with edge capacity constraints.',
     explanation:
       'Uses BFS to find augmenting paths from s to t in the residual network (Edmonds-Karp). Finds the bottleneck capacity along each path, pushes flow, and updates forward/backward residual capacities until no augmenting path remains.',
+    glossaryTerms: ['maximum-flow', 'flow-network', 'bfs', 'augmenting-path', 'residual-graph'],
     pseudocode: [
       'function EdmondsKarp(s, t, capacities):',
       '  flow = 0; residual = copy(capacities)  // Initialize zero flow and residual capacities',
@@ -1469,6 +1502,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         nodeLabels: ['S', 'A', 'B', 'T'],
       };
     },
+    summarizeResult: resultSummaries.summarizeFordFulkerson,
     stepGenerator: fordFulkersonSteps,
   },
 
@@ -1490,6 +1524,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Compute the maximum feasible flow from source S to sink T through a directed capacity network using Edmonds-Karp with explicit breadth-first search path discovery.',
     explanation:
       'Edmonds-Karp is an explicit BFS implementation of the Ford-Fulkerson method. By always choosing the augmenting path with the fewest edges, it guarantees termination in polynomial O(V · E²) time, completely avoiding infinite loops with irrational capacities.',
+    glossaryTerms: ['maximum-flow', 'bfs', 'augmenting-path'],
     pseudocode: [
       'function EdmondsKarp(network, source s, sink t):',
       '  initialize flow = 0 for all edges  // Empty initial flow assignment',
@@ -1561,6 +1596,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         nodeLabels: ['S', 'A', 'B', 'C', 'D', 'T'],
       };
     },
+    summarizeResult: resultSummaries.summarizeEdmondsKarp,
     stepGenerator: edmondsKarpSteps,
   },
 
@@ -1582,6 +1618,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Compute maximum feasible flow from source S to sink T using localized push and relabel operations on an active preflow network.',
     explanation:
       'Unlike augmenting path algorithms that push flow along entire paths from source to sink at once, Goldberg-Tarjan’s Push-Relabel operates locally. It maintains a preflow where excess flow accumulates at internal vertices, pushing flow downward along steep residual edges (height h(u) = h(v) + 1) and relabeling vertex heights whenever an overflowing vertex has no downward exit.',
+    glossaryTerms: ['maximum-flow', 'preflow', 'augmenting-path', 'residual-graph'],
     pseudocode: [
       'function PushRelabel(network, source s, sink t):',
       '  h[s] = |V|; h[v] = 0 for all v != s  // Source elevated to |V|; sink and others at 0',
@@ -1655,6 +1692,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         nodeLabels: ['S', 'A', 'B', 'C', 'D', 'T'],
       };
     },
+    summarizeResult: resultSummaries.summarizePushRelabel,
     stepGenerator: pushRelabelSteps,
   },
 
@@ -1675,6 +1713,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Compute the convex hull (smallest enclosing convex polygon) for a given set of n points in the 2D Cartesian plane.',
     explanation:
       'Finds the lowest y-coordinate anchor point P0. Sorts all other points by polar angle with P0. Iterates through points using a stack, popping vertices that make a clockwise (right) turn via cross-product orientation check.',
+    glossaryTerms: ['convex-hull'],
     pseudocode: [
       'function GrahamsScan(points):',
       '  P0 = findLowestPoint(points)  // Anchor pivot: lowest y-coordinate (tiebreaker: lowest x)',
@@ -1742,6 +1781,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       }));
       return { points: pts };
     },
+    summarizeResult: resultSummaries.summarizeGrahamScan,
     stepGenerator: grahamScanSteps,
   },
 
@@ -1763,6 +1803,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Compute the 2D convex hull of a point set by gift wrapping: start from the lowest point and repeatedly find the next hull point that forms the smallest counter-clockwise turn.',
     explanation:
       'Starting from the lowest-y anchor pivot, Jarvis’ March tests each point to find the most counter-clockwise candidate relative to the current hull point. It wraps around the exterior until returning to the start pivot.',
+    glossaryTerms: ['convex-hull'],
     pseudocode: [
       'function JarvisMarch(points):',
       '  pivot = findLowestPoint(points)  // Anchor: lowest y-coordinate (tiebreaker: lowest x)',
@@ -1842,6 +1883,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       }));
       return { points: pts };
     },
+    summarizeResult: resultSummaries.summarizeJarvisMarch,
     stepGenerator: jarvisMarchSteps,
   },
 
@@ -1863,6 +1905,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Given a collection of 2D line segments, determine whether any two segments intersect using a vertical sweep line moving left to right.',
     explanation:
       'The Bentley-Ottmann sweep-line paradigm sorts all segment endpoints by x-coordinate. As the sweep line moves left to right, segments currently cutting the sweep line are stored in an active status structure T ordered by y-coordinate. New segments are tested for intersection only with their immediate above/below neighbors in T, reducing naive O(n²) comparisons to O(n log n).',
+    glossaryTerms: ['sweep-line'],
     pseudocode: [
       'function AnySegmentsIntersect(segments):',
       '  events = sortEndpointsByX(segments)  // Event queue: left & right endpoints sorted by x',
@@ -1937,6 +1980,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       ];
       return { segments: segs };
     },
+    summarizeResult: resultSummaries.summarizeLineSegmentIntersection,
     stepGenerator: lineSegmentIntersectionSteps,
   },
 
@@ -1958,6 +2002,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Sort an array of n numbers by choosing a pivot uniformly at random, partitioning around the pivot, and recursively sorting the left and right subarrays.',
     explanation:
       'Random pivot selection guarantees an expected O(n log n) runtime regardless of the input distribution, defeating adversarial inputs (like already sorted or reverse sorted arrays).',
+    glossaryTerms: ['randomized-algorithm', 'recursion'],
     pseudocode: [
       'function RandomizedQuicksort(arr, low, high):',
       '  if low >= high: return // Base Case: subarray of size <= 1 is already sorted',
@@ -1992,6 +2037,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       const array = Array.from({ length: len }, () => Math.floor(Math.random() * 80) + 5);
       return { array };
     },
+    summarizeResult: resultSummaries.summarizeRandomizedQuicksort,
     stepGenerator: randomizedQuicksortSteps,
   },
 
@@ -2073,6 +2119,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       const candidates = Array.from({ length: len }, () => Math.floor(Math.random() * 25) + 1);
       return { candidates, interviewCost: 1, hiringCost: 5 };
     },
+    summarizeResult: resultSummaries.summarizeHiringProblem,
     stepGenerator: hiringProblemSteps,
   },
 
@@ -2094,6 +2141,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Find a global minimum cut in a connected undirected graph: a partition of vertices (A, B) minimizing the number of crossing edges, using randomized edge contraction.',
     explanation:
       'Karger’s algorithm repeatedly selects an edge uniformly at random from the multigraph and contracts its endpoints into a super-node, discarding self-loops while keeping parallel edges. When exactly two super-nodes remain, the crossing edges form a cut. The probability of finding the true minimum cut in one run is at least 2/(V·(V-1)).',
+    glossaryTerms: ['minimum-cut', 'edge-contraction', 'randomized-algorithm'],
     pseudocode: [
       'function KargerMinCut(G = (V, E)):',
       '  while |V| > 2:  // Repeat contraction until exactly 2 super-nodes remain',
@@ -2177,6 +2225,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       ];
       return { edgeList: edges };
     },
+    summarizeResult: resultSummaries.summarizeKargerMinCut,
     stepGenerator: kargerMinCutSteps,
   },
 
@@ -2197,6 +2246,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Find a subset of vertices C ⊆ V such that every edge (u, v) ∈ E has at least one endpoint in C, with size |C| ≤ 2 · OPT.',
     explanation:
       'Repeatedly picks an arbitrary uncovered edge (u, v), adds BOTH endpoints u and v to cover C, and deletes all incident edges. Since the picked edges form a matching M and OPT ≥ |M|, |C| = 2|M| ≤ 2 · OPT.',
+    glossaryTerms: ['vertex', 'edge'],
     pseudocode: [
       'function ApproxVertexCover(G = (V, E)):',
       '  C = {};  E_prime = copy(E)  // Initialize empty vertex cover and uncovered edge set',
@@ -2257,6 +2307,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         ],
       };
     },
+    summarizeResult: resultSummaries.summarizeVertexCoverApprox,
     stepGenerator: vertexCoverApproxSteps,
   },
 
@@ -2278,6 +2329,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Given a universe of elements U and a family of subsets S, find a minimum number of subsets whose union contains every element in U.',
     explanation:
       'Set Cover is a classic NP-hard optimization problem. The greedy heuristic repeatedly picks the subset that covers the maximum number of currently uncovered elements. This yields a provable approximation ratio of H(|U|) <= ln(|U|) + 1.',
+    glossaryTerms: ['np-hard', 'greedy-algorithm', 'approximation-algorithm'],
     pseudocode: [
       'function GreedySetCover(universe U, subsets S):',
       '  covered = {}, selectedSubsets = []  // Initialize empty element cover and chosen set family',
@@ -2350,6 +2402,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       ];
       return { universeSize: uSize, subsets: subs };
     },
+    summarizeResult: resultSummaries.summarizeSetCover,
     stepGenerator: setCoverSteps,
   },
 
@@ -2371,6 +2424,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Find a minimum-cost Hamiltonian cycle visiting every city exactly once and returning to the origin in a complete metric graph with cost(Tour) <= 2 · OPT.',
     explanation:
       'For metric graphs satisfying the triangle inequality, the MST-Doubling heuristic: (1) builds an MST T, (2) doubles all edges to form an Eulerian multigraph with total weight 2 · W(T), and (3) visits cities in preorder DFS while shortcutting already-visited cities. Since OPT >= W(T) and shortcuts never increase distance, Cost(Tour) <= 2 · W(T) <= 2 · OPT.',
+    glossaryTerms: ['hamiltonian-cycle', 'triangle-inequality', 'minimum-spanning-tree', 'eulerian-multigraph'],
     pseudocode: [
       'function MetricTspApprox(cities, costMatrix):',
       '  T = PrimMST(cities, costMatrix)  // Phase 1: Minimum Spanning Tree has W(T) <= OPT',
@@ -2447,6 +2501,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       }
       return { numCities: n, costMatrix, cityNames: ['A', 'B', 'C', 'D'] };
     },
+    summarizeResult: resultSummaries.summarizeTspApprox,
     stepGenerator: tspApproxSteps,
   },
 
@@ -2466,6 +2521,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Given a set of positive integers and a target sum, determine whether any subset of the integers sums exactly to the target value using backtracking with pruning.',
     explanation:
       'Explores an include/exclude binary decision tree. At each level, decides whether to include the current element. Prunes branches where the running sum exceeds the target or the maximum achievable sum (current + all remaining) falls below the target.',
+    glossaryTerms: ['backtracking', 'pruning', 'state-space-tree'],
     pseudocode: [
       'function SubsetSum(index, currentSum, remaining, included):',
       '  if currentSum == target: return SOLUTION(included)  // Base case: target sum matched',
@@ -2543,6 +2599,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       const targetSum = Math.floor(Math.random() * (totalSum - 1)) + 1;
       return { numbers, targetSum, findMode: 'first' };
     },
+    summarizeResult: resultSummaries.summarizeSubsetSum,
     stepGenerator: subsetSumSteps,
   },
 
@@ -2562,6 +2619,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Given an undirected graph G = (V, E) and an integer k, determine if vertices can be assigned at most k colors such that no two adjacent vertices share the same color.',
     explanation:
       'Assigns colors 1 through k sequentially to vertices. For each vertex, tries each color in order, checking for conflicts with already-colored neighbors. If all k colors conflict, backtracks to uncolor the previous vertex and tries alternative assignments.',
+    glossaryTerms: ['graph', 'vertex', 'backtracking'],
     pseudocode: GRAPH_COLORING_PSEUDOCODE_FIRST,
     visualizer: 'GraphVisualizer',
     inputSchema: [
@@ -2689,6 +2747,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         ],
       };
     },
+    summarizeResult: resultSummaries.summarizeGraphColoring,
     stepGenerator: graphColoringSteps,
   },
 
@@ -2708,6 +2767,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       'Given n jobs with individual deadlines and profits, select a subset of jobs that can be scheduled within their deadlines to maximize total profit.',
     explanation:
       'Explores a state-space tree where branches decide whether to include or exclude each job (sorted by profit descending). Subtrees are pruned if the accumulated job set violates deadlines or if the calculated upper bound cannot beat the best-known feasible profit.',
+    glossaryTerms: ['state-space-tree', 'bounding-function', 'pruning'],
     pseudocode: [
       'function JobSelectionBB(jobs):',
       '  sort jobs descending by profit  // Greedy initial sorting by profit',
@@ -2784,6 +2844,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       const profits = Array.from({ length: n }, () => Math.floor(Math.random() * 80) + 10);
       return { deadlines, profits };
     },
+    summarizeResult: resultSummaries.summarizeJobSelectionBb,
     stepGenerator: jobSelectionBBSteps,
   },
 ];

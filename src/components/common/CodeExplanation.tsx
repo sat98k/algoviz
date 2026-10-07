@@ -1,14 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 import { Terminal } from 'lucide-react';
 import { AlgorithmStep } from '../../types/algorithm';
+import { GlossaryKey } from '../../config/glossary';
+import { GlossaryText } from './GlossaryText';
 
 interface CodeExplanationProps {
   step: AlgorithmStep;
   pseudocode: string[];
   hideStepHeader?: boolean;
+  /** Glossary terms to link in the step description. */
+  glossaryTerms?: readonly GlossaryKey[];
 }
 
-export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudocode, hideStepHeader = false }) => {
+export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudocode, hideStepHeader = false, glossaryTerms }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeLines: number[] = Array.isArray(step.codeLine)
     ? step.codeLine
@@ -62,7 +66,7 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
           </h3>
 
           <p className="text-xs text-chalk-300 font-sans leading-relaxed">
-            {step.description}
+            <GlossaryText text={step.description} terms={glossaryTerms} />
           </p>
         </div>
       )}

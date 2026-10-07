@@ -1,3 +1,5 @@
+import type { GlossaryKey } from '../config/glossary';
+
 export type Paradigm =
   | 'Greedy'
   | 'Divide & Conquer'
@@ -105,6 +107,30 @@ export interface PresetInput {
   data: Record<string, any>;
 }
 
+export interface ResultSummaryDetail {
+  label: string;
+  value: string | number;
+}
+
+export interface ResultSummaryTable {
+  caption?: string;
+  columns: string[];
+  rows: (string | number)[][];
+}
+
+/** Learner-facing description of an algorithm's final result. */
+export interface ResultSummary {
+  headline: string;
+  details?: ResultSummaryDetail[];
+  table?: ResultSummaryTable;
+}
+
+/**
+ * Turns a step's raw `result` into a ResultSummary. Return null when the result
+ * doesn't have the expected shape; the generic fallback summary is used instead.
+ */
+export type ResultSummarizer = (result: any, inputs: Record<string, any>) => ResultSummary | null;
+
 export interface AlgorithmConfig {
   id: string;
   module: number;
@@ -114,10 +140,13 @@ export interface AlgorithmConfig {
   complexity: ComplexityInfo;
   problemStatement: string;
   explanation: string;
+  /** Glossary terms worth linking in this algorithm's learning text and step descriptions. */
+  glossaryTerms?: GlossaryKey[];
   pseudocode: string[];
   visualizer: VisualizerType;
   inputSchema: InputFieldDefinition[];
   presets: PresetInput[];
   generateRandomInput: () => Record<string, any>;
   stepGenerator: (inputs: any) => Generator<AlgorithmStep<any>>;
+  summarizeResult?: ResultSummarizer;
 }
