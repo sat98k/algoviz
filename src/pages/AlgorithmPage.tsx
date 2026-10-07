@@ -31,6 +31,7 @@ import { ColoringSolutionsPanel } from '../components/common/ColoringSolutionsPa
 import { InputControlPanel } from '../components/common/InputControlPanel';
 import { CodeExplanation } from '../components/common/CodeExplanation';
 import { CallFlowOverlay } from '../components/common/CallFlowOverlay';
+import { ProblemIntuitionPanel } from '../components/common/ProblemIntuitionPanel';
 
 import { ArrowLeft, Terminal, Columns, Maximize2, Play, Pause, RotateCcw, SkipBack, SkipForward, RefreshCw } from 'lucide-react';
 
@@ -609,8 +610,13 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
           </div>
         </div>
 
-        {/* Fix #3 & Decision 1: High-visibility CURRENT ACTION banner elevated to top position.
-            Problem statement is locked out of the frontend for now per user instruction. */}
+        {/* Learning flow: Problem → Core Idea → visualization. Sits above the live
+            CURRENT ACTION banner and stays collapsible while stepping. */}
+        <ProblemIntuitionPanel
+          problemStatement={config.problemStatement}
+          explanation={config.explanation}
+        />
+
         {liveCaptionBanner}
       </motion.div>
 
