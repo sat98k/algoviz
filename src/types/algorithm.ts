@@ -1,4 +1,5 @@
 import type { GlossaryKey } from '../config/glossary';
+import type { ComparisonGroupId } from '../config/comparisonGroups';
 
 export type Paradigm =
   | 'Greedy'
@@ -131,6 +132,23 @@ export interface ResultSummary {
  */
 export type ResultSummarizer = (result: any, inputs: Record<string, any>) => ResultSummary | null;
 
+/**
+ * How an algorithm presents itself on the Comparison page. Algorithms in the same
+ * `group` solve the same problem from the same input format, so they can be run
+ * side by side on one shared input.
+ */
+export interface ComparisonProfile {
+  group: ComparisonGroupId;
+  /** One-sentence summary of the approach. */
+  keyIdea: string;
+  strengths: string[];
+  limitations: string[];
+  /** The situation/input where this algorithm is the better choice. */
+  chooseWhen: string;
+  /** What kind of answer it returns, e.g. "Exact optimum" or "≤ 2 × optimal". */
+  answerQuality: string;
+}
+
 export interface AlgorithmConfig {
   id: string;
   module: number;
@@ -149,4 +167,6 @@ export interface AlgorithmConfig {
   generateRandomInput: () => Record<string, any>;
   stepGenerator: (inputs: any) => Generator<AlgorithmStep<any>>;
   summarizeResult?: ResultSummarizer;
+  /** Present when the algorithm can be compared with others solving the same problem. */
+  comparison?: ComparisonProfile;
 }

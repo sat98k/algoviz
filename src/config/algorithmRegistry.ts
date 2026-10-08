@@ -35,6 +35,7 @@ import {
 } from '../algorithms/graphColoring';
 import { jobSelectionBBSteps } from '../algorithms/jobSelectionBB';
 import * as resultSummaries from './resultSummaries';
+import { COMPARISON_PROFILES } from './comparisonProfiles';
 
 export const algorithmRegistry: AlgorithmConfig[] = [
   // Module 1: Greedy — Fractional Knapsack
@@ -416,6 +417,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { weights, values, capacity };
     },
     summarizeResult: resultSummaries.summarizeKnapsackDp,
+    comparison: COMPARISON_PROFILES['knapsack-dp'],
     stepGenerator: knapsackDPSteps,
   },
 
@@ -831,6 +833,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { costMatrix: matrix, cityNames: ['A', 'B', 'C', 'D'], numCities: n };
     },
     summarizeResult: resultSummaries.summarizeTsp,
+    comparison: COMPARISON_PROFILES['tsp'],
     stepGenerator: tspSteps,
   },
 
@@ -954,6 +957,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { weights, values, capacity };
     },
     summarizeResult: resultSummaries.summarizeKnapsackBb,
+    comparison: COMPARISON_PROFILES['knapsack-bb'],
     stepGenerator: knapsackBBSteps,
   },
 
@@ -1018,6 +1022,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     summarizeResult: resultSummaries.summarizeNaiveStringMatch,
+    comparison: COMPARISON_PROFILES['naive-string-match'],
     stepGenerator: naiveStringMatchSteps,
   },
 
@@ -1105,6 +1110,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     summarizeResult: resultSummaries.summarizeKmp,
+    comparison: COMPARISON_PROFILES['kmp'],
     stepGenerator: kmpSteps,
   },
 
@@ -1173,6 +1179,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     summarizeResult: resultSummaries.summarizeRabinKarp,
+    comparison: COMPARISON_PROFILES['rabin-karp'],
     stepGenerator: rabinKarpSteps,
   },
 
@@ -1233,6 +1240,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     ],
     generateRandomInput: () => ({ text: 'MISSISSIPPI', pattern: 'ISSI' }),
     summarizeResult: resultSummaries.summarizeSuffixTree,
+    comparison: COMPARISON_PROFILES['suffix-tree'],
     stepGenerator: suffixTreeSteps,
   },
 
@@ -1503,6 +1511,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     summarizeResult: resultSummaries.summarizeFordFulkerson,
+    comparison: COMPARISON_PROFILES['ford-fulkerson'],
     stepGenerator: fordFulkersonSteps,
   },
 
@@ -1597,6 +1606,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     summarizeResult: resultSummaries.summarizeEdmondsKarp,
+    comparison: COMPARISON_PROFILES['edmonds-karp'],
     stepGenerator: edmondsKarpSteps,
   },
 
@@ -1693,6 +1703,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     summarizeResult: resultSummaries.summarizePushRelabel,
+    comparison: COMPARISON_PROFILES['push-relabel'],
     stepGenerator: pushRelabelSteps,
   },
 
@@ -1782,6 +1793,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { points: pts };
     },
     summarizeResult: resultSummaries.summarizeGrahamScan,
+    comparison: COMPARISON_PROFILES['graham-scan'],
     stepGenerator: grahamScanSteps,
   },
 
@@ -1884,6 +1896,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { points: pts };
     },
     summarizeResult: resultSummaries.summarizeJarvisMarch,
+    comparison: COMPARISON_PROFILES['jarvis-march'],
     stepGenerator: jarvisMarchSteps,
   },
 
@@ -2502,6 +2515,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { numCities: n, costMatrix, cityNames: ['A', 'B', 'C', 'D'] };
     },
     summarizeResult: resultSummaries.summarizeTspApprox,
+    comparison: COMPARISON_PROFILES['tsp-approx'],
     stepGenerator: tspApproxSteps,
   },
 

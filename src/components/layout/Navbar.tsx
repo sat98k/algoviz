@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Sun, Moon } from 'lucide-react';
+import { BookOpen, GitCompare, Sun, Moon } from 'lucide-react';
 
 interface NavbarProps {
   currentView: 'home' | 'module' | 'algorithm' | 'compare';
@@ -71,6 +71,20 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             </span>
           </button>
 
+          <button
+            onClick={() => onNavigate('compare')}
+            aria-current={currentView === 'compare' ? 'page' : undefined}
+            className={`group relative px-3 sm:px-4 py-2 text-xs font-mono tracking-wider uppercase transition-all duration-200 ${
+              currentView === 'compare'
+                ? 'text-chalk-100 bg-obsidian-800 border border-hairline font-bold'
+                : 'text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-850'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <GitCompare className="w-3.5 h-3.5 text-amber" />
+              <span>Compare</span>
+            </span>
+          </button>
 
           {/* Theme Toggle Button */}
           <button

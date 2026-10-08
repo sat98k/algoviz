@@ -4,19 +4,7 @@ import { getAlgorithmById } from '../config/algorithmRegistry';
 import { motion, useReducedMotion } from 'framer-motion';
 
 // Visualizer Components
-import { ArrayBarVisualizer } from '../components/visualizers/ArrayBarVisualizer';
-import { GridTableVisualizer } from '../components/visualizers/GridTableVisualizer';
-import { TreeVisualizer } from '../components/visualizers/TreeVisualizer';
-import { BoardVisualizer } from '../components/visualizers/BoardVisualizer';
-import { GraphVisualizer } from '../components/visualizers/GraphVisualizer';
-import { PointCanvasVisualizer } from '../components/visualizers/PointCanvasVisualizer';
-import { StringMatchVisualizer } from '../components/visualizers/StringMatchVisualizer';
-import { FractionalKnapsackVisualizer } from '../components/visualizers/FractionalKnapsackVisualizer';
-import { RecursionTreeVisualizer } from '../components/visualizers/RecursionTreeVisualizer';
-import { AssemblyLineVisualizer } from '../components/visualizers/AssemblyLineVisualizer';
-import { TspVisualizer } from '../components/visualizers/TspVisualizer';
-import { SetCoverVisualizer } from '../components/visualizers/SetCoverVisualizer';
-import { SweepLineVisualizer } from '../components/visualizers/SweepLineVisualizer';
+import { VisualizerStage } from '../components/visualizers/VisualizerStage';
 import { TreeTraversalOverride, createHuffmanDecodingAlgorithmSteps } from '../utils/huffmanCodec';
 import { HUFFMAN_DECODING_PSEUDOCODE } from '../algorithms/huffman';
 import { SUBSET_SUM_PSEUDOCODE_FIRST, SUBSET_SUM_PSEUDOCODE_ALL } from '../algorithms/subsetSum';
@@ -188,60 +176,15 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
 
   const finalStep = steps[steps.length - 1];
 
-  const renderVisualizer = () => {
-    switch (config.visualizer) {
-      case 'ArrayBarVisualizer':
-        return <ArrayBarVisualizer step={currentStep} />;
-      case 'GridTableVisualizer':
-        return <GridTableVisualizer step={currentStep} />;
-      case 'TreeVisualizer':
-        return (
-          <TreeVisualizer
-            key={`${config.id}-${inputs.findMode ?? 'first'}-${Array.isArray(inputs.numbers) ? inputs.numbers.join('_') : ''}-${inputs.targetSum}`}
-            step={currentStep}
-            traversalOverride={huffmanTraversal}
-          />
-        );
-      case 'BoardVisualizer':
-        return <BoardVisualizer step={currentStep} />;
-      case 'GraphVisualizer':
-        return (
-          <GraphVisualizer
-            key={`${config.id}-${inputs.findMode ?? 'first'}-${inputs.numColors ?? 3}-${Array.isArray(inputs.edgeList) ? inputs.edgeList.length : ''}`}
-            step={currentStep}
-          />
-        );
-      case 'PointCanvasVisualizer':
-        return <PointCanvasVisualizer step={currentStep} />;
-      case 'StringMatchVisualizer':
-        return <StringMatchVisualizer step={currentStep} />;
-      case 'FractionalKnapsackVisualizer':
-        return <FractionalKnapsackVisualizer step={currentStep} />;
-      case 'RecursionTreeVisualizer':
-        return <RecursionTreeVisualizer step={currentStep} />;
-      case 'AssemblyLineVisualizer':
-        return <AssemblyLineVisualizer step={currentStep} />;
-      case 'TspVisualizer':
-        return (
-          <TspVisualizer
-            step={currentStep}
-            inputs={inputs}
-            onApplyInputs={(newInputs) => setInputs(newInputs)}
-            presets={config.presets}
-          />
-        );
-      case 'SetCoverVisualizer':
-        return <SetCoverVisualizer step={currentStep} />;
-      case 'SweepLineVisualizer':
-        return <SweepLineVisualizer step={currentStep} />;
-      default:
-        return (
-          <div className="p-12 text-center font-mono text-xs text-chalk-500 border border-hairline bg-obsidian-950">
-            VISUALIZER '{config.visualizer}' IS NOT REGISTERED.
-          </div>
-        );
-    }
-  };
+  const renderVisualizer = () => (
+    <VisualizerStage
+      config={config}
+      step={currentStep}
+      inputs={inputs}
+      traversalOverride={huffmanTraversal}
+      onApplyInputs={(newInputs) => setInputs(newInputs)}
+    />
+  );
 
   const [layoutMode, setLayoutMode] = useState<'split' | 'stacked'>('split');
 
