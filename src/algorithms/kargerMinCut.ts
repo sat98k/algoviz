@@ -13,10 +13,70 @@ export interface KargerState {
   phase: 'init' | 'pick_edge' | 'contract' | 'complete';
 }
 
+/** Small deterministic PRNG (mulberry32) so a given seed always replays the same run. */
+export function seededRandom(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Exact global minimum cut by checking every partition (vertex 0 fixed on side A).
+ * Only used for small teaching graphs; returns null when the graph is too large.
+ */
+export function exactMinCut(nodeIds: string[], edges: [string, string][]): number | null {
+  const n = nodeIds.length;
+  if (n < 2 || n > 16) return null;
+  const index = new Map(nodeIds.map((id, i) => [id, i]));
+  let best = Infinity;
+  for (let mask = 1; mask < 1 << (n - 1); mask++) {
+    const sideB = mask << 1; // vertex 0 always on side A
+    let crossing = 0;
+    for (const [u, v] of edges) {
+      const inB = (x: string) => ((sideB >> index.get(x)!) & 1) === 1;
+      if (inB(u) !== inB(v)) crossing++;
+    }
+    best = Math.min(best, crossing);
+  }
+  return best;
+}
+
+/** One complete contraction run without animation (union-find): returns the cut it ends with. */
+export function contractOnce(nodeIds: string[], edges: [string, string][], rand: () => number) {
+  const parent = new Map(nodeIds.map((id) => [id, id]));
+  const find = (x: string): string => {
+    while (parent.get(x) !== x) {
+      parent.set(x, parent.get(parent.get(x)!)!);
+      x = parent.get(x)!;
+    }
+    return x;
+  };
+  let components = nodeIds.length;
+  while (components > 2) {
+    const live = edges.filter(([u, v]) => find(u) !== find(v));
+    if (live.length === 0) break;
+    const [u, v] = live[Math.floor(rand() * live.length)];
+    parent.set(find(u), find(v));
+    components--;
+  }
+  const rootA = find(nodeIds[0]);
+  const sideA = nodeIds.filter((id) => find(id) === rootA);
+  const sideB = nodeIds.filter((id) => find(id) !== rootA);
+  const cutSize = edges.filter(([u, v]) => find(u) !== find(v)).length;
+  return { cutSize, sideA, sideB };
+}
+
 export function* kargerMinCutSteps(inputs: {
   numNodes?: number;
   edgeList?: [string, string][];
   seed?: number;
+  /** Independent contraction runs; the first is animated, the rest are summarized. */
+  trials?: number;
 }): Generator<AlgorithmStep<KargerState>> {
   // Default benchmark graph: 6-node dumbbell / bridge graph with known min-cut = 2 (or 1 depending on bridge)
   // Two triangles connected by 2 bridge edges
@@ -45,6 +105,8 @@ export function* kargerMinCutSteps(inputs: {
 
   const origNodeIds = Array.from(nodeSet).sort((a, b) => parseInt(a) - parseInt(b));
   const n = origNodeIds.length;
+  const rand = typeof inputs.seed === 'number' && Number.isFinite(inputs.seed) ? seededRandom(inputs.seed) : Math.random;
+  const trials = Math.max(1, Math.min(500, Math.floor(Number(inputs.trials) || 1)));
 
   // Circular layout coordinates for initial nodes
   const svgWidth = 600;
@@ -130,7 +192,7 @@ export function* kargerMinCutSteps(inputs: {
     if (flatEdges.length === 0) break;
 
     // Pick edge uniformly at random
-    const randomIdx = Math.floor(Math.random() * flatEdges.length);
+    const randomIdx = Math.floor(rand() * flatEdges.length);
     const pickedEdge = flatEdges[randomIdx];
 
     const uNode = currentNodes.find((n) => n.id === pickedEdge.u)!;
@@ -229,10 +291,40 @@ export function* kargerMinCutSteps(inputs: {
   );
   const cutSize = cutEdges.reduce((s, e) => s + (e.weight || 1), 0);
 
+  // Repeat the contraction (trials - 1) more times without animation and keep the smallest cut.
+  const labelOf = (id: string) => `V${parseInt(id) + 1}`;
+  let bestCutSize = cutSize;
+  let bestSides = { sideA: cutSetA, sideB: cutSetB };
+  for (let t = 1; t < trials; t++) {
+    const run = contractOnce(origNodeIds, rawEdges, rand);
+    if (run.cutSize < bestCutSize) {
+      bestCutSize = run.cutSize;
+      bestSides = { sideA: run.sideA.map(labelOf), sideB: run.sideB.map(labelOf) };
+    }
+  }
+
+  const trueMinCut = exactMinCut(origNodeIds, rawEdges);
+  const pSingle = n >= 2 ? 2 / (n * (n - 1)) : 1;
+  const pAll = 1 - Math.pow(1 - pSingle, trials);
+  const thisRunIsMinimum = trueMinCut === null ? null : cutSize === trueMinCut;
+  const bestIsMinimum = trueMinCut === null ? null : bestCutSize === trueMinCut;
+
+  const runSentence = `This run ended with super-nodes A = {${cutSetA.join(', ')}} and B = {${cutSetB.join(', ')}}, a cut crossed by ${cutSize} edge(s). One run is only a candidate: it finds a minimum cut with probability at least 2 / (n(n − 1)) = ${pSingle.toFixed(3)}.`;
+  const repeatSentence =
+    trials > 1
+      ? ` Across ${trials} independent runs (including this one), the smallest cut found has size ${bestCutSize}; the chance that ${trials} runs all miss a minimum cut is at most ${(1 - pAll).toFixed(3)}.`
+      : ' Repeating the run and keeping the smallest cut makes finding the minimum increasingly likely.';
+  const truthSentence =
+    trueMinCut === null
+      ? ''
+      : ` Checking every partition shows the true minimum cut has size ${trueMinCut}: ${
+          thisRunIsMinimum ? 'this run found a minimum cut' : 'this run did not find it'
+        }${trials > 1 ? (bestIsMinimum ? ', and the best of all runs did.' : ', and neither did the best of all runs.') : '.'}`;
+
   yield {
     stepIndex: stepIndex++,
-    title: `Karger’s Min-Cut Complete: Cut Size = ${cutSize}`,
-    description: `Contraction halted at 2 super-nodes. Partition: Cut Set A = {${cutSetA.join(', ')}}, Cut Set B = {${cutSetB.join(', ')}}. Total cut edges bridging the partition: ${cutSize}. (Multiple randomized runs amplify probability of finding the global minimum cut to >= 1 - 1/n).`,
+    title: `Contraction Finished: This Run’s Cut Has Size ${cutSize}`,
+    description: runSentence + repeatSentence + truthSentence,
     codeLine: 7,
     state: {
       nodes: [...currentNodes],
@@ -248,7 +340,7 @@ export function* kargerMinCutSteps(inputs: {
       nodes: [nodeA.id, nodeB.id],
       edges: cutEdges.map((e) => ({ u: e.u, v: e.v, status: 'cover' })),
     },
-    metrics: { comparisons, iterations, custom: { superNodes: 2, cutSize } },
+    metrics: { comparisons, iterations, custom: { superNodes: 2, cutSize, bestCutSize, trials } },
     isFinal: true,
     result: {
       cutSize,
@@ -256,7 +348,13 @@ export function* kargerMinCutSteps(inputs: {
       cutSetB,
       partition: `A = {${cutSetA.join(', ')}} | B = {${cutSetB.join(', ')}}`,
       multiEdgesBetween: cutSize,
-      successProbabilityBound: `Single run success ≥ 2 / (n · (n - 1)) = ${(2 / (n * (n - 1))).toFixed(3)}`,
+      trials,
+      bestCutSize,
+      bestPartition: `A = {${bestSides.sideA.join(', ')}} | B = {${bestSides.sideB.join(', ')}}`,
+      trueMinCutSize: trueMinCut,
+      thisRunIsMinimum,
+      bestIsMinimum,
+      successProbabilityBound: `One run ≥ 2 / (n(n − 1)) = ${pSingle.toFixed(3)}; ${trials} run(s) ≥ ${pAll.toFixed(3)}`,
     },
   };
 }

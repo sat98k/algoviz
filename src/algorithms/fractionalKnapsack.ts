@@ -81,7 +81,7 @@ export function* fractionalKnapsackSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Sort Items by Value/Weight Ratio Descending',
-    description: `Sorted items by greedy heuristic ratio: [${sortedItems
+    description: `Sorted items by value-per-unit-weight (the greedy choice, which is provably optimal for the fractional problem): [${sortedItems
       .map((it) => `Item ${it.id} (${it.ratio})`)
       .join(' > ')}].`,
     codeLine: 3,

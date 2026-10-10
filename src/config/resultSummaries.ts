@@ -167,7 +167,9 @@ export const summarizeNQueens: ResultSummarizer = (r) => {
   }
   const first: number[] | undefined = r.firstSolution ?? r.solutions?.[0];
   return {
-    headline: `Found ${plural(r.totalSolutionsFound, 'way')} to place ${r.n} queens on a ${r.n}×${r.n} board so that none attack each other.`,
+    headline: r.stoppedAtFirst
+      ? `Found a way to place ${r.n} queens on a ${r.n}×${r.n} board so that none attack each other. The search stopped at this first solution, so other solutions may exist.`
+      : `Found ${plural(r.totalSolutionsFound, 'way')} to place ${r.n} queens on a ${r.n}×${r.n} board so that none attack each other.`,
     table: isArr(first)
       ? {
           caption: `${r.totalSolutionsFound > 1 ? 'First solution' : 'Solution'}: queen position in each row (rows and columns numbered from 1)`,
@@ -413,9 +415,21 @@ export const summarizeHiringProblem: ResultSummarizer = (r) => {
 
 export const summarizeKargerMinCut: ResultSummarizer = (r) => {
   if (!isNum(r.cutSize)) return null;
+  const many = isNum(r.trials) && r.trials > 1 && isNum(r.bestCutSize);
+  const truth = isNum(r.trueMinCutSize)
+    ? ` The true minimum cut (checked over every partition) has size ${r.trueMinCutSize}.`
+    : '';
   return {
-    headline: `This run found a cut crossed by ${plural(r.cutSize, 'edge')}: ${r.partition ?? `{${list(r.cutSetA ?? [])}} | {${list(r.cutSetB ?? [])}}`}.`,
-    details: detailsOf(r.successProbabilityBound && { label: 'Success probability bound', value: String(r.successProbabilityBound) }),
+    headline: many
+      ? `The animated run found a cut of size ${r.cutSize}; the best of ${r.trials} runs found a cut of size ${r.bestCutSize}.${truth}`
+      : `This run found a cut crossed by ${plural(r.cutSize, 'edge')}: ${r.partition}. A single run is not guaranteed to find the minimum.${truth}`,
+    details: detailsOf(
+      { label: 'Cut found by the animated run', value: `${r.cutSize} (${r.partition})` },
+      many && { label: `Best cut over ${r.trials} runs`, value: `${r.bestCutSize} (${r.bestPartition})` },
+      typeof r.thisRunIsMinimum === 'boolean' && { label: 'Animated run found a minimum cut', value: formatValue(r.thisRunIsMinimum) },
+      many && typeof r.bestIsMinimum === 'boolean' && { label: 'Best run found a minimum cut', value: formatValue(r.bestIsMinimum) },
+      r.successProbabilityBound && { label: 'Success probability bound', value: String(r.successProbabilityBound) }
+    ),
   };
 };
 
@@ -445,11 +459,16 @@ export const summarizeSetCover: ResultSummarizer = (r) => {
 export const summarizeTspApprox: ResultSummarizer = (r) => {
   if (!isNum(r.tourCost) || !isArr(r.tour)) return null;
   return {
-    headline: `Approximate tour with cost ${r.tourCost}: ${list(r.tour, ' → ')}.`,
+    headline:
+      r.guaranteeHolds === false
+        ? `Tour with cost ${r.tourCost}: ${list(r.tour, ' → ')}. The costs are not metric, so this tour has no 2× guarantee.`
+        : `Approximate tour with cost ${r.tourCost}: ${list(r.tour, ' → ')}.`,
     details: detailsOf(
       isNum(r.mstWeight) && { label: 'MST weight', value: r.mstWeight },
       isNum(r.doubledWeight) && { label: '2 × MST weight', value: r.doubledWeight },
-      r.approxRatioBound && { label: 'Bound', value: String(r.approxRatioBound) }
+      typeof r.isMetric === 'boolean' && { label: 'Metric costs (triangle inequality holds)', value: formatValue(r.isMetric) },
+      r.metricViolation && { label: 'Why not metric', value: String(r.metricViolation) },
+      r.approxRatioBound && { label: r.guaranteeHolds === false ? 'Guarantee' : 'Bound', value: String(r.approxRatioBound) }
     ),
   };
 };

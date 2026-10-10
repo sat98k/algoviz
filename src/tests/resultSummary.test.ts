@@ -57,10 +57,16 @@ describe('Result summaries', () => {
     expect(summary.headline).toBe('1234 × 5678 = 7006652');
   });
 
-  it('N-Queens: states solution count and lists queen positions', () => {
+  it('N-Queens: first-solution mode says the search stopped, and lists queen positions', () => {
     const { summary } = run('n-queens');
-    expect(summary.headline).toContain('Found 1 way to place 4 queens on a 4×4 board');
+    expect(summary.headline).toContain('Found a way to place 4 queens on a 4×4 board');
+    expect(summary.headline).toContain('stopped at this first solution');
     expect(summary.table!.rows).toEqual([[1, 2], [2, 4], [3, 1], [4, 3]]);
+  });
+
+  it('N-Queens: find-all mode states the total count', () => {
+    const { summary } = run('n-queens', { findAll: true });
+    expect(summary.headline).toContain('Found 2 ways to place 4 queens on a 4×4 board');
   });
 
   it('KMP: states where the pattern occurs and keeps the LPS table', () => {

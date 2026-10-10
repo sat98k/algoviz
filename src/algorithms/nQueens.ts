@@ -27,7 +27,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
   yield {
     stepIndex: stepIndex++,
     title: `Initialize ${n}-Queens Board`,
-    description: `Initialized empty ${n}x${n} chessboard. Objective: Place ${n} non-attacking queens.`,
+    description: `Initialized empty ${n}×${n} chessboard. Objective: place ${n} queens so that no two share a row, column or diagonal. Rows and columns are numbered from 1.`,
     codeLine: 1,
     state: {
       n,
@@ -64,7 +64,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
       yield {
         stepIndex: stepIndex++,
         title: `Valid ${n}-Queens Solution #${solutions.length} Found!`,
-        description: `Successfully placed all ${n} queens on the board without conflicts. Positions: [${board.map((c, r) => `(${r},${c})`).join(', ')}].`,
+        description: `Successfully placed all ${n} queens on the board without conflicts. Positions (row, column): [${board.map((c, r) => `(${r + 1}, ${c + 1})`).join(', ')}].`,
         codeLine: 2,
         callFlow: row > 0 ? { type: 'return', nodeId: `${row - 1}-${board[row - 1]}` } : undefined,
         state: {
@@ -93,8 +93,8 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
       if (check.safe) {
         yield {
           stepIndex: stepIndex++,
-          title: `Place Queen at (${row}, ${col})`,
-          description: `Row ${row}, Col ${col} is safe from attacking lines of previously placed queens. Proceeding to row ${row + 1}.`,
+          title: `Place Queen at Row ${row + 1}, Column ${col + 1}`,
+          description: `Row ${row + 1}, column ${col + 1} is not attacked by any queen placed so far, so a queen goes here. Proceeding to row ${row + 2}.`,
           codeLine: [4, 5, 6],
           callFlow: { type: 'call', nodeId: `${row}-${col}` },
           state: {
@@ -124,8 +124,8 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
         board[row] = -1;
         yield {
           stepIndex: stepIndex++,
-          title: `Backtrack from Row ${row}, Col ${col}`,
-          description: `Backtracking: removed queen from (${row}, ${col}) to try subsequent column placements.`,
+          title: `Backtrack from Row ${row + 1}, Column ${col + 1}`,
+          description: `No safe placement exists further down from here, so the queen at row ${row + 1}, column ${col + 1} is removed and the next column in row ${row + 1} is tried.`,
           codeLine: 7,
           callFlow: { type: 'return', nodeId: `${row}-${col}` },
           state: {
@@ -147,8 +147,8 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
         const confRow = check.conflictingRow!;
         yield {
           stepIndex: stepIndex++,
-          title: `Conflict at (${row}, ${col})`,
-          description: `Cannot place queen at (${row}, ${col}) — attacked by existing queen at (${confRow}, ${board[confRow]}).`,
+          title: `Conflict at Row ${row + 1}, Column ${col + 1}`,
+          description: `Cannot place a queen at row ${row + 1}, column ${col + 1}: it is attacked by the queen at row ${confRow + 1}, column ${board[confRow] + 1}.`,
           codeLine: 4,
           state: {
             n,
@@ -183,7 +183,11 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
   yield {
     stepIndex: stepIndex++,
     title: 'N-Queens Search Complete',
-    description: `Search completed. Found ${solutions.length} valid solution(s) with ${backtracks} backtracks and ${recursiveCalls} recursive calls.`,
+    description: findAll
+      ? `Search completed. Found all ${solutions.length} valid solution(s) with ${backtracks} backtracks and ${recursiveCalls} recursive calls.`
+      : solutions.length > 0
+      ? `Search stopped at the first valid solution (${backtracks} backtracks, ${recursiveCalls} recursive calls). This mode does not look for the remaining solutions.`
+      : `Search completed: no valid placement exists (${backtracks} backtracks, ${recursiveCalls} recursive calls).`,
     codeLine: 8,
     state: {
       n,
@@ -203,6 +207,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
     result: {
       n,
       totalSolutionsFound: solutions.length,
+      stoppedAtFirst: !findAll,
       solutions,
       firstSolution: solutions[0] || null,
     },

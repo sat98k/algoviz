@@ -111,7 +111,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       },
       {
         name: 'Small Knapsack (W=15)',
-        description: 'Small capacity requiring early fraction slice',
+        description: 'Capacity 15: smaller than all but the lightest item',
         data: { weights: [10, 20, 30], values: [60, 100, 120], capacity: 15 },
       },
     ],
@@ -236,12 +236,12 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       },
       {
         name: 'All Negative Array',
-        description: 'Requires selecting single least negative element',
+        description: 'Every element is negative',
         data: { array: [-8, -3, -6, -2, -5] },
       },
       {
         name: 'All Positive Array',
-        description: 'Whole array constitutes optimal subarray',
+        description: 'Every element is positive',
         data: { array: [1, 2, 3, 4, 5] },
       },
       {
@@ -270,16 +270,16 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     name: 'Karatsuba Fast Multiplication',
     paradigm: 'Divide & Conquer',
     complexity: {
-      timeBest: 'O(n^{1.585})',
-      timeAverage: 'O(n^{\\log_2 3}) \\approx O(n^{1.585})',
-      timeWorst: 'O(n^{1.585})',
+      timeBest: 'O(n^log2(3)) ≈ O(n^1.585)',
+      timeAverage: 'O(n^log2(3)) ≈ O(n^1.585)',
+      timeWorst: 'O(n^log2(3)) ≈ O(n^1.585)',
       spaceWorst: 'O(n)',
-      description: 'Master theorem T(n) = 3T(n/2) + O(n) -> reduces 4 multiplications to 3 recursive subproblems',
+      description: 'T(n) = 3T(n/2) + O(n) solves to O(n^log2(3)) ≈ O(n^1.585): three half-size multiplications instead of four (which would give O(n²))',
     },
     problemStatement:
       'Multiply two large n-digit integers faster than standard O(n²) grade-school multiplication using recursive 3-way algebraic decomposition.',
     explanation:
-      'Splits X = a·10^m + b and Y = c·10^m + d. Instead of computing 4 subproducts (ac, ad, bc, bd), Karatsuba computes z2 = ac, z0 = bd, and z1 = (a+b)(c+d) - z2 - z0 using only 3 recursive calls, combining them as z2·10^(2m) + z1·10^m + z0 in O(n^1.585) time.',
+      'Splits X = a·10^m + b and Y = c·10^m + d, so X·Y = ac·10^(2m) + (ad + bc)·10^m + bd. Done directly that needs 4 products (ac, ad, bc, bd). Karatsuba computes p1 = ac, p2 = bd and p3 = (a+b)(c+d) with 3 recursive calls; since p3 = ac + ad + bc + bd, the middle term is ad + bc = p3 − p1 − p2. The result is p1·10^(2m) + (p3 − p1 − p2)·10^m + p2, in O(n^log2(3)) ≈ O(n^1.585) time.',
     glossaryTerms: ['recursion'],
     pseudocode: [
       'function Karatsuba(X, Y):',
@@ -289,7 +289,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '  p1 = Karatsuba(a, c) // Recursive call 1: high parts product',
       '  p2 = Karatsuba(b, d) // Recursive call 2: low parts product',
       '  p3 = Karatsuba(a + b, c + d) // Recursive call 3: sum parts product',
-      '  crossTerm = p3 - p1 - p2 // Gauss-Karatsuba cross coefficient trick',
+      '  crossTerm = p3 - p1 - p2 // = ad + bc, because p3 = (a+b)(c+d) = ac + ad + bc + bd',
       '  return p1 * 10^(2m) + crossTerm * 10^m + p2 // Combine scaled components into final product',
     ],
     visualizer: 'RecursionTreeVisualizer',
@@ -529,12 +529,12 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     presets: [
       {
         name: 'Classic CLRS (4 Matrices)',
-        description: 'Dimensions [10, 20, 30, 40, 30] -> min cost 30,000',
+        description: 'Dimensions [10, 20, 30, 40, 30] (textbook example)',
         data: { dimensions: [10, 20, 30, 40, 30] },
       },
       {
         name: '3 Matrices Split Comparison',
-        description: 'Dimensions [10, 100, 5, 50] -> min cost 7,500',
+        description: 'Dimensions [10, 100, 5, 50]: compare the two possible orders',
         data: { dimensions: [10, 100, 5, 50] },
       },
       {
@@ -658,7 +658,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     presets: [
       {
         name: 'Classic CLRS 6 Stations',
-        description: 'Textbook 6-station problem with optimal time 35',
+        description: 'Textbook 6-station problem (CLRS)',
         data: {
           a1: [7, 9, 3, 4, 8, 4],
           a2: [8, 5, 6, 4, 5, 7],
@@ -779,7 +779,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     presets: [
       {
         name: 'Classic 4-City Textbook',
-        description: 'Standard 4-city symmetric problem with optimal tour cost 80',
+        description: 'Standard 4-city symmetric textbook instance',
         data: {
           costMatrix: [
             [0, 10, 15, 20],
@@ -793,7 +793,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       },
       {
         name: '3-City Triangle',
-        description: 'Simple 3-node cyclic tour with cost 21',
+        description: 'Three cities with costs 7, 6 and 8',
         data: {
           costMatrix: [
             [0, 5, 10],
@@ -877,10 +877,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       },
     ],
     presets: [
-      { name: '4-Queens (2 Solutions)', data: { n: 4 } },
-      { name: '5-Queens (10 Solutions)', data: { n: 5 } },
-      { name: '6-Queens (4 Solutions)', data: { n: 6 } },
-      { name: '8-Queens (92 Solutions)', data: { n: 8 } },
+      { name: '4-Queens (Beginner Example)', data: { n: 4 } },
+      { name: '5-Queens (Odd-Sized Board)', data: { n: 5 } },
+      { name: '6-Queens (Medium Board)', data: { n: 6 } },
+      { name: '8-Queens (Classic Chessboard)', data: { n: 8 } },
     ],
     generateRandomInput: () => {
       const sizes = [4, 5, 6];
@@ -947,7 +947,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     ],
     presets: [
       { name: '4 Items (Cap 5)', data: { weights: [2, 3, 4, 5], values: [3, 4, 5, 6], capacity: 5 } },
-      { name: '4 Items High Prune (Cap 10)', data: { weights: [4, 7, 5, 3], values: [40, 42, 25, 12], capacity: 10 } },
+      { name: '4 Items, Larger Capacity (Cap 10)', data: { weights: [4, 7, 5, 3], values: [40, 42, 25, 12], capacity: 10 } },
     ],
     generateRandomInput: () => {
       const n = 4;
@@ -1380,7 +1380,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Negative Cycle (B → C → D → B)',
+        name: 'Loop B → C → D → B with a Negative Edge',
         data: {
           source: 0,
           nodeLabels: ['A', 'B', 'C', 'D'],
@@ -1467,7 +1467,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     ],
     presets: [
       {
-        name: 'Classic 6-Node Network (Max Flow = 23)',
+        name: 'Classic 6-Node Network (CLRS)',
         data: {
           capacities: [
             [0, 16, 13, 0, 0, 0],
@@ -1551,15 +1551,15 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         type: 'select',
         defaultValue: 'classic6',
         options: [
-          { label: 'Classic 6-Node Network (Max Flow = 23)', value: 'classic6' },
-          { label: '4-Node Diamond Network (Max Flow = 17)', value: 'diamond4' },
+          { label: 'Classic 6-Node Network (CLRS)', value: 'classic6' },
+          { label: '4-Node Diamond Network', value: 'diamond4' },
         ],
       },
     ],
     presets: [
       {
-        name: 'Classic 6-Node Network (Max Flow = 23)',
-        description: 'Standard CLRS 6-node flow network with capacity bottleneck 23',
+        name: 'Classic 6-Node Network (CLRS)',
+        description: 'Standard CLRS 6-node flow network',
         data: {
           capacities: [
             [0, 16, 13, 0, 0, 0],
@@ -1575,7 +1575,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Simple 4-Node Diamond (Max Flow = 17)',
+        name: 'Simple 4-Node Diamond',
         description: '4-node network with two parallel paths and cross edge',
         data: {
           capacities: [
@@ -1648,15 +1648,15 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         type: 'select',
         defaultValue: 'classic6',
         options: [
-          { label: 'Classic 6-Node Network (Max Flow = 23)', value: 'classic6' },
-          { label: '4-Node Diamond Network (Max Flow = 17)', value: 'diamond4' },
+          { label: 'Classic 6-Node Network (CLRS)', value: 'classic6' },
+          { label: '4-Node Diamond Network', value: 'diamond4' },
         ],
       },
     ],
     presets: [
       {
-        name: 'Classic 6-Node Network (Max Flow = 23)',
-        description: 'Standard CLRS benchmark network with maximum flow 23',
+        name: 'Classic 6-Node Network (CLRS)',
+        description: 'Standard CLRS benchmark network',
         data: {
           capacities: [
             [0, 16, 13, 0, 0, 0],
@@ -1672,7 +1672,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: '4-Node Diamond (Max Flow = 17)',
+        name: '4-Node Diamond',
         description: 'Diamond network with dual parallel routes',
         data: {
           capacities: [
@@ -1771,7 +1771,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Square with Interior Points (4 Corners Hull)',
+        name: 'Square with Interior Points',
         data: {
           points: [
             { x: 80, y: 80 },
@@ -1863,7 +1863,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Square with Interior Points (4 Corners Hull)',
+        name: 'Square with Interior Points',
         data: {
           points: [
             { x: 80, y: 80 },
@@ -1908,11 +1908,11 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     name: 'Line Segment Intersection (Sweep-Line)',
     paradigm: 'Geometric',
     complexity: {
-      timeBest: 'O(1)',
+      timeBest: 'O(n log n)',
       timeAverage: 'O(n log n)',
       timeWorst: 'O(n log n)',
       spaceWorst: 'O(n)',
-      description: 'O(n log n) sweep-line procedure detecting whether ANY pair of segments intersect',
+      description: 'Sorting the 2n endpoints costs O(n log n) even when an intersection is found early; each sweep event then costs O(log n)',
     },
     problemStatement:
       'Given a collection of 2D line segments, determine whether any two segments intersect using a vertical sweep line moving left to right.',
@@ -1942,16 +1942,16 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         type: 'select',
         defaultValue: 'classic',
         options: [
-          { label: 'Intersecting Pair (Classic)', value: 'classic' },
-          { label: 'Non-Intersecting Parallel', value: 'parallel' },
-          { label: 'Delayed Adjacency Intersection', value: 'delayed' },
+          { label: 'Classic 4 Segments', value: 'classic' },
+          { label: 'Three Parallel Segments', value: 'parallel' },
+          { label: 'Neighbours Change Mid-Sweep', value: 'delayed' },
         ],
       },
     ],
     presets: [
       {
-        name: 'Intersecting Pair (Classic)',
-        description: '4 segments with S1 and S2 crossing at an interior point',
+        name: 'Classic 4 Segments',
+        description: '4 segments with different slopes',
         data: {
           segments: [
             { id: 'S1', label: 'S1', p1: { x: 50, y: 120 }, p2: { x: 280, y: 260 } },
@@ -1962,8 +1962,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Non-Intersecting Parallel Segments',
-        description: '3 horizontal parallel segments with zero intersections',
+        name: 'Three Parallel Segments',
+        description: '3 horizontal segments at different heights',
         data: {
           segments: [
             { id: 'S1', label: 'S1', p1: { x: 50, y: 100 }, p2: { x: 300, y: 100 } },
@@ -1973,8 +1973,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Delayed Adjacency Intersection',
-        description: 'Segments become adjacent and intersect only after a middle segment ends',
+        name: 'Neighbours Change Mid-Sweep',
+        description: 'A middle segment ends partway through the sweep, so two other segments become neighbours',
         data: {
           segments: [
             { id: 'S1', label: 'S1', p1: { x: 50, y: 250 }, p2: { x: 450, y: 190 } },
@@ -2117,13 +2117,13 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         data: { candidates: [4, 7, 2, 9, 8, 10, 5, 12], interviewCost: 1, hiringCost: 5 },
       },
       {
-        name: 'Worst Case (Ascending - Hire All)',
-        description: 'Monotonically improving candidates: forces hiring on every single interview',
+        name: 'Ascending Ratings (Worst-Case Order)',
+        description: 'Each candidate is rated higher than the one before',
         data: { candidates: [2, 4, 6, 8, 10, 12, 14, 16], interviewCost: 1, hiringCost: 5 },
       },
       {
-        name: 'Best Case (Descending - Hire First Only)',
-        description: 'First applicant is the best: exactly 1 hire occurs, minimizing cost',
+        name: 'Descending Ratings (Best-Case Order)',
+        description: 'Each candidate is rated lower than the one before',
         data: { candidates: [20, 18, 15, 12, 9, 6, 4, 2], interviewCost: 1, hiringCost: 5 },
       },
     ],
@@ -2153,7 +2153,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     problemStatement:
       'Find a global minimum cut in a connected undirected graph: a partition of vertices (A, B) minimizing the number of crossing edges, using randomized edge contraction.',
     explanation:
-      'Karger’s algorithm repeatedly selects an edge uniformly at random from the multigraph and contracts its endpoints into a super-node, discarding self-loops while keeping parallel edges. When exactly two super-nodes remain, the crossing edges form a cut. The probability of finding the true minimum cut in one run is at least 2/(V·(V-1)).',
+      'Karger’s algorithm repeatedly selects an edge uniformly at random from the multigraph and contracts its endpoints into a super-node, discarding self-loops while keeping parallel edges. When exactly two super-nodes remain, the crossing edges form a cut. That cut is only a candidate: one run finds a true minimum cut with probability at least 2/(V·(V-1)), so the algorithm is repeated many times and the smallest cut found is kept.',
     glossaryTerms: ['minimum-cut', 'edge-contraction', 'randomized-algorithm'],
     pseudocode: [
       'function KargerMinCut(G = (V, E)):',
@@ -2172,15 +2172,24 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         type: 'select',
         defaultValue: 'barbell',
         options: [
-          { label: 'Barbell / Bridge Graph (Min-Cut = 2)', value: 'barbell' },
-          { label: 'Single Bridge Cut (Min-Cut = 1)', value: 'single_bridge' },
-          { label: 'Complete Graph K4 (Min-Cut = 3)', value: 'k4' },
+          { label: 'Barbell: Two Triangles, Two Bridges', value: 'barbell' },
+          { label: 'Two Triangles, One Bridge', value: 'single_bridge' },
+          { label: 'Complete Graph K4', value: 'k4' },
         ],
+      },
+      {
+        name: 'trials',
+        label: 'Independent runs',
+        type: 'number',
+        defaultValue: 20,
+        min: 1,
+        max: 200,
+        helperText: 'Repeat the random contraction this many times and keep the smallest cut. The animation shows the first run.',
       },
     ],
     presets: [
       {
-        name: 'Barbell / Bridge Graph (Min-Cut = 2)',
+        name: 'Barbell: Two Triangles, Two Bridges',
         description: 'Two triangles (0-1-2) and (3-4-5) connected by 2 bridge edges (1-3, 2-4)',
         data: {
           edgeList: [
@@ -2196,8 +2205,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Single Bridge Cut (Min-Cut = 1)',
-        description: 'Two clusters connected by a single critical bottleneck bridge edge',
+        name: 'Two Triangles, One Bridge',
+        description: 'Two triangles connected by a single edge',
         data: {
           edgeList: [
             ['0', '1'],
@@ -2211,8 +2220,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Complete Graph K4 (Min-Cut = 3)',
-        description: 'Complete 4-node graph: any partition separates at least 3 edges',
+        name: 'Complete Graph K4',
+        description: 'Every pair of the 4 vertices is joined by an edge',
         data: {
           edgeList: [
             ['0', '1'],
@@ -2253,7 +2262,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       timeAverage: 'O(V + E)',
       timeWorst: 'O(V + E)',
       spaceWorst: 'O(V + E)',
-      description: 'Polynomial time 2-approximation for NP-Complete problem',
+      description: 'Polynomial-time 2-approximation. Minimum vertex cover is NP-hard as an optimization problem; its decision version (is there a cover of size ≤ k?) is NP-complete',
     },
     problemStatement:
       'Find a subset of vertices C ⊆ V such that every edge (u, v) ∈ E has at least one endpoint in C, with size |C| ≤ 2 · OPT.',
@@ -2380,8 +2389,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Single Master Set Covers All',
-        description: 'Set S2 contains entire universe {1..5}: greedy finds optimal in 1 step',
+        name: 'Three Overlapping Subsets of {1..5}',
+        description: 'Universe {1..5} with subsets {1, 2}, {1, 2, 3, 4, 5} and {3, 4}',
         data: {
           universeSize: 5,
           subsets: [
@@ -2436,15 +2445,15 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     problemStatement:
       'Find a minimum-cost Hamiltonian cycle visiting every city exactly once and returning to the origin in a complete metric graph with cost(Tour) <= 2 · OPT.',
     explanation:
-      'For metric graphs satisfying the triangle inequality, the MST-Doubling heuristic: (1) builds an MST T, (2) doubles all edges to form an Eulerian multigraph with total weight 2 · W(T), and (3) visits cities in preorder DFS while shortcutting already-visited cities. Since OPT >= W(T) and shortcuts never increase distance, Cost(Tour) <= 2 · W(T) <= 2 · OPT.',
+      'The MST-Doubling algorithm (1) builds a minimum spanning tree T, (2) doubles every edge to form an Eulerian multigraph with total weight 2 · W(T), and (3) visits cities in DFS preorder, shortcutting past cities already visited. Deleting one edge from an optimal tour leaves a spanning tree, so W(T) ≤ OPT. On metric costs (symmetric, satisfying the triangle inequality) a shortcut is never longer than the walk it skips, so Cost(Tour) ≤ 2 · W(T) ≤ 2 · OPT. If the costs are not metric, the page warns that no guarantee applies.',
     glossaryTerms: ['hamiltonian-cycle', 'triangle-inequality', 'minimum-spanning-tree', 'eulerian-multigraph'],
     pseudocode: [
       'function MetricTspApprox(cities, costMatrix):',
-      '  T = PrimMST(cities, costMatrix)  // Phase 1: Minimum Spanning Tree has W(T) <= OPT',
+      '  T = PrimMST(cities, costMatrix)  // Phase 1: W(T) <= OPT (an optimal tour minus one edge is a spanning tree)',
       '  multigraph = doubleEdges(T)  // Phase 2: Every vertex has even degree (Eulerian circuit exists)',
       '  preorderWalk = dfsPreorder(T, startCity = 0)  // Phase 3: DFS traversal order',
-      '  tour = shortcut(preorderWalk) + [startCity]  // Skip previously visited cities via Triangle Ineq',
-      '  return tour  // Guaranteed Cost(tour) <= 2 · W(T) <= 2 · OPT',
+      '  tour = shortcut(preorderWalk) + [startCity]  // Skip visited cities; never adds cost if costs are metric',
+      '  return tour  // Metric costs only: Cost(tour) <= 2 · W(T) <= 2 · OPT',
     ],
     visualizer: 'TspVisualizer',
     inputSchema: [
@@ -2460,22 +2469,22 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     ],
     presets: [
       {
-        name: 'Classic 4-City Benchmark (OPT=80)',
-        description: 'Standard 4-city asymmetric cost matrix (Held-Karp OPT=80, Approx=95)',
+        name: 'Metric 4-City Rectangle',
+        description: 'Corners of a 30 × 40 rectangle with straight-line distances (metric)',
         data: {
           numCities: 4,
           costMatrix: [
-            [0, 10, 15, 20],
-            [10, 0, 35, 25],
-            [15, 35, 0, 30],
-            [20, 25, 30, 0],
+            [0, 30, 50, 40],
+            [30, 0, 40, 50],
+            [50, 40, 0, 30],
+            [40, 50, 30, 0],
           ],
           cityNames: ['A', 'B', 'C', 'D'],
         },
       },
       {
-        name: '3-City Metric Triangle (OPT=21)',
-        description: 'Triangle with costs 7, 6, 8 (OPT=21, Approx=21)',
+        name: '3-City Metric Triangle',
+        description: 'Triangle with costs 7, 6 and 8',
         data: {
           numCities: 3,
           costMatrix: [
@@ -2487,18 +2496,32 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: '5-City Pentagon',
-        description: '5 cities with metric distance layout',
+        name: '5-City Metric Pentagon',
+        description: '5 cities whose costs satisfy the triangle inequality',
         data: {
           numCities: 5,
           costMatrix: [
             [0, 12, 18, 25, 15],
-            [12, 0, 22, 19, 28],
+            [12, 0, 22, 19, 27],
             [18, 22, 0, 14, 20],
             [25, 19, 14, 0, 16],
-            [15, 28, 20, 16, 0],
+            [15, 27, 20, 16, 0],
           ],
           cityNames: ['A', 'B', 'C', 'D', 'E'],
+        },
+      },
+      {
+        name: 'Non-Metric 4-City (Triangle Inequality Broken)',
+        description: 'cost(B, C) = 35 > cost(B, A) + cost(A, C) = 25 breaks the triangle inequality, so the 2× guarantee does not apply to this input.',
+        data: {
+          numCities: 4,
+          costMatrix: [
+            [0, 10, 15, 20],
+            [10, 0, 35, 25],
+            [15, 35, 0, 30],
+            [20, 25, 30, 0],
+          ],
+          cityNames: ['A', 'B', 'C', 'D'],
         },
       },
     ],
@@ -2512,6 +2535,11 @@ export const algorithmRegistry: AlgorithmConfig[] = [
           costMatrix[j][i] = c;
         }
       }
+      // Replace each cost by its shortest-path distance (metric closure), so random inputs are always metric.
+      for (let k = 0; k < n; k++)
+        for (let i = 0; i < n; i++)
+          for (let j = 0; j < n; j++)
+            costMatrix[i][j] = Math.min(costMatrix[i][j], costMatrix[i][k] + costMatrix[k][j]);
       return { numCities: n, costMatrix, cityNames: ['A', 'B', 'C', 'D'] };
     },
     summarizeResult: resultSummaries.summarizeTspApprox,
@@ -2582,22 +2610,22 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     presets: [
       {
         name: 'Classic Example (Target 9)',
-        description: 'Set [3, 34, 4, 12, 5, 2] with target sum 9 → subset [4, 5]',
+        description: 'Set [3, 34, 4, 12, 5, 2] with target sum 9',
         data: { numbers: [3, 34, 4, 12, 5, 2], targetSum: 9, findMode: 'first' },
       },
       {
         name: 'All Subsets Demo (Target 30)',
-        description: 'Set [5, 10, 12, 13, 15, 18] with target 30 → all 3 subsets: [5, 10, 15], [5, 12, 13], [12, 18]',
+        description: 'Set [5, 10, 12, 13, 15, 18] with target 30, searching for every matching subset',
         data: { numbers: [5, 10, 12, 13, 15, 18], targetSum: 30, findMode: 'all' },
       },
       {
-        name: 'No Solution (Target 13)',
-        description: 'Set [3, 5, 7] with target 13 → no valid subset',
+        name: 'Three Odd Numbers (Target 13)',
+        description: 'Set [3, 5, 7] with target 13',
         data: { numbers: [3, 5, 7], targetSum: 13, findMode: 'first' },
       },
       {
-        name: 'Full Set Match (Target 12)',
-        description: 'Set [2, 4, 6] with target 12 → all elements',
+        name: 'Three Even Numbers (Target 12)',
+        description: 'Set [2, 4, 6] with target 12',
         data: { numbers: [2, 4, 6], targetSum: 12, findMode: 'first' },
       },
       {
@@ -2660,8 +2688,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     ],
     presets: [
       {
-        name: '5-Node Planar (k=3, First Solution)',
-        description: 'Standard 5-vertex planar graph finding first valid 3-coloring',
+        name: '5-Node Planar Graph (k=3, First Solution)',
+        description: 'Standard 5-vertex planar graph, stopping at the first valid 3-coloring',
         data: {
           findMode: 'first',
           numColors: 3,
@@ -2690,8 +2718,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Complete Graph K4 (k=3, Unsolvable)',
-        description: 'K4 complete graph requires 4 colors; 3 colors fails with backtracking',
+        name: 'Complete Graph K4 with 3 Colors',
+        description: 'Every pair of the 4 vertices is adjacent; only 3 colors available',
         data: {
           numColors: 3,
           edgeList: [
@@ -2705,8 +2733,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Complete Graph K4 (k=4, Solvable)',
-        description: 'K4 complete graph colored with k=4 colors',
+        name: 'Complete Graph K4 with 4 Colors',
+        description: 'Every pair of the 4 vertices is adjacent; 4 colors available',
         data: {
           numColors: 4,
           edgeList: [
@@ -2720,8 +2748,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Odd Cycle C5 (k=2, Unsolvable)',
-        description: '5-cycle is not bipartite, impossible with 2 colors',
+        name: '5-Cycle C5 with 2 Colors',
+        description: 'Five vertices in a ring; only 2 colors available',
         data: {
           numColors: 2,
           edgeList: [
@@ -2734,8 +2762,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: 'Hexagon Cycle C6 (k=2, Solvable)',
-        description: 'Even cycle C6 is bipartite, cleanly 2-colorable',
+        name: '6-Cycle C6 with 2 Colors',
+        description: 'Six vertices in a ring; only 2 colors available',
         data: {
           numColors: 2,
           edgeList: [
@@ -2820,15 +2848,15 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     ],
     presets: [
       {
-        name: 'Classic 5-Job (Profit 142)',
-        description: 'Standard textbook problem with 5 jobs, max profit 142 [J1, J3, J5]',
+        name: 'Classic 5-Job Example',
+        description: 'Standard textbook problem with 5 jobs and deadlines up to 3',
         data: {
           deadlines: [2, 1, 2, 1, 3],
           profits: [100, 19, 27, 25, 15],
         },
       },
       {
-        name: 'Horowitz-Sahni 4-Job (Profit 127)',
+        name: 'Horowitz-Sahni 4-Job Example',
         description: 'Classic benchmark: 4 jobs with deadlines [2, 1, 2, 1] and profits [100, 10, 15, 27]',
         data: {
           deadlines: [2, 1, 2, 1],
@@ -2837,15 +2865,15 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       },
       {
         name: 'Tight Deadlines (Single Slot)',
-        description: 'All deadlines = 1, only 1 job can be scheduled: highest profit wins',
+        description: 'All deadlines = 1, so there is only one time slot',
         data: {
           deadlines: [1, 1, 1, 1],
           profits: [50, 40, 30, 20],
         },
       },
       {
-        name: 'Sequential Slots (All Fit)',
-        description: 'Deadlines [1, 2, 3, 4] allow all 4 jobs to complete',
+        name: 'Staggered Deadlines (1, 2, 3, 4)',
+        description: 'Deadlines [1, 2, 3, 4], one per job',
         data: {
           deadlines: [1, 2, 3, 4],
           profits: [20, 35, 45, 60],

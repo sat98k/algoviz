@@ -163,7 +163,7 @@ export function* hiringProblemSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'The Hiring Problem Complete',
-    description: `All ${scores.length} candidates interviewed. Total hires: ${hiredIndices.length} (Candidates [${hiredIndices.join(', ')}]). Total expense: $${totalCost} (Interviews: $${scores.length * ci}, Hires: $${hiredIndices.length * ch}). Theoretical expected hires E[X] = ln(${scores.length}) + O(1) ≈ ${harmonicSum.toFixed(2)}.`,
+    description: `All ${scores.length} candidates interviewed. Total hires: ${hiredIndices.length} (Candidates [${hiredIndices.join(', ')}]). Total expense: $${totalCost} (Interviews: $${scores.length * ci}, Hires: $${hiredIndices.length * ch}). If candidates arrived in random order, the expected number of hires would be the harmonic number H_${scores.length} = 1 + 1/2 + … + 1/${scores.length} ≈ ${harmonicSum.toFixed(2)} (H_n ≈ ln n + 0.577; here ln ${scores.length} ≈ ${Math.log(scores.length).toFixed(2)}).`,
     codeLine: 8,
     state: {
       mode: 'hiring',

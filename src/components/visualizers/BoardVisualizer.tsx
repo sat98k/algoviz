@@ -79,7 +79,7 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
                 >
                   {/* Coordinates indicator on corners */}
                   <span className="absolute top-0.5 left-1 text-[8px] font-mono text-chalk-600 pointer-events-none">
-                    {r},{c}
+                    {r + 1},{c + 1}
                   </span>
 
                   {/* Queen Icon */}

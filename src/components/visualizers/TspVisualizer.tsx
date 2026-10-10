@@ -265,7 +265,14 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
             {optimalCost !== undefined && (
               <div className="flex items-center gap-1.5 px-2 py-0.5 bg-acid-500/15 border border-acid-500/30 text-acid-500 rounded font-bold text-[11px]">
                 <CheckCircle className="w-3.5 h-3.5" />
-                <span>Min Tour Cost = {optimalCost}</span>
+                <span>
+                  {state.isApprox
+                    ? state.currentPhase === 'complete'
+                      ? 'Approx. Tour Cost'
+                      : 'Tour Cost So Far'
+                    : 'Min Tour Cost'}{' '}
+                  = {optimalCost}
+                </span>
               </div>
             )}
           </div>
@@ -588,9 +595,15 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
               <span className="font-bold text-chalk-200 uppercase tracking-wider">
                 MST 2-Approximation Telemetry
               </span>
-              <span className="px-2 py-0.5 rounded text-[10px] bg-amber/20 text-amber-glow border border-amber/30 font-bold uppercase">
-                2.0 × OPT Bound
-              </span>
+              {state.metricCheck?.isMetric === false ? (
+                <span className="px-2 py-0.5 rounded text-[10px] bg-rose-500/15 text-rose-400 border border-rose-500/40 font-bold uppercase">
+                  Not metric · no guarantee
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded text-[10px] bg-amber/20 text-amber-glow border border-amber/30 font-bold uppercase">
+                  2.0 × OPT Bound
+                </span>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -606,9 +619,13 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
                 <span>Current Tour Cost:</span>
                 <strong className="text-acid-500 font-bold">{state.optimalCost || 0}</strong>
               </div>
-              <div className="flex justify-between py-1 text-chalk-400">
+              <div className="flex justify-between gap-3 py-1 text-chalk-400">
                 <span>Theoretical Guarantee:</span>
-                <strong className="text-chalk-200">Cost(Tour) ≤ 2 · W(T) ≤ 2 · OPT</strong>
+                {state.metricCheck?.isMetric === false ? (
+                  <strong className="text-rose-400 text-right">None: costs break the triangle inequality</strong>
+                ) : (
+                  <strong className="text-chalk-200 text-right">Cost(Tour) ≤ 2 · W(T) ≤ 2 · OPT (metric costs)</strong>
+                )}
               </div>
             </div>
 

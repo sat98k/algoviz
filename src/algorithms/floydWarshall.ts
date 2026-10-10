@@ -177,7 +177,7 @@ export function* floydWarshallSteps(inputs: {
 
             yield {
               stepIndex: stepIndex++,
-              title: `Relax Distance D[V${i + 1}][V${j + 1}] via V${k + 1}`,
+              title: `Shorter Path: Update D[V${i + 1}][V${j + 1}] via V${k + 1}`,
               description: `Shortened path found! D[V${i + 1}][V${j + 1}] updated from ${
                 oldDij === null ? '∞' : oldDij
               } to ${throughK} (D[V${i + 1}][V${k + 1}] = ${dik} + D[V${k + 1}][V${j + 1}] = ${dkj}).`,
@@ -273,7 +273,7 @@ export function* floydWarshallSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Floyd-Warshall Complete',
-    description: `All-Pairs Shortest Path computation finished in O(V³) time with ${relaxations} edge relaxations.`,
+    description: `All-pairs shortest paths computed in O(V³) time. ${relaxations} pair distance(s) were shortened by routing through an intermediate vertex.`,
     codeLine: 9,
     state: {
       nodes,

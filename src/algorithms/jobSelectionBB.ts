@@ -228,7 +228,7 @@ export function* jobSelectionBBSteps(inputs: {
 
     yield makeStep(
       `Explore Node ${curr.id} (Level ${curr.level})`,
-      `De-queued node ${curr.id} at level ${curr.level} with Profit = ${curr.profit}, Upper Bound = ${curr.bound}. Current best profit = ${bestProfit}.`,
+      `Took node ${curr.id} from the queue (the live node with the highest upper bound) at level ${curr.level}: profit so far = ${curr.profit}, upper bound = ${curr.bound}. Best profit found so far = ${bestProfit}.`,
       6,
       `Exploring node ${curr.id}: Profit=${curr.profit}, UB=${curr.bound}`,
       curr.id,
@@ -310,10 +310,10 @@ export function* jobSelectionBBSteps(inputs: {
         isNewIncumbent = true;
 
         yield makeStep(
-          `New Incumbent Profit Found: ${bestProfit}`,
-          `Feasible schedule with Job J${nextJob.id} achieves profit ${bestProfit}. Schedule: [${bestSchedule.map((id, slot) => `Slot ${slot + 1}: J${id ?? 'empty'}`).join(', ')}].`,
+          `New Best Profit Found: ${bestProfit}`,
+          `Feasible schedule with Job J${nextJob.id} achieves profit ${bestProfit}. Schedule: [${bestSchedule.map((id, slot) => `Slot ${slot + 1}: ${id == null ? 'empty' : `J${id}`}`).join(', ')}].`,
           9,
-          `New incumbent profit = ${bestProfit} with J${nextJob.id}`,
+          `New best profit = ${bestProfit} with J${nextJob.id}`,
           leftNode.id,
           undefined,
           false,
@@ -330,10 +330,10 @@ export function* jobSelectionBBSteps(inputs: {
         if (inclBound <= bestProfit || leftNode.level === n) {
           leftNode.status = 'incumbent';
           yield makeStep(
-            `Incumbent Node ${leftNode.id} Fathomed`,
-            `Feasible incumbent node ${leftNode.id} has UB ${inclBound} equal to current best profit ${bestProfit}. No descendant can exceed this profit.`,
+            `Best Node ${leftNode.id} Needs No Further Branching`,
+            `Node ${leftNode.id} holds the best feasible schedule so far, and its upper bound ${inclBound} equals that profit (${bestProfit}). No schedule below it can earn more, so it is not branched further.`,
             11,
-            `Incumbent ${leftNode.id} fathomed: UB (${inclBound}) = Best (${bestProfit})`,
+            `Best node ${leftNode.id} closed: UB (${inclBound}) = best (${bestProfit})`,
             leftNode.id,
             undefined,
             false,
@@ -344,10 +344,10 @@ export function* jobSelectionBBSteps(inputs: {
           // Still has potential to achieve higher profit in deeper branches
           queue.push(leftNode);
           yield makeStep(
-            `Incumbent J${nextJob.id} Added to Queue`,
-            `New incumbent node with J${nextJob.id} added to queue for deeper exploration (Profit = ${inclProfit}, UB = ${inclBound}).`,
+            `Best Schedule (with J${nextJob.id}) Added to Queue`,
+            `The new best schedule (including J${nextJob.id}) may still be improved, so its node joins the queue for deeper exploration (profit = ${inclProfit}, upper bound = ${inclBound}).`,
             11,
-            `+J${nextJob.id} incumbent queued: Profit=${inclProfit}, UB=${inclBound}`,
+            `+J${nextJob.id} best-so-far queued: Profit=${inclProfit}, UB=${inclBound}`,
             leftNode.id,
             undefined,
             false,
@@ -502,7 +502,7 @@ export function* jobSelectionBBSteps(inputs: {
 
   yield makeStep(
     'Branch & Bound Job Selection Complete',
-    `Optimal job selection found! Max Profit = ${bestProfit}. Optimal Jobs: [${bestJobs.map((id) => `J${id}`).join(', ')}]. Schedule: [${bestSchedule.map((id, s) => `Slot ${s + 1}: J${id ?? 'empty'}`).join(', ')}]. Explored ${nodesExplored} nodes, pruned ${prunedNodes} branches.`,
+    `Optimal job selection found! Max Profit = ${bestProfit}. Optimal Jobs: [${bestJobs.map((id) => `J${id}`).join(', ')}]. Schedule: [${bestSchedule.map((id, s) => `Slot ${s + 1}: ${id == null ? 'empty' : `J${id}`}`).join(', ')}]. Explored ${nodesExplored} nodes, pruned ${prunedNodes} branches.`,
     15,
     `Optimal: Profit = ${bestProfit}, Jobs: [${bestJobs.map((id) => `J${id}`).join(', ')}]`,
     optimalNodeId,

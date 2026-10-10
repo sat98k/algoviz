@@ -19,19 +19,54 @@ export interface TspApproxState {
   optimalCost?: number;
   calculationFormula?: string;
   explanation?: string;
+  metricCheck: MetricCheck;
 }
+
+export interface MetricCheck {
+  /** Symmetric and satisfies the triangle inequality, so the 2x guarantee applies. */
+  isMetric: boolean;
+  isSymmetric: boolean;
+  /** The largest triangle-inequality violation: cost(i,j) > cost(i,k) + cost(k,j). */
+  violation?: { i: number; j: number; k: number; direct: number; detour: number };
+  /** First pair with cost(i,j) != cost(j,i). */
+  asymmetry?: { i: number; j: number };
+}
+
+/** Checks the assumptions the 2-approximation guarantee depends on. */
+export function checkMetric(cost: number[][]): MetricCheck {
+  const n = cost.length;
+  let asymmetry: MetricCheck['asymmetry'];
+  let violation: MetricCheck['violation'];
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (!asymmetry && cost[i][j] !== cost[j][i]) asymmetry = { i, j };
+      if (i === j) continue;
+      for (let k = 0; k < n; k++) {
+        if (k === i || k === j) continue;
+        const detour = cost[i][k] + cost[k][j];
+        if (cost[i][j] > detour && (!violation || cost[i][j] - detour > violation.direct - violation.detour)) {
+          violation = { i, j, k, direct: cost[i][j], detour };
+        }
+      }
+    }
+  }
+  return { isMetric: !asymmetry && !violation, isSymmetric: !asymmetry, violation, asymmetry };
+}
+
+/** The relation that actually holds between a and b, so no displayed inequality is ever false. */
+const relation = (a: number, b: number) => (a <= b ? '≤' : '>');
 
 export function* tspApproxSteps(inputs: {
   numCities?: number;
   costMatrix?: number[][];
   cityNames?: string[];
 }): Generator<AlgorithmStep<TspApproxState>> {
-  // Default 4-city textbook instance (Held-Karp optimal is 80)
+  // Default: corners of a 30 x 40 rectangle (Euclidean, so metric). OPT = 140.
   const defaultCostMatrix = [
-    [0, 10, 15, 20],
-    [10, 0, 35, 25],
-    [15, 35, 0, 30],
-    [20, 25, 30, 0],
+    [0, 30, 50, 40],
+    [30, 0, 40, 50],
+    [50, 40, 0, 30],
+    [40, 50, 30, 0],
   ];
 
   const cost = inputs.costMatrix && inputs.costMatrix.length >= 3 ? inputs.costMatrix : defaultCostMatrix;
@@ -62,13 +97,26 @@ export function* tspApproxSteps(inputs: {
   let comparisons = 0;
   let iterations = 0;
 
+  const metricCheck = checkMetric(cost);
+  const label = (i: number) => cities[i].label;
+  const v = metricCheck.violation;
+  const nonMetricReason = !metricCheck.isSymmetric && metricCheck.asymmetry
+    ? `cost(${label(metricCheck.asymmetry.i)}, ${label(metricCheck.asymmetry.j)}) ≠ cost(${label(metricCheck.asymmetry.j)}, ${label(metricCheck.asymmetry.i)}), so the costs are not symmetric`
+    : v
+    ? `cost(${label(v.i)}, ${label(v.j)}) = ${v.direct} > cost(${label(v.i)}, ${label(v.k)}) + cost(${label(v.k)}, ${label(v.j)}) = ${v.detour}, which violates the triangle inequality`
+    : '';
+  const assumptionText = metricCheck.isMetric
+    ? 'These costs are metric (symmetric and satisfy the triangle inequality), so the tour is guaranteed to cost at most 2 × OPT.'
+    : `Warning: ${nonMetricReason}. The 2 × OPT guarantee only holds for metric costs, so this run builds a tour but promises nothing about its quality.`;
+
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize TSP 2-Approximation (MST-Doubling)',
-    description: `Loaded ${n} cities. Procedure: (1) Construct MST using Prim’s algorithm; (2) Double every MST edge to form Eulerian multigraph; (3) Perform DFS preorder traversal with shortcutting to guarantee Cost <= 2 * OPT.`,
+    description: `Loaded ${n} cities. Procedure: (1) build a minimum spanning tree with Prim’s algorithm; (2) double every MST edge to form an Eulerian multigraph; (3) walk the tree in DFS preorder, skipping cities already visited. ${assumptionText}`,
     codeLine: 1,
     state: {
       isApprox: true,
+      metricCheck,
       numCities: n,
       cities,
       costMatrix: cost,
@@ -144,6 +192,7 @@ export function* tspApproxSteps(inputs: {
       codeLine: [2, 3],
       state: {
         isApprox: true,
+        metricCheck,
         numCities: n,
         cities,
         costMatrix: cost,
@@ -179,6 +228,7 @@ export function* tspApproxSteps(inputs: {
       codeLine: 4,
       state: {
         isApprox: true,
+        metricCheck,
         numCities: n,
         cities,
         costMatrix: cost,
@@ -215,10 +265,11 @@ export function* tspApproxSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: `Phase 2: Double Every MST Edge (Weight: 2 * ${totalMstWeight} = ${doubledWeight})`,
-    description: `Doubled all ${mstEdges.length} edges in the MST to form an Eulerian multigraph (each vertex now has an even degree). Eulerian tour weight = 2 * W(MST) = ${doubledWeight} <= 2 * OPT.`,
+    description: `Doubled all ${mstEdges.length} MST edges to form an Eulerian multigraph (every vertex now has even degree), so a closed walk using each doubled edge once costs 2 × W(MST) = ${doubledWeight}. This is at most 2 × OPT for any non-negative costs: deleting one edge from an optimal tour leaves a spanning tree, so W(MST) ≤ OPT.`,
     codeLine: 5,
     state: {
       isApprox: true,
+      metricCheck,
       numCities: n,
       cities,
       costMatrix: cost,
@@ -282,10 +333,15 @@ export function* tspApproxSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `DFS Preorder Shortcut: ${cities[u].label} ➔ ${cities[v].label} (Cost: ${cost[u][v]})`,
-      description: `Visited ${cities[v].label} via preorder DFS. Shortcutting skipped any previously visited intermediate vertices (valid by Triangle Inequality: dist(u,w) <= dist(u,v) + dist(v,w)). Running Tour Cost: ${approxTourCost}.`,
+      description: `Next unvisited city in DFS preorder is ${cities[v].label}, so the tour goes ${cities[u].label} ➔ ${cities[v].label} directly, skipping cities already visited. ${
+        metricCheck.isMetric
+          ? 'With metric costs a direct hop is never longer than the walk it skips (triangle inequality), so shortcutting cannot increase the cost.'
+          : 'These costs break the triangle inequality, so this direct hop may cost more than the walk it skips.'
+      } Running tour cost: ${approxTourCost}.`,
       codeLine: [6, 7],
       state: {
         isApprox: true,
+        metricCheck,
         numCities: n,
         cities,
         costMatrix: cost,
@@ -311,14 +367,24 @@ export function* tspApproxSteps(inputs: {
     };
   }
 
+  // The guarantee is claimed only when its assumption holds and the numbers agree.
+  const guaranteeHolds = metricCheck.isMetric && approxTourCost <= doubledWeight;
+  const tourText = finalCycle.map((i) => cities[i].label).join(' ➔ ');
+  const boundText = guaranteeHolds
+    ? `Tour cost ${approxTourCost} ≤ 2 × W(MST) = ${doubledWeight} ≤ 2 × OPT`
+    : `No guarantee: ${metricCheck.isMetric ? 'unexpected bound failure' : 'costs are not metric'} (tour cost ${approxTourCost} ${relation(approxTourCost, doubledWeight)} 2 × W(MST) = ${doubledWeight})`;
+
   // Complete
   yield {
     stepIndex: stepIndex++,
     title: `TSP 2-Approximation Complete (Cost: ${approxTourCost})`,
-    description: `Constructed valid Hamiltonian cycle: ${finalCycle.map((i) => cities[i].label).join(' ➔ ')}. Approximation guarantee: Tour Cost (${approxTourCost}) <= 2 * W(MST) (${doubledWeight}) <= 2 * OPT.`,
+    description: guaranteeHolds
+      ? `Built the Hamiltonian cycle ${tourText}. Guarantee: tour cost ${approxTourCost} ≤ 2 × W(MST) = ${doubledWeight} (shortcuts never add cost on metric inputs), and W(MST) ≤ OPT, so the tour costs at most 2 × OPT.`
+      : `Built the Hamiltonian cycle ${tourText} with cost ${approxTourCost}. No approximation guarantee applies: ${nonMetricReason || 'the costs are not metric'}. Here the tour cost is ${approxTourCost} ${relation(approxTourCost, doubledWeight)} 2 × W(MST) = ${doubledWeight}.`,
     codeLine: 8,
     state: {
       isApprox: true,
+      metricCheck,
       numCities: n,
       cities,
       costMatrix: cost,
@@ -333,8 +399,10 @@ export function* tspApproxSteps(inputs: {
       dfsOrder: [...tourOrder],
       optimalTour: finalCycle,
       optimalCost: approxTourCost,
-      calculationFormula: `Total Tour Cost = ${approxTourCost} <= 2 * W(MST) = ${doubledWeight}`,
-      explanation: 'Final 2-approximation Hamiltonian tour successfully built and verified against the 2x bound.',
+      calculationFormula: `Total tour cost = ${approxTourCost} ${relation(approxTourCost, doubledWeight)} 2 × W(MST) = ${doubledWeight}`,
+      explanation: guaranteeHolds
+        ? 'Final tour built; on metric costs it is guaranteed to be at most 2 × OPT.'
+        : 'Final tour built, but the costs are not metric, so the 2 × OPT guarantee does not apply.',
     },
     highlights: {
       nodes: finalCycle.map((c) => `${c}`),
@@ -348,7 +416,10 @@ export function* tspApproxSteps(inputs: {
       tourCost: approxTourCost,
       mstWeight: totalMstWeight,
       doubledWeight,
-      approxRatioBound: `Cost <= 2 * OPT (${approxTourCost} <= ${doubledWeight})`,
+      approxRatioBound: boundText,
+      isMetric: metricCheck.isMetric,
+      metricViolation: nonMetricReason || undefined,
+      guaranteeHolds,
       isHamiltonian: new Set(tourOrder).size === n && finalCycle[0] === finalCycle[finalCycle.length - 1],
     },
   };
