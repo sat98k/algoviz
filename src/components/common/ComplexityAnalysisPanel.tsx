@@ -55,7 +55,7 @@ export const ComplexityAnalysisPanel: React.FC<ComplexityAnalysisPanelProps> = (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Time */}
         <div className="flex flex-col gap-2 p-3.5 bg-obsidian-950 border border-hairline">
-          <h3 className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-chalk-500">
+          <h3 className="flex items-center gap-1.5 font-sans text-xs font-semibold text-chalk-400">
             <Clock className="w-3 h-3 text-amber" /> Time
           </h3>
           <dl className="flex flex-col gap-2.5">
@@ -73,7 +73,7 @@ export const ComplexityAnalysisPanel: React.FC<ComplexityAnalysisPanelProps> = (
 
         {/* Space */}
         <div className="flex flex-col gap-2 p-3.5 bg-obsidian-950 border border-hairline">
-          <h3 className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-chalk-500">
+          <h3 className="flex items-center gap-1.5 font-sans text-xs font-semibold text-chalk-400">
             <Cpu className="w-3 h-3 text-acid-500" /> Space
           </h3>
           <p className={`${formula} text-base font-bold`}>{analysis.space.bound}</p>

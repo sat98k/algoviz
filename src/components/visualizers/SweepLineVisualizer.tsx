@@ -150,7 +150,7 @@ export const SweepLineVisualizer: React.FC<SweepLineVisualizerProps> = ({ step }
                 <text
                   x={sweepSvgX + 6}
                   y={padding}
-                  className="text-[9px] font-mono font-bold fill-amber-400 uppercase tracking-wider"
+                  className="text-[11px] font-mono font-bold fill-amber-400 uppercase tracking-wider"
                 >
                   Sweep
                 </text>
@@ -180,7 +180,7 @@ export const SweepLineVisualizer: React.FC<SweepLineVisualizerProps> = ({ step }
             <span className="font-bold text-chalk-200 uppercase tracking-wider">
               Active Segments Status T
             </span>
-            <span className="text-[10px] text-chalk-400">Top-to-Bottom</span>
+            <span className="text-[11px] text-chalk-400">Top-to-Bottom</span>
           </div>
 
           <div className="space-y-2">
@@ -208,10 +208,10 @@ export const SweepLineVisualizer: React.FC<SweepLineVisualizerProps> = ({ step }
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-chalk-500">#{rank + 1}</span>
+                        <span className="text-[11px] text-chalk-500">#{rank + 1}</span>
                         <strong className="text-chalk-100">{seg?.label || id}</strong>
                       </div>
-                      <span className="text-[10px] text-chalk-400">
+                      <span className="text-[11px] text-chalk-400">
                         [{seg?.p1.x}, {seg?.p1.y}] → [{seg?.p2.x}, {seg?.p2.y}]
                       </span>
                     </div>
@@ -223,7 +223,7 @@ export const SweepLineVisualizer: React.FC<SweepLineVisualizerProps> = ({ step }
 
           {/* Adjacency Check Summary */}
           <div className="p-3 bg-obsidian-900 border border-hairline text-chalk-300 font-sans text-xs space-y-1">
-            <div className="font-mono text-[10px] uppercase font-bold text-amber tracking-wider">
+            <div className="font-mono text-[11px] uppercase font-bold text-amber tracking-wider">
               Sweep-Line Invariant:
             </div>
             <p>

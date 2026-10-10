@@ -87,7 +87,7 @@ export const TspDpMatrix: React.FC<TspDpMatrixProps> = ({ step, onClose }) => {
           <span className="font-bold tracking-wider uppercase text-[11px]">
             Held-Karp DP Table [S, j]
           </span>
-          <span className="text-[10px] px-1.5 py-0.5 bg-obsidian-950 border border-hairline text-chalk-400">
+          <span className="text-[11px] px-1.5 py-0.5 bg-obsidian-950 border border-hairline text-chalk-400">
             {subsets.length} Subsets × {numCities} Cities
           </span>
         </div>
@@ -106,7 +106,7 @@ export const TspDpMatrix: React.FC<TspDpMatrixProps> = ({ step, onClose }) => {
       {/* Recurrence & Active Calculation Formula Box */}
       {state.calculationFormula && !state.dpRule && (
         <div className="p-3 bg-obsidian-900/60 border-b border-hairline flex flex-col gap-1 text-[11px]">
-          <div className="flex items-center gap-1.5 text-chalk-500 uppercase text-[10px] font-semibold">
+          <div className="flex items-center gap-1.5 text-chalk-500 uppercase text-[11px] font-semibold">
             <HelpCircle className="w-3.5 h-3.5 text-amber" />
             <span>Recurrence & State Transition</span>
           </div>
@@ -121,23 +121,23 @@ export const TspDpMatrix: React.FC<TspDpMatrixProps> = ({ step, onClose }) => {
         <table className="w-full border-collapse text-center">
           <thead>
             <tr className="border-b border-hairline bg-obsidian-900 sticky top-0 z-20">
-              <th className="px-2 py-2 text-left text-chalk-400 font-semibold uppercase text-[10px] tracking-wider border-r border-hairline min-w-[130px] bg-obsidian-900">
+              <th className="px-2 py-2 text-left text-chalk-400 font-semibold uppercase text-[11px] tracking-wider border-r border-hairline min-w-[130px] bg-obsidian-900">
                 Subset S ⊆ V
               </th>
-              <th className="px-1.5 py-2 text-chalk-400 font-semibold uppercase text-[10px] tracking-wider border-r border-hairline w-12 bg-obsidian-900">
+              <th className="px-1.5 py-2 text-chalk-400 font-semibold uppercase text-[11px] tracking-wider border-r border-hairline w-12 bg-obsidian-900">
                 |S|
               </th>
               {cities.map((city) => (
                 <th
                   key={city.id}
-                  className={`px-2 py-2 font-semibold uppercase text-[10px] tracking-wider border-r border-hairline min-w-[60px] ${
+                  className={`px-2 py-2 font-semibold uppercase text-[11px] tracking-wider border-r border-hairline min-w-[60px] ${
                     city.id === currentCity && currentPhase === 'fill'
                       ? 'text-amber-glow bg-amber/15 font-bold'
                       : 'text-chalk-300 bg-obsidian-900'
                   }`}
                 >
                   {city.label}
-                  <span className="block text-[9px] text-chalk-500 font-normal">
+                  <span className="block text-[11px] text-chalk-500 font-normal">
                     {city.id === 0 ? '(Start)' : `j=${city.id}`}
                   </span>
                 </th>
@@ -165,7 +165,7 @@ export const TspDpMatrix: React.FC<TspDpMatrixProps> = ({ step, onClose }) => {
                   </td>
 
                   {/* Subset Size Badge */}
-                  <td className="px-1.5 py-1.5 border-r border-hairline text-chalk-500 text-[10px] bg-obsidian-950/60">
+                  <td className="px-1.5 py-1.5 border-r border-hairline text-chalk-500 text-[11px] bg-obsidian-950/60">
                     {size}
                   </td>
 
@@ -190,7 +190,7 @@ export const TspDpMatrix: React.FC<TspDpMatrixProps> = ({ step, onClose }) => {
                       return (
                         <td
                           key={city.id}
-                          className="px-2 py-1.5 border-r border-hairline/40 bg-obsidian-950/30 text-chalk-700 select-none text-[10px]"
+                          className="px-2 py-1.5 border-r border-hairline/40 bg-obsidian-950/30 text-chalk-700 select-none text-[11px]"
                           title="Start city 0 only valid as base case for S={0}"
                         >
                           —
@@ -219,7 +219,7 @@ export const TspDpMatrix: React.FC<TspDpMatrixProps> = ({ step, onClose }) => {
                             {val !== null && val !== undefined ? val : '∞'}
                           </span>
                           {predLabel && (
-                            <span className="text-[9px] opacity-75 font-normal flex items-center gap-0.5">
+                            <span className="text-[11px] opacity-75 font-normal flex items-center gap-0.5">
                               <ArrowRight className="w-2 h-2 inline" />
                               {predLabel}
                             </span>
@@ -236,7 +236,7 @@ export const TspDpMatrix: React.FC<TspDpMatrixProps> = ({ step, onClose }) => {
       </div>
 
       {/* Pane Footer Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-obsidian-900 border-t border-hairline text-[10px] text-chalk-400">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-obsidian-900 border-t border-hairline text-[11px] text-chalk-400">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-sm bg-amber/30 border border-amber inline-block" />

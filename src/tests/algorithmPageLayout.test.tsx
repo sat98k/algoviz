@@ -30,11 +30,12 @@ describe.each(['split', 'stacked'] as const)('AlgorithmPage layout (%s)', (mode)
     expect(count(text, first.title)).toBeGreaterThanOrEqual(1);
     expect(count(text, first.description)).toBe(1);
 
-    // One playback group, one pseudocode panel, one values panel.
+    // One playback toolbar, one pseudocode panel, one operation-counts panel.
     expect(count(html, 'aria-label="Playback speed slider"')).toBe(1);
     expect(count(html, 'title="Step forward (Key: →)"')).toBe(1);
+    expect(count(html, 'role="toolbar"')).toBe(1);
     expect(count(html, 'id="pseudocode-line-1"')).toBe(1);
-    expect(count(html, 'Current values')).toBe(1);
+    expect(count(html, 'aria-label="Operation counts"')).toBe(1);
 
     // Learning order: explanation → final answer → inputs → complexity.
     const explanation = html.indexOf('What happened and why?');
@@ -76,7 +77,8 @@ describe('Step explanation is never hidden or truncated', () => {
     expect(decode(html)).toContain(long);
     expect(html).toContain('whitespace-pre-line');
     expect(decode(html)).toContain('Step 5 of 20');
-    expect(decode(html)).toContain('Pseudocode lines 3–5');
+    // The active line is shown once, on the pseudocode panel, not repeated here.
+    expect(decode(html)).not.toMatch(/Pseudocode lines?/);
     expect(html).toContain('aria-live="polite"');
   });
 });
@@ -101,8 +103,12 @@ describe('Final answer card', () => {
 });
 
 describe('Plain-language labels', () => {
-  it('values panel is called "Current values"', () => {
-    expect(renderToStaticMarkup(<MetricsPanel metrics={{ comparisons: 3 }} />)).toContain('Current values');
-    expect(renderToStaticMarkup(<MetricsPanel metrics={{}} />)).toContain('Current values');
+  it('counters are called "Operation counts", not values', () => {
+    const html = renderToStaticMarkup(<MetricsPanel metrics={{ comparisons: 3, recursiveCalls: 2 }} />);
+    expect(html).toContain('Operation counts');
+    expect(html).not.toContain('Current values');
+    expect(decode(html)).toContain('Comparisons3');
+    expect(decode(html)).toContain('Recursive calls2');
+    expect(renderToStaticMarkup(<MetricsPanel metrics={{}} />)).toContain('Operation counts');
   });
 });

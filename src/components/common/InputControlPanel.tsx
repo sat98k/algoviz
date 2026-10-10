@@ -113,7 +113,7 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({ config, cu
             <table className="border-collapse mx-auto text-center font-mono text-xs">
               <thead>
                 <tr>
-                  <th className="p-1 text-[10px] text-chalk-500 font-normal border-b border-r border-hairline w-10">\</th>
+                  <th className="p-1 text-[11px] text-chalk-500 font-normal border-b border-r border-hairline w-10">\</th>
                   {rawVal.map((_: any, cIdx: number) => (
                     <th key={cIdx} className="p-1.5 font-bold text-xs uppercase border-b border-r border-hairline min-w-[50px] text-chalk-200 bg-obsidian-900/80">
                       {String.fromCharCode(65 + cIdx)}
@@ -165,7 +165,7 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({ config, cu
           onBlur={() => dispatch({ type: 'blur', name: field.name })}
           aria-describedby={describedBy}
         >
-          <div className="grid grid-cols-[2.5rem_1fr_1fr_2rem] gap-2 font-mono text-[10px] uppercase tracking-wider text-chalk-500">
+          <div className="grid grid-cols-[2.5rem_1fr_1fr_2rem] gap-2 font-sans text-xs text-chalk-400">
             <span>Point</span>
             <span>x</span>
             <span>y</span>
@@ -232,7 +232,7 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({ config, cu
       <div className="flex items-center justify-between pb-3 border-b border-hairline">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="w-3.5 h-3.5 text-amber" />
-          <h3 className="font-mono text-xs uppercase tracking-widest text-chalk-200">Input &amp; presets</h3>
+          <h3 className="font-sans text-sm font-semibold text-chalk-200">Input &amp; presets</h3>
         </div>
         <button
           type="button"
@@ -246,7 +246,7 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({ config, cu
       {/* Preset Chips */}
       {config.presets && config.presets.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-chalk-500 mr-1">PRESETS:</span>
+          <span className="font-sans text-xs text-chalk-400 mr-1">Presets:</span>
           {config.presets.map((preset) => (
             <button
               key={preset.name}
@@ -278,12 +278,12 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({ config, cu
               >
                 <label htmlFor={`${config.id}-${field.name}`} className="font-mono text-xs text-chalk-300 flex items-center justify-between">
                   <span>{field.label}</span>
-                  <span className="text-[10px] text-chalk-500 uppercase">{field.type === 'array' ? 'list' : field.type}</span>
+                  <span className="text-xs text-chalk-500">{field.type === 'array' ? 'list' : field.type}</span>
                 </label>
                 {renderField(field)}
                 {renderError(field.name)}
                 {!showError(field.name) && (field.helperText || field.type === 'array') && (
-                  <span className="font-mono text-[10px] text-chalk-500">
+                  <span className="font-mono text-xs text-chalk-500">
                     {field.helperText ?? ''}
                     {field.type === 'array' && (field.helperText ? ' · ' : '') + listHint(field)}
                   </span>
@@ -309,7 +309,7 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({ config, cu
 
           <button
             type="submit"
-            className="flex items-center justify-center gap-2 mt-1 px-4 py-2.5 bg-obsidian-800 hover:bg-obsidian-700 text-chalk-100 border border-hairline font-mono text-xs uppercase tracking-wider font-semibold transition-colors"
+            className="flex items-center justify-center gap-2 mt-1 px-4 py-2.5 bg-obsidian-800 hover:bg-obsidian-700 text-chalk-100 border border-hairline font-sans text-sm font-semibold transition-colors"
           >
             <Play className="w-3.5 h-3.5 text-amber fill-current" />
             <span>Run with these inputs</span>

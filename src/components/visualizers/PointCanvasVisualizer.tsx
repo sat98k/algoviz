@@ -117,7 +117,7 @@ export const PointCanvasVisualizer: React.FC<PointCanvasVisualizerProps> = ({ st
                 <text
                   x={12}
                   y={4}
-                  className="text-[10px] font-mono font-bold fill-chalk-300 pointer-events-none"
+                  className="text-[11px] font-mono font-bold fill-chalk-300 pointer-events-none"
                 >
                   {pt.label || `P${pt.id}`} ({pt.x}, {pt.y})
                 </text>

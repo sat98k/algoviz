@@ -1,147 +1,105 @@
 import React, { useEffect, useRef } from 'react';
 import { Terminal } from 'lucide-react';
 import { AlgorithmStep } from '../../types/algorithm';
-import { GlossaryKey } from '../../config/glossary';
-import { GlossaryText } from './GlossaryText';
+import { revealActiveLines } from '../../utils/codeScroll';
 
 interface CodeExplanationProps {
   step: AlgorithmStep;
   pseudocode: string[];
-  hideStepHeader?: boolean;
-  /** Glossary terms to link in the step description. */
-  glossaryTerms?: readonly GlossaryKey[];
+  /** Tailwind max-height class for the scrolling code area. */
+  maxHeightClass?: string;
 }
 
-export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudocode, hideStepHeader = false, glossaryTerms }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const activeLines: number[] = Array.isArray(step.codeLine)
-    ? step.codeLine
-    : step.codeLine
-    ? [step.codeLine]
-    : [];
+export const activeLinesOf = (codeLine: AlgorithmStep['codeLine']): number[] =>
+  Array.isArray(codeLine) ? codeLine : codeLine ? [codeLine] : [];
 
-  // Auto-scroll active line into view smoothly if pseudocode overflows
+/**
+ * Pseudocode with the current step's lines highlighted. The step title and description
+ * live in "What happened and why?", so this panel shows only the code.
+ *
+ * Auto-scroll is container-only: when the step changes and its lines are outside the
+ * visible code area, only this panel's scrollTop moves. The page never scrolls, and
+ * manual scrolling of the code is left alone until the next step change.
+ */
+export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudocode, maxHeightClass = 'max-h-80' }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const activeLines = activeLinesOf(step.codeLine);
+  const activeKey = activeLines.join(',');
+
   useEffect(() => {
-    if (activeLines.length > 0 && containerRef.current) {
-      const firstActiveLineEl = containerRef.current.querySelector<HTMLElement>(
-        `[data-line-num="${activeLines[0]}"]`
-      );
-      if (firstActiveLineEl) {
-        firstActiveLineEl.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }
-    }
-  }, [step.stepIndex, activeLines]);
+    if (containerRef.current && activeLines.length > 0) revealActiveLines(containerRef.current, activeLines);
+    // Re-run only when the step or its lines change, never on unrelated renders.
+  }, [step.stepIndex, activeKey, pseudocode]);
+
+  if (!pseudocode || pseudocode.length === 0) return null;
 
   const activeLineText =
-    activeLines.length > 0
-      ? activeLines.length === 1
-        ? `LINE ${activeLines[0]}`
-        : `LINES ${activeLines[0]}–${activeLines[activeLines.length - 1]}`
-      : null;
+    activeLines.length === 0
+      ? null
+      : activeLines.length === 1
+      ? `Line ${activeLines[0]}`
+      : `Lines ${activeLines[0]}–${activeLines[activeLines.length - 1]}`;
 
   return (
-    <div className="flex flex-col gap-3 p-4 sm:p-5 bg-obsidian-900 border border-hairline w-full">
-      {/* Current Step Title & Explanation */}
-      {!hideStepHeader && (
-        <div className="flex flex-col gap-2 pb-3 border-b border-hairline">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-amber animate-pulse"></span>
-              <span className="font-mono text-xs uppercase tracking-wider text-amber font-semibold">
-                STEP {step.stepIndex + 1}
+    <section aria-label="Pseudocode" className="flex flex-col gap-2 p-3 sm:p-4 bg-obsidian-900 border border-hairline w-full min-w-0">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="flex items-center gap-1.5 font-sans text-sm font-semibold text-chalk-200">
+          <Terminal className="w-3.5 h-3.5 text-amber" />
+          Pseudocode
+        </h2>
+        {activeLineText && (
+          <span className="font-mono text-xs px-2 py-0.5 bg-sem-current/15 border border-sem-current/50 text-sem-current-ink font-semibold">
+            {activeLineText}
+          </span>
+        )}
+      </div>
+
+      <div
+        ref={containerRef}
+        data-testid="pseudocode-scroll"
+        className={`relative py-2 bg-obsidian-950 border border-hairline font-mono overflow-y-auto overflow-x-hidden overscroll-contain leading-relaxed ${maxHeightClass}`}
+      >
+        {pseudocode.map((line, idx) => {
+          const lineNum = idx + 1;
+          const isActive = activeLines.includes(lineNum);
+
+          // Code and comment are styled separately; comments are supporting text.
+          const commentIdx = line.indexOf('//');
+          const codePart = commentIdx === -1 ? line : line.substring(0, commentIdx);
+          const commentPart = commentIdx === -1 ? '' : line.substring(commentIdx);
+
+          return (
+            <div
+              key={lineNum}
+              id={`pseudocode-line-${lineNum}`}
+              data-line-num={lineNum}
+              className={`grid grid-cols-[auto_1fr] items-start px-2 py-0.5 transition-colors duration-200 border-l-4 ${
+                isActive ? 'bg-sem-current/15 text-sem-current-ink font-semibold border-sem-current' : 'text-chalk-200 border-transparent'
+              }`}
+            >
+              <span
+                className={`w-7 shrink-0 text-xs select-none mr-2 tabular-nums text-right pt-px ${
+                  isActive ? 'text-sem-current-ink font-bold' : 'text-chalk-500'
+                }`}
+              >
+                {lineNum}
               </span>
-            </div>
-            {activeLineText && (
-              <span className="font-mono text-[11px] px-2 py-0.5 bg-amber/10 border border-amber/30 text-amber-glow font-bold">
-                {activeLineText}
-              </span>
-            )}
-          </div>
-
-          <h3 className="font-display font-bold text-base sm:text-lg text-chalk-100 mt-0.5">
-            {step.title}
-          </h3>
-
-          <p className="text-xs text-chalk-300 font-sans leading-relaxed">
-            <GlossaryText text={step.description} terms={glossaryTerms} />
-          </p>
-        </div>
-      )}
-
-      {/* Pseudocode Box with active line highlighting */}
-      {pseudocode && pseudocode.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between font-mono text-[11px] text-chalk-500 pb-1">
-            <div className="flex items-center gap-1.5">
-              <Terminal className="w-3.5 h-3.5 text-amber" />
-              <span className="uppercase tracking-wider font-semibold text-chalk-300">
-                Pseudocode
-              </span>
-            </div>
-            {activeLineText && hideStepHeader && (
-              <span className="font-mono text-[10px] px-2 py-0.5 bg-amber/15 border border-amber/40 text-amber font-bold">
-                ACTIVE: {activeLineText}
-              </span>
-            )}
-          </div>
-
-          <div
-            ref={containerRef}
-            className="p-3 bg-obsidian-950 border border-hairline font-mono text-xs overflow-y-auto overflow-x-hidden max-h-72 sm:max-h-80 leading-relaxed rounded-none shadow-inner"
-          >
-            {pseudocode.map((line, idx) => {
-              const lineNum = idx + 1;
-              const isActive = activeLines.includes(lineNum);
-
-              // Split code and comment if present for subtle syntax highlighting
-              const commentIdx = line.indexOf('//');
-              let codePart = line;
-              let commentPart = '';
-              if (commentIdx !== -1) {
-                codePart = line.substring(0, commentIdx);
-                commentPart = line.substring(commentIdx);
-              }
-
-              return (
-                <div
-                  key={lineNum}
-                  id={`pseudocode-line-${lineNum}`}
-                  data-line-num={lineNum}
-                  className={`grid grid-cols-[auto_1fr] items-start px-2 py-1 transition-all duration-200 rounded-none group ${
-                    isActive
-                      ? 'bg-sem-current/15 text-sem-current-ink font-semibold border-l-4 border-sem-current pl-2.5'
-                      : 'text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-900/50'
-                  }`}
-                >
+              <div className="whitespace-pre-wrap break-words min-w-0">
+                <span className="text-[13px] sm:text-sm">{codePart}</span>
+                {commentPart && (
                   <span
-                    className={`w-7 shrink-0 text-[10px] select-none mr-2 font-mono tabular-nums text-right pr-1 pt-0.5 ${
-                      isActive ? 'text-sem-current-ink font-bold' : 'text-chalk-600 group-hover:text-chalk-400'
+                    className={`font-sans block sm:inline sm:ml-2 text-xs sm:text-[13px] italic ${
+                      isActive ? 'text-chalk-100 font-medium' : 'text-chalk-400 font-normal'
                     }`}
                   >
-                    {String(lineNum).padStart(2, '0')}
+                    {commentPart}
                   </span>
-                  <div className="whitespace-pre-wrap break-words min-w-0 pl-1">
-                    <span className="font-mono text-[11px] sm:text-xs">{codePart}</span>
-                    {commentPart && (
-                      <span
-                        className={`font-sans block sm:inline sm:ml-2 text-[10px] sm:text-[11px] font-medium leading-normal transition-colors ${
-                          isActive ? 'text-chalk-100 italic drop-shadow-sm' : 'text-chalk-400 italic font-normal'
-                        }`}
-                      >
-                        {commentPart}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 };
-

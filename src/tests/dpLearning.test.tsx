@@ -22,9 +22,11 @@ describe('DP briefs', () => {
         continue;
       }
       const b = a.dpBrief!;
-      for (const f of [b.cell, b.state, b.baseCase, b.fillOrder, b.answer]) expect(f.length, a.id).toBeGreaterThan(3);
-      expect(b.state.length, a.id).toBeLessThan(110);
       expect(b.cases.length).toBeGreaterThan(0);
+      // Cell meaning, base case, fill order and answer are in the numbered core steps.
+      const steps = a.coreSteps!.join(' ');
+      expect(steps, a.id).toMatch(/`(dp|m|D|DP|f₁)\[/);
+      expect(a.coreSteps!.length).toBeGreaterThanOrEqual(4);
       for (const c of b.cases) for (const f of [c.condition, c.formula, c.action]) expect(f.length).toBeGreaterThan(3);
       expect(JSON.stringify(b)).not.toMatch(/\\\\[a-z]|\^\{/); // no LaTeX
     }
@@ -52,13 +54,20 @@ describe('DP briefs', () => {
     expect(JSON.stringify(getAlgorithmById('tsp')!.dpBrief!.details)).toMatch(/3 tours for 4 cities, 181,440 for 10, and about 6 × 10¹⁶ for 20/);
   });
 
-  it('the page shows the brief before the demo and a compact version beside the table, only for DP', () => {
-    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="knapsack-dp" onBack={() => {}} />);
-    expect(html.split('aria-label="Table rules"').length - 1).toBe(1);
-    expect(html).toContain('Rule for this cell');
-    expect(html.indexOf('Table rules')).toBeLessThan(html.indexOf('What happened and why?'));
+  it('the recurrence cases sit inside "How it works" (no separate panel) and the live rule sits beside the table, only for DP', () => {
+    for (const id of DP_IDS) {
+      const html = renderToStaticMarkup(<AlgorithmPage algorithmId={id} onBack={() => {}} />);
+      const panel = html.indexOf('aria-label="Problem and how it works"');
+      const cases = html.indexOf('aria-label="Recurrence cases"');
+      expect(cases, id).toBeGreaterThan(panel);
+      expect(cases).toBeLessThan(html.indexOf('What happened and why?'));
+      expect(html.split('aria-label="Recurrence cases"').length - 1).toBe(1);
+      expect(html).not.toContain('Table rules');
+      for (const c of getAlgorithmById(id)!.dpBrief!.cases) expect(decode(html)).toContain(c.formula);
+      expect(html).toContain('Rule for this cell');
+    }
     const kmp = renderToStaticMarkup(<AlgorithmPage algorithmId="kmp" onBack={() => {}} />);
-    expect(kmp).not.toContain('Table rules');
+    expect(kmp).not.toContain('Recurrence cases');
     expect(kmp).not.toContain('Rule for this cell');
   });
 });

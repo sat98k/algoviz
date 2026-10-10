@@ -36,37 +36,37 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
     switch (item.status) {
       case 'taken_full':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-acid-500/20 text-acid-500 border border-acid-500/40 uppercase">
+          <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-acid-500/20 text-acid-500 border border-acid-500/40 uppercase">
             TAKEN 100%
           </span>
         );
       case 'taken_fraction':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-electric-400/20 text-electric-400 border border-electric-400/40 uppercase">
+          <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-electric-400/20 text-electric-400 border border-electric-400/40 uppercase">
             TAKEN {(item.fractionTaken * 100).toFixed(1)}%
           </span>
         );
       case 'skipped':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 uppercase">
+          <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 uppercase">
             SKIPPED
           </span>
         );
       case 'examining':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-amber/20 text-amber-glow border border-amber uppercase animate-pulse">
+          <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-amber/20 text-amber-glow border border-amber uppercase animate-pulse">
             EVALUATING
           </span>
         );
       case 'sorting':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-mono text-chalk-400 bg-obsidian-800 border border-hairline uppercase">
+          <span className="px-2 py-0.5 text-[11px] font-mono text-chalk-400 bg-obsidian-800 border border-hairline uppercase">
             SORTED
           </span>
         );
       default:
         return (
-          <span className="px-2 py-0.5 text-[10px] font-mono text-chalk-500 bg-obsidian-850 border border-hairline uppercase">
+          <span className="px-2 py-0.5 text-[11px] font-mono text-chalk-500 bg-obsidian-850 border border-hairline uppercase">
             PENDING
           </span>
         );
@@ -83,7 +83,7 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
             <span className="text-chalk-100 font-bold tabular-nums">
               {currentWeight} / {capacity} kg
             </span>
-            <span className="text-chalk-500 text-[10px]">({fillPercentage.toFixed(1)}% full)</span>
+            <span className="text-chalk-500 text-[11px]">({fillPercentage.toFixed(1)}% full)</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -106,14 +106,6 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
           />
         </div>
       </div>
-
-      {/* Explanation Callout */}
-      {state.explanation && (
-        <div className="w-full max-w-4xl mb-6 px-4 py-2 bg-obsidian-950 border border-amber/30 font-mono text-xs text-amber-glow flex items-center gap-2">
-          <span className="font-semibold text-chalk-500 uppercase">[ GREEDY RULE ]:</span>
-          <span>{state.explanation}</span>
-        </div>
-      )}
 
       {/* Item Cards Grid / List */}
       <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
@@ -152,7 +144,7 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
 
               {/* Portion Taken Bar */}
               <div className="flex flex-col gap-1 pt-1 border-t border-hairline">
-                <div className="flex justify-between font-mono text-[10px] text-chalk-400">
+                <div className="flex justify-between font-mono text-[11px] text-chalk-400">
                   <span>Portion Taken:</span>
                   <span className="font-bold text-chalk-200">{percentTaken}%</span>
                 </div>

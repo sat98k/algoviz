@@ -78,7 +78,7 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
                   }`}
                 >
                   {/* Coordinates indicator on corners */}
-                  <span className="absolute top-0.5 left-1 text-[8px] font-mono text-chalk-600 pointer-events-none">
+                  <span className="absolute top-0.5 left-1 text-[11px] font-mono text-chalk-600 pointer-events-none">
                     {r + 1},{c + 1}
                   </span>
 
@@ -113,11 +113,11 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
           <span>Queen placed</span>
         </li>
         <li className="flex items-center gap-1.5">
-          <span className="px-1 text-[10px] font-bold bg-sem-current/30 border border-sem-current text-sem-current-ink">▶</span>
+          <span className="px-1 text-[11px] font-bold bg-sem-current/30 border border-sem-current text-sem-current-ink">▶</span>
           <span>Square being tried</span>
         </li>
         <li className="flex items-center gap-1.5">
-          <span className="px-1 text-[10px] font-bold bg-sem-mismatch/20 border-2 border-sem-mismatch text-sem-mismatch-ink">✗</span>
+          <span className="px-1 text-[11px] font-bold bg-sem-mismatch/20 border-2 border-sem-mismatch text-sem-mismatch-ink">✗</span>
           <span>Attacked (conflict)</span>
         </li>
       </ul>

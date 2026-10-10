@@ -119,7 +119,7 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
       {/* The page's "Rule for this cell" card shows the calculation whenever a rule exists */}
       {state.formulaExplanation && !state.dpRule && (
         <div className="w-full max-w-5xl px-4 py-2 bg-sem-formula/10 border border-sem-formula/40 text-xs md:text-sm font-mono text-sem-formula-ink flex flex-wrap items-center gap-2">
-          <span className="font-semibold uppercase text-[10px] tracking-wider">ƒ Calculation:</span>
+          <span className="font-semibold uppercase text-[11px] tracking-wider">ƒ Calculation:</span>
           <span className="break-all">{state.formulaExplanation}</span>
         </div>
       )}
@@ -128,7 +128,7 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
       {isMCM && mcmDims.length > 0 && (
         <div className="w-full max-w-5xl flex flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
-            <span className="text-chalk-500 text-[10px] uppercase tracking-wider mr-1">Dimensions p:</span>
+            <span className="text-chalk-500 text-[11px] uppercase tracking-wider mr-1">Dimensions p:</span>
             {mcmDims.map((d, idx) => {
               const tag = mcmActiveDims.get(idx);
               return (
@@ -137,7 +137,7 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
                   className={`flex flex-col items-center px-2 py-1 border ${tag ? 'bg-sem-compare/15 border-sem-compare text-sem-compare-ink font-bold' : 'border-hairline text-chalk-300'}`}
                 >
                   <span>{d}</span>
-                  <span className="text-[9px] text-chalk-500">p[{idx}]</span>
+                  <span className="text-[11px] text-chalk-500">p[{idx}]</span>
                 </span>
               );
             })}
@@ -169,7 +169,7 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-2">
             <div className="flex items-center gap-2 text-chalk-300">
               <Layers className="w-3.5 h-3.5 text-amber" />
-              <span className="text-chalk-500 uppercase text-[10px] tracking-wider">
+              <span className="text-chalk-500 uppercase text-[11px] tracking-wider">
                 {isBacktrackPhase ? 'OPTIMAL PARENTHESIZATION RECONSTRUCTION (BACKTRACKING)' : 'DP TABLE COMPUTATION STAGE'}
               </span>
             </div>
@@ -285,7 +285,7 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
                             {isLowerTriangular ? '—' : val === Infinity ? '∞' : val}
                           </span>
                           {isMCM && !isLowerTriangular && typeof splitK === 'number' && splitK > 0 && (
-                            <span className="text-[9px] text-chalk-500 font-mono mt-0.5">
+                            <span className="text-[11px] text-chalk-500 font-mono mt-0.5">
                               s={splitK}
                             </span>
                           )}
@@ -303,20 +303,20 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
       {/* Legend: the answer path also uses a thicker border, so it is distinguishable without colour */}
       <ul aria-label="Legend" className="flex flex-wrap items-center justify-center gap-5 mt-2 text-xs font-mono text-chalk-400">
         <li className="flex items-center gap-1.5">
-          <span className="px-1 text-[10px] font-bold bg-sem-current/30 border border-sem-current text-sem-current-ink">▶</span>
+          <span className="px-1 text-[11px] font-bold bg-sem-current/30 border border-sem-current text-sem-current-ink">▶</span>
           <span>Cell being computed</span>
         </li>
         <li className="flex items-center gap-1.5">
-          <span className="px-1 text-[10px] font-bold bg-sem-compare/30 border border-sem-compare text-sem-compare-ink">⇄</span>
+          <span className="px-1 text-[11px] font-bold bg-sem-compare/30 border border-sem-compare text-sem-compare-ink">⇄</span>
           <span>Cells it reads from</span>
         </li>
         <li className="flex items-center gap-1.5">
-          <span className="px-1 text-[10px] font-bold bg-sem-final/30 border-2 border-sem-final text-sem-final-ink">★</span>
+          <span className="px-1 text-[11px] font-bold bg-sem-final/30 border-2 border-sem-final text-sem-final-ink">★</span>
           <span>Answer path (traceback)</span>
         </li>
         {isLCS && (
           <li className="flex items-center gap-1.5">
-            <span className="px-1 text-[10px] font-bold border border-hairline">↖ ↑ ←</span>
+            <span className="px-1 text-[11px] font-bold border border-hairline">↖ ↑ ←</span>
             <span>Where a value came from</span>
           </li>
         )}

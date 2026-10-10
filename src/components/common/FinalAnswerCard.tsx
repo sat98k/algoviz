@@ -29,7 +29,7 @@ export const FinalAnswerCard: React.FC<FinalAnswerCardProps> = ({ isFinal, resul
     >
       <Hourglass className="w-4 h-4 mt-0.5 shrink-0 text-chalk-500" />
       <div className="flex flex-col gap-0.5">
-        <span className="font-mono text-[11px] uppercase tracking-wider font-semibold text-chalk-300">Final answer</span>
+        <span className="font-sans text-sm font-semibold text-chalk-300">Final answer</span>
         <span className="font-sans text-sm">
           The answer appears here when the algorithm finishes. You are on step {stepNumber} of {totalSteps}.
         </span>

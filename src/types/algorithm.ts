@@ -73,16 +73,12 @@ export interface DpCase {
   action: string;
 }
 
-/** Compact visual rules of a DP algorithm, shown before the demonstration. */
+/**
+ * The recurrence cases of a DP algorithm, shown inside "How it works" (the numbered
+ * core steps already define the cell, the base case, the fill order and the answer).
+ */
 export interface DpBrief {
-  /** Cell notation, e.g. "dp[i][j]". */
-  cell: string;
-  /** One short sentence: what one cell means. */
-  state: string;
   cases: DpCase[];
-  baseCase: string;
-  fillOrder: string;
-  answer: string;
   /** Optional extras shown in a collapsed "worked example" section. */
   details?: { label: string; text: string }[];
 }
@@ -253,6 +249,8 @@ export interface AlgorithmConfig {
   dpBrief?: DpBrief;
   problemStatement: string;
   explanation: string;
+  /** "How it works": 3–6 short numbered steps (RichText markup), shown instead of `explanation`. */
+  coreSteps?: string[];
   /** Glossary terms worth linking in this algorithm's learning text and step descriptions. */
   glossaryTerms?: GlossaryKey[];
   pseudocode: string[];

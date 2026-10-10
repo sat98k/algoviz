@@ -324,7 +324,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 <text
                   y={34}
                   textAnchor="middle"
-                  className="text-[9px] font-mono font-bold uppercase pointer-events-none"
+                  className="text-[11px] font-mono font-bold uppercase pointer-events-none"
                   fill={colorInfo.border}
                 >
                   {colorInfo.name}
@@ -464,7 +464,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 <text
                   textAnchor="middle"
                   dominantBaseline="central"
-                  className="text-[10px] font-mono font-bold"
+                  className="text-[11px] font-mono font-bold"
                   fill={
                     isSource
                       ? '#fef08a'
@@ -497,7 +497,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 <text
                   textAnchor="middle"
                   dominantBaseline="central"
-                  className="text-[9px] font-mono font-bold uppercase tracking-wider"
+                  className="text-[11px] font-mono font-bold uppercase tracking-wider"
                   fill={isPivot ? '#fbbf24' : isSourceI ? '#7dd3fc' : '#e9d5ff'}
                 >
                   {isPivot ? 'PIVOT' : isSourceI ? 'SRC' : 'DST'}
@@ -590,7 +590,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                   <span className="inline-flex items-center gap-1.5">
                     {nd.label}
                     {isSourceNode && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber/20 text-amber-glow border border-amber/40">
+                      <span className="px-1.5 py-0.5 rounded text-[11px] bg-amber/20 text-amber-glow border border-amber/40">
                         SRC
                       </span>
                     )}
@@ -611,7 +611,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                   {p ? (
                     <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
                       {nodes.find((x) => x.id === p)?.label ?? p}
-                      <span className="text-[10px] text-chalk-500">→</span>
+                      <span className="text-[11px] text-chalk-500">→</span>
                       {nd.label}
                     </span>
                   ) : (
@@ -670,12 +670,12 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                   <span className="inline-flex items-center gap-1.5">
                     {nd.label}
                     {isSource && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] bg-sky-950/80 text-sky-300 border border-sky-600/40">
+                      <span className="px-1.5 py-0.5 rounded text-[11px] bg-sky-950/80 text-sky-300 border border-sky-600/40">
                         SRC
                       </span>
                     )}
                     {isSink && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] bg-emerald-950/80 text-emerald-300 border border-emerald-600/40">
+                      <span className="px-1.5 py-0.5 rounded text-[11px] bg-emerald-950/80 text-emerald-300 border border-emerald-600/40">
                         SNK
                       </span>
                     )}
@@ -697,7 +697,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                   ) : isSink ? (
                     <span className="text-emerald-400 font-semibold">Sink (Flow: {e})</span>
                   ) : isOverflowing ? (
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-amber/20 text-amber font-bold uppercase">
+                    <span className="px-2 py-0.5 rounded text-[11px] bg-amber/20 text-amber font-bold uppercase">
                       Overflowing
                     </span>
                   ) : (
@@ -766,7 +766,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               </div>
             </div>
             {state.bottleneckCapacity !== undefined && (state.phase === 'augment' || state.phase === 'path_found') && (
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-acid-500/20 border border-acid-500/40 text-acid-400 font-bold">
+              <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-acid-500/20 border border-acid-500/40 text-acid-400 font-bold">
                 Augment Δf = {state.bottleneckCapacity}
               </span>
             )}
@@ -810,10 +810,10 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                       }`}
                     >
                       {n.label}
-                      {isColPivot && <span className="block text-[8px] text-amber-400 font-normal">PIVOT</span>}
-                      {isColDest && <span className="block text-[8px] text-purple-300 font-normal">DST</span>}
-                      {isColSource && <span className="block text-[8px] text-sky-400 font-normal">SRC</span>}
-                      {isColSink && <span className="block text-[8px] text-emerald-400 font-normal">SNK</span>}
+                      {isColPivot && <span className="block text-[11px] text-amber-400 font-normal">PIVOT</span>}
+                      {isColDest && <span className="block text-[11px] text-purple-300 font-normal">DST</span>}
+                      {isColSource && <span className="block text-[11px] text-sky-400 font-normal">SRC</span>}
+                      {isColSink && <span className="block text-[11px] text-emerald-400 font-normal">SNK</span>}
                     </th>
                   );
                 })}
@@ -842,12 +842,12 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                       }`}
                     >
                       {nodes[r]?.label}
-                      {isRowSrc && <span className="block text-[8px] text-sky-300 font-normal">SRC</span>}
+                      {isRowSrc && <span className="block text-[11px] text-sky-300 font-normal">SRC</span>}
                       {isRowPivot && !isRowSrc && (
-                        <span className="block text-[8px] text-amber-400 font-normal">PIVOT</span>
+                        <span className="block text-[11px] text-amber-400 font-normal">PIVOT</span>
                       )}
-                      {isRowSource && <span className="block text-[8px] text-sky-400 font-normal">SRC</span>}
-                      {isRowSink && <span className="block text-[8px] text-emerald-400 font-normal">SNK</span>}
+                      {isRowSource && <span className="block text-[11px] text-sky-400 font-normal">SRC</span>}
+                      {isRowSink && <span className="block text-[11px] text-emerald-400 font-normal">SNK</span>}
                     </th>
                     {row.map((val: any, c: number) => {
                       const isUpdated = state.updatedCell?.i === r && state.updatedCell?.j === c;
@@ -1012,7 +1012,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 <span className="px-3 py-1 bg-obsidian-950 border border-amber/40 text-amber-glow flex items-center gap-1.5">
                   CURRENT: <strong>V{parseInt(state.currentVertex) + 1}</strong>
                   {state.currentColor !== undefined && state.currentColor > 0 && (
-                    <span className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded text-[10px] bg-obsidian-900 border border-hairline">
+                    <span className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded text-[11px] bg-obsidian-900 border border-hairline">
                       <span
                         className="w-2 h-2 rounded-full inline-block"
                         style={{ backgroundColor: COLOR_PALETTE[state.currentColor]?.bg || '#f59e0b' }}
@@ -1094,7 +1094,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 <span className="w-2 h-2 rounded-full bg-amber inline-block"></span>
                 GRAPH TOPOLOGY
               </span>
-              <span className="text-[10px] font-mono text-chalk-500">
+              <span className="text-[11px] font-mono text-chalk-500">
                 {nodes.length} Vertices • {edges.length} Edges
               </span>
             </div>
@@ -1119,12 +1119,12 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                   : 'CAPACITY MATRIX'}
               </span>
               {isFloyd && state.k >= 0 && (
-                <span className="text-[10px] font-mono text-amber-glow font-bold">
+                <span className="text-[11px] font-mono text-amber-glow font-bold">
                   PIVOT: V{state.k + 1}
                 </span>
               )}
               {isBellmanFord && (
-                <span className="text-[10px] font-mono text-amber-glow font-bold">
+                <span className="text-[11px] font-mono text-amber-glow font-bold">
                   SOURCE: {nodes.find((x) => x.id === state.source)?.label ?? state.source}
                 </span>
               )}

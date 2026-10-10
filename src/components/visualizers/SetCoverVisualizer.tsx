@@ -119,15 +119,15 @@ export const SetCoverVisualizer: React.FC<SetCoverVisualizerProps> = ({ step }) 
                     {sub.label}
                   </span>
                   {isSelected ? (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500 text-obsidian-950 uppercase">
+                    <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-emerald-500 text-obsidian-950 uppercase">
                       ✓ IN COVER
                     </span>
                   ) : isCurrent ? (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber text-obsidian-950 uppercase flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-amber text-obsidian-950 uppercase flex items-center gap-1">
                       <Sparkles className="w-3 h-3" /> BEST PICK
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-obsidian-800 border border-hairline text-chalk-400">
+                    <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-obsidian-800 border border-hairline text-chalk-400">
                       +{sub.uncoveredCount} new
                     </span>
                   )}
@@ -164,7 +164,7 @@ export const SetCoverVisualizer: React.FC<SetCoverVisualizerProps> = ({ step }) 
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-5 mt-5 text-xs font-mono text-chalk-400">
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-[9px] text-emerald-400">✓</span>
+          <span className="w-3 h-3 rounded bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-[11px] text-emerald-400">✓</span>
           <span>Covered Element</span>
         </div>
         <div className="flex items-center gap-1.5">

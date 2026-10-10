@@ -9,9 +9,9 @@ import {
   termPopoverReducer,
   TermPopoverAction,
 } from '../components/common/Term';
-import { ProblemIntuitionPanel } from '../components/common/ProblemIntuitionPanel';
+import { ProblemIntuitionPanel, panelTokens } from '../components/common/ProblemIntuitionPanel';
 import { ComplexityAnalysisPanel } from '../components/common/ComplexityAnalysisPanel';
-import { CodeExplanation } from '../components/common/CodeExplanation';
+import { StepExplanation } from '../components/common/StepExplanation';
 
 const linkedKeys = (text: string, keys: readonly GlossaryKey[], exclude?: Set<GlossaryKey>) =>
   linkGlossaryTerms(text, keys, exclude).filter((s) => s.termKey).map((s) => [s.termKey, s.text]);
@@ -19,10 +19,11 @@ const linkedKeys = (text: string, keys: readonly GlossaryKey[], exclude?: Set<Gl
 /** Keys linked on the Problem & Intuition panel, mirroring ProblemIntuitionPanel. */
 const panelLinks = (id: string) => {
   const c = getAlgorithmById(id)!;
-  const inProblem = linkGlossaryTerms(c.problemStatement, c.glossaryTerms);
-  const used = new Set(inProblem.map((s) => s.termKey).filter(Boolean) as GlossaryKey[]);
-  const inExplanation = linkGlossaryTerms(c.explanation, c.glossaryTerms, used);
-  return [...inProblem, ...inExplanation].filter((s) => s.termKey).map((s) => [s.termKey, s.text]);
+  const t = panelTokens(c.problemStatement, c.explanation, c.coreSteps, c.glossaryTerms);
+  const all = [...t.problem, ...(t.steps ?? []).flatMap((st) => [...st.main, ...st.subs.flat()]), ...(t.explanation ?? [])];
+  return all
+    .filter((tok) => (tok.kind === 'text' || tok.kind === 'bold') && tok.termKey)
+    .map((tok) => [(tok as { termKey: GlossaryKey }).termKey, tok.text]);
 };
 
 describe('Glossary data', () => {
@@ -106,20 +107,20 @@ describe('Algorithm wiring', () => {
 
   it('links the expected phrases for the core teaching algorithms', () => {
     expect(panelLinks('fractional-knapsack')).toEqual([
+      ['greedy-algorithm', 'greedy'],
       ['greedy-choice-property', 'greedy choice property'],
-      ['greedy-algorithm', 'greedily'],
     ]);
     expect(panelLinks('huffman')).toEqual([
       ['prefix-code', 'prefix code'],
-      ['priority-queue', 'min-priority queue'],
+      ['priority-queue', 'priority queue'],
     ]);
     expect(panelLinks('max-subarray')).toEqual([
-      ['divide-and-conquer', 'Divide & Conquer'],
+      ['divide-and-conquer', 'divide and conquer'],
       ['recursion', 'Recursively'],
     ]);
-    expect(panelLinks('karatsuba')).toEqual([['recursion', 'recursive']]);
-    expect(panelLinks('n-queens')).toEqual([['backtracking', 'backtracks']]);
-    expect(panelLinks('kmp')).toEqual([['lps', 'Longest Proper Prefix which is also Suffix (LPS)']]);
+    expect(panelLinks('karatsuba')).toEqual([['recursion', 'Recursively']]);
+    expect(panelLinks('n-queens')).toEqual([['backtracking', 'backtrack']]);
+    expect(panelLinks('kmp')).toEqual([['lps', 'LPS']]);
   });
 
   it('links LPS inside KMP step descriptions', () => {
@@ -182,7 +183,7 @@ describe('Rendered markup', () => {
   ] as const)('%s Problem & Intuition panel renders its terms', (id, keys) => {
     const c = getAlgorithmById(id)!;
     const html = renderToStaticMarkup(
-      <ProblemIntuitionPanel problemStatement={c.problemStatement} explanation={c.explanation} terms={c.glossaryTerms} />
+      <ProblemIntuitionPanel problemStatement={c.problemStatement} explanation={c.explanation} coreSteps={c.coreSteps} terms={c.glossaryTerms} />
     );
     for (const key of keys) expect(html).toContain(`data-glossary-term="${key}"`);
   });
@@ -195,9 +196,10 @@ describe('Rendered markup', () => {
 
   it('step description links listed terms', () => {
     const html = renderToStaticMarkup(
-      <CodeExplanation
+      <StepExplanation
         step={{ stepIndex: 0, title: 't', description: 'Falling back to LPS[2] = 1.', state: {}, highlights: {}, metrics: {} }}
-        pseudocode={[]}
+        stepNumber={1}
+        totalSteps={1}
         glossaryTerms={['lps']}
       />
     );

@@ -38,6 +38,7 @@ import * as resultSummaries from './resultSummaries';
 import { COMPARISON_PROFILES } from './comparisonProfiles';
 import { COMPLEXITY_ANALYSIS, complexityFrom } from './complexityAnalysis';
 import { DP_BRIEFS } from './dpBriefs';
+import { CORE_STEPS } from './coreSteps';
 
 export const algorithmRegistry: AlgorithmConfig[] = [
   // Module 1: Greedy — Fractional Knapsack
@@ -50,9 +51,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['fractional-knapsack']),
     analysis: COMPLEXITY_ANALYSIS['fractional-knapsack'],
     problemStatement:
-      'Given weights and values of n items and a knapsack capacity W, determine the maximum value achievable by taking entire items or fractional portions of items.',
+      'You have a knapsack that holds at most W kg and n items, each with a weight and a value. Items can be cut, so you may take part of one. Find the largest total value you can carry.',
     explanation:
       'The Fractional Knapsack problem exhibits the greedy choice property: items are sorted by their value-to-weight density (v_i / w_i). We greedily consume highest-density items in full, taking a fractional slice of the first item that exceeds remaining capacity.',
+    coreSteps: CORE_STEPS['fractional-knapsack'],
     glossaryTerms: ['greedy-choice-property', 'greedy-algorithm'],
     pseudocode: [
       'function FractionalKnapsack(weights, values, capacity):',
@@ -146,9 +148,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['huffman']),
     analysis: COMPLEXITY_ANALYSIS['huffman'],
     problemStatement:
-      'Construct a lossless, variable-length prefix code for characters in a given string based on their frequencies, minimizing total encoded bit length.',
+      'Give every character in a text a binary code so that the whole text needs as few bits as possible. Frequent characters should get short codes, and no code may be the beginning of another (a prefix code).',
     explanation:
       'Huffman Coding repeatedly merges the two lowest-frequency tree nodes in a min-priority queue, creating a full binary tree where more frequent characters receive shorter bit sequences.',
+    coreSteps: CORE_STEPS['huffman'],
     glossaryTerms: ['prefix-code', 'priority-queue'],
     pseudocode: [
       'function HuffmanCoding(inputText):',
@@ -201,9 +204,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['max-subarray']),
     analysis: COMPLEXITY_ANALYSIS['max-subarray'],
     problemStatement:
-      'Find the contiguous subarray within a one-dimensional array of numbers which has the largest sum, using the classic Divide & Conquer paradigm.',
+      'Given an array of numbers that may be negative, find the contiguous run of elements with the largest sum, and where it starts and ends.',
     explanation:
       'Recursively split the array at midpoint mid into left half [low..mid] and right half [mid+1..high]. Solve both recursively, compute the maximum crossing subarray spanning the midpoint in O(n) time, and return the maximum of the three subproblem answers.',
+    coreSteps: CORE_STEPS['max-subarray'],
     glossaryTerms: ['divide-and-conquer', 'recursion'],
     pseudocode: [
       'function MaxSubarrayDC(arr, low, high):',
@@ -271,9 +275,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['karatsuba']),
     analysis: COMPLEXITY_ANALYSIS['karatsuba'],
     problemStatement:
-      'Multiply two large n-digit integers faster than standard O(n²) grade-school multiplication using recursive 3-way algebraic decomposition.',
+      'Multiply two large whole numbers using fewer digit multiplications than the school method.',
     explanation:
       'Splits X = a·10^m + b and Y = c·10^m + d, so X·Y = ac·10^(2m) + (ad + bc)·10^m + bd. Done directly that needs 4 products (ac, ad, bc, bd). Karatsuba computes p1 = ac, p2 = bd and p3 = (a+b)(c+d) with 3 recursive calls; since p3 = ac + ad + bc + bd, the middle term is ad + bc = p3 − p1 − p2. The result is p1·10^(2m) + (p3 − p1 − p2)·10^m + p2, in O(n^log2(3)) ≈ O(n^1.585) time.',
+    coreSteps: CORE_STEPS['karatsuba'],
     glossaryTerms: ['recursion'],
     pseudocode: [
       'function Karatsuba(X, Y):',
@@ -355,9 +360,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     analysis: COMPLEXITY_ANALYSIS['knapsack-dp'],
     dpBrief: DP_BRIEFS['knapsack-dp'],
     problemStatement:
-      'Given weights and values of n items, determine the items to include in a knapsack of capacity W to maximize total value without exceeding capacity.',
+      'You have a knapsack that holds at most W kg and n items, each with a weight and a value. Each item is taken whole or left out. Find the largest total value that fits, and which items give it.',
     explanation:
       'Constructs a 2D table DP[i][w] representing the max value achievable using a subset of the first i items with weight capacity w. Backtracks through the table to identify chosen items.',
+    coreSteps: CORE_STEPS['knapsack-dp'],
     glossaryTerms: ['dp-table'],
     pseudocode: [
       'function KnapsackDP(weights, values, capacity, n):',
@@ -437,9 +443,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     analysis: COMPLEXITY_ANALYSIS['lcs'],
     dpBrief: DP_BRIEFS['lcs'],
     problemStatement:
-      'Find the longest subsequence common to two sequences X and Y (characters appear in the same relative order, not necessarily contiguous).',
+      'Given two strings, find the longest sequence of characters that appears in both in the same order. The characters do not have to be next to each other.',
     explanation:
       'Fills an (m+1) × (n+1) table. If X[i-1] == Y[j-1], DP[i][j] = 1 + DP[i-1][j-1]; otherwise DP[i][j] = max(DP[i-1][j], DP[i][j-1]). Backtracks to recover the exact LCS string.',
+    coreSteps: CORE_STEPS['lcs'],
     glossaryTerms: ['dp-table'],
     pseudocode: [
       'function LCS(str1, str2, len1, len2):',
@@ -500,9 +507,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     analysis: COMPLEXITY_ANALYSIS['matrix-chain-multiplication'],
     dpBrief: DP_BRIEFS['matrix-chain-multiplication'],
     problemStatement:
-      'Given a sequence of matrices A1, A2, ..., An with specified dimensions, find the optimal parenthesization that minimizes the total number of scalar multiplications.',
+      'A chain of matrices A₁·A₂·…·Aₙ can be multiplied in many orders (bracketings). Every order gives the same result but needs a different amount of work. Find the bracketing with the fewest scalar multiplications.',
     explanation:
       'Matrix multiplication is associative. We define m[i, j] as the minimum scalar multiplications to compute A_i..A_j. The recurrence tests every split point k (i <= k < j) combining optimal costs m[i, k] + m[k+1, j] + p_{i-1}*p_k*p_j, storing the best split in table s to reconstruct parenthesization.',
+    coreSteps: CORE_STEPS['matrix-chain-multiplication'],
     glossaryTerms: ['recurrence'],
     pseudocode: [
       'function MatrixChainOrder(p, n):',
@@ -577,9 +585,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     analysis: COMPLEXITY_ANALYSIS['assembly-line-scheduling'],
     dpBrief: DP_BRIEFS['assembly-line-scheduling'],
     problemStatement:
-      'Given two parallel assembly lines with n manufacturing stations, processing times, line transfer penalties, and entry/exit times, determine the fastest path to assemble an automobile.',
+      'A car passes through n stations, and every station exists on two parallel lines. Moving to the other line costs a transfer time. Find the fastest route from entry to exit.',
     explanation:
       'Maintains f1[j] and f2[j] representing the fastest time to exit station j on lines 1 and 2. At each station, decides whether to stay on the same line or transfer from the parallel line. Backtracks from the fastest exit to reconstruct the exact manufacturing sequence.',
+    coreSteps: CORE_STEPS['assembly-line-scheduling'],
     pseudocode: [
       'function AssemblyLineScheduling(a1, a2, t1, t2, e1, e2, x1, x2, n):',
       '  f1[1] = e1 + a1[1];  f2[1] = e2 + a2[1]  // Base cases: entry times + first stations',
@@ -750,9 +759,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     analysis: COMPLEXITY_ANALYSIS['tsp'],
     dpBrief: DP_BRIEFS['tsp'],
     problemStatement:
-      'Given a list of cities and pairwise travel costs, find the minimum-weight Hamiltonian cycle that visits every city exactly once and returns to the origin.',
+      'A salesperson must visit every city exactly once and return to the starting city (a Hamiltonian cycle). Find the cheapest such tour.',
     explanation:
       'The Held-Karp algorithm uses dynamic programming with bitmask state compression. DP[S, j] stores the minimum cost of a path visiting all cities in subset S and ending at city j. Optimal subproblems are built bottom-up by subset size |S| = 2 to n, before closing the cycle back to start city 0 and backtracking the optimal tour.',
+    coreSteps: CORE_STEPS['tsp'],
     glossaryTerms: ['hamiltonian-cycle', 'dynamic-programming', 'optimal-substructure'],
     pseudocode: [
       'function TSP_HeldKarp(costMatrix, n):',
@@ -863,9 +873,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['n-queens']),
     analysis: COMPLEXITY_ANALYSIS['n-queens'],
     problemStatement:
-      'Place N non-attacking queens on an N×N chessboard so that no two queens share the same row, column, or diagonal.',
+      'Place N queens on an N×N chessboard so that no two attack each other: no two share a row, column or diagonal.',
     explanation:
       'Places queens row by row. If a placement violates column or diagonal constraints, the algorithm immediately backtracks to try another column position.',
+    coreSteps: CORE_STEPS['n-queens'],
     glossaryTerms: ['backtracking'],
     pseudocode: [
       'function SolveNQueens(row, N, board):',
@@ -914,9 +925,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['knapsack-bb']),
     analysis: COMPLEXITY_ANALYSIS['knapsack-bb'],
     problemStatement:
-      'Solve 0-1 Knapsack by exploring a state-space decision tree, computing optimistic upper bounds to prune subtrees that cannot beat the current best solution.',
+      'Each item is taken whole or left out, and the knapsack holds at most W kg. Find the most valuable selection by searching a tree of take/skip decisions and skipping branches that cannot beat the best answer so far.',
     explanation:
       'Sorts items by value/weight ratio. Calculates an upper bound at each node via fractional knapsack on remaining capacity. Explores promising nodes first (Best-First search) and prunes branches whose bound ≤ best known value.',
+    coreSteps: CORE_STEPS['knapsack-bb'],
     glossaryTerms: ['state-space-tree', 'bounding-function', 'pruning'],
     pseudocode: [
       'function KnapsackBB(items, W):',
@@ -990,9 +1002,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['naive-string-match']),
     analysis: COMPLEXITY_ANALYSIS['naive-string-match'],
     problemStatement:
-      'Find all occurrences of a pattern P of length m in a text T of length n by testing every possible alignment of P against T.',
+      'Find every position where a pattern appears in a text.',
     explanation:
       'Slides the pattern across the text one position at a time. At each shift s it compares the pattern against the aligned window T[s..s+m-1] character by character, abandoning the alignment on the first mismatch. Simple and preprocessing-free, but repeats comparisons — worst case (n−m+1)·m.',
+    coreSteps: CORE_STEPS['naive-string-match'],
     pseudocode: [
       'function NaiveStringMatch(text, pattern):',
       '  textLength = length(text)',
@@ -1051,9 +1064,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['kmp']),
     analysis: COMPLEXITY_ANALYSIS['kmp'],
     problemStatement:
-      'Find all occurrences of a pattern P of length m in a text T of length n in linear time without rolling back the text pointer.',
+      'Find every position where a pattern appears in a text, without ever moving backwards in the text.',
     explanation:
       'Phase 1 precomputes a Longest Proper Prefix which is also Suffix (LPS) table from the pattern alone in O(m) time. Phase 2 scans the text: when a mismatch occurs after j matched characters, LPS[j − 1] says how many of them are still a valid start of the pattern, so j moves back while the text index never does.',
+    coreSteps: CORE_STEPS['kmp'],
     glossaryTerms: ['lps'],
     pseudocode: [
       '// ── Phase 1 · PREPROCESSING: build the LPS table from the pattern alone ──',
@@ -1133,9 +1147,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['rabin-karp']),
     analysis: COMPLEXITY_ANALYSIS['rabin-karp'],
     problemStatement:
-      'Find all occurrences of a pattern P of length m in a text T of length n by comparing a rolling hash of each text window against the hash of the pattern.',
+      'Find every position where a pattern appears in a text, comparing numeric hashes of text windows before comparing characters.',
     explanation:
       'Hashes the pattern and the first text window in O(m). Each subsequent window hash is derived from the previous one in O(1) by removing the leading character and appending the next (a "rolling" hash). Only when a window hash equals the pattern hash is a full character comparison performed, which rules out spurious hits (hash collisions). Expected linear time; worst case degrades to the naive bound when every window collides.',
+    coreSteps: CORE_STEPS['rabin-karp'],
     glossaryTerms: ['rolling-hash', 'collision', 'hash-function'],
     pseudocode: [
       'function RabinKarp(text, pattern, baseRadix = 256, primeModulus = 101):',
@@ -1197,9 +1212,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['suffix-tree']),
     analysis: COMPLEXITY_ANALYSIS['suffix-tree'],
     problemStatement:
-      'Preprocess the text T (length n) into a suffix tree so that every occurrence of any pattern P (length m) can be reported in O(m + z), where z is the number of occurrences.',
+      'Build a tree from all the suffixes of a text, so that any pattern can then be found by walking down from the root. Find every position where the pattern occurs.',
     explanation:
       "Ukkonen's algorithm builds the suffix tree online in linear time using an active point (node, edge, length), a global leaf end, suffix links and the skip/count trick — applying extension rules 1–3 once per phase. Each root-to-leaf path spells a suffix of T$, and every leaf label is a suffix start index. Matching walks P down from the root; if P is fully consumed, every leaf beneath the stopping point is an occurrence.",
+    coreSteps: CORE_STEPS['suffix-tree'],
     pseudocode: [
       'function SuffixTreeMatch(text, pattern):',
       '  terminalText = text + "$"',
@@ -1254,9 +1270,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     analysis: COMPLEXITY_ANALYSIS['floyd-warshall'],
     dpBrief: DP_BRIEFS['floyd-warshall'],
     problemStatement:
-      'Compute the shortest path distances between every pair of vertices in a directed, weighted graph (which may contain negative edge weights but no negative cycles).',
+      'Find the length of the shortest path between every pair of vertices in a weighted directed graph. Edge weights may be negative, but there must be no negative cycle.',
     explanation:
       'Iteratively updates shortest distance estimates between all pairs (i, j) by testing if routing through an intermediate vertex k improves the path: D[i][j] = min(D[i][j], D[i][k] + D[k][j]).',
+    coreSteps: CORE_STEPS['floyd-warshall'],
     glossaryTerms: ['shortest-path', 'vertex', 'graph', 'negative-cycle'],
     pseudocode: [
       'function FloydWarshall(V, weightMatrix):',
@@ -1320,9 +1337,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['bellman-ford']),
     analysis: COMPLEXITY_ANALYSIS['bellman-ford'],
     problemStatement:
-      'Compute the shortest-path distance from a single source vertex to every other vertex in a directed, weighted graph that may contain negative edge weights, and report whether a negative-weight cycle is reachable from the source.',
+      'Find the shortest distance from one source vertex to every other vertex in a weighted directed graph. Edges may be negative; also report a negative cycle if one is reachable from the source.',
     explanation:
       'Initializes the source distance to 0 and all others to ∞, then relaxes every edge V−1 times: a shortest path visits at most V−1 edges, so after V−1 passes all distances are final. One extra pass over the edges detects a reachable negative-weight cycle — if any edge can still be relaxed, no shortest path exists.',
+    coreSteps: CORE_STEPS['bellman-ford'],
     glossaryTerms: ['shortest-path', 'vertex', 'relaxation', 'negative-cycle'],
     pseudocode: [
       'function BellmanFord(V, E, weight, source):',
@@ -1421,9 +1439,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['ford-fulkerson']),
     analysis: COMPLEXITY_ANALYSIS['ford-fulkerson'],
     problemStatement:
-      'Compute the maximum feasible flow from a source vertex s to a sink vertex t in a directed flow network with edge capacity constraints.',
+      'Find the maximum flow from a source s to a sink t through a flow network, where every edge has a capacity.',
     explanation:
       'Uses BFS to find augmenting paths from s to t in the residual network (Edmonds-Karp). Finds the bottleneck capacity along each path, pushes flow, and updates forward/backward residual capacities until no augmenting path remains.',
+    coreSteps: CORE_STEPS['ford-fulkerson'],
     glossaryTerms: ['maximum-flow', 'flow-network', 'bfs', 'augmenting-path', 'residual-graph'],
     pseudocode: [
       'function EdmondsKarp(s, t, capacities):',
@@ -1525,9 +1544,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['edmonds-karp']),
     analysis: COMPLEXITY_ANALYSIS['edmonds-karp'],
     problemStatement:
-      'Compute the maximum feasible flow from source S to sink T through a directed capacity network using Edmonds-Karp with explicit breadth-first search path discovery.',
+      'Find the maximum flow from source S to sink T through a network in which every edge has a capacity.',
     explanation:
       'Edmonds-Karp is an explicit BFS implementation of the Ford-Fulkerson method. By always choosing the augmenting path with the fewest edges, it guarantees termination in polynomial O(V · E²) time, completely avoiding infinite loops with irrational capacities.',
+    coreSteps: CORE_STEPS['edmonds-karp'],
     glossaryTerms: ['maximum-flow', 'bfs', 'augmenting-path'],
     pseudocode: [
       'function EdmondsKarp(network, source s, sink t):',
@@ -1604,9 +1624,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['push-relabel']),
     analysis: COMPLEXITY_ANALYSIS['push-relabel'],
     problemStatement:
-      'Compute maximum feasible flow from source S to sink T using localized push and relabel operations on an active preflow network.',
+      'Find the maximum flow from source S to sink T by pushing flow between neighbouring vertices, instead of along whole augmenting paths.',
     explanation:
       'Unlike augmenting path algorithms that push flow along entire paths from source to sink at once, Goldberg-Tarjan’s Push-Relabel operates locally. It maintains a preflow where excess flow accumulates at internal vertices, pushing flow downward along steep residual edges (height h(u) = h(v) + 1) and relabeling vertex heights whenever an overflowing vertex has no downward exit.',
+    coreSteps: CORE_STEPS['push-relabel'],
     glossaryTerms: ['maximum-flow', 'preflow', 'augmenting-path', 'residual-graph'],
     pseudocode: [
       'function PushRelabel(network, source s, sink t):',
@@ -1685,9 +1706,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['graham-scan']),
     analysis: COMPLEXITY_ANALYSIS['graham-scan'],
     problemStatement:
-      'Compute the convex hull (smallest enclosing convex polygon) for a given set of n points in the 2D Cartesian plane.',
+      'Find the convex hull of a set of points: the smallest convex polygon that encloses all of them.',
     explanation:
       'Finds the lowest y-coordinate anchor point P0. Sorts all other points by polar angle with P0. Iterates through points using a stack, popping vertices that make a clockwise (right) turn via cross-product orientation check.',
+    coreSteps: CORE_STEPS['graham-scan'],
     glossaryTerms: ['convex-hull'],
     pseudocode: [
       'function GrahamsScan(points):',
@@ -1773,9 +1795,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['jarvis-march']),
     analysis: COMPLEXITY_ANALYSIS['jarvis-march'],
     problemStatement:
-      'Compute the 2D convex hull of a point set by gift wrapping: start from the lowest point and repeatedly find the next hull point that forms the smallest counter-clockwise turn.',
+      'Find the convex hull of a set of points: the smallest convex polygon that encloses all of them.',
     explanation:
       'Starting from the lowest-y anchor pivot, Jarvis’ March tests each point to find the most counter-clockwise candidate relative to the current hull point. It wraps around the exterior until returning to the start pivot.',
+    coreSteps: CORE_STEPS['jarvis-march'],
     glossaryTerms: ['convex-hull'],
     pseudocode: [
       'function JarvisMarch(points):',
@@ -1873,9 +1896,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['line-segment-intersection']),
     analysis: COMPLEXITY_ANALYSIS['line-segment-intersection'],
     problemStatement:
-      'Given a collection of 2D line segments, determine whether any two segments intersect using a vertical sweep line moving left to right.',
+      'Given some line segments in the plane, decide whether any two of them intersect.',
     explanation:
       'The Bentley-Ottmann sweep-line paradigm sorts all segment endpoints by x-coordinate. As the sweep line moves left to right, segments currently cutting the sweep line are stored in an active status structure T ordered by y-coordinate. Only segments that are neighbours in T are ever tested: when a segment is inserted it is tested against the segments directly above and below it, and when a segment is deleted its former above and below neighbours become adjacent and are tested against each other. The leftmost intersection always involves two segments that are neighbours just before it, so these checks are enough, reducing naive O(n²) comparisons to O(n log n).',
+    coreSteps: CORE_STEPS['line-segment-intersection'],
     glossaryTerms: ['sweep-line'],
     pseudocode: [
       'function AnySegmentsIntersect(segments):',
@@ -1953,9 +1977,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['randomized-quicksort']),
     analysis: COMPLEXITY_ANALYSIS['randomized-quicksort'],
     problemStatement:
-      'Sort an array of n numbers by choosing a pivot uniformly at random, partitioning around the pivot, and recursively sorting the left and right subarrays.',
+      'Sort an array of numbers into increasing order.',
     explanation:
       'Random pivot selection guarantees an expected O(n log n) runtime regardless of the input distribution, defeating adversarial inputs (like already sorted or reverse sorted arrays).',
+    coreSteps: CORE_STEPS['randomized-quicksort'],
     glossaryTerms: ['randomized-algorithm', 'recursion'],
     pseudocode: [
       'function RandomizedQuicksort(arr, low, high):',
@@ -2007,9 +2032,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['hiring-problem']),
     analysis: COMPLEXITY_ANALYSIS['hiring-problem'],
     problemStatement:
-      'Evaluate candidates sequentially: pay an interview cost c_i for every applicant, but pay a much larger hiring cost c_h only when an applicant is strictly better than everyone interviewed so far.',
+      'Candidates arrive one at a time. You interview each one and hire them whenever they are better than everyone seen so far. Find how many hires happen and the total cost.',
     explanation:
       'The Hiring Problem models online decision-making under probabilistic input. In the worst case (ascending scores), all n candidates are hired costing O(n · c_h). Under random permutation, candidate i has probability 1/i of being the best so far, leading to expected hiring cost O(c_h · ln n).',
+    coreSteps: CORE_STEPS['hiring-problem'],
     pseudocode: [
       'function HiringProblem(candidates, costInterview, costHire):',
       '  bestScore = -infinity, totalCost = 0  // Initialize current best score and expenditure',
@@ -2086,9 +2112,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['karger-min-cut']),
     analysis: COMPLEXITY_ANALYSIS['karger-min-cut'],
     problemStatement:
-      'Find a global minimum cut in a connected undirected graph: a partition of vertices (A, B) minimizing the number of crossing edges, using randomized edge contraction.',
+      'Split the vertices of a connected undirected graph into two groups so that as few edges as possible cross between them (a minimum cut).',
     explanation:
       'Karger’s algorithm repeatedly selects an edge uniformly at random from the multigraph and contracts its endpoints into a super-node, discarding self-loops while keeping parallel edges. When exactly two super-nodes remain, the crossing edges form a cut. That cut is only a candidate: one run finds a true minimum cut with probability at least 2/(V·(V-1)), so the algorithm is repeated many times and the smallest cut found is kept.',
+    coreSteps: CORE_STEPS['karger-min-cut'],
     glossaryTerms: ['minimum-cut', 'edge-contraction', 'randomized-algorithm'],
     pseudocode: [
       'function KargerMinCut(G = (V, E)):',
@@ -2186,9 +2213,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['vertex-cover-approx']),
     analysis: COMPLEXITY_ANALYSIS['vertex-cover-approx'],
     problemStatement:
-      'Find a subset of vertices C ⊆ V such that every edge (u, v) ∈ E has at least one endpoint in C, with size |C| ≤ 2 · OPT.',
+      'Choose a set of vertices so that every edge touches at least one chosen vertex, using as few vertices as possible. This method guarantees at most twice the optimal number.',
     explanation:
       'Repeatedly picks an arbitrary uncovered edge (u, v), adds BOTH endpoints u and v to cover C, and deletes all incident edges. Since the picked edges form a matching M and OPT ≥ |M|, |C| = 2|M| ≤ 2 · OPT.',
+    coreSteps: CORE_STEPS['vertex-cover-approx'],
     glossaryTerms: ['vertex', 'edge'],
     pseudocode: [
       'function ApproxVertexCover(G = (V, E)):',
@@ -2255,9 +2283,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['set-cover']),
     analysis: COMPLEXITY_ANALYSIS['set-cover'],
     problemStatement:
-      'Given a universe of elements U and a family of subsets S, find a minimum number of subsets whose union contains every element in U.',
+      'Given a set of elements and a collection of subsets, choose as few subsets as possible so that every element is covered. The problem is NP-hard, so a quick method that is close to optimal is used.',
     explanation:
       'Set Cover is a classic NP-hard optimization problem. The greedy heuristic repeatedly picks the subset that covers the maximum number of currently uncovered elements. This yields a provable approximation ratio of H(|U|) <= ln(|U|) + 1.',
+    coreSteps: CORE_STEPS['set-cover'],
     glossaryTerms: ['np-hard', 'greedy-algorithm', 'approximation-algorithm'],
     pseudocode: [
       'function GreedySetCover(universe U, subsets S):',
@@ -2352,9 +2381,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['tsp-approx']),
     analysis: COMPLEXITY_ANALYSIS['tsp-approx'],
     problemStatement:
-      'Find a minimum-cost Hamiltonian cycle visiting every city exactly once and returning to the origin in a complete metric graph with cost(Tour) <= 2 · OPT.',
+      "Find a short tour that visits every city once and returns to the start (a Hamiltonian cycle). When travel costs obey the triangle inequality, this method's tour costs at most twice the optimal one.",
     explanation:
       'The MST-Doubling algorithm (1) builds a minimum spanning tree T, (2) doubles every edge to form an Eulerian multigraph with total weight 2 · W(T), and (3) visits cities in DFS preorder, shortcutting past cities already visited. Deleting one edge from an optimal tour leaves a spanning tree, so W(T) ≤ OPT. On metric costs (symmetric, satisfying the triangle inequality) a shortcut is never longer than the walk it skips, so Cost(Tour) ≤ 2 · W(T) ≤ 2 · OPT. If the costs are not metric, the page warns that no guarantee applies.',
+    coreSteps: CORE_STEPS['tsp-approx'],
     glossaryTerms: ['hamiltonian-cycle', 'triangle-inequality', 'minimum-spanning-tree', 'eulerian-multigraph'],
     pseudocode: [
       'function MetricTspApprox(cities, costMatrix):',
@@ -2467,9 +2497,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['subset-sum']),
     analysis: COMPLEXITY_ANALYSIS['subset-sum'],
     problemStatement:
-      'Given a set of positive integers and a target sum, determine whether any subset of the integers sums exactly to the target value using backtracking with pruning.',
+      'Given positive integers and a target, find a subset whose numbers add up exactly to the target.',
     explanation:
       'Explores an include/exclude binary decision tree. At each level, decides whether to include the current element. Prunes branches where the running sum exceeds the target or the maximum achievable sum (current + all remaining) falls below the target.',
+    coreSteps: CORE_STEPS['subset-sum'],
     glossaryTerms: ['backtracking', 'pruning', 'state-space-tree'],
     pseudocode: [
       'function SubsetSum(index, currentSum, remaining, included):',
@@ -2571,9 +2602,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['graph-coloring']),
     analysis: COMPLEXITY_ANALYSIS['graph-coloring'],
     problemStatement:
-      'Given an undirected graph G = (V, E) and an integer k, determine if vertices can be assigned at most k colors such that no two adjacent vertices share the same color.',
+      'Colour the vertices of a graph with at most k colours so that no two connected vertices share a colour.',
     explanation:
       'Assigns colors 1 through k sequentially to vertices. For each vertex, tries each color in order, checking for conflicts with already-colored neighbors. If all k colors conflict, backtracks to uncolor the previous vertex and tries alternative assignments.',
+    coreSteps: CORE_STEPS['graph-coloring'],
     glossaryTerms: ['graph', 'vertex', 'backtracking'],
     pseudocode: GRAPH_COLORING_PSEUDOCODE_FIRST,
     visualizer: 'GraphVisualizer',
@@ -2733,9 +2765,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['job-selection-bb']),
     analysis: COMPLEXITY_ANALYSIS['job-selection-bb'],
     problemStatement:
-      'Given n jobs with individual deadlines and profits, select a subset of jobs that can be scheduled within their deadlines to maximize total profit.',
+      'Each job takes one time slot and has a deadline and a profit. Choose jobs that can all finish by their deadlines with the largest total profit.',
     explanation:
       'Explores a state-space tree where branches decide whether to include or exclude each job (sorted by profit descending). Subtrees are pruned if the accumulated job set violates deadlines or if the calculated upper bound cannot beat the best-known feasible profit.',
+    coreSteps: CORE_STEPS['job-selection-bb'],
     glossaryTerms: ['state-space-tree', 'bounding-function', 'pruning'],
     pseudocode: [
       'function JobSelectionBB(jobs):',

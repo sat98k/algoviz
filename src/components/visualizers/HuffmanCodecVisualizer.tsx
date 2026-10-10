@@ -323,7 +323,7 @@ export const HuffmanCodecVisualizer: React.FC<HuffmanCodecVisualizerProps> = ({
                     }`}
                   >
                     <span>{ch}</span>
-                    <span className="text-[9px] text-chalk-500 mt-0.5">{idx + 1}</span>
+                    <span className="text-[11px] text-chalk-500 mt-0.5">{idx + 1}</span>
                   </div>
                 );
               })}
@@ -334,7 +334,7 @@ export const HuffmanCodecVisualizer: React.FC<HuffmanCodecVisualizerProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
             {/* Current Character Card */}
             <div className="p-4 bg-obsidian-900 border border-hairline flex flex-col justify-between gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
+              <span className="text-[11px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
                 <FileText className="w-3 h-3 text-amber" /> CURRENT CHARACTER
               </span>
               <div className="flex items-baseline gap-2 mt-1">
@@ -351,7 +351,7 @@ export const HuffmanCodecVisualizer: React.FC<HuffmanCodecVisualizerProps> = ({
 
             {/* Current Node Card */}
             <div className="p-4 bg-obsidian-900 border border-hairline flex flex-col justify-between gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
+              <span className="text-[11px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
                 <Layers className="w-3 h-3 text-acid-500" /> ACTIVE TREE NODE
               </span>
               <div className="flex items-baseline gap-2 mt-1">
@@ -363,7 +363,7 @@ export const HuffmanCodecVisualizer: React.FC<HuffmanCodecVisualizerProps> = ({
 
             {/* Traversal Direction */}
             <div className="p-4 bg-obsidian-900 border border-hairline flex flex-col justify-between gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
+              <span className="text-[11px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
                 <ArrowRight className="w-3 h-3 text-cyan-400" /> DIRECTION / DECISION
               </span>
               <div className="flex items-baseline gap-2 mt-1">
@@ -375,7 +375,7 @@ export const HuffmanCodecVisualizer: React.FC<HuffmanCodecVisualizerProps> = ({
 
             {/* Prefix Code For Character */}
             <div className="p-4 bg-obsidian-900 border border-hairline flex flex-col justify-between gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
+              <span className="text-[11px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
                 <Binary className="w-3 h-3 text-rose-400" /> GENERATED CODE
               </span>
               <div className="flex items-baseline gap-2 mt-1">
@@ -400,7 +400,7 @@ export const HuffmanCodecVisualizer: React.FC<HuffmanCodecVisualizerProps> = ({
               <button
                 type="button"
                 onClick={handleCopyBits}
-                className="flex items-center gap-1 px-2 py-0.5 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-300 border border-hairline text-[10px] transition-colors"
+                className="flex items-center gap-1 px-2 py-0.5 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-300 border border-hairline text-[11px] transition-colors"
               >
                 {copied ? <Check className="w-3 h-3 text-acid-500" /> : <Copy className="w-3 h-3 text-chalk-400" />}
                 <span>{copied ? 'COPIED' : 'COPY BITS'}</span>
@@ -462,7 +462,7 @@ export const HuffmanCodecVisualizer: React.FC<HuffmanCodecVisualizerProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
             {/* Current Bit */}
             <div className="p-4 bg-obsidian-900 border border-hairline flex flex-col justify-between gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
+              <span className="text-[11px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
                 <Binary className="w-3 h-3 text-amber" /> CURRENT BIT
               </span>
               <div className="flex items-baseline gap-2 mt-1">
@@ -479,7 +479,7 @@ export const HuffmanCodecVisualizer: React.FC<HuffmanCodecVisualizerProps> = ({
 
             {/* Current Node */}
             <div className="p-4 bg-obsidian-900 border border-hairline flex flex-col justify-between gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
+              <span className="text-[11px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
                 <Layers className="w-3 h-3 text-acid-500" /> CURRENT TREE NODE
               </span>
               <div className="flex items-baseline gap-2 mt-1">
@@ -491,7 +491,7 @@ export const HuffmanCodecVisualizer: React.FC<HuffmanCodecVisualizerProps> = ({
 
             {/* Traversal Direction */}
             <div className="p-4 bg-obsidian-900 border border-hairline flex flex-col justify-between gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
+              <span className="text-[11px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
                 <ArrowRight className="w-3 h-3 text-cyan-400" /> DIRECTION / ACTION
               </span>
               <div className="flex items-baseline gap-2 mt-1">
@@ -503,7 +503,7 @@ export const HuffmanCodecVisualizer: React.FC<HuffmanCodecVisualizerProps> = ({
 
             {/* Emitted Character */}
             <div className="p-4 bg-obsidian-900 border border-hairline flex flex-col justify-between gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
+              <span className="text-[11px] uppercase tracking-wider text-chalk-500 flex items-center gap-1.5">
                 <CheckCircle2 className="w-3 h-3 text-emerald-400" /> DECODED CHARACTER
               </span>
               <div className="flex items-baseline gap-2 mt-1">

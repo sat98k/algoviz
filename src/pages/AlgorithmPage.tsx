@@ -20,7 +20,6 @@ import { CodeExplanation } from '../components/common/CodeExplanation';
 import { CallFlowOverlay } from '../components/common/CallFlowOverlay';
 import { ProblemIntuitionPanel } from '../components/common/ProblemIntuitionPanel';
 import { StepExplanation } from '../components/common/StepExplanation';
-import { DpBriefPanel } from '../components/common/DpBriefPanel';
 import { DpCurrentRule } from '../components/common/DpCurrentRule';
 import { FinalAnswerCard } from '../components/common/FinalAnswerCard';
 import { NQueensSolutionsPanel, findSolutionSteps } from '../components/common/NQueensSolutionsPanel';
@@ -374,14 +373,18 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
     <StepExplanation step={currentStep} stepNumber={stepNumber} totalSteps={totalSteps} glossaryTerms={config.glossaryTerms} />
   );
 
-  // The step explanation above carries the description, so the pseudocode panel never repeats it.
-  const pseudocodePanel = (
-    <div className="flex flex-col gap-3 min-w-0">
-      {config.dpBrief && <DpCurrentRule rule={currentStep.state?.dpRule} />}
-      <CodeExplanation step={currentStep} pseudocode={activePseudocode} hideStepHeader={true} />
-    </div>
+  // The step explanation carries the description, so the pseudocode panel shows only code.
+  const pseudocodeFor = (maxHeightClass: string) => (
+    <CodeExplanation step={currentStep} pseudocode={activePseudocode} maxHeightClass={maxHeightClass} />
   );
-  const currentValuesPanel = <MetricsPanel metrics={currentStep.metrics || {}} />;
+  // DP pages: the rule applied to the current cell. On narrow screens it follows the step
+  // explanation (close to the table); on wide screens it sits under the pseudocode.
+  const dpRulePanel = config.dpBrief ? (
+    <div className="order-first lg:order-none">
+      <DpCurrentRule rule={currentStep.state?.dpRule} />
+    </div>
+  ) : null;
+  const operationCounts = <MetricsPanel metrics={currentStep.metrics || {}} />;
 
   const showColoringSolutions =
     config.id === 'graph-coloring' && (inputs.findMode === 'all' || currentStep.state?.allSolutions?.length);
@@ -462,13 +465,14 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
           </div>
         </div>
 
-        {/* Learning flow: Problem → Core Idea → visualization (collapsible while stepping). */}
+        {/* Learning flow: problem → how it works → visualization (collapsible while stepping). */}
         <ProblemIntuitionPanel
           problemStatement={config.problemStatement}
           explanation={config.explanation}
+          coreSteps={config.coreSteps}
+          dpBrief={config.dpBrief}
           terms={config.glossaryTerms}
         />
-        {config.dpBrief && <DpBriefPanel brief={config.dpBrief} />}
       </motion.div>
 
       {/* Visual learning stage. CallFlowOverlay draws between the visualizer and the
@@ -481,28 +485,34 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
         {graphColoringModeSwitch}
         {nQueensModeSwitch}
 
+        {/* One playback toolbar across the whole learning stage. */}
+        {playbackControls}
+
         {layoutMode === 'split' ? (
-          /* Split: visualization, explanation and controls on the left; pseudocode and values beside them. */
-          <section className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
+          /* Split: visualization and pseudocode side by side, tops aligned; explanation under the
+             visualization, DP rule and operation counts under the pseudocode. */
+          <section className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
             <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-3 min-w-0">
-              {playbackControls}
               <div className="w-full relative">{renderVisualizer()}</div>
               {stepExplanation}
             </div>
             <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 min-w-0">
-              {pseudocodePanel}
-              {currentValuesPanel}
+              {pseudocodeFor('max-h-[22rem] lg:max-h-[min(34rem,70vh)]')}
+              {dpRulePanel}
+              {operationCounts}
             </div>
           </section>
         ) : (
-          /* Full width: the largest visualization, with pseudocode and values side by side below it. */
+          /* Full width: the largest visualization; pseudocode beside the DP rule and counts below it. */
           <section className="flex flex-col gap-3">
-            {playbackControls}
             <div className="w-full relative">{renderVisualizer()}</div>
             {stepExplanation}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
-              {pseudocodePanel}
-              {currentValuesPanel}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+              {pseudocodeFor('max-h-[22rem]')}
+              <div className="flex flex-col gap-3 min-w-0">
+                {dpRulePanel}
+                {operationCounts}
+              </div>
             </div>
           </section>
         )}

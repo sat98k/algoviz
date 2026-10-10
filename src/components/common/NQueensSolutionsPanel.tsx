@@ -34,7 +34,7 @@ export const NQueensSolutionsPanel: React.FC<NQueensSolutionsPanelProps> = ({ n,
   return (
     <section aria-label="Solutions found" className="flex flex-col gap-3 p-5 bg-obsidian-900 border border-sem-final/50 border-l-4 border-l-sem-final">
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-hairline">
-        <h3 className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-sem-final-ink font-semibold">
+        <h3 className="flex items-center gap-2 font-sans text-sm font-semibold text-sem-final-ink">
           <Grid3x3 className="w-3.5 h-3.5" />
           {isFinal ? 'Final answer: all solutions' : 'Solutions found so far'}
         </h3>
@@ -83,14 +83,14 @@ export const NQueensSolutionsPanel: React.FC<NQueensSolutionsPanelProps> = ({ n,
                       );
                     })}
                   </span>
-                  <span className="font-mono text-[9px] leading-tight text-chalk-500 break-all">{positions}</span>
+                  <span className="font-mono text-[11px] leading-tight text-chalk-500 break-all">{positions}</span>
                 </button>
               </li>
             );
           })}
         </ol>
       )}
-      <p className="font-mono text-[10px] text-chalk-500">Positions are (row, column), counted from 1. Select a board to jump to the step where it was found.</p>
+      <p className="font-mono text-[11px] text-chalk-500">Positions are (row, column), counted from 1. Select a board to jump to the step where it was found.</p>
     </section>
   );
 };

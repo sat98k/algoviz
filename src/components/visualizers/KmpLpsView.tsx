@@ -132,9 +132,9 @@ export const KmpLpsView: React.FC<KmpLpsViewProps> = ({ pattern, lpsTable, i, le
                 : 'bg-obsidian-900 border border-dashed border-hairline text-chalk-600';
               return (
                 <div key={idx} className="flex flex-col items-center">
-                  <span className="text-[10px] font-mono text-chalk-500">'{ch}'</span>
+                  <span className="text-[11px] font-mono text-chalk-500">'{ch}'</span>
                   <div className={`w-9 h-8 flex items-center justify-center text-xs font-mono font-bold ${cls}`}>{filled ? lpsTable[idx] : '·'}</div>
-                  <span className="text-[9px] font-mono text-chalk-600 mt-0.5 tabular-nums">{idx}</span>
+                  <span className="text-[11px] font-mono text-chalk-600 mt-0.5 tabular-nums">{idx}</span>
                 </div>
               );
             })}
@@ -163,8 +163,8 @@ const PatternRow: React.FC<{
       {pattern.split('').map((ch, idx) => (
         <div key={idx} className="flex flex-col items-center">
           <div className={`w-9 h-10 flex items-center justify-center text-sm font-mono transition-all duration-200 ${cellClass(idx)}`}>{ch}</div>
-          <span className="text-[9px] font-mono text-chalk-600 mt-1 tabular-nums">{idx}</span>
-          {pointer?.idx === idx && <span className="text-[10px] font-mono font-bold text-chalk-200 leading-none">▲ {pointer.name}</span>}
+          <span className="text-[11px] font-mono text-chalk-600 mt-1 tabular-nums">{idx}</span>
+          {pointer?.idx === idx && <span className="text-[11px] font-mono font-bold text-chalk-200 leading-none">▲ {pointer.name}</span>}
         </div>
       ))}
     </div>

@@ -63,7 +63,7 @@ export const ColoringSolutionsPanel: React.FC<ColoringSolutionsPanelProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-hairline">
         <div className="flex items-center gap-2.5">
           <Palette className="w-4 h-4 text-amber" />
-          <h3 className="font-mono text-xs uppercase tracking-widest text-chalk-100 font-bold">
+          <h3 className="font-sans text-sm font-semibold text-chalk-100">
             ALL VALID COLORINGS OUTPUT PANE
           </h3>
           <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-amber/15 border border-amber/30 text-amber">
@@ -139,7 +139,7 @@ export const ColoringSolutionsPanel: React.FC<ColoringSolutionsPanelProps> = ({
                     COLORING #{idx + 1}
                   </span>
                   {isSelected && (
-                    <span className="text-[10px] text-amber font-semibold flex items-center gap-1">
+                    <span className="text-[11px] text-amber font-semibold flex items-center gap-1">
                       <Eye className="w-3 h-3" /> ACTIVE
                     </span>
                   )}
@@ -153,7 +153,7 @@ export const ColoringSolutionsPanel: React.FC<ColoringSolutionsPanelProps> = ({
                     return (
                       <span
                         key={vId}
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-obsidian-900 border border-hairline text-chalk-200"
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono bg-obsidian-900 border border-hairline text-chalk-200"
                         style={{ borderColor: colorInfo.border + '60' }}
                       >
                         <span

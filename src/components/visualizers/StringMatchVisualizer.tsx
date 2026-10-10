@@ -3,6 +3,7 @@ import { AlgorithmStep } from '../../types/algorithm';
 import { ArrowRight, CheckCircle2, AlertTriangle, XCircle, Hash } from 'lucide-react';
 import { SEM } from '../../styles/semantics';
 import { KmpLpsView } from './KmpLpsView';
+import { prefersReducedMotion } from '../../utils/codeScroll';
 
 interface StringMatchVisualizerProps {
   step: AlgorithmStep;
@@ -53,9 +54,10 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
       // Keep target comfortably centered in the visible viewport
       const targetScroll = Math.max(0, activeLeft - containerWidth / 2 + cellWidthWithGap / 2);
 
+      // Horizontal scroll of this strip only; the page itself never moves.
       scrollContainerRef.current.scrollTo({
         left: targetScroll,
-        behavior: 'smooth',
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
       });
     }
   }, [textIndex, safeShift, step.stepIndex]);
@@ -135,7 +137,7 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
               style={{ paddingLeft: `${safeShift * 42}px` }}
             >
               <div
-                className={`h-6 flex items-center justify-between px-2 text-[10px] font-mono uppercase tracking-wider transition-colors duration-200 ${
+                className={`h-6 flex items-center justify-between px-2 text-[11px] font-mono uppercase tracking-wider transition-colors duration-200 ${
                   hashInfo
                     ? hashInfo.hashMatch
                       ? hashInfo.spurious
@@ -164,7 +166,7 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono uppercase tracking-wider text-chalk-400 font-semibold">
-                Target Text T[i] <span className="text-[10px] text-chalk-600">(Length {n})</span>:
+                Target Text T[i] <span className="text-[11px] text-chalk-600">(Length {n})</span>:
               </span>
             </div>
 
@@ -211,7 +213,7 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
                   <div key={idx} className="flex flex-col items-center relative">
                     {badgeText && (
                       <span
-                        className={`absolute -top-[18px] text-[10px] leading-none font-mono font-bold px-1 py-0.5 border whitespace-nowrap z-10 ${badgeClass}`}
+                        className={`absolute -top-[18px] text-[11px] leading-none font-mono font-bold px-1 py-0.5 border whitespace-nowrap z-10 ${badgeClass}`}
                       >
                         {badgeText}
                       </span>
@@ -222,7 +224,7 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
                       {char}
                       {verdict && <VerdictMark verdict={verdict} />}
                     </div>
-                    <span className="text-[9px] font-mono text-chalk-600 mt-1 tabular-nums">{idx}</span>
+                    <span className="text-[11px] font-mono text-chalk-600 mt-1 tabular-nums">{idx}</span>
                   </div>
                 );
               })}
@@ -232,7 +234,7 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
           {/* PATTERN Ribbon (Directly aligned with current window alignment) */}
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-mono uppercase tracking-wider text-chalk-400 font-semibold">
-              Pattern P[j] <span className="text-[10px] text-chalk-600">(Length {m})</span>:
+              Pattern P[j] <span className="text-[11px] text-chalk-600">(Length {m})</span>:
             </span>
             <div
               className="flex items-center gap-1.5 transition-all duration-300"
@@ -267,7 +269,7 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
                       {char}
                       {verdict && <VerdictMark verdict={verdict} />}
                     </div>
-                    <span className="text-[9px] font-mono text-chalk-600 mt-1 tabular-nums">{idx}</span>
+                    <span className="text-[11px] font-mono text-chalk-600 mt-1 tabular-nums">{idx}</span>
                   </div>
                 );
               })}
@@ -305,7 +307,7 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
                       >
                         {lpsVal}
                       </div>
-                      <span className="text-[9px] font-mono text-chalk-500 mt-0.5">'{char}'</span>
+                      <span className="text-[11px] font-mono text-chalk-500 mt-0.5">'{char}'</span>
                     </div>
                   );
                 })}
@@ -450,7 +452,7 @@ const VerdictMark: React.FC<{ verdict: 'match' | 'mismatch' }> = ({ verdict }) =
   <>
     <span
       aria-hidden="true"
-      className={`absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[10px] font-bold leading-none text-obsidian-950 ${
+      className={`absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[11px] font-bold leading-none text-obsidian-950 ${
         verdict === 'match' ? 'bg-sem-match' : 'bg-sem-mismatch'
       }`}
     >
@@ -462,7 +464,7 @@ const VerdictMark: React.FC<{ verdict: 'match' | 'mismatch' }> = ({ verdict }) =
 
 const LegendItem: React.FC<{ swatch: string; symbol: string; label: string }> = ({ swatch, symbol, label }) => (
   <li className="flex items-center gap-1.5">
-    <span className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-[10px] font-bold ${swatch}`}>{symbol}</span>
+    <span className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-[11px] font-bold ${swatch}`}>{symbol}</span>
     <span>{label}</span>
   </li>
 );

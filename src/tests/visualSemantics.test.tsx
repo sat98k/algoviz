@@ -171,7 +171,6 @@ describe('Other surfaces share the semantics', () => {
       <CodeExplanation
         step={{ stepIndex: 0, title: '', description: '', codeLine: 2, state: {}, highlights: {}, metrics: {} }}
         pseudocode={['a', 'b', 'c']}
-        hideStepHeader
       />
     );
     expect(html).toContain('bg-sem-current/15');

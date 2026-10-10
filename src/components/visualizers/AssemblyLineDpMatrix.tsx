@@ -68,7 +68,7 @@ export const AssemblyLineDpMatrix: React.FC<AssemblyLineDpMatrixProps> = ({ step
         <div className="flex items-center gap-2 text-chalk-200">
           <Layers className="w-4 h-4 text-amber" />
           <span className="font-bold tracking-wider uppercase text-[11px]">DP State Matrix (f[i, j])</span>
-          <span className="text-[10px] px-1.5 py-0.5 bg-obsidian-950 border border-hairline text-chalk-400">
+          <span className="text-[11px] px-1.5 py-0.5 bg-obsidian-950 border border-hairline text-chalk-400">
             2 × {n}
           </span>
         </div>
@@ -87,7 +87,7 @@ export const AssemblyLineDpMatrix: React.FC<AssemblyLineDpMatrixProps> = ({ step
       {/* Recurrence & Active Calculation Box */}
       {state.formulaExplanation && !state.dpRule && (
         <div className="p-2.5 bg-obsidian-950 border-b border-hairline flex flex-col gap-1 text-[11px]">
-          <div className="flex items-center gap-1 text-chalk-500 uppercase text-[10px] font-semibold">
+          <div className="flex items-center gap-1 text-chalk-500 uppercase text-[11px] font-semibold">
             <HelpCircle className="w-3 h-3 text-amber" />
             <span>ƒ Calculation</span>
           </div>
@@ -102,7 +102,7 @@ export const AssemblyLineDpMatrix: React.FC<AssemblyLineDpMatrixProps> = ({ step
         <table className="w-full border-collapse text-center text-xs font-mono">
           <thead>
             <tr className="bg-obsidian-950">
-              <th className="p-2 border-b border-r border-hairline text-chalk-500 font-semibold sticky left-0 bg-obsidian-950 z-20 text-[10px] uppercase tracking-wider">
+              <th className="p-2 border-b border-r border-hairline text-chalk-500 font-semibold sticky left-0 bg-obsidian-950 z-20 text-[11px] uppercase tracking-wider">
                 Line \ Task
               </th>
               {colLabels.map((colText, cIdx) => {
@@ -161,7 +161,7 @@ export const AssemblyLineDpMatrix: React.FC<AssemblyLineDpMatrixProps> = ({ step
                           {/* Predecessor Line Indicator (l[j]) */}
                           {cIdx > 0 && typeof pred === 'number' && pred > 0 && (
                             <span
-                              className={`text-[9px] font-mono mt-0.5 ${
+                              className={`text-[11px] font-mono mt-0.5 ${
                                 status === 'path'
                                   ? 'text-acid-500 font-bold'
                                   : status === 'active'
@@ -186,13 +186,13 @@ export const AssemblyLineDpMatrix: React.FC<AssemblyLineDpMatrixProps> = ({ step
 
       {/* Predecessor Legend & Meaning */}
       <div className="px-3 pb-3 pt-1 flex flex-col gap-2 border-t border-hairline/60">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-chalk-500">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-chalk-500">
           <span>f[i, j]: Min cost to reach station j on Line i</span>
           <span>l[i, j]: Predecessor line</span>
         </div>
 
         {/* Status Legend */}
-        <div className="flex flex-wrap items-center justify-center gap-3 text-[10px] font-mono text-chalk-400 pt-1 border-t border-hairline/40">
+        <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] font-mono text-chalk-400 pt-1 border-t border-hairline/40">
           <div className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 bg-amber/40 border border-amber"></span>
             <span>Active Cell</span>

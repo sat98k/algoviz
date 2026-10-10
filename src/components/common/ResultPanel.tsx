@@ -35,7 +35,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({
     <section aria-label={title} className="flex flex-col gap-4 p-5 bg-obsidian-900 border border-sem-final/50 border-l-4 border-l-sem-final">
       <div className="flex items-center gap-2 pb-3 border-b border-hairline">
         <CheckCircle2 className="w-3.5 h-3.5 text-sem-final-ink" />
-        <h3 className="font-mono text-xs uppercase tracking-widest text-sem-final-ink font-semibold">
+        <h3 className="font-sans text-sm font-semibold text-sem-final-ink">
           {title}
         </h3>
       </div>
@@ -49,7 +49,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
           {summary.details.map((d) => (
             <div key={d.label} className="flex flex-col py-1 border-b border-hairline/50 min-w-0">
-              <dt className="font-mono text-[10px] uppercase tracking-wider text-chalk-500">{d.label}</dt>
+              <dt className="font-sans text-xs text-chalk-400">{d.label}</dt>
               <dd className="font-mono text-chalk-200 break-all">{d.value}</dd>
             </div>
           ))}
@@ -59,7 +59,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({
       {summary.table && summary.table.rows.length > 0 && (
         <div className="flex flex-col gap-1.5">
           {summary.table.caption && (
-            <span className="font-mono text-[10px] uppercase tracking-wider text-chalk-500">
+            <span className="font-sans text-xs text-chalk-400">
               {summary.table.caption}
             </span>
           )}
@@ -68,7 +68,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({
               <thead className="sticky top-0 bg-obsidian-850">
                 <tr>
                   {summary.table.columns.map((col) => (
-                    <th key={col} className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-chalk-400 font-semibold whitespace-nowrap">
+                    <th key={col} className="px-3 py-1.5 text-xs text-chalk-400 font-semibold whitespace-nowrap">
                       {col}
                     </th>
                   ))}
@@ -93,7 +93,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({
       {/* Raw result kept available but collapsed */}
       {result !== undefined && result !== null && (
         <details className="group border border-hairline bg-obsidian-950">
-          <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer select-none font-mono text-[11px] uppercase tracking-wider text-chalk-400 hover:text-chalk-200 list-none [&::-webkit-details-marker]:hidden">
+          <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer select-none font-sans text-xs text-chalk-400 hover:text-chalk-200 list-none [&::-webkit-details-marker]:hidden">
             <span className="flex items-center gap-1.5">
               <ChevronRight className="w-3.5 h-3.5 transition-transform group-open:rotate-90" />
               View technical result (raw data)

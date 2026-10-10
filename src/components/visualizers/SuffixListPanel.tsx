@@ -59,7 +59,7 @@ export const SuffixListPanel: React.FC<{ state: SuffixTreeState }> = ({ state })
                   <span className="text-chalk-300">{suffix}</span>
                 )}
               </span>
-              {mark && <span className="ml-auto shrink-0 text-[10px] text-chalk-400">{mark}</span>}
+              {mark && <span className="ml-auto shrink-0 text-[11px] text-chalk-400">{mark}</span>}
             </li>
           );
         })}

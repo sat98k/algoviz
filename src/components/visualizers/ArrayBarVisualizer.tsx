@@ -95,7 +95,7 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
               {/* Badge tag */}
               <div className="h-5 flex items-center justify-center mb-1">
                 {badge && (
-                  <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-obsidian-800 border border-hairline text-chalk-200 uppercase tracking-wider">
+                  <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 bg-obsidian-800 border border-hairline text-chalk-200 uppercase tracking-wider">
                     {badge}
                   </span>
                 )}
@@ -114,7 +114,7 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
               </div>
 
               {/* Index marker */}
-              <div className="mt-2 text-[10px] font-mono text-chalk-500 select-none tabular-nums">
+              <div className="mt-2 text-[11px] font-mono text-chalk-500 select-none tabular-nums">
                 {idx}
               </div>
             </div>
@@ -138,7 +138,7 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
             ]
         ).map(([swatch, tag, label]) => (
           <li key={tag} className="flex items-center gap-1.5">
-            <span className={`px-1 text-[9px] font-bold ${swatch}`}>{tag}</span>
+            <span className={`px-1 text-[11px] font-bold ${swatch}`}>{tag}</span>
             <span>{label}</span>
           </li>
         ))}

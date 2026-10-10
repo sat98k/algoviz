@@ -252,7 +252,7 @@ export const TspDistanceMatrixEditor: React.FC<TspDistanceMatrixEditorProps> = (
             <h4 className="font-bold text-xs uppercase tracking-wider text-chalk-100">
               User-Editable TSP Distance Matrix
             </h4>
-            <p className="text-[10px] text-chalk-400">
+            <p className="text-[11px] text-chalk-400">
               Symmetric costs c(i, j) = c(j, i). Driving graph, DP states, and tour solution.
             </p>
           </div>
@@ -317,7 +317,7 @@ export const TspDistanceMatrixEditor: React.FC<TspDistanceMatrixEditorProps> = (
                 </button>
               ))}
             </div>
-            <span className="text-[10px] text-chalk-500 font-normal">
+            <span className="text-[11px] text-chalk-500 font-normal">
               ({cities.join(', ')})
             </span>
           </div>
@@ -325,7 +325,7 @@ export const TspDistanceMatrixEditor: React.FC<TspDistanceMatrixEditorProps> = (
           {/* Preset Buttons */}
           {presets && presets.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="font-mono text-[10px] uppercase text-chalk-500 mr-1 flex items-center gap-1">
+              <span className="font-mono text-[11px] uppercase text-chalk-500 mr-1 flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-amber" /> Presets:
               </span>
               {presets.map((p) => (
@@ -352,7 +352,7 @@ export const TspDistanceMatrixEditor: React.FC<TspDistanceMatrixEditorProps> = (
             <table className="border-collapse mx-auto">
               <thead>
                 <tr>
-                  <th className="p-1 text-[10px] text-chalk-500 font-normal border-b border-r border-hairline w-12 text-center">
+                  <th className="p-1 text-[11px] text-chalk-500 font-normal border-b border-r border-hairline w-12 text-center">
                     From \ To
                   </th>
                   {cities.map((city, cIdx) => (

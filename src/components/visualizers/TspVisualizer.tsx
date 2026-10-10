@@ -253,7 +253,7 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-obsidian-900 border-b border-hairline text-xs font-mono">
             <div className="flex items-center gap-2">
               <span
-                className={`px-2 py-0.5 rounded text-[10px] font-bold border ${currentPhaseInfo.bg} ${currentPhaseInfo.border} ${currentPhaseInfo.color}`}
+                className={`px-2 py-0.5 rounded text-[11px] font-bold border ${currentPhaseInfo.bg} ${currentPhaseInfo.border} ${currentPhaseInfo.color}`}
               >
                 {currentPhaseInfo.label}
               </span>
@@ -544,7 +544,7 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
                         <text
                           textAnchor="middle"
                           dominantBaseline="central"
-                          className="font-mono text-[9px] font-bold uppercase tracking-wider"
+                          className="font-mono text-[11px] font-bold uppercase tracking-wider"
                           fill={isDark ? '#f8fafc' : '#0f172a'}
                         >
                           START
@@ -596,11 +596,11 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
                 MST 2-Approximation Telemetry
               </span>
               {state.metricCheck?.isMetric === false ? (
-                <span className="px-2 py-0.5 rounded text-[10px] bg-sem-warning/15 text-sem-warning-ink border border-sem-warning/60 font-bold uppercase">
+                <span className="px-2 py-0.5 rounded text-[11px] bg-sem-warning/15 text-sem-warning-ink border border-sem-warning/60 font-bold uppercase">
                   ⚠ Not metric · no guarantee
                 </span>
               ) : (
-                <span className="px-2 py-0.5 rounded text-[10px] bg-amber/20 text-amber-glow border border-amber/30 font-bold uppercase">
+                <span className="px-2 py-0.5 rounded text-[11px] bg-amber/20 text-amber-glow border border-amber/30 font-bold uppercase">
                   2.0 × OPT Bound
                 </span>
               )}
@@ -647,7 +647,7 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
                   {state.mstEdges.map((e: any, idx: number) => (
                     <span
                       key={idx}
-                      className="px-2 py-0.5 rounded bg-sky-950/60 border border-sky-600/40 text-sky-300 font-mono text-[10px]"
+                      className="px-2 py-0.5 rounded bg-sky-950/60 border border-sky-600/40 text-sky-300 font-mono text-[11px]"
                     >
                       ({cities[e.u]?.label || e.u}, {cities[e.v]?.label || e.v}): {e.weight}
                     </span>

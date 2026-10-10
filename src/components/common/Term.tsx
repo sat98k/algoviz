@@ -183,7 +183,7 @@ export const Term: React.FC<TermProps> = ({ termKey, children, className = '' })
             }}
             className="z-[100] w-max max-w-[min(20rem,calc(100vw-24px))] p-3 bg-obsidian-950 border border-amber/40 shadow-lg shadow-black/40 text-left normal-case tracking-normal"
           >
-            <span className="block font-mono text-[10px] uppercase tracking-widest text-amber font-bold mb-1">
+            <span className="block font-mono text-[11px] uppercase tracking-widest text-amber font-bold mb-1">
               {entry.term}
             </span>
             <span className="block font-sans text-xs leading-relaxed text-chalk-200">{entry.definition}</span>

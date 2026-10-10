@@ -540,13 +540,13 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
-          <span className="px-1.5 text-[10px] text-chalk-500 select-none">
+          <span className="px-1.5 text-[11px] text-chalk-500 select-none">
             {Math.round(scale * 100)}%
           </span>
         </div>
 
         {/* Viewport Instructions Badge */}
-        <div className="absolute bottom-2 left-3 z-10 pointer-events-none text-[10px] font-mono text-chalk-500/80 flex items-center gap-1.5">
+        <div className="absolute bottom-2 left-3 z-10 pointer-events-none text-[11px] font-mono text-chalk-500/80 flex items-center gap-1.5">
           <Move className="w-3 h-3" />
           <span>Click & Drag to Pan • Scroll to Zoom • {autoFocus ? '🎯 Auto-Tracking Branch' : 'Free Camera'}</span>
         </div>

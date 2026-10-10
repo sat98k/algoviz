@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
-import { Check, Split, Calculator } from 'lucide-react';
+import { Check, Calculator } from 'lucide-react';
 
 interface RecursionTreeVisualizerProps {
   step: AlgorithmStep;
@@ -299,7 +299,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
 
     return (
       <div key={idx} className="flex flex-col items-center">
-        <span className="text-[9px] font-mono text-chalk-500 mb-0.5 select-none">i={idx}</span>
+        <span className="text-[11px] font-mono text-chalk-500 mb-0.5 select-none">i={idx}</span>
         <div className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center border font-mono text-xs sm:text-sm font-semibold transition-all ${styleClasses}`}>
           {val}
         </div>
@@ -349,7 +349,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
           x={rectWidth / 2}
           y={32}
           textAnchor="middle"
-          className="text-[10px] font-mono font-medium"
+          className="text-[11px] font-mono font-medium"
           fill={resultColor}
         >
           {node.result !== undefined
@@ -566,15 +566,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
       {/* --- Max Subarray Visual Split & Combine Deck --- */}
       {isMaxSubarray && fullArray.length > 0 && (
         <div className="w-full flex flex-col gap-3 p-4 bg-obsidian-950 border border-hairline">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-2">
-            <div className="flex items-center gap-2 font-mono text-xs text-amber-glow">
-              <Split className="w-3.5 h-3.5 text-amber" />
-              <span className="font-semibold uppercase tracking-wider">{step.title}</span>
-            </div>
-            {state.explanation && (
-              <span className="text-chalk-400 font-mono text-[11px]">{state.explanation}</span>
-            )}
-          </div>
+          {/* The step title and explanation are in "What happened and why?" below. */}
 
           {/* Literal Array Splitting Visual */}
           <div className="flex flex-col gap-2 py-2">
@@ -582,7 +574,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
               <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 py-2">
                 {/* Left Half Cluster */}
                 <div className="flex flex-col items-center gap-1.5 p-2.5 bg-amber/5 border border-dashed border-amber/40">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-amber-glow font-semibold">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-amber-glow font-semibold">
                     LEFT HALF [ {activeRange[0]} .. {splitMid} ]
                   </span>
                   <div className="flex items-center gap-1">
@@ -595,14 +587,14 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
 
                 {/* Split Boundary Marker */}
                 <div className="flex flex-col items-center justify-center font-mono text-chalk-500 px-1">
-                  <span className="text-[10px] uppercase tracking-widest text-amber font-bold">SPLIT MID</span>
+                  <span className="text-[11px] uppercase tracking-widest text-amber font-bold">SPLIT MID</span>
                   <div className="w-px h-8 bg-amber/40 my-1"></div>
                   <span className="text-xs font-bold text-amber">k = {splitMid}</span>
                 </div>
 
                 {/* Right Half Cluster */}
                 <div className="flex flex-col items-center gap-1.5 p-2.5 bg-cyan-500/5 border border-dashed border-cyan-400/40">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-cyan-300 font-semibold">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-cyan-300 font-semibold">
                     RIGHT HALF [ {splitMid + 1} .. {activeRange[1]} ]
                   </span>
                   <div className="flex items-center gap-1">
@@ -638,7 +630,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
           {(lSum !== undefined || rSum !== undefined || crossSum !== undefined) && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-hairline font-mono text-xs">
               <div className={`p-2 border transition-all ${winner === 'LSum' ? 'bg-acid-500/15 border-acid-500 text-acid-500 ring-1 ring-acid-500' : 'bg-obsidian-900 border-hairline text-chalk-300'}`}>
-                <div className="text-[10px] text-chalk-500 uppercase flex items-center justify-between">
+                <div className="text-[11px] text-chalk-500 uppercase flex items-center justify-between">
                   <span>LSum (Left)</span>
                   {winner === 'LSum' && <Check className="w-3 h-3 text-acid-500" />}
                 </div>
@@ -646,7 +638,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
               </div>
 
               <div className={`p-2 border transition-all ${winner === 'RSum' ? 'bg-acid-500/15 border-acid-500 text-acid-500 ring-1 ring-acid-500' : 'bg-obsidian-900 border-hairline text-chalk-300'}`}>
-                <div className="text-[10px] text-chalk-500 uppercase flex items-center justify-between">
+                <div className="text-[11px] text-chalk-500 uppercase flex items-center justify-between">
                   <span>RSum (Right)</span>
                   {winner === 'RSum' && <Check className="w-3 h-3 text-acid-500" />}
                 </div>
@@ -654,7 +646,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
               </div>
 
               <div className={`p-2 border transition-all ${winner === 'CrossSum' ? 'bg-acid-500/15 border-acid-500 text-acid-500 ring-1 ring-acid-500' : 'bg-obsidian-900 border-hairline text-chalk-300'}`}>
-                <div className="text-[10px] text-chalk-500 uppercase flex items-center justify-between">
+                <div className="text-[11px] text-chalk-500 uppercase flex items-center justify-between">
                   <span>CrossSum</span>
                   {winner === 'CrossSum' && <Check className="w-3 h-3 text-acid-500" />}
                 </div>
@@ -662,10 +654,10 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
               </div>
 
               <div className="p-2 bg-obsidian-900 border border-amber/40 text-amber-glow">
-                <div className="text-[10px] text-chalk-500 uppercase">Selected Max</div>
+                <div className="text-[11px] text-chalk-500 uppercase">Selected Max</div>
                 <div className="text-sm font-bold mt-0.5 flex items-center gap-1">
                   <span>{winner ?? 'COMBINING'}</span>
-                  {winner && <span className="text-[10px] text-chalk-400">({Math.max(lSum ?? -Infinity, rSum ?? -Infinity, crossSum ?? -Infinity)})</span>}
+                  {winner && <span className="text-[11px] text-chalk-400">({Math.max(lSum ?? -Infinity, rSum ?? -Infinity, crossSum ?? -Infinity)})</span>}
                 </div>
               </div>
             </div>
@@ -676,19 +668,17 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
       {/* --- Karatsuba Explicit 4-Step Mathematical Ledger --- */}
       {isKaratsuba && (
         <div className="w-full flex flex-col gap-3 p-4 bg-obsidian-950 border border-hairline font-mono">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-2">
-            <div className="flex items-center gap-2 text-xs text-amber-glow">
-              <Calculator className="w-3.5 h-3.5 text-amber" />
-              <span className="font-semibold uppercase tracking-wider">{step.title}</span>
-            </div>
-            {state.formulaExplanation && (
-              <span className="text-chalk-400 text-xs">{state.formulaExplanation}</span>
-            )}
-          </div>
+          {/* The current calculation with real numbers (the step title is shown below the visualization). */}
+          {state.formulaExplanation && (
+            <p className="flex items-center gap-2 pb-2 border-b border-hairline font-mono text-sm text-sem-formula-ink [overflow-wrap:anywhere]">
+              <Calculator className="w-3.5 h-3.5 shrink-0 text-amber" aria-hidden="true" />
+              {state.formulaExplanation}
+            </p>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
             <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col gap-1.5">
-              <span className="text-[10px] text-amber uppercase tracking-wider font-bold">1. Split (m={karatsubaData.m ?? '—'})</span>
+              <span className="text-[11px] text-amber uppercase tracking-wider font-bold">1. Split (m={karatsubaData.m ?? '—'})</span>
               <div className="text-chalk-300">
                 <div>X: a=<strong className="text-chalk-100">{karatsubaData.a ?? '—'}</strong>, b=<strong className="text-chalk-100">{karatsubaData.b ?? '—'}</strong></div>
                 <div>Y: c=<strong className="text-chalk-100">{karatsubaData.c ?? '—'}</strong>, d=<strong className="text-chalk-100">{karatsubaData.d ?? '—'}</strong></div>
@@ -696,7 +686,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
             </div>
 
             <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col gap-1.5">
-              <span className="text-[10px] text-electric-400 uppercase tracking-wider font-bold">2. Products (P1, P2, P3)</span>
+              <span className="text-[11px] text-electric-400 uppercase tracking-wider font-bold">2. Products (P1, P2, P3)</span>
               <div className="text-chalk-300 space-y-0.5">
                 <div>P1 (a·c) = <strong className="text-electric-400">{karatsubaData.p1 ?? '—'}</strong></div>
                 <div>P2 (b·d) = <strong className="text-electric-400">{karatsubaData.p2 ?? '—'}</strong></div>
@@ -705,9 +695,9 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
             </div>
 
             <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col gap-1.5">
-              <span className="text-[10px] text-purple-400 uppercase tracking-wider font-bold">3. Cross-Term</span>
+              <span className="text-[11px] text-purple-400 uppercase tracking-wider font-bold">3. Cross-Term</span>
               <div className="text-chalk-300">
-                <div className="text-[10px] text-chalk-500">P3 - P1 - P2</div>
+                <div className="text-[11px] text-chalk-500">P3 - P1 - P2</div>
                 <div className="text-purple-300 font-bold text-sm mt-1">
                   {karatsubaData.crossTerm ?? '—'}
                 </div>
@@ -715,9 +705,9 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
             </div>
 
             <div className="p-3 bg-obsidian-900 border border-acid-500/40 flex flex-col gap-1.5">
-              <span className="text-[10px] text-acid-500 uppercase tracking-wider font-bold">4. Combine</span>
+              <span className="text-[11px] text-acid-500 uppercase tracking-wider font-bold">4. Combine</span>
               <div className="text-chalk-300">
-                <div className="text-[10px] text-chalk-500">P1·10²ᵐ + Cross·10ᵐ + P2</div>
+                <div className="text-[11px] text-chalk-500">P1·10²ᵐ + Cross·10ᵐ + P2</div>
                 <div className="text-acid-500 font-bold text-sm mt-1 truncate" title={karatsubaData.finalResult}>
                   = {karatsubaData.finalResult ?? (step.isFinal ? step.result?.product : '—')}
                 </div>

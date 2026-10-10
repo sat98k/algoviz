@@ -126,17 +126,17 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
         } flex flex-col gap-2 p-4 bg-obsidian-950 border border-hairline font-mono text-xs transition-all duration-300`}
       >
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-2">
-          <div className="flex items-center gap-2 text-amber-glow">
+          <div className="flex items-center gap-2 text-chalk-300 font-sans text-sm font-semibold">
             <Factory className="w-4 h-4 text-amber" />
-            <span className="font-semibold uppercase tracking-wider">{step.title}</span>
+            <span>Two assembly lines</span>
           </div>
           <div className="flex items-center gap-3">
             {minTotalTime !== undefined && (
               <div className="flex items-center gap-2">
-                <span className="text-chalk-500 uppercase text-[10px]">Optimal Total Time:</span>
+                <span className="text-chalk-500 uppercase text-[11px]">Optimal Total Time:</span>
                 <span className="text-acid-500 font-bold text-sm">{minTotalTime}</span>
                 {winningLine && (
-                  <span className="text-[10px] text-chalk-400 font-mono">(via Exit Line {winningLine})</span>
+                  <span className="text-[11px] text-chalk-400 font-mono">(via Exit Line {winningLine})</span>
                 )}
               </div>
             )}
@@ -159,7 +159,7 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
         {/* Calculation: shown here only when the DP matrix (which shows it) is closed */}
         {state.formulaExplanation && !showDpMatrix && !state.dpRule && (
           <div className="text-sem-formula-ink text-xs flex flex-wrap items-center gap-2 font-mono">
-            <span className="uppercase font-semibold text-[10px] tracking-wider">ƒ Calculation:</span>
+            <span className="uppercase font-semibold text-[11px] tracking-wider">ƒ Calculation:</span>
             <span>{state.formulaExplanation}</span>
           </div>
         )}
@@ -167,7 +167,7 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
         {/* Reconstructed Path Banner */}
         {optimalPath.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 text-xs pt-1 border-t border-hairline">
-            <span className="text-chalk-500 uppercase text-[10px]">Optimal Route:</span>
+            <span className="text-chalk-500 uppercase text-[11px]">Optimal Route:</span>
             <div className="flex flex-wrap items-center gap-1.5 font-bold">
               {optimalPath.map((p, idx) => (
                 <React.Fragment key={idx}>
