@@ -16,6 +16,14 @@ export interface KMPState {
   };
   shift?: number;
   shiftAmount?: number;
+  /** LPS phase: what the step did with the pointers i (= patternIndex) and len (= lpsLen). */
+  lpsAction?: 'start' | 'compare' | 'extend' | 'fallback' | 'zero' | 'done';
+  /** LPS phase, fallback: len before falling back. */
+  prevLen?: number;
+  /** LPS phase: number of LPS entries computed so far (entries 0 … lpsFilled−1 are final). */
+  lpsFilled?: number;
+  /** Search phase: the LPS entry used to move j back (fallback or after a full match). */
+  lpsUsedIndex?: number;
 }
 
 export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<AlgorithmStep<KMPState>> {
@@ -33,18 +41,21 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
 
   yield {
     stepIndex: stepIndex++,
-    title: 'Initialize KMP: Build LPS Table',
-    description: `Target text length n = ${n}, pattern length m = ${m}. Phase 1: Precompute the Longest Proper Prefix which is also Suffix (LPS) table in O(m) time.`,
-    codeLine: [1, 2, 3, 4, 5],
+    title: 'Phase 1: Build the LPS Table (Pattern Only)',
+    description: `Before reading the text, KMP studies the pattern alone. For each position i, LPS[i] is the length of the longest proper prefix of P[0…i] that is also a suffix of it (proper = not the whole string). LPS[0] = 0 because a single character has no proper prefix. Start with len = 0 and i = 1.`,
+    codeLine: [2, 3, 4, 5],
     state: {
       text,
       pattern,
       lpsTable: [...lps],
       phase: 'lps',
       textIndex: -1,
-      patternIndex: 0,
+      patternIndex: Math.min(1, m),
       matchIndices: [],
       shift: 0,
+      lpsLen: 0,
+      lpsAction: 'start',
+      lpsFilled: Math.min(1, m),
     },
     highlights: {},
     metrics: { comparisons, iterations },
@@ -62,8 +73,11 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
 
     yield {
       stepIndex: stepIndex++,
-      title: `LPS: Compare pattern[${i}] vs pattern[${len}]`,
-      description: `Comparing pattern[${i}] ('${pattern[i]}') with pattern[${len}] ('${pattern[len]}') to see if prefix can be extended.`,
+      title: `LPS: Compare P[i = ${i}] with P[len = ${len}]`,
+      description:
+        len === 0
+          ? `No prefix is matched yet (len = 0). Can P[${i}] = '${pattern[i]}' start a prefix-suffix by matching P[0] = '${pattern[0]}'?`
+          : `The prefix "${pattern.slice(0, len)}" already equals the suffix ending at index ${i - 1}. Can it grow by one? Compare the next prefix character P[${len}] = '${pattern[len]}' with P[${i}] = '${pattern[i]}'.`,
       codeLine: [6, 7],
       state: {
         text,
@@ -75,6 +89,8 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
         lpsLen: len,
         matchIndices: [],
         shift: 0,
+        lpsAction: 'compare',
+        lpsFilled: i,
         currentComparison: {
           textChar: pattern[i],
           patternChar: pattern[len],
@@ -93,8 +109,8 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
       lps[i] = len;
       yield {
         stepIndex: stepIndex++,
-        title: `LPS: Set LPS[${i}] = ${len}`,
-        description: `Characters match! Prefix "${pattern.slice(0, len)}" matches suffix ending at index ${i}. LPS[${i}] = ${len}.`,
+        title: `LPS: len Grows to ${len}, so LPS[${i}] = ${len}`,
+        description: `P[${i}] = P[${len - 1}], so the prefix-suffix grows by one: the prefix "${pattern.slice(0, len)}" equals the suffix ending at index ${i}. Record LPS[${i}] = ${len} and move i to ${i + 1}.`,
         codeLine: [8, 9, 10],
         state: {
           text,
@@ -106,6 +122,8 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
           lpsLen: len,
           matchIndices: [],
           shift: 0,
+          lpsAction: 'extend',
+          lpsFilled: i + 1,
         },
         highlights: {
           type: 'match',
@@ -120,9 +138,9 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
         len = lps[len - 1];
         yield {
           stepIndex: stepIndex++,
-          title: `LPS: Fallback len from ${prevLen} to LPS[${prevLen - 1}] = ${len}`,
-          description: `Mismatch in prefix! Falling back prefix length to LPS[${prevLen - 1}] = ${len} without advancing index ${i}.`,
-          codeLine: [11, 12, 13],
+          title: `LPS: Fall Back, len = LPS[${prevLen - 1}] = ${len}`,
+          description: `The prefix "${pattern.slice(0, prevLen)}" cannot be extended with '${pattern[i]}'. The next shorter candidate is the longest prefix-suffix of "${pattern.slice(0, prevLen)}" itself, which LPS[${prevLen - 1}] = ${len} already stores${len > 0 ? ` ("${pattern.slice(0, len)}")` : ''}. i stays at ${i}; try again with len = ${len}.`,
+          codeLine: [11, 12],
           state: {
             text,
             pattern,
@@ -133,6 +151,9 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
             lpsLen: len,
             matchIndices: [],
             shift: 0,
+            lpsAction: 'fallback',
+            prevLen,
+            lpsFilled: i,
           },
           highlights: {
             type: 'backtrack',
@@ -144,9 +165,9 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
         lps[i] = 0;
         yield {
           stepIndex: stepIndex++,
-          title: `LPS: Set LPS[${i}] = 0`,
-          description: `No proper prefix-suffix match exists for suffix ending at ${i}. LPS[${i}] = 0. Advancing index to ${i + 1}.`,
-          codeLine: [14, 15, 16],
+          title: `LPS: No Prefix Fits, LPS[${i}] = 0`,
+          description: `len = 0 and P[${i}] = '${pattern[i]}' differs from P[0] = '${pattern[0]}', so no proper prefix of P[0…${i}] is also a suffix. Record LPS[${i}] = 0 and move i to ${i + 1}.`,
+          codeLine: [13, 14, 15],
           state: {
             text,
             pattern,
@@ -157,6 +178,8 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
             lpsLen: 0,
             matchIndices: [],
             shift: 0,
+            lpsAction: 'zero',
+            lpsFilled: i + 1,
           },
           highlights: {
             activeIndices: [i],
@@ -170,9 +193,31 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
 
   yield {
     stepIndex: stepIndex++,
-    title: 'LPS Table Complete — Begin Search Phase',
-    description: `Computed full LPS Table: [${lps.join(', ')}]. Now scanning text with zero backtracking of the text pointer.`,
-    codeLine: [17, 19, 20, 21, 22],
+    title: 'LPS Table Complete',
+    description: `LPS = [${lps.join(', ')}]. Phase 1 used only the pattern; the text has not been read yet.`,
+    codeLine: 16,
+    state: {
+      text,
+      pattern,
+      lpsTable: [...lps],
+      phase: 'lps',
+      textIndex: -1,
+      patternIndex: -1,
+      lpsLen: len,
+      matchIndices: [],
+      shift: 0,
+      lpsAction: 'done',
+      lpsFilled: m,
+    },
+    highlights: {},
+    metrics: { comparisons, iterations },
+  };
+
+  yield {
+    stepIndex: stepIndex++,
+    title: 'Phase 2: Search the Text',
+    description: `Scan the text with i (text index) and j (pattern index), both starting at 0. On a mismatch, the LPS table moves j back while i never moves backwards.`,
+    codeLine: [20, 21, 22],
     state: {
       text,
       pattern,
@@ -200,8 +245,10 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
 
     yield {
       stepIndex: stepIndex++,
-      title: `Compare: text[${txtIdx}] vs pattern[${patIdx}]`,
-      description: `Comparing text[${txtIdx}] ('${text[txtIdx]}') with pattern[${patIdx}] ('${pattern[patIdx]}') at alignment shift ${currentShift}. Result: ${isCharMatch ? 'MATCH' : 'MISMATCH'}.`,
+      title: `Compare text[i = ${txtIdx}] with P[j = ${patIdx}]`,
+      description: isCharMatch
+        ? `text[${txtIdx}] = '${text[txtIdx]}' equals P[${patIdx}]: advance both i and j.`
+        : `text[${txtIdx}] = '${text[txtIdx]}' differs from P[${patIdx}] = '${pattern[patIdx]}'.`,
       codeLine: [23, 24],
       state: {
         text,
@@ -237,8 +284,8 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
         yield {
           stepIndex: stepIndex++,
           title: `Full Pattern Match Confirmed at Index ${foundPos}!`,
-          description: `All ${m} characters matched! Pattern "${pattern}" found at position ${foundPos}. Shifting pattern via LPS[${m - 1}] = ${lps[m - 1]}.`,
-          codeLine: [27, 28, 29],
+          description: `All ${m} characters matched: "${pattern}" occurs at index ${foundPos}. To find overlapping matches, keep the longest prefix that is also a suffix: j = LPS[${m - 1}] = ${lps[m - 1]}.`,
+          codeLine: [26, 27, 28],
           state: {
             text,
             pattern,
@@ -249,6 +296,7 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
             shift: foundPos,
             matchIndices: [...matchIndices],
             shiftAmount: patIdx - lps[patIdx - 1],
+            lpsUsedIndex: m - 1,
           },
           highlights: {
             type: 'match',
@@ -266,9 +314,9 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
         const newShift = txtIdx - patIdx;
         yield {
           stepIndex: stepIndex++,
-          title: `Mismatch: Shift Pattern via LPS[${oldPatIdx - 1}] = ${patIdx}`,
-          description: `Mismatch at pattern index ${oldPatIdx}. Fall back pattern index to ${patIdx} without decrementing text pointer (text[${txtIdx}] remains fixed). Alignment shift becomes ${newShift}.`,
-          codeLine: [30, 31, 32],
+          title: `Mismatch: j Falls Back to LPS[${oldPatIdx - 1}] = ${patIdx}`,
+          description: `The ${oldPatIdx} text characters before i matched P[0…${oldPatIdx - 1}] = "${pattern.slice(0, oldPatIdx)}". ${patIdx > 0 ? `Its last ${patIdx} characters equal its first ${patIdx} ("${pattern.slice(0, patIdx)}"), so the pattern slides right and those ${patIdx} characters are already known to match: no text character is re-read.` : 'No prefix of it is also a suffix, so the pattern restarts from j = 0.'} i stays at ${txtIdx}; j = ${patIdx}.`,
+          codeLine: [29, 30],
           state: {
             text,
             pattern,
@@ -279,6 +327,7 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
             shift: newShift,
             matchIndices: [...matchIndices],
             shiftAmount: oldPatIdx - patIdx,
+            lpsUsedIndex: oldPatIdx - 1,
             currentComparison: {
               textChar: text[txtIdx],
               patternChar: pattern[oldPatIdx],
@@ -296,9 +345,9 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
         txtIdx++;
         yield {
           stepIndex: stepIndex++,
-          title: `Mismatch at Pattern Start: Advance Text Pointer`,
-          description: `Mismatch at pattern index 0. Advancing text pointer to index ${txtIdx}.`,
-          codeLine: [30, 33, 34],
+          title: `Mismatch at j = 0: Advance i`,
+          description: `Nothing of the pattern is matched, so there is nothing to reuse: move i to ${txtIdx}.`,
+          codeLine: [31, 32],
           state: {
             text,
             pattern,
@@ -322,7 +371,7 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
     stepIndex: stepIndex++,
     title: 'KMP Search Complete',
     description: `Search complete. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. Total character comparisons: ${comparisons}.`,
-    codeLine: 35,
+    codeLine: 33,
     state: {
       text,
       pattern,

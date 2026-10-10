@@ -4,6 +4,7 @@ import { computeTreeLayout, TreeNodeInput } from '../../utils/treeLayout';
 import { getNodeTheme } from '../../utils/treeTheme';
 import { TreeTraversalOverride } from '../../utils/huffmanCodec';
 import { ZoomIn, ZoomOut, RotateCcw, Move, Target } from 'lucide-react';
+import { SuffixListPanel } from './SuffixListPanel';
 
 interface TreeVisualizerProps {
   step: AlgorithmStep;
@@ -439,6 +440,8 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
           )}
         </div>
       )}
+
+      {isSuffixTree && state.suffixTree && <SuffixListPanel state={state} />}
 
       {/* Huffman Decoding Live Bitstream Traversal Banner */}
       {isHuffman && state.mode === 'decode' && state.encodedBits && (

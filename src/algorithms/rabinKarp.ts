@@ -34,6 +34,8 @@ export interface RabinKarpState {
     prevHash: number;
     nextHash: number;
     calculationText: string;
+    /** The update in four stages with this step's real numbers; each value feeds the next. */
+    stages: { label: string; expr: string; value: number }[];
   };
 }
 
@@ -136,7 +138,7 @@ export function* rabinKarpSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Shift ${s}: Compare Window Hash (${t}) vs Pattern Hash (${p})`,
         description: hashMatch
-          ? `Hashes match (${t} == ${p})! Candidate alignment found at shift ${s}. Performing character-by-character verification to rule out a hash collision.`
+          ? `Hashes match (${t} = ${p}), so shift ${s} is a candidate. Equal hashes do not prove equal strings: the hash is taken mod ${Q}, so it has only ${Q} possible values and different windows can share one. Check the characters one by one.`
           : `Hashes differ (${t} != ${p}). No match possible at shift ${s}. Skipping character checks and rolling window right.`,
         codeLine: [7, 8],
         state: {
@@ -272,12 +274,22 @@ export function* rabinKarpSteps(inputs: {
         t = (D * (t - removedAscii * h) + addedAscii) % Q;
         if (t < 0) t += Q;
 
+        const withoutOut = prevT - removedAscii * h;
+        const shifted = D * withoutOut;
+        const withIn = shifted + addedAscii;
+        const stages = [
+          { label: `Remove outgoing '${removed}'`, expr: `${prevT} − ${removedAscii} × ${h}`, value: withoutOut },
+          { label: 'Shift one place (× d)', expr: `${withoutOut} × ${D}`, value: shifted },
+          { label: `Add incoming '${added}'`, expr: `${shifted} + ${addedAscii}`, value: withIn },
+          { label: 'Reduce mod q', expr: `${withIn} mod ${Q}`, value: t },
+        ];
+
         const formula = `(${D} × (${prevT} − '${removed}'(${removedAscii}) × ${h}) + '${added}'(${addedAscii})) mod ${Q} = ${t}`;
 
         yield {
           stepIndex: stepIndex++,
           title: `Roll Hash to Shift ${s + 1}`,
-          description: `Slide window 1 position right: subtract outgoing '${removed}' (weight ${h}) and add incoming '${added}'. New window hash = ${t} computed in O(1) time.`,
+          description: `Slide the window one place right: '${removed}' leaves on the left and '${added}' enters on the right. The new hash is computed from the old one in O(1), without rereading the other ${m - 1} characters: ${prevT} → ${t}.`,
           codeLine: [13, 14],
           state: {
             text,
@@ -300,6 +312,7 @@ export function* rabinKarpSteps(inputs: {
               prevHash: prevT,
               nextHash: t,
               calculationText: formula,
+              stages,
             },
           },
           highlights: {

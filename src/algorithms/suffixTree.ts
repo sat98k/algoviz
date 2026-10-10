@@ -29,6 +29,8 @@ export interface SuffixTreeState {
   matchLeafIds?: string[];
   matchIndices: number[];
   explanation?: string;
+  /** Search phase: number of pattern characters matched so far (P[0 … matchedLength−1]). */
+  matchedLength?: number;
 }
 
 const LEAF = -1;
@@ -90,6 +92,7 @@ export function* suffixTreeSteps(inputs: {
       activePointLabel?: string;
       matchLeafIds?: string[];
       matchIndices?: number[];
+      matchedLength?: number;
       isFinal?: boolean;
       result?: any;
     }
@@ -135,6 +138,7 @@ export function* suffixTreeSteps(inputs: {
         matchLeafIds: opts.matchLeafIds,
         matchIndices: opts.matchIndices ?? [],
         explanation: description,
+        matchedLength: opts.matchedLength,
       },
       highlights: { nodes: [...bestIds, ...activeIds] },
       metrics: { comparisons, iterations },
@@ -148,7 +152,7 @@ export function* suffixTreeSteps(inputs: {
 
   yield snapshot(
     'Initialize — append terminal "$"',
-    `Build a suffix tree for "${s}" (length ${sLen}) with Ukkonen's online algorithm in O(n), then match the pattern by walking down from the root.`,
+    `A suffix is the text from some position to the end; "${s}" has ${sLen} of them. The terminal "$" makes sure no suffix is the beginning of another, so each one ends at its own leaf. Build the tree that holds all of them with Ukkonen's online algorithm in O(n), then search by walking down from the root.`,
     2,
     { phase: 'build', activeIds: new Set(['root']), activePointLabel: apLabel() }
   );
@@ -287,7 +291,7 @@ export function* suffixTreeSteps(inputs: {
 
   yield snapshot(
     'Suffix tree complete',
-    `Construction finished: ${nodeCount} nodes. Every root-to-leaf path spells a suffix of "${s}"; leaf labels are suffix start indices. Now search for "${pattern}".`,
+    `Construction finished: ${nodeCount} nodes. Reading the edge labels from the root down to leaf k spells the suffix that starts at index k. Now search for "${pattern}": every substring of the text is the beginning of some suffix, so walk the pattern down from the root.`,
     8,
     { phase: 'search', activeIds: new Set(['root']) }
   );
@@ -309,7 +313,7 @@ export function* suffixTreeSteps(inputs: {
         yield snapshot(
           `Mismatch — no edge for '${pattern[k]}'`,
           `${node.id} has no outgoing edge beginning with P[${k}] = '${pattern[k]}'. The pattern does not occur in the text.`,
-          9,
+          11,
           {
             phase: 'search',
             activeIds: new Set([node.id]),
@@ -332,7 +336,7 @@ export function* suffixTreeSteps(inputs: {
       yield snapshot(
         'Mismatch on edge',
         `P[${k}] = '${pattern[k]}' vs '${tc}' at position ${edgePos} of edge "${edgeStr(child)}" → mismatch. The pattern does not occur in the text.`,
-        9,
+        11,
         {
           phase: 'search',
           activeIds: new Set([child.id]),
@@ -349,11 +353,12 @@ export function* suffixTreeSteps(inputs: {
     yield snapshot(
       `Match P[${k - 1}] = '${pattern[k - 1]}'`,
       `P[${k - 1}] = '${pattern[k - 1]}' matches position ${edgePos} of edge "${edgeStr(child)}" (${node.id} → ${child.id}). ${m - k} pattern character${m - k === 1 ? '' : 's'} remaining.`,
-      9,
+      11,
       {
         phase: 'search',
         activeIds: new Set([child.id]),
         exploredIds: new Set(path),
+        matchedLength: k,
       }
     );
 
@@ -390,8 +395,8 @@ export function* suffixTreeSteps(inputs: {
 
     yield snapshot(
       'Pattern consumed — collect leaves',
-      `The whole pattern was matched. Every leaf beneath ${subRoot.id} is an occurrence: ${matchIndices.length} found at [${matchIndices.join(', ')}].`,
-      10,
+      `The whole pattern fits on a path from the root, so it is the beginning of every suffix whose leaf lies below this point. Those leaves give the starting positions: ${matchIndices.length} found at [${matchIndices.join(', ')}].`,
+      12,
       {
         phase: 'search',
         activeIds: new Set([subRoot.id]),
@@ -399,6 +404,7 @@ export function* suffixTreeSteps(inputs: {
         bestIds: new Set(matchLeafIds),
         matchLeafIds,
         matchIndices,
+        matchedLength: m,
       }
     );
   }
@@ -408,7 +414,7 @@ export function* suffixTreeSteps(inputs: {
     matched
       ? `Search complete. Pattern "${pattern}" occurs ${matchIndices.length} time(s) at index positions: [${matchIndices.join(', ')}]. Character comparisons: ${comparisons}.`
       : `Search complete. Pattern "${pattern}" does not occur in the text. Character comparisons: ${comparisons}.`,
-    11,
+    13,
     {
       phase: 'search',
       exploredIds: new Set(path),

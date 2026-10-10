@@ -142,13 +142,13 @@ describe('String matching uses one match/mismatch language', () => {
   it('Rabin-Karp: the leaving character is neutral and labelled OUT, never styled as an error', () => {
     const roll = firstWith(rk, (s) => !!s.state.rollingInfo);
     const html = render(roll);
-    const out = html.indexOf('>OUT<');
+    const out = html.indexOf('>− OUT<');
     expect(out).toBeGreaterThan(-1);
     const cell = html.slice(out, html.indexOf('</div>', html.indexOf('class="relative w-9', out)));
     expect(cell).toContain('line-through');
     expect(cell).not.toContain('sem-mismatch');
-    expect(html).toContain('>IN<');
-    expect(html).toContain('OUT · leaving character');
+    expect(html).toContain('>+ IN<');
+    expect(html).toContain('− OUT (leaves on the left)');
   });
 
   it('Rabin-Karp: a hash collision is a warning, not a mismatch', () => {
