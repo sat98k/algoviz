@@ -1,4 +1,4 @@
-import { AlgorithmStep } from '../types/algorithm';
+import { AlgorithmStep, DpRuleStep } from '../types/algorithm';
 
 export interface KnapsackItem {
   id: number;
@@ -8,6 +8,8 @@ export interface KnapsackItem {
 }
 
 export interface KnapsackDPState {
+  /** The DP rule applied at this step, for the "Rule for this cell" card. */
+  dpRule?: DpRuleStep;
   items: KnapsackItem[];
   capacity: number;
   dpTable: number[][];
@@ -45,7 +47,7 @@ export function* knapsackDPSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize DP Table',
-    description: `Created ${(n + 1)} x ${(capacity + 1)} DP table initialized with 0 for base cases (0 items or 0 capacity).`,
+    description: `Created a ${n + 1} × ${capacity + 1} table. dp[i][w] will hold the best value using only the first i items with capacity w. Row 0 is all zeros because with no items there is nothing to carry, and column 0 is all zeros because with no capacity nothing fits.`,
     codeLine: 2,
     state: {
       items,
@@ -77,7 +79,7 @@ export function* knapsackDPSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Item ${i} Exceeds Weight ${w}`,
-          description: `Item ${i} (wt: ${item.weight}, val: ${item.value}) is heavier than current capacity ${w}. dp[${i}][${w}] = dp[${i - 1}][${w}] = ${dp[i][w]}.`,
+          description: `Item ${i} (weight ${item.weight}) does not fit in capacity ${w}, so the best value is the same as without it.`,
           codeLine: [6, 7],
           state: {
             items,
@@ -87,6 +89,14 @@ export function* knapsackDPSteps(inputs: {
             currentCol: w,
             selectedItems: [],
             formulaExplanation: `dp[${i}][${w}] = dp[${i - 1}][${w}] = ${dp[i][w]}`,
+            dpRule: {
+              label: 'Item does not fit',
+              tone: 'mismatch',
+              check: { text: `weight ${item.weight} ≤ capacity ${w}`, ok: false },
+              formula: 'dp[i][w] = dp[i−1][w]',
+              substitution: `dp[${i}][${w}] = dp[${i - 1}][${w}] = ${dp[i][w]}`,
+              action: 'Copy the cell above.',
+            },
           },
           highlights: {
             cells: [
@@ -105,7 +115,7 @@ export function* knapsackDPSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Evaluate Item ${i} at Weight ${w}`,
-          description: `Option 1 (Exclude): dp[${i - 1}][${w}] = ${excludeVal}. Option 2 (Include): ${item.value} + dp[${i - 1}][${w - item.weight}] = ${includeVal}. Selected: ${dp[i][w]}.`,
+          description: `Item ${i} fits in capacity ${w}, so compare leaving it out with taking it. ${includeVal > excludeVal ? 'Taking it gives more value.' : includeVal === excludeVal ? 'Both give the same value, so it is left out.' : 'Leaving it out gives more value.'}`,
           codeLine: [8, 9, 10, 11],
           state: {
             items,
@@ -115,6 +125,14 @@ export function* knapsackDPSteps(inputs: {
             currentCol: w,
             selectedItems: [],
             formulaExplanation: `dp[${i}][${w}] = max(dp[${i - 1}][${w}] = ${excludeVal}, ${item.value} + dp[${i - 1}][${w - item.weight}] = ${includeVal}) = ${dp[i][w]}`,
+            dpRule: {
+              label: 'Item fits',
+              tone: 'match',
+              check: { text: `weight ${item.weight} ≤ capacity ${w}`, ok: true },
+              formula: 'dp[i][w] = max( dp[i−1][w], vᵢ + dp[i−1][w−wᵢ] )',
+              substitution: `dp[${i}][${w}] = max( ${excludeVal}, ${item.value} + ${dp[i - 1][w - item.weight]} ) = ${dp[i][w]}`,
+              action: includeVal > excludeVal ? `Take item ${i} (${includeVal} > ${excludeVal}).` : `Leave item ${i} out (${excludeVal} ≥ ${includeVal}).`,
+            },
           },
           highlights: {
             cells: [
@@ -184,6 +202,14 @@ export function* knapsackDPSteps(inputs: {
           maxValue: dp[n][capacity],
           backtrackPhase: true,
           formulaExplanation: `dp[${i}][${currW}] (${valCurr}) != dp[${i - 1}][${currW}] (${valPrev}) ➔ Item ${i} INCLUDED (+${item.value})`,
+          dpRule: {
+            label: 'Traceback: was item taken?',
+            tone: 'decision',
+            check: { text: `dp[${i}][${currW}] = ${valCurr} ≠ dp[${i - 1}][${currW}] = ${valPrev}`, ok: true },
+            formula: 'taken ⇔ dp[i][w] ≠ dp[i−1][w]',
+            substitution: `w = ${currW} − ${item.weight} = ${nextW}`,
+            action: `Item ${i} was taken: move to dp[${i - 1}][${nextW}].`,
+          },
         },
         highlights: {
           cells: [
@@ -215,6 +241,14 @@ export function* knapsackDPSteps(inputs: {
           maxValue: dp[n][capacity],
           backtrackPhase: true,
           formulaExplanation: `dp[${i}][${currW}] (${valCurr}) == dp[${i - 1}][${currW}] (${valPrev}) ➔ Item ${i} Excluded`,
+          dpRule: {
+            label: 'Traceback: was item taken?',
+            tone: 'decision',
+            check: { text: `dp[${i}][${currW}] = ${valCurr} ≠ dp[${i - 1}][${currW}] = ${valPrev}`, ok: false },
+            formula: 'taken ⇔ dp[i][w] ≠ dp[i−1][w]',
+            substitution: `w stays ${currW}`,
+            action: `Item ${i} was not taken: move up to dp[${i - 1}][${currW}].`,
+          },
         },
         highlights: {
           cells: [

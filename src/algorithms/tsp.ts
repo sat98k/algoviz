@@ -1,4 +1,4 @@
-import { AlgorithmStep } from '../types/algorithm';
+import { AlgorithmStep, DpRuleStep } from '../types/algorithm';
 
 export interface TspCity {
   id: number;
@@ -18,6 +18,8 @@ export interface CandidateEdge {
 }
 
 export interface TspState {
+  /** The DP rule applied at this step, for the "Rule for this cell" card. */
+  dpRule?: DpRuleStep;
   numCities: number;
   cities: TspCity[];
   costMatrix: number[][];
@@ -229,6 +231,13 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
       currentMask: 1,
       currentCity: 0,
       currentPhase: 'base',
+      dpRule: {
+        label: 'Base case',
+        tone: 'current',
+        formula: 'DP[{start}, start] = 0',
+        substitution: `DP[{${cities[0].label}}, ${cities[0].label}] = 0`,
+        action: 'Before moving, the path costs nothing.',
+      },
       candidateEdges: [],
       activeTourEdges: [],
       currentSubsetLabel: formatSubsetMask(1, cities),
@@ -325,7 +334,10 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
         yield {
           stepIndex: stepIndex++,
           title: `DP(${subsetLabel}, ${cities[j].label}) = ${minCost}`,
-          description: `Subset ${subsetLabel} (size ${s}): Computing DP for ending city ${cities[j].label} = ${minCost} via predecessor ${bestPredLabel}.`,
+          description:
+            candidates.length > 1
+              ? `The path through ${subsetLabel} must reach ${cities[j].label} from another city in the set; the cheapest way in is from ${bestPredLabel}.`
+              : `The path through ${subsetLabel} can only reach ${cities[j].label} from ${bestPredLabel}.`,
           codeLine: [6, 7],
           state: {
             numCities: n,
@@ -338,6 +350,14 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
             currentCity: j,
             currentPhase: 'fill',
             candidateEdges: candidates,
+            dpRule: {
+              label: `State DP[${subsetLabel}, ${cities[j].label}]`,
+              tone: 'compare',
+              check: candidates.length > 1 ? { text: `cheapest of ${candidates.length} previous cities: ${bestPredLabel}`, ok: true } : undefined,
+              formula: 'DP[S, j] = min_k ( DP[S − {j}, k] + cost(k, j) )',
+              substitution: `${candidates.map((c) => `via ${cities[c.u].label}: ${c.subCost} + ${c.edgeCost} = ${c.totalCost}`).join(';  ')}  →  ${minCost}`,
+              action: `Parent of this state: ${bestPredLabel}.`,
+            },
             activeTourEdges: candidates
               .filter((c) => c.isChosen)
               .map((c) => ({ u: c.u, v: c.v })),
@@ -424,6 +444,13 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
       currentCity: 0,
       currentPhase: 'close',
       candidateEdges: closingCandidates,
+      dpRule: {
+        label: 'Close the tour',
+        tone: 'decision',
+        formula: 'min_j ( DP[all, j] + cost(j, start) )',
+        substitution: `${closingCandidates.map((c) => `end at ${cities[c.u].label}: ${c.subCost} + ${c.edgeCost} = ${c.totalCost}`).join(';  ')}  →  ${optimalCost}`,
+        action: `Best last city: ${cities[bestLastCity].label}.`,
+      },
       activeTourEdges: [{ u: bestLastCity, v: 0 }],
       currentSubsetLabel: fullSubsetLabel,
       calculationFormula: closingFormula,
@@ -448,10 +475,13 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
   const reversedPath: number[] = [0, bestLastCity];
   let currMask = fullMask;
   let currCity = bestLastCity;
+  const maskLabel = (mask: number) => `{${cities.filter((c) => mask & (1 << c.id)).map((c) => c.label).join(', ')}}`;
+  const parentChain: string[] = [];
 
   while (currCity !== 0) {
     const parent = parentTable[`${currMask},${currCity}`];
     if (parent === null || parent === undefined) break;
+    parentChain.push(`DP[${maskLabel(currMask)}, ${cities[currCity].label}] came from ${cities[parent].label}`);
     currMask = currMask ^ (1 << currCity);
     currCity = parent;
     if (currCity !== 0) {
@@ -472,7 +502,7 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
   yield {
     stepIndex: stepIndex++,
     title: 'Backtrack Optimal Tour',
-    description: `Tour Reconstruction: Backtracking through parent pointers reveals optimal tour: ${tourString} with total cost ${optimalCost}.`,
+    description: `Follow the parent pointers back from the best final city ${cities[bestLastCity].label}: ${parentChain.join('; ')}. Reading this chain backwards, starting and ending at ${cities[0].label}, gives the tour ${tourString} with total cost ${optimalCost}.`,
     codeLine: 10,
     state: {
       numCities: n,

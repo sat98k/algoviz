@@ -57,6 +57,48 @@ export interface TimeBound {
   note?: string;
 }
 
+/** Semantic tone of a DP case or rule (maps to the shared colour semantics). */
+export type DpTone = 'match' | 'mismatch' | 'current' | 'compare' | 'decision';
+
+/** One recurrence case: when it applies, what is computed, and what that means. */
+export interface DpCase {
+  /** Short case name, e.g. "Match". */
+  label: string;
+  tone: DpTone;
+  /** When this case applies, as a short expression. */
+  condition: string;
+  /** The formula, plain-text math. */
+  formula: string;
+  /** What it means in a few words. */
+  action: string;
+}
+
+/** Compact visual rules of a DP algorithm, shown before the demonstration. */
+export interface DpBrief {
+  /** Cell notation, e.g. "dp[i][j]". */
+  cell: string;
+  /** One short sentence: what one cell means. */
+  state: string;
+  cases: DpCase[];
+  baseCase: string;
+  fillOrder: string;
+  answer: string;
+  /** Optional extras shown in a collapsed "worked example" section. */
+  details?: { label: string; text: string }[];
+}
+
+/** The rule applied at the current step, read by the "Rule for this cell" card. Values are the step's real data. */
+export interface DpRuleStep {
+  label: string;
+  tone: DpTone;
+  /** The condition checked, with its outcome (✓ / ✗). */
+  check?: { text: string; ok: boolean };
+  formula: string;
+  /** The formula with this step's actual numbers. */
+  substitution: string;
+  action: string;
+}
+
 /** The teaching analysis shown in the "Time and space complexity" section. */
 export interface ComplexityAnalysis {
   variables: { symbol: string; meaning: string }[];
@@ -93,7 +135,7 @@ export interface HighlightInfo {
   pivotIndex?: number;
   sortedIndices?: number[];
   window?: [number, number];
-  cells?: { r: number; c: number; status?: 'active' | 'source' | 'path' | 'check' | 'skip' | 'visited' }[];
+  cells?: { r: number; c: number; status?: 'active' | 'source' | 'path' | 'check' | 'skip' | 'visited'; arrow?: '↖' | '↑' | '←' }[];
   nodes?: (string | number)[];
   activeNode?: string | number;
   prunedNodes?: (string | number)[];
@@ -207,6 +249,8 @@ export interface AlgorithmConfig {
   /** Short summary used by compact views (derived from `analysis`). */
   complexity: ComplexityInfo;
   analysis: ComplexityAnalysis;
+  /** Present for dynamic-programming algorithms. */
+  dpBrief?: DpBrief;
   problemStatement: string;
   explanation: string;
   /** Glossary terms worth linking in this algorithm's learning text and step descriptions. */

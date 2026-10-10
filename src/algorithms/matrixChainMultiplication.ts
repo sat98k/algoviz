@@ -1,4 +1,4 @@
-import { AlgorithmStep } from '../types/algorithm';
+import { AlgorithmStep, DpRuleStep } from '../types/algorithm';
 
 export interface MatrixInfo {
   id: number;
@@ -18,6 +18,8 @@ export interface MCMBacktrackStep {
 }
 
 export interface MCMState {
+  /** The DP rule applied at this step, for the "Rule for this cell" card. */
+  dpRule?: DpRuleStep;
   dimensions: number[];
   matrices: MatrixInfo[];
   dpTable: number[][]; // m[i][j] (1-indexed for display)
@@ -103,6 +105,13 @@ export function* matrixChainMultiplicationSteps(inputs: {
           currentRow: i,
           currentCol: j,
           formulaExplanation: `m[${i}][${j}] = min_{${i} <= k < ${j}} (m[${i}][k] + m[k+1][${j}] + p_${i-1} * p_k * p_${j})`,
+          dpRule: {
+            label: `New cell m[${i}, ${j}]`,
+            tone: 'compare',
+            formula: 'm[i, j] = min_k ( m[i, k] + m[k+1, j] + p[i−1]·p[k]·p[j] )',
+            substitution: `try k = ${Array.from({ length: j - i }, (_, d) => i + d).join(', ')}`,
+            action: 'Try each split and keep the cheapest.',
+          },
         },
         highlights: {
           cells: [{ r: i, c: j, status: 'active' }],
@@ -117,6 +126,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
         const multCost = p[i - 1] * p[k] * p[j];
         const totalCost = costLeft + costRight + multCost;
 
+        const prevBest = m[i][j];
         const isNewMin = totalCost < m[i][j];
         if (isNewMin) {
           m[i][j] = totalCost;
@@ -141,6 +151,16 @@ export function* matrixChainMultiplicationSteps(inputs: {
             bestK: s[i][j],
             minCost: m[i][j],
             formulaExplanation: `Cost at k=${k}: ${costLeft} + ${costRight} + (${p[i - 1]} * ${p[k]} * ${p[j]} = ${multCost}) = ${totalCost}`,
+            dpRule: {
+              label: `Split at k = ${k}`,
+              tone: 'compare',
+              check: Number.isFinite(prevBest)
+                ? { text: `${totalCost} < best so far ${prevBest}`, ok: isNewMin }
+                : { text: 'first split tried', ok: true },
+              formula: 'm[i, k] + m[k+1, j] + p[i−1]·p[k]·p[j]',
+              substitution: `m[${i},${k}] + m[${k + 1},${j}] + ${p[i - 1]}·${p[k]}·${p[j]} = ${costLeft} + ${costRight} + ${multCost} = ${totalCost}`,
+              action: isNewMin ? `New best: m[${i}, ${j}] = ${totalCost}, s[${i}, ${j}] = ${k}.` : `Keep m[${i}, ${j}] = ${prevBest}.`,
+            },
           },
           highlights: {
             cells: [

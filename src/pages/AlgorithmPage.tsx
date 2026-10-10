@@ -20,6 +20,8 @@ import { CodeExplanation } from '../components/common/CodeExplanation';
 import { CallFlowOverlay } from '../components/common/CallFlowOverlay';
 import { ProblemIntuitionPanel } from '../components/common/ProblemIntuitionPanel';
 import { StepExplanation } from '../components/common/StepExplanation';
+import { DpBriefPanel } from '../components/common/DpBriefPanel';
+import { DpCurrentRule } from '../components/common/DpCurrentRule';
 import { FinalAnswerCard } from '../components/common/FinalAnswerCard';
 import { NQueensSolutionsPanel, findSolutionSteps } from '../components/common/NQueensSolutionsPanel';
 
@@ -373,7 +375,12 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
   );
 
   // The step explanation above carries the description, so the pseudocode panel never repeats it.
-  const pseudocodePanel = <CodeExplanation step={currentStep} pseudocode={activePseudocode} hideStepHeader={true} />;
+  const pseudocodePanel = (
+    <div className="flex flex-col gap-3 min-w-0">
+      {config.dpBrief && <DpCurrentRule rule={currentStep.state?.dpRule} />}
+      <CodeExplanation step={currentStep} pseudocode={activePseudocode} hideStepHeader={true} />
+    </div>
+  );
   const currentValuesPanel = <MetricsPanel metrics={currentStep.metrics || {}} />;
 
   const showColoringSolutions =
@@ -461,6 +468,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
           explanation={config.explanation}
           terms={config.glossaryTerms}
         />
+        {config.dpBrief && <DpBriefPanel brief={config.dpBrief} />}
       </motion.div>
 
       {/* Visual learning stage. CallFlowOverlay draws between the visualizer and the

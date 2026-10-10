@@ -26,7 +26,10 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
   const minTotalTime = state.minTotalTime;
   const winningLine = state.winningLine;
 
-  const [showDpMatrix, setShowDpMatrix] = useState<boolean>(false);
+  // Open beside the lines by default on wide screens, where there is room for both.
+  const [showDpMatrix, setShowDpMatrix] = useState<boolean>(
+    () => typeof window !== 'undefined' && !!window.matchMedia?.('(min-width: 1280px)').matches
+  );
 
   // Real-time reactive theme detection for SVG color tokens
   const [isDark, setIsDark] = useState<boolean>(() =>
@@ -153,10 +156,10 @@ export const AssemblyLineVisualizer: React.FC<AssemblyLineVisualizerProps> = ({ 
           </div>
         </div>
 
-        {/* Narrative Callout */}
-        {state.formulaExplanation && (
-          <div className="text-amber-glow text-xs flex items-center gap-2">
-            <span className="text-chalk-500 uppercase font-semibold">[ DP STATE ]:</span>
+        {/* Calculation: shown here only when the DP matrix (which shows it) is closed */}
+        {state.formulaExplanation && !showDpMatrix && !state.dpRule && (
+          <div className="text-sem-formula-ink text-xs flex flex-wrap items-center gap-2 font-mono">
+            <span className="uppercase font-semibold text-[10px] tracking-wider">ƒ Calculation:</span>
             <span>{state.formulaExplanation}</span>
           </div>
         )}

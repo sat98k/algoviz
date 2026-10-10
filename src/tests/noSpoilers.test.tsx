@@ -140,7 +140,7 @@ describe('Educational intermediate values stay visible', () => {
 
   it('Knapsack DP shows each cell value as it is computed', () => {
     const steps = run('knapsack-dp', getDefaultInputs(getAlgorithmById('knapsack-dp')!));
-    expect(steps.filter((s) => /Selected: \d+/.test(s.description)).length).toBeGreaterThan(5);
+    expect(steps.filter((s) => s.state.dpRule && /= \d+$/.test(s.state.dpRule.substitution)).length).toBeGreaterThan(5);
   });
 
   it('TSP visualizer labels a partial approximate cost as "so far", not as the minimum', () => {

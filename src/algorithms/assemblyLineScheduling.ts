@@ -1,4 +1,4 @@
-import { AlgorithmStep } from '../types/algorithm';
+import { AlgorithmStep, DpRuleStep } from '../types/algorithm';
 
 export interface AssemblyLineInputs {
   a1?: number[];
@@ -20,6 +20,8 @@ export interface PathSegment {
 }
 
 export interface AssemblyLineState {
+  /** The DP rule applied at this step, for the "Rule for this cell" card. */
+  dpRule?: DpRuleStep;
   numStations: number;
   a1: number[];
   a2: number[];
@@ -96,6 +98,13 @@ export function* assemblyLineSchedulingSteps(
       optimalPath: [],
       activeSegments: [],
       formulaExplanation: `f1[1] = e1 + a1[1] = ${f1[0]}, f2[1] = e2 + a2[1] = ${f2[0]}`,
+      dpRule: {
+        label: 'Base case: station 1',
+        tone: 'current',
+        formula: 'fₗ[1] = eₗ + aₗ,₁',
+        substitution: `f₁[1] = ${e1} + ${a1[0]} = ${f1[0]};  f₂[1] = ${e2} + ${a2[0]} = ${f2[0]}`,
+        action: 'Station 1 can only be reached from the entrance.',
+      },
       explanation: 'Calculate base arrival costs by adding entry times to station 1 processing times.',
     },
     highlights: {
@@ -128,7 +137,7 @@ export function* assemblyLineSchedulingSteps(
     yield {
       stepIndex: stepIndex++,
       title: `Compute Station ${j + 1} on Line 1`,
-      description: `Line 1 (Station ${j + 1}): Option 1 (Stay on Line 1) = f1[${j}] (${f1[j - 1]}) + a1[${j + 1}] (${a1[j]}) = ${stayLine1}. Option 2 (Transfer from Line 2) = f2[${j}] (${f2[j - 1]}) + t2[${j}] (${t2[j - 1]}) + a1[${j + 1}] (${a1[j]}) = ${transferFrom2}. Selected: f1[${j + 1}] = ${f1[j]} via Line ${l1[j]}.`,
+      description: `To finish station ${j + 1} on line 1, either stay on line 1 or switch from line 2 and pay the transfer time. ${l1[j] === 1 ? 'Staying' : 'Switching'} is faster (${stayLine1} vs ${transferFrom2}).`,
       codeLine: 4,
       state: {
         numStations: n,
@@ -150,6 +159,14 @@ export function* assemblyLineSchedulingSteps(
         optimalPath: [],
         activeSegments: [],
         formulaExplanation: `f1[${j + 1}] = min(f1[${j}] + a1[${j + 1}] = ${stayLine1}, f2[${j}] + t2[${j}] + a1[${j + 1}] = ${transferFrom2}) = ${f1[j]} (from Line ${l1[j]})`,
+        dpRule: {
+          label: `Station ${j + 1} on line 1`,
+          tone: 'compare',
+          check: { text: `stay ${f1[j - 1]} ≤ switch ${f2[j - 1]! + t2[j - 1]}`, ok: l1[j] === 1 },
+          formula: 'f₁[j] = a₁,ⱼ + min( f₁[j−1], f₂[j−1] + t₂,ⱼ₋₁ )',
+          substitution: `f₁[${j + 1}] = ${a1[j]} + min( ${f1[j - 1]}, ${f2[j - 1]} + ${t2[j - 1]} ) = ${f1[j]}`,
+          action: l1[j] === 1 ? 'Stay on line 1.' : 'Switch from line 2.',
+        },
       },
       highlights: {
         nodes: [`L1-S${j + 1}`],
@@ -178,7 +195,7 @@ export function* assemblyLineSchedulingSteps(
     yield {
       stepIndex: stepIndex++,
       title: `Compute Station ${j + 1} on Line 2`,
-      description: `Line 2 (Station ${j + 1}): Option 1 (Stay on Line 2) = f2[${j}] (${f2[j - 1]}) + a2[${j + 1}] (${a2[j]}) = ${stayLine2}. Option 2 (Transfer from Line 1) = f1[${j}] (${f1[j - 1]}) + t1[${j}] (${t1[j - 1]}) + a2[${j + 1}] (${a2[j]}) = ${transferFrom1}. Selected: f2[${j + 1}] = ${f2[j]} via Line ${l2[j]}.`,
+      description: `To finish station ${j + 1} on line 2, either stay on line 2 or switch from line 1 and pay the transfer time. ${l2[j] === 2 ? 'Staying' : 'Switching'} is faster (${stayLine2} vs ${transferFrom1}).`,
       codeLine: 5,
       state: {
         numStations: n,
@@ -200,6 +217,14 @@ export function* assemblyLineSchedulingSteps(
         optimalPath: [],
         activeSegments: [],
         formulaExplanation: `f2[${j + 1}] = min(f2[${j}] + a2[${j + 1}] = ${stayLine2}, f1[${j}] + t1[${j}] + a2[${j + 1}] = ${transferFrom1}) = ${f2[j]} (from Line ${l2[j]})`,
+        dpRule: {
+          label: `Station ${j + 1} on line 2`,
+          tone: 'compare',
+          check: { text: `stay ${f2[j - 1]} ≤ switch ${f1[j - 1]! + t1[j - 1]}`, ok: l2[j] === 2 },
+          formula: 'f₂[j] = a₂,ⱼ + min( f₂[j−1], f₁[j−1] + t₁,ⱼ₋₁ )',
+          substitution: `f₂[${j + 1}] = ${a2[j]} + min( ${f2[j - 1]}, ${f1[j - 1]} + ${t1[j - 1]} ) = ${f2[j]}`,
+          action: l2[j] === 2 ? 'Stay on line 2.' : 'Switch from line 1.',
+        },
       },
       highlights: {
         nodes: [`L2-S${j + 1}`],
@@ -246,6 +271,13 @@ export function* assemblyLineSchedulingSteps(
       minTotalTime,
       winningLine,
       formulaExplanation: `f* = min(f1[${n}] + x1 = ${exitLine1}, f2[${n}] + x2 = ${exitLine2}) = ${minTotalTime} (Exit Line ${winningLine})`,
+      dpRule: {
+        label: 'Choose the exit',
+        tone: 'decision',
+        formula: 'min( f₁[n] + x₁, f₂[n] + x₂ )',
+        substitution: `min( ${f1[n - 1]} + ${x1}, ${f2[n - 1]} + ${x2} ) = min( ${exitLine1}, ${exitLine2} ) = ${minTotalTime}`,
+        action: `Exit from line ${winningLine}.`,
+      },
     },
     highlights: {
       nodes: [`L${winningLine}-S${n}`],

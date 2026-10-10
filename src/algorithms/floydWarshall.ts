@@ -1,4 +1,4 @@
-import { AlgorithmStep } from '../types/algorithm';
+import { AlgorithmStep, DpRuleStep } from '../types/algorithm';
 
 export interface GraphNode {
   id: string;
@@ -16,6 +16,8 @@ export interface GraphEdge {
 }
 
 export interface FloydWarshallState {
+  /** The DP rule applied at this step, for the "Rule for this cell" card. */
+  dpRule?: DpRuleStep;
   nodes: GraphNode[];
   edges: GraphEdge[];
   distMatrix: (number | null)[][];
@@ -25,6 +27,8 @@ export interface FloydWarshallState {
   j: number;
   updatedCell?: { i: number; j: number };
   explanation?: string;
+  /** The comparison made at this step: the current best D[i][j] versus going through vertex k. */
+  comparison?: { direct: number | null; legIK: number | null; legKJ: number | null; viaK: number | null; improved: boolean };
 }
 
 export function* floydWarshallSteps(inputs: {
@@ -146,6 +150,15 @@ export function* floydWarshallSteps(inputs: {
               k,
               i,
               j,
+              comparison: { direct: dij, legIK: dik, legKJ: dkj, viaK: null, improved: false },
+              dpRule: {
+                label: 'Not shorter (no route via k)',
+                tone: 'mismatch',
+                check: { text: `D[V${i + 1}][V${k + 1}] + D[V${k + 1}][V${j + 1}] < D[V${i + 1}][V${j + 1}]`, ok: false },
+                formula: 'D[i][j] = min( D[i][j], D[i][k] + D[k][j] )',
+                substitution: `D[V${i + 1}][V${j + 1}] = min( ${dij ?? '∞'}, ${dik ?? '∞'} + ${dkj ?? '∞'} ) = ${dij ?? '∞'}`,
+                action: `A leg through V${k + 1} does not exist: keep ${dij ?? '∞'}.`,
+              },
               explanation: `D[V${i + 1}][V${k + 1}] + D[V${k + 1}][V${j + 1}] = ${
                 dik === null ? '∞' : dik
               } + ${dkj === null ? '∞' : dkj} = ∞`,
@@ -191,6 +204,15 @@ export function* floydWarshallSteps(inputs: {
                 i,
                 j,
                 updatedCell: { i, j },
+                comparison: { direct: oldDij, legIK: dik, legKJ: dkj, viaK: throughK, improved: true },
+                dpRule: {
+                  label: 'Shorter through k',
+                  tone: 'match',
+                  check: { text: `${dik} + ${dkj} < ${oldDij ?? '∞'}`, ok: true },
+                  formula: 'D[i][j] = min( D[i][j], D[i][k] + D[k][j] )',
+                  substitution: `D[V${i + 1}][V${j + 1}] = min( ${oldDij ?? '∞'}, ${dik} + ${dkj} ) = ${throughK}`,
+                  action: `Update: route V${i + 1} → V${k + 1} → V${j + 1}.`,
+                },
                 explanation: `D[V${i + 1}][V${j + 1}] = min(${oldDij ?? '∞'}, ${dik} + ${dkj}) = ${throughK}`,
               },
               highlights: {
@@ -222,6 +244,15 @@ export function* floydWarshallSteps(inputs: {
                 k,
                 i,
                 j,
+                comparison: { direct: dij, legIK: dik, legKJ: dkj, viaK: throughK, improved: false },
+                dpRule: {
+                  label: 'Not shorter',
+                  tone: 'mismatch',
+                  check: { text: `${dik} + ${dkj} < ${dij}`, ok: false },
+                  formula: 'D[i][j] = min( D[i][j], D[i][k] + D[k][j] )',
+                  substitution: `D[V${i + 1}][V${j + 1}] = min( ${dij}, ${dik} + ${dkj} ) = ${dij}`,
+                  action: `Keep ${dij}.`,
+                },
                 explanation: `min(${dij}, ${dik} + ${dkj}) = ${dij} (no change)`,
               },
               highlights: {

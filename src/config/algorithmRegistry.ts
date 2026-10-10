@@ -37,6 +37,7 @@ import { jobSelectionBBSteps } from '../algorithms/jobSelectionBB';
 import * as resultSummaries from './resultSummaries';
 import { COMPARISON_PROFILES } from './comparisonProfiles';
 import { COMPLEXITY_ANALYSIS, complexityFrom } from './complexityAnalysis';
+import { DP_BRIEFS } from './dpBriefs';
 
 export const algorithmRegistry: AlgorithmConfig[] = [
   // Module 1: Greedy — Fractional Knapsack
@@ -352,6 +353,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     paradigm: 'Dynamic Programming',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['knapsack-dp']),
     analysis: COMPLEXITY_ANALYSIS['knapsack-dp'],
+    dpBrief: DP_BRIEFS['knapsack-dp'],
     problemStatement:
       'Given weights and values of n items, determine the items to include in a knapsack of capacity W to maximize total value without exceeding capacity.',
     explanation:
@@ -433,6 +435,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     paradigm: 'Dynamic Programming',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['lcs']),
     analysis: COMPLEXITY_ANALYSIS['lcs'],
+    dpBrief: DP_BRIEFS['lcs'],
     problemStatement:
       'Find the longest subsequence common to two sequences X and Y (characters appear in the same relative order, not necessarily contiguous).',
     explanation:
@@ -447,8 +450,12 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '        dpTable[i][j] = 1 + dpTable[i - 1][j - 1]',
       '      else: // Character mismatch: inherit best score from top or left cell',
       '        dpTable[i][j] = max(dpTable[i - 1][j], dpTable[i][j - 1])',
-      '  lcsString = backtrackLCS(dpTable, str1, str2, len1, len2) // Trace diagonal match steps',
-      '  return { length: dpTable[len1][len2], lcsString }',
+      '  i = len1; j = len2; lcs = "" // Traceback starts at the bottom-right cell',
+      '  while i > 0 and j > 0:',
+      '    if str1[i - 1] == str2[j - 1]: lcs = str1[i - 1] + lcs; i--; j-- // ↖ match: character is in the LCS',
+      '    else if dpTable[i - 1][j] >= dpTable[i][j - 1]: i-- // ↑ value came from the top cell',
+      '    else: j-- // ← value came from the left cell',
+      '  return { length: dpTable[len1][len2], lcsString: lcs }',
     ],
     visualizer: 'GridTableVisualizer',
     inputSchema: [
@@ -491,6 +498,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     paradigm: 'Dynamic Programming',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['matrix-chain-multiplication']),
     analysis: COMPLEXITY_ANALYSIS['matrix-chain-multiplication'],
+    dpBrief: DP_BRIEFS['matrix-chain-multiplication'],
     problemStatement:
       'Given a sequence of matrices A1, A2, ..., An with specified dimensions, find the optimal parenthesization that minimizes the total number of scalar multiplications.',
     explanation:
@@ -567,6 +575,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     paradigm: 'Dynamic Programming',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['assembly-line-scheduling']),
     analysis: COMPLEXITY_ANALYSIS['assembly-line-scheduling'],
+    dpBrief: DP_BRIEFS['assembly-line-scheduling'],
     problemStatement:
       'Given two parallel assembly lines with n manufacturing stations, processing times, line transfer penalties, and entry/exit times, determine the fastest path to assemble an automobile.',
     explanation:
@@ -739,6 +748,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     paradigm: 'Dynamic Programming',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['tsp']),
     analysis: COMPLEXITY_ANALYSIS['tsp'],
+    dpBrief: DP_BRIEFS['tsp'],
     problemStatement:
       'Given a list of cities and pairwise travel costs, find the minimum-weight Hamiltonian cycle that visits every city exactly once and returns to the origin.',
     explanation:
@@ -1243,6 +1253,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     paradigm: 'Graph',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['floyd-warshall']),
     analysis: COMPLEXITY_ANALYSIS['floyd-warshall'],
+    dpBrief: DP_BRIEFS['floyd-warshall'],
     problemStatement:
       'Compute the shortest path distances between every pair of vertices in a directed, weighted graph (which may contain negative edge weights but no negative cycles).',
     explanation:

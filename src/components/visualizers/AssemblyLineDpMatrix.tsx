@@ -85,13 +85,13 @@ export const AssemblyLineDpMatrix: React.FC<AssemblyLineDpMatrixProps> = ({ step
       </div>
 
       {/* Recurrence & Active Calculation Box */}
-      {state.formulaExplanation && (
+      {state.formulaExplanation && !state.dpRule && (
         <div className="p-2.5 bg-obsidian-950 border-b border-hairline flex flex-col gap-1 text-[11px]">
           <div className="flex items-center gap-1 text-chalk-500 uppercase text-[10px] font-semibold">
             <HelpCircle className="w-3 h-3 text-amber" />
-            <span>Recurrence Evaluation</span>
+            <span>ƒ Calculation</span>
           </div>
-          <p className="text-amber-glow font-mono leading-tight break-all">
+          <p className="text-sem-formula-ink font-mono leading-tight break-all">
             {state.formulaExplanation}
           </p>
         </div>

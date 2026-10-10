@@ -773,6 +773,14 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
           </div>
         )}
 
+        {isFloyd && state.k !== undefined && state.k >= 0 && (
+          <div className="flex flex-col gap-1.5 mb-3 font-mono text-xs">
+            <p className="text-sem-current-ink">
+              ▶ Round {state.k + 1}: paths may stop only at {nodes.slice(0, state.k + 1).map((nd) => nd.label).join(', ')}
+              {state.k + 1 < nodes.length ? '' : ' (every vertex)'}.
+            </p>
+          </div>
+        )}
         <div className="w-full overflow-x-auto max-h-[340px]">
           <table className="w-full border-collapse text-center text-xs font-mono">
             <thead>
@@ -845,18 +853,18 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                       const isUpdated = state.updatedCell?.i === r && state.updatedCell?.j === c;
                       const isSubpathIK = isFloyd && state.i === r && state.k === c;
                       const isSubpathKJ = isFloyd && state.k === r && state.j === c;
+                      const isDirectIJ = isFloyd && state.i === r && state.j === c;
                       const augRel = getAugmentingRelation(r, c);
 
                       let cellStyle = 'text-chalk-300';
                       let cellContent: React.ReactNode = val === null ? '∞' : val;
 
                       if (isUpdated) {
-                        cellStyle =
-                          'bg-amber/30 text-amber-glow font-extrabold border-2 border-amber shadow-sm scale-105';
-                      } else if (isSubpathIK) {
-                        cellStyle = 'bg-sky-950/50 text-sky-300 font-semibold border border-sky-600/40';
-                      } else if (isSubpathKJ) {
-                        cellStyle = 'bg-purple-950/50 text-purple-300 font-semibold border border-purple-600/40';
+                        cellStyle = 'bg-sem-match/20 text-sem-match-ink font-extrabold border-2 border-sem-match shadow-sm scale-105';
+                      } else if (isDirectIJ) {
+                        cellStyle = 'bg-sem-current/15 text-sem-current-ink font-bold border border-sem-current';
+                      } else if (isSubpathIK || isSubpathKJ) {
+                        cellStyle = 'bg-sem-compare/15 text-sem-compare-ink font-semibold border border-sem-compare/60';
                       } else if (augRel === 'forward') {
                         cellStyle =
                           'bg-acid-500/25 text-acid-400 font-bold border-2 border-acid-500/70 shadow-sm';

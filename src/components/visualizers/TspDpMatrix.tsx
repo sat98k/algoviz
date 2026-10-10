@@ -104,7 +104,7 @@ export const TspDpMatrix: React.FC<TspDpMatrixProps> = ({ step, onClose }) => {
       </div>
 
       {/* Recurrence & Active Calculation Formula Box */}
-      {state.calculationFormula && (
+      {state.calculationFormula && !state.dpRule && (
         <div className="p-3 bg-obsidian-900/60 border-b border-hairline flex flex-col gap-1 text-[11px]">
           <div className="flex items-center gap-1.5 text-chalk-500 uppercase text-[10px] font-semibold">
             <HelpCircle className="w-3.5 h-3.5 text-amber" />
