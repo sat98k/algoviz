@@ -134,7 +134,7 @@ export function* lineSegmentIntersectionSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Initialize Sweep-Line Segment Intersection',
     description: `Loaded ${segments.length} line segments. Generated ${events.length} event points (endpoints sorted by x-coordinate). Sweep line will move from left to right to detect whether ANY pair of segments intersect.`,
-    codeLine: 1,
+    codeLine: [1, 2, 3],
     state: {
       segments: [...segments],
       currentSweepX: events[0]?.x ? events[0].x - 20 : 0,
@@ -175,7 +175,7 @@ export function* lineSegmentIntersectionSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Left Endpoint Event: Insert ${currentSeg.label} at x = ${event.x}`,
         description: `Sweep line reached left endpoint of ${currentSeg.label} (${event.x}, ${event.y}). Inserted ${currentSeg.label} into active structure T. Active set: [${activeSegmentIds.join(', ')}].`,
-        codeLine: [2, 3],
+        codeLine: [4, 5, 6],
         state: {
           segments: [...segments],
           currentSweepX: event.x,
@@ -200,7 +200,7 @@ export function* lineSegmentIntersectionSteps(inputs: {
           stepIndex: stepIndex++,
           title: `Check Adjacency: ${currentSeg.label} and Above Neighbor ${aboveSeg.label}`,
           description: `Testing newly adjacent segments (${currentSeg.label}, ${aboveSeg.label}) in active status T for intersection.`,
-          codeLine: [4, 5],
+          codeLine: 7,
           state: {
             segments: [...segments],
             currentSweepX: event.x,
@@ -222,7 +222,7 @@ export function* lineSegmentIntersectionSteps(inputs: {
             stepIndex: stepIndex++,
             title: `INTERSECTION FOUND: ${currentSeg.label} × ${aboveSeg.label}`,
             description: `Intersection confirmed between ${currentSeg.label} and ${aboveSeg.label} at point (${res.point?.x}, ${res.point?.y})! Algorithm terminates early with positive result.`,
-            codeLine: 6,
+            codeLine: 7,
             state: {
               segments: [...segments],
               currentSweepX: event.x,
@@ -259,7 +259,7 @@ export function* lineSegmentIntersectionSteps(inputs: {
           stepIndex: stepIndex++,
           title: `Check Adjacency: ${currentSeg.label} and Below Neighbor ${belowSeg.label}`,
           description: `Testing newly adjacent segments (${currentSeg.label}, ${belowSeg.label}) in active status T for intersection.`,
-          codeLine: [4, 5],
+          codeLine: 8,
           state: {
             segments: [...segments],
             currentSweepX: event.x,
@@ -281,7 +281,7 @@ export function* lineSegmentIntersectionSteps(inputs: {
             stepIndex: stepIndex++,
             title: `INTERSECTION FOUND: ${currentSeg.label} × ${belowSeg.label}`,
             description: `Intersection confirmed between ${currentSeg.label} and ${belowSeg.label} at point (${res.point?.x}, ${res.point?.y})! Algorithm terminates early with positive result.`,
-            codeLine: 6,
+            codeLine: 8,
             state: {
               segments: [...segments],
               currentSweepX: event.x,
@@ -319,7 +319,7 @@ export function* lineSegmentIntersectionSteps(inputs: {
         stepIndex: stepIndex++,
         title: `Right Endpoint Event: Remove ${currentSeg.label} at x = ${event.x}`,
         description: `Sweep line reached right endpoint of ${currentSeg.label} (${event.x}, ${event.y}). Removed ${currentSeg.label} from active structure T. Remaining active: [${activeSegmentIds.join(', ')}].`,
-        codeLine: 7,
+        codeLine: [9, 10, 11],
         state: {
           segments: [...segments],
           currentSweepX: event.x,
@@ -343,7 +343,7 @@ export function* lineSegmentIntersectionSteps(inputs: {
           stepIndex: stepIndex++,
           title: `Check Former Neighbors: ${aboveSeg.label} and ${belowSeg.label}`,
           description: `Segments ${aboveSeg.label} and ${belowSeg.label} are now newly adjacent in T after deleting ${currentSeg.label}. Testing them for intersection.`,
-          codeLine: 8,
+          codeLine: 12,
           state: {
             segments: [...segments],
             currentSweepX: event.x,
@@ -365,7 +365,7 @@ export function* lineSegmentIntersectionSteps(inputs: {
             stepIndex: stepIndex++,
             title: `INTERSECTION FOUND: ${aboveSeg.label} × ${belowSeg.label}`,
             description: `Intersection confirmed between ${aboveSeg.label} and ${belowSeg.label} at point (${res.point?.x}, ${res.point?.y})!`,
-            codeLine: 6,
+            codeLine: 12,
             state: {
               segments: [...segments],
               currentSweepX: event.x,
@@ -399,7 +399,7 @@ export function* lineSegmentIntersectionSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Sweep-Line Complete: No Intersections Found',
     description: `Sweep line traversed all ${events.length} event points across the plane. Zero intersecting segment pairs detected among the input set.`,
-    codeLine: 9,
+    codeLine: 13,
     state: {
       segments: [...segments],
       currentSweepX: (events[events.length - 1]?.x || 500) + 30,

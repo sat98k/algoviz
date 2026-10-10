@@ -21,6 +21,7 @@ import { CallFlowOverlay } from '../components/common/CallFlowOverlay';
 import { ProblemIntuitionPanel } from '../components/common/ProblemIntuitionPanel';
 import { StepExplanation } from '../components/common/StepExplanation';
 import { FinalAnswerCard } from '../components/common/FinalAnswerCard';
+import { NQueensSolutionsPanel, findSolutionSteps } from '../components/common/NQueensSolutionsPanel';
 
 import { ArrowLeft, Columns, Maximize2, Play, RefreshCw } from 'lucide-react';
 
@@ -262,95 +263,59 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
     </div>
   );
 
-  const subsetSumModeSwitch = config.id === 'subset-sum' && (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-obsidian-950 border border-amber/40 shadow-sm font-mono text-xs">
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] text-chalk-400 uppercase font-bold tracking-wider">
-          SEARCH MODE:
-        </span>
-        <button
-          type="button"
-          onClick={() => {
-            setIsPlaying(false);
-            setCurrentStepIndex(0);
-            setInputs((prev) => ({ ...prev, findMode: 'first' }));
-          }}
-          className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
-            (inputs.findMode ?? 'first') === 'first'
-              ? 'bg-amber text-obsidian-950 border-amber shadow-sm'
-              : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
-          }`}
-        >
-          FIND FIRST SOLUTION
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setIsPlaying(false);
-            setCurrentStepIndex(0);
-            setInputs((prev) => ({ ...prev, findMode: 'all' }));
-          }}
-          className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
-            inputs.findMode === 'all'
-              ? 'bg-amber text-obsidian-950 border-amber shadow-sm'
-              : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
-          }`}
-        >
-          FIND ALL SOLUTIONS
-        </button>
+  /** First / All solutions switch shared by the search algorithms. Changing mode restarts the run. */
+  const renderModeSwitch = (isAll: boolean, setAll: (all: boolean) => void, firstHint: string, allHint: string) => (
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-obsidian-950 border border-hairline font-mono text-xs">
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Search mode">
+        <span className="text-[11px] text-chalk-400 uppercase font-bold tracking-wider">Search mode:</span>
+        {([false, true] as const).map((all) => (
+          <button
+            key={String(all)}
+            type="button"
+            aria-pressed={isAll === all}
+            onClick={() => {
+              setIsPlaying(false);
+              setCurrentStepIndex(0);
+              setAll(all);
+            }}
+            className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
+              isAll === all ? 'bg-amber text-obsidian-950 border-amber shadow-sm' : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
+            }`}
+          >
+            {all ? 'Find all solutions' : 'Find first solution'}
+          </button>
+        ))}
       </div>
-      <span className="text-[11px] text-chalk-500 hidden sm:inline">
-        {inputs.findMode === 'all'
-          ? '⚡ Exhaustive search: continues backtracking to discover all subsets'
-          : '⚡ Fast search: stops immediately upon finding first valid subset'}
-      </span>
+      <span className="text-[11px] text-chalk-400">{isAll ? allHint : firstHint}</span>
     </div>
   );
 
-  const graphColoringModeSwitch = config.id === 'graph-coloring' && (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-obsidian-950 border border-amber/40 shadow-sm font-mono text-xs">
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] text-chalk-400 uppercase font-bold tracking-wider">
-          SEARCH MODE:
-        </span>
-        <button
-          type="button"
-          onClick={() => {
-            setIsPlaying(false);
-            setCurrentStepIndex(0);
-            setInputs((prev) => ({ ...prev, findMode: 'first' }));
-          }}
-          className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
-            (inputs.findMode ?? 'first') === 'first'
-              ? 'bg-amber text-obsidian-950 border-amber shadow-sm'
-              : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
-          }`}
-        >
-          FIND FIRST SOLUTION
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setIsPlaying(false);
-            setCurrentStepIndex(0);
-            setInputs((prev) => ({ ...prev, findMode: 'all' }));
-          }}
-          className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
-            inputs.findMode === 'all'
-              ? 'bg-amber text-obsidian-950 border-amber shadow-sm'
-              : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
-          }`}
-        >
-          FIND ALL SOLUTIONS
-        </button>
-      </div>
-      <span className="text-[11px] text-chalk-500 hidden sm:inline">
-        {inputs.findMode === 'all'
-          ? '⚡ Exhaustive search: continues backtracking to discover all valid colorings'
-          : '⚡ Fast search: stops immediately upon finding first valid coloring'}
-      </span>
-    </div>
-  );
+  const subsetSumModeSwitch =
+    config.id === 'subset-sum' &&
+    renderModeSwitch(
+      inputs.findMode === 'all',
+      (all) => setInputs((prev) => ({ ...prev, findMode: all ? 'all' : 'first' })),
+      'Stops as soon as one subset reaches the target.',
+      'Keeps backtracking after each match to find every subset that reaches the target.'
+    );
+
+  const graphColoringModeSwitch =
+    config.id === 'graph-coloring' &&
+    renderModeSwitch(
+      inputs.findMode === 'all',
+      (all) => setInputs((prev) => ({ ...prev, findMode: all ? 'all' : 'first' })),
+      'Stops as soon as every vertex has a valid color.',
+      'Keeps backtracking after each valid coloring to find all of them.'
+    );
+
+  const nQueensModeSwitch =
+    config.id === 'n-queens' &&
+    renderModeSwitch(
+      inputs.findAll === true,
+      (all) => setInputs((prev) => ({ ...prev, findAll: all })),
+      'Stops at the first valid placement. Other solutions may exist.',
+      `Explores every placement and collects every solution (${activeSteps.length.toLocaleString()} steps for this board). Use the solutions gallery to jump straight to any solution.`
+    );
 
   const layoutToggle = (
     <div className="flex items-center gap-1 bg-obsidian-950 border border-hairline p-1 font-mono text-xs">
@@ -414,7 +379,24 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
   const showColoringSolutions =
     config.id === 'graph-coloring' && (inputs.findMode === 'all' || currentStep.state?.allSolutions?.length);
 
-  const finalAnswer = showColoringSolutions ? (
+  // N-Queens "find all": gallery of solutions found so far, each linked to the step that found it.
+  const nQueensSolutionSteps = useMemo(
+    () => (config.id === 'n-queens' ? findSolutionSteps(activeSteps) : []),
+    [config.id, activeSteps]
+  );
+
+  const finalAnswer = config.id === 'n-queens' && inputs.findAll ? (
+    <NQueensSolutionsPanel
+      n={currentStep.state?.n ?? inputs.n ?? 4}
+      solutions={currentStep.state?.solutions ?? []}
+      foundAtStep={nQueensSolutionSteps}
+      isFinal={!!currentStep.isFinal}
+      onJump={(idx) => {
+        setIsPlaying(false);
+        setCurrentStepIndex(idx);
+      }}
+    />
+  ) : showColoringSolutions ? (
     <ColoringSolutionsPanel
       solutions={currentStep.state?.allSolutions || (finalStep?.result?.allSolutions ?? [])}
       numColors={currentStep.state?.numColors ?? inputs.numColors ?? 3}
@@ -489,6 +471,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
         {config.id === 'huffman' && huffmanStageSwitch}
         {subsetSumModeSwitch}
         {graphColoringModeSwitch}
+        {nQueensModeSwitch}
 
         {layoutMode === 'split' ? (
           /* Split: visualization, explanation and controls on the left; pseudocode and values beside them. */

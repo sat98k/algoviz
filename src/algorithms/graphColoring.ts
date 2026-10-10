@@ -270,7 +270,9 @@ export function* graphColoringSteps(inputs: {
 
       yield makeStep(
         `Backtrack: Uncolor ${vertexLabel}`,
-        `Backtracking from vertex ${vertexLabel}. Removing color ${colorName} (${c}) and trying the next color.`,
+        findMode === 'all'
+          ? `All colorings that continue from ${vertexLabel} = ${colorName} have been explored. Remove ${colorName} from ${vertexLabel}${c < k ? ' and try its next color.' : '; it has no colors left, so the search backs up to the previous vertex.'}`
+          : `The vertices after ${vertexLabel} could not all be colored, so ${vertexLabel}'s color ${colorName} is removed${c < k ? ' and its next color is tried.' : '. It has no colors left to try, so the search backs up to the previous vertex.'}`,
         7,
         `Backtrack: ${vertexLabel} uncolored (was ${colorName})`,
         vertexId,

@@ -170,8 +170,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
             if (!converted) return null;
 
             if (isSubsetSum) {
-              converted.edgeLabel = idx === 0 ? '+Elem' : '-Elem';
-              converted.edgeStatus = idx === 0 ? 'include' : 'exclude';
+              const included = child.itemIncluded ?? idx === 0;
+              const value = child.element !== undefined ? String(child.element) : '';
+              converted.edgeLabel = included ? `+${value}` : `−${value}`;
+              converted.edgeStatus = included ? 'include' : 'exclude';
             } else if (isJobSelection) {
               const jId = child.jobId ?? child.level;
               converted.edgeLabel = child.jobIncluded ? `+J${jId}` : `-J${jId}`;

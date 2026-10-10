@@ -7,6 +7,8 @@ export interface SubsetSumTreeNode {
   remainingSum: number;
   includedElements: number[];
   itemIncluded?: boolean;
+  /** The number this branch decides on (included or excluded), for "+4" / "−4" edge labels. */
+  element?: number;
   status?: 'active' | 'explored' | 'pruned' | 'solution' | 'normal';
   pruneReason?: string;
   children?: SubsetSumTreeNode[];
@@ -243,6 +245,7 @@ export function* subsetSumSteps(inputs: SubsetSumInputs): Generator<AlgorithmSte
       remainingSum: newRemaining,
       includedElements: [...included, elem],
       itemIncluded: true,
+      element: elem,
       status: 'active',
       children: [],
     };
@@ -259,7 +262,7 @@ export function* subsetSumSteps(inputs: SubsetSumInputs): Generator<AlgorithmSte
 
       yield makeSnapshot(
         `Prune: +${elem} Exceeds Target`,
-        `Including element ${elem} makes current sum ${includeSum}, which exceeds target ${targetSum}. Pruning branch.`,
+        `Including ${elem} makes the sum ${currentSum} + ${elem} = ${includeSum}, which is more than the target ${targetSum}. All numbers are positive and sorted, so adding anything else only makes it bigger: no subset in this branch can work, so it is pruned.`,
         5,
         includeNode.id,
         currentSum,
@@ -281,7 +284,7 @@ export function* subsetSumSteps(inputs: SubsetSumInputs): Generator<AlgorithmSte
 
       yield makeSnapshot(
         `Prune: +${elem} Insufficient Remaining`,
-        `Including ${elem} gives sum ${includeSum}, but even taking all remaining elements yields max sum ${includeSum + newRemaining} < target ${targetSum}. Pruning.`,
+        `Including ${elem} gives sum ${includeSum}. Even if every remaining number were added too, the sum would only reach ${includeSum} + ${newRemaining} = ${includeSum + newRemaining}, still less than the target ${targetSum}. This branch can never reach the target, so it is pruned.`,
         6,
         includeNode.id,
         currentSum,
@@ -313,6 +316,26 @@ export function* subsetSumSteps(inputs: SubsetSumInputs): Generator<AlgorithmSte
 
       const found = yield* backtrack(index + 1, includeSum, newRemaining, includeNode.includedElements, includeNode);
       if (findMode === 'first' && found) return true;
+
+      // Coming back up: undo the "+elem" choice before trying the "−elem" branch.
+      backtracks++;
+      yield makeSnapshot(
+        `Backtrack: Undo +${elem}`,
+        findMode === 'all'
+          ? `Every subset below "+${elem}" has been explored. Undo that choice (sum back to ${currentSum}) and try the branch that leaves ${elem} out.`
+          : `No subset below "+${elem}" reaches ${targetSum}. Undo that choice (sum back to ${currentSum}) and try the branch that leaves ${elem} out.`,
+        8,
+        parentNode.id,
+        currentSum,
+        included,
+        `Undo +${elem}: running sum ${includeSum} ➔ ${currentSum}`,
+        `Backtrack to sum ${currentSum} / ${targetSum}`,
+        index,
+        elem,
+        false,
+        undefined,
+        { type: 'return', nodeId: includeNode.id }
+      );
     }
 
     // --- OPTION 2: EXCLUDE numbers[index] ---
@@ -326,6 +349,7 @@ export function* subsetSumSteps(inputs: SubsetSumInputs): Generator<AlgorithmSte
       remainingSum: newRemaining,
       includedElements: [...included],
       itemIncluded: false,
+      element: elem,
       status: 'active',
       children: [],
     };
@@ -342,7 +366,7 @@ export function* subsetSumSteps(inputs: SubsetSumInputs): Generator<AlgorithmSte
 
       yield makeSnapshot(
         `Prune: Exclude ${elem} (Remaining Insufficient)`,
-        `Excluding ${elem} leaves sum ${currentSum}. Max achievable with remaining elements is ${currentSum + newRemaining} < target ${targetSum}. Pruning.`,
+        `Leaving out ${elem} keeps the sum at ${currentSum}. Even if every number after it were added, the sum would only reach ${currentSum} + ${newRemaining} = ${currentSum + newRemaining}, less than the target ${targetSum}. Without ${elem} the target is out of reach, so this branch is pruned.`,
         9,
         excludeNode.id,
         currentSum,

@@ -50,7 +50,9 @@ describe('Subset Sum (M2 Backtracking)', () => {
     const steps = Array.from(subsetSumSteps({ numbers, targetSum, findMode: 'first' }));
     const finalStep = steps[steps.length - 1];
 
-    expect(steps.length).toBe(20);
+    // 20 search steps + 2 explicit "Backtrack: Undo +x" steps (Phase 5)
+    expect(steps.length).toBe(22);
+    expect(steps.filter((st) => st.title.startsWith('Backtrack: Undo')).length).toBe(2);
     expect(finalStep.isFinal).toBe(true);
     expect(finalStep.result.found).toBe(true);
     expect(finalStep.result.subset).toEqual([5, 10, 15]);
@@ -58,7 +60,7 @@ describe('Subset Sum (M2 Backtracking)', () => {
     expect(finalStep.result.allSolutions).toEqual([[5, 10, 15]]);
   });
 
-  it('exhaustively finds all 3 solutions (91 steps) when findMode is all', () => {
+  it('exhaustively finds all 3 solutions (111 steps) when findMode is all', () => {
     const numbers = [5, 10, 12, 13, 15, 18];
     const targetSum = 30;
 
@@ -66,7 +68,9 @@ describe('Subset Sum (M2 Backtracking)', () => {
     const steps = Array.from(config!.stepGenerator({ numbers, targetSum, findMode: 'all' }));
     const finalStep = steps[steps.length - 1];
 
-    expect(steps.length).toBe(91);
+    // 91 search steps + 20 explicit "Backtrack: Undo +x" steps (Phase 5)
+    expect(steps.length).toBe(111);
+    expect(steps.filter((st) => st.title.startsWith('Backtrack: Undo')).length).toBe(20);
     expect(finalStep.isFinal).toBe(true);
     expect(finalStep.result.found).toBe(true);
     expect(finalStep.result.solutionsCount).toBe(3);

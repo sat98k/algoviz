@@ -1968,7 +1968,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     problemStatement:
       'Given a collection of 2D line segments, determine whether any two segments intersect using a vertical sweep line moving left to right.',
     explanation:
-      'The Bentley-Ottmann sweep-line paradigm sorts all segment endpoints by x-coordinate. As the sweep line moves left to right, segments currently cutting the sweep line are stored in an active status structure T ordered by y-coordinate. New segments are tested for intersection only with their immediate above/below neighbors in T, reducing naive O(n²) comparisons to O(n log n).',
+      'The Bentley-Ottmann sweep-line paradigm sorts all segment endpoints by x-coordinate. As the sweep line moves left to right, segments currently cutting the sweep line are stored in an active status structure T ordered by y-coordinate. Only segments that are neighbours in T are ever tested: when a segment is inserted it is tested against the segments directly above and below it, and when a segment is deleted its former above and below neighbours become adjacent and are tested against each other. The leftmost intersection always involves two segments that are neighbours just before it, so these checks are enough, reducing naive O(n²) comparisons to O(n log n).',
     glossaryTerms: ['sweep-line'],
     pseudocode: [
       'function AnySegmentsIntersect(segments):',
@@ -1989,6 +1989,17 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     inputSchema: [],
     presets: [
       {
+        name: 'Neighbours Change Mid-Sweep',
+        description: 'A short middle segment separates two long ones; when it ends, the long segments become neighbours for the first time',
+        data: {
+          segments: [
+            { id: 'S1', label: 'S1', p1: { x: 50, y: 300 }, p2: { x: 450, y: 100 } },
+            { id: 'S2', label: 'S2', p1: { x: 80, y: 190 }, p2: { x: 200, y: 190 } },
+            { id: 'S3', label: 'S3', p1: { x: 100, y: 80 }, p2: { x: 450, y: 280 } },
+          ],
+        },
+      },
+      {
         name: 'Classic 4 Segments',
         description: '4 segments with different slopes',
         data: {
@@ -2008,17 +2019,6 @@ export const algorithmRegistry: AlgorithmConfig[] = [
             { id: 'S1', label: 'S1', p1: { x: 50, y: 100 }, p2: { x: 300, y: 100 } },
             { id: 'S2', label: 'S2', p1: { x: 50, y: 200 }, p2: { x: 300, y: 200 } },
             { id: 'S3', label: 'S3', p1: { x: 50, y: 300 }, p2: { x: 300, y: 300 } },
-          ],
-        },
-      },
-      {
-        name: 'Neighbours Change Mid-Sweep',
-        description: 'A middle segment ends partway through the sweep, so two other segments become neighbours',
-        data: {
-          segments: [
-            { id: 'S1', label: 'S1', p1: { x: 50, y: 250 }, p2: { x: 450, y: 190 } },
-            { id: 'S2', label: 'S2', p1: { x: 80, y: 200 }, p2: { x: 240, y: 200 } },
-            { id: 'S3', label: 'S3', p1: { x: 50, y: 150 }, p2: { x: 450, y: 210 } },
           ],
         },
       },
@@ -2617,7 +2617,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         integer: true,
         itemMin: 1,
         maxLength: 8,
-        defaultValue: [3, 34, 4, 12, 5, 2],
+        defaultValue: [2, 4, 5, 9],
         placeholder: 'e.g. 3, 34, 4, 12, 5, 2',
         helperText: 'Positive integers (comma-separated). Will be sorted internally for better pruning.',
       },
@@ -2626,7 +2626,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         label: 'Target Sum',
         type: 'number',
         integer: true,
-        defaultValue: 9,
+        defaultValue: 16,
         min: 1,
         max: 200,
         helperText: 'The exact sum to find among subsets.',
@@ -2644,6 +2644,11 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       },
     ],
     presets: [
+      {
+        name: 'Beginner Example (Target 16)',
+        description: 'Set [2, 4, 5, 9] with target 16: small enough to follow every include/exclude choice, prune and backtrack',
+        data: { numbers: [2, 4, 5, 9], targetSum: 16, findMode: 'first' },
+      },
       {
         name: 'Classic Example (Target 9)',
         description: 'Set [3, 34, 4, 12, 5, 2] with target sum 9',
@@ -2725,8 +2730,24 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     ],
     presets: [
       {
-        name: '5-Node Planar Graph (k=3, First Solution)',
-        description: 'Standard 5-vertex planar graph, stopping at the first valid 3-coloring',
+        name: '5-Vertex Graph (k=3, Beginner Example)',
+        description: 'Five vertices, six edges and three colors: short enough to follow, with rejected colors and backtracking along the way',
+        data: {
+          findMode: 'first',
+          numColors: 3,
+          edgeList: [
+            ['0', '1'],
+            ['0', '4'],
+            ['1', '3'],
+            ['1', '4'],
+            ['2', '3'],
+            ['3', '4'],
+          ],
+        },
+      },
+      {
+        name: '4-Vertex Graph (k=3, First Solution)',
+        description: 'Small 4-vertex graph, stopping at the first valid 3-coloring',
         data: {
           findMode: 'first',
           numColors: 3,
@@ -2740,8 +2761,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         },
       },
       {
-        name: '5-Node Planar (All 3-Colorings)',
-        description: 'Exhaustive backtracking to discover all valid 3-colorings for the 5-node planar graph',
+        name: '4-Vertex Graph (All 3-Colorings)',
+        description: 'Exhaustive backtracking to discover all valid 3-colorings of the small 4-vertex graph',
         data: {
           findMode: 'all',
           numColors: 3,
