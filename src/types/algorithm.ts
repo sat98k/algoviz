@@ -99,7 +99,21 @@ export interface InputFieldDefinition {
   max?: number;
   options?: { label: string; value: any }[];
   helperText?: string;
+  /** Extra check on the parsed value; return an error message or null. */
   validate?: (val: any) => string | null;
+  /** number / array / points: values must be whole numbers. */
+  integer?: boolean;
+  /** array: every entry must be > 0. */
+  positive?: boolean;
+  /** array / points: allowed number of entries. */
+  minLength?: number;
+  maxLength?: number;
+  /** array: inclusive bounds for every entry. */
+  itemMin?: number;
+  itemMax?: number;
+  /** text: regular expression the trimmed value must match, with a learner-facing message. */
+  pattern?: string;
+  patternMessage?: string;
 }
 
 export interface PresetInput {
@@ -167,6 +181,8 @@ export interface AlgorithmConfig {
   generateRandomInput: () => Record<string, any>;
   stepGenerator: (inputs: any) => Generator<AlgorithmStep<any>>;
   summarizeResult?: ResultSummarizer;
+  /** Checks that span several fields (e.g. equal lengths). Return an error message or null. */
+  validateInputs?: (inputs: Record<string, any>) => string | null;
   /** Present when the algorithm can be compared with others solving the same problem. */
   comparison?: ComparisonProfile;
 }

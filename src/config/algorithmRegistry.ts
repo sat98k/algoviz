@@ -76,6 +76,9 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'weights',
         label: 'Item Weights',
         type: 'array',
+        positive: true,
+        minLength: 1,
+        maxLength: 8,
         defaultValue: [10, 20, 30],
         placeholder: 'e.g. 10, 20, 30',
         helperText: 'Weights of items (comma-separated).',
@@ -84,6 +87,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'values',
         label: 'Item Values ($)',
         type: 'array',
+        itemMin: 0,
+        maxLength: 8,
         defaultValue: [60, 100, 120],
         placeholder: 'e.g. 60, 100, 120',
         helperText: 'Values of items (comma-separated).',
@@ -128,6 +133,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { weights, values, capacity };
     },
     summarizeResult: resultSummaries.summarizeFractionalKnapsack,
+    validateInputs: (inputs) =>
+      inputs.weights.length === inputs.values.length
+        ? null
+        : `Weights and values must have the same number of entries (${inputs.weights.length} weights, ${inputs.values.length} values).`,
     stepGenerator: fractionalKnapsackSteps,
   },
   // Module 1: Greedy — Huffman Coding
@@ -223,6 +232,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'array',
         label: 'Array of Integers (comma-separated)',
         type: 'array',
+        minLength: 1,
+        maxLength: 16,
         defaultValue: [-2, 1, -3, 4, -1, 2, 1, -5, 4],
         placeholder: 'e.g. -2, 1, -3, 4, -1, 2, 1, -5, 4',
         helperText: 'Elements may include negative, zero, and positive integers.',
@@ -298,17 +309,21 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'num1',
         label: 'First Integer (X)',
         type: 'text',
+        pattern: '^\\d{1,12}$',
+        patternMessage: 'Enter a non-negative whole number using digits only (up to 12 digits).',
         defaultValue: '1234',
         placeholder: 'e.g. 1234 or 98765',
-        helperText: 'Non-negative integer (arbitrary digits supported).',
+        helperText: 'Non-negative whole number, up to 12 digits.',
       },
       {
         name: 'num2',
         label: 'Second Integer (Y)',
         type: 'text',
+        pattern: '^\\d{1,12}$',
+        patternMessage: 'Enter a non-negative whole number using digits only (up to 12 digits).',
         defaultValue: '5678',
         placeholder: 'e.g. 5678 or 4321',
-        helperText: 'Non-negative integer (arbitrary digits supported).',
+        helperText: 'Non-negative whole number, up to 12 digits.',
       },
     ],
     presets: [
@@ -385,6 +400,9 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'weights',
         label: 'Weights (comma-separated)',
         type: 'array',
+        integer: true,
+        itemMin: 1,
+        maxLength: 8,
         defaultValue: [2, 3, 4, 5],
         placeholder: 'e.g. 2, 3, 4, 5',
       },
@@ -392,6 +410,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'values',
         label: 'Values (comma-separated)',
         type: 'array',
+        itemMin: 0,
+        maxLength: 8,
         defaultValue: [3, 4, 5, 6],
         placeholder: 'e.g. 3, 4, 5, 6',
       },
@@ -399,6 +419,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'capacity',
         label: 'Knapsack Capacity (W)',
         type: 'number',
+        integer: true,
         defaultValue: 5,
         min: 1,
         max: 20,
@@ -418,6 +439,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     },
     summarizeResult: resultSummaries.summarizeKnapsackDp,
     comparison: COMPARISON_PROFILES['knapsack-dp'],
+    validateInputs: (inputs) =>
+      inputs.weights.length === inputs.values.length
+        ? null
+        : `Weights and values must have the same number of entries (${inputs.weights.length} weights, ${inputs.values.length} values).`,
     stepGenerator: knapsackDPSteps,
   },
 
@@ -521,6 +546,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'dimensions',
         label: 'Matrix Dimensions (p0, p1, ..., pn)',
         type: 'array',
+        integer: true,
+        itemMin: 1,
+        minLength: 3,
+        maxLength: 7,
         defaultValue: [10, 20, 30, 40, 30],
         placeholder: 'e.g. 10, 20, 30, 40, 30',
         helperText: 'Array of dimensions representing n matrices: A_i has dimension p_{i-1} x p_i.',
@@ -594,6 +623,9 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'a1',
         label: 'Line 1 Station Times (a1)',
         type: 'array',
+        itemMin: 0,
+        minLength: 2,
+        maxLength: 8,
         defaultValue: [7, 9, 3, 4, 8, 4],
         placeholder: 'e.g. 7, 9, 3, 4, 8, 4',
         helperText: 'Processing times for stations on Line 1.',
@@ -602,6 +634,9 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'a2',
         label: 'Line 2 Station Times (a2)',
         type: 'array',
+        itemMin: 0,
+        minLength: 2,
+        maxLength: 8,
         defaultValue: [8, 5, 6, 4, 5, 7],
         placeholder: 'e.g. 8, 5, 6, 4, 5, 7',
         helperText: 'Processing times for stations on Line 2.',
@@ -610,6 +645,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 't1',
         label: 'Transfer Line 1 ➔ Line 2 (t1)',
         type: 'array',
+        itemMin: 0,
+        maxLength: 7,
         defaultValue: [2, 3, 1, 3, 4],
         placeholder: 'e.g. 2, 3, 1, 3, 4',
         helperText: 'Transfer penalties to switch from Line 1 to Line 2 (n-1 values).',
@@ -618,6 +655,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 't2',
         label: 'Transfer Line 2 ➔ Line 1 (t2)',
         type: 'array',
+        itemMin: 0,
+        maxLength: 7,
         defaultValue: [2, 1, 2, 2, 1],
         placeholder: 'e.g. 2, 1, 2, 2, 1',
         helperText: 'Transfer penalties to switch from Line 2 to Line 1 (n-1 values).',
@@ -717,6 +756,13 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       };
     },
     summarizeResult: resultSummaries.summarizeAssemblyLineScheduling,
+    validateInputs: (inputs) => {
+      const n = inputs.a1.length;
+      if (inputs.a2.length !== n) return `Both lines need the same number of stations (line 1 has ${n}, line 2 has ${inputs.a2.length}).`;
+      if (inputs.t1.length !== n - 1 || inputs.t2.length !== n - 1)
+        return `With ${n} stations, each transfer list needs ${n - 1} values (one between each pair of stations).`;
+      return null;
+    },
     stepGenerator: assemblyLineSchedulingSteps,
   },
 
@@ -758,6 +804,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'numCities',
         label: 'Number of Cities (3–6)',
         type: 'number',
+        integer: true,
         defaultValue: 4,
         min: 3,
         max: 6,
@@ -870,6 +917,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'n',
         label: 'Board Size (N)',
         type: 'number',
+        integer: true,
         defaultValue: 4,
         min: 4,
         max: 8,
@@ -928,12 +976,16 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'weights',
         label: 'Weights (comma-separated)',
         type: 'array',
+        positive: true,
+        maxLength: 6,
         defaultValue: [2, 3, 4, 5],
       },
       {
         name: 'values',
         label: 'Values (comma-separated)',
         type: 'array',
+        itemMin: 0,
+        maxLength: 6,
         defaultValue: [3, 4, 5, 6],
       },
       {
@@ -958,6 +1010,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     },
     summarizeResult: resultSummaries.summarizeKnapsackBb,
     comparison: COMPARISON_PROFILES['knapsack-bb'],
+    validateInputs: (inputs) =>
+      inputs.weights.length === inputs.values.length
+        ? null
+        : `Weights and values must have the same number of entries (${inputs.weights.length} weights, ${inputs.values.length} values).`,
     stepGenerator: knapsackBBSteps,
   },
 
@@ -1274,16 +1330,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '  return dist  // All-pairs shortest path matrix computed',
     ],
     visualizer: 'GraphVisualizer',
-    inputSchema: [
-      {
-        name: 'numNodes',
-        label: 'Number of Nodes (3–5)',
-        type: 'number',
-        defaultValue: 4,
-        min: 3,
-        max: 5,
-      },
-    ],
+    inputSchema: [],
     presets: [
       {
         name: 'Textbook 4-Node Graph',
@@ -1357,11 +1404,12 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     inputSchema: [
       {
         name: 'source',
-        label: 'Source Node Index (0-based)',
+        label: 'Source Vertex Index',
         type: 'number',
+        integer: true,
         defaultValue: 0,
         min: 0,
-        max: 4,
+        helperText: 'Vertices are numbered from 0 in the order shown, e.g. 0 = S in the CLRS preset.',
       },
     ],
     presets: [
@@ -1418,6 +1466,13 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       ],
     }),
     summarizeResult: resultSummaries.summarizeBellmanFord,
+    validateInputs: (inputs) => {
+      const n = (inputs.matrix ?? []).length;
+      const labels: string[] = inputs.nodeLabels ?? [];
+      return inputs.source >= n
+        ? `The source must be between 0 and ${n - 1} for this graph (${labels.map((l, i) => `${i} = ${l}`).join(', ')}).`
+        : null;
+    },
     stepGenerator: bellmanFordSteps,
   },
 
@@ -1454,15 +1509,21 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     inputSchema: [
       {
         name: 'source',
-        label: 'Source Node Index',
+        label: 'Source Vertex Index',
         type: 'number',
+        integer: true,
+        min: 0,
         defaultValue: 0,
+        helperText: 'Vertices are numbered from 0 in the order shown (0 = S in the 6-node preset).',
       },
       {
         name: 'sink',
-        label: 'Sink Node Index',
+        label: 'Sink Vertex Index',
         type: 'number',
+        integer: true,
+        min: 0,
         defaultValue: 5,
+        helperText: 'Must differ from the source (5 = T in the 6-node preset).',
       },
     ],
     presets: [
@@ -1512,6 +1573,14 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     },
     summarizeResult: resultSummaries.summarizeFordFulkerson,
     comparison: COMPARISON_PROFILES['ford-fulkerson'],
+    validateInputs: (inputs) => {
+      const n = (inputs.capacities ?? []).length;
+      const labels: string[] = inputs.nodeLabels ?? [];
+      const names = labels.map((l, i) => `${i} = ${l}`).join(', ');
+      if (inputs.source >= n || inputs.sink >= n) return `Source and sink must be between 0 and ${n - 1} for this network (${names}).`;
+      if (inputs.source === inputs.sink) return 'Source and sink must be different vertices.';
+      return null;
+    },
     stepGenerator: fordFulkersonSteps,
   },
 
@@ -1544,18 +1613,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '  return totalFlow  // Max flow achieved in at most O(V · E) augmentations',
     ],
     visualizer: 'GraphVisualizer',
-    inputSchema: [
-      {
-        name: 'capacities',
-        label: 'Flow Network Topologies',
-        type: 'select',
-        defaultValue: 'classic6',
-        options: [
-          { label: 'Classic 6-Node Network (CLRS)', value: 'classic6' },
-          { label: '4-Node Diamond Network', value: 'diamond4' },
-        ],
-      },
-    ],
+    inputSchema: [],
     presets: [
       {
         name: 'Classic 6-Node Network (CLRS)',
@@ -1641,18 +1699,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '  return e(t)  // Final accumulated excess at sink equals maximum flow',
     ],
     visualizer: 'GraphVisualizer',
-    inputSchema: [
-      {
-        name: 'capacities',
-        label: 'Network Capacities',
-        type: 'select',
-        defaultValue: 'classic6',
-        options: [
-          { label: 'Classic 6-Node Network (CLRS)', value: 'classic6' },
-          { label: '4-Node Diamond Network', value: 'diamond4' },
-        ],
-      },
-    ],
+    inputSchema: [],
     presets: [
       {
         name: 'Classic 6-Node Network (CLRS)',
@@ -1742,6 +1789,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'points',
         label: '2D Points Array',
         type: 'points',
+        minLength: 3,
+        maxLength: 20,
         defaultValue: [
           { x: 100, y: 100 },
           { x: 150, y: 250 },
@@ -1834,6 +1883,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'points',
         label: '2D Points Array',
         type: 'points',
+        minLength: 3,
+        maxLength: 20,
         defaultValue: [
           { x: 100, y: 100 },
           { x: 150, y: 250 },
@@ -1935,19 +1986,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '  return false  // No intersecting pairs found across entire plane',
     ],
     visualizer: 'SweepLineVisualizer',
-    inputSchema: [
-      {
-        name: 'segments',
-        label: 'Line Segments Set',
-        type: 'select',
-        defaultValue: 'classic',
-        options: [
-          { label: 'Classic 4 Segments', value: 'classic' },
-          { label: 'Three Parallel Segments', value: 'parallel' },
-          { label: 'Neighbours Change Mid-Sweep', value: 'delayed' },
-        ],
-      },
-    ],
+    inputSchema: [],
     presets: [
       {
         name: 'Classic 4 Segments',
@@ -2036,6 +2075,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'array',
         label: 'Array to Sort (comma-separated)',
         type: 'array',
+        minLength: 2,
+        maxLength: 16,
         defaultValue: [38, 27, 43, 3, 9, 82, 10, 19, 50],
         placeholder: 'e.g. 38, 27, 43, 3, 9, 82, 10',
       },
@@ -2089,6 +2130,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'candidates',
         label: 'Candidate Scores Array',
         type: 'array',
+        minLength: 1,
+        maxLength: 12,
         defaultValue: [4, 7, 2, 9, 8, 10, 5, 12],
         placeholder: 'e.g. 4, 7, 2, 9, 8, 10, 5, 12',
         helperText: 'Applicant skill ratings (comma-separated). Evaluated left to right.',
@@ -2167,20 +2210,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     visualizer: 'GraphVisualizer',
     inputSchema: [
       {
-        name: 'edgeList',
-        label: 'Graph Topology',
-        type: 'select',
-        defaultValue: 'barbell',
-        options: [
-          { label: 'Barbell: Two Triangles, Two Bridges', value: 'barbell' },
-          { label: 'Two Triangles, One Bridge', value: 'single_bridge' },
-          { label: 'Complete Graph K4', value: 'k4' },
-        ],
-      },
-      {
         name: 'trials',
         label: 'Independent runs',
         type: 'number',
+        integer: true,
         defaultValue: 20,
         min: 1,
         max: 200,
@@ -2279,16 +2312,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '  return C  // Guaranteed |C| <= 2 * OPT (size <= 2 * maximal matching)',
     ],
     visualizer: 'GraphVisualizer',
-    inputSchema: [
-      {
-        name: 'numNodes',
-        label: 'Number of Vertices',
-        type: 'number',
-        defaultValue: 7,
-        min: 4,
-        max: 8,
-      },
-    ],
+    inputSchema: [],
     presets: [
       {
         name: '7-Node Benchmark Graph',
@@ -2367,6 +2391,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'universeSize',
         label: 'Universe Size (|U|)',
         type: 'number',
+        integer: true,
         defaultValue: 10,
         min: 5,
         max: 20,
@@ -2425,6 +2450,12 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { universeSize: uSize, subsets: subs };
     },
     summarizeResult: resultSummaries.summarizeSetCover,
+    validateInputs: (inputs) => {
+      const largest = Math.max(...(inputs.subsets ?? []).flatMap((s: { elements: number[] }) => s.elements));
+      return Number.isFinite(largest) && inputs.universeSize < largest
+        ? `The subsets use elements up to ${largest}, so the universe size must be at least ${largest}.`
+        : null;
+    },
     stepGenerator: setCoverSteps,
   },
 
@@ -2461,6 +2492,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'numCities',
         label: 'Number of Cities (N)',
         type: 'number',
+        integer: true,
         defaultValue: 4,
         min: 3,
         max: 6,
@@ -2582,6 +2614,9 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'numbers',
         label: 'Set of Numbers',
         type: 'array',
+        integer: true,
+        itemMin: 1,
+        maxLength: 8,
         defaultValue: [3, 34, 4, 12, 5, 2],
         placeholder: 'e.g. 3, 34, 4, 12, 5, 2',
         helperText: 'Positive integers (comma-separated). Will be sorted internally for better pruning.',
@@ -2590,6 +2625,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'targetSum',
         label: 'Target Sum',
         type: 'number',
+        integer: true,
         defaultValue: 9,
         min: 1,
         max: 200,
@@ -2680,6 +2716,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'numColors',
         label: 'Available Colors (k)',
         type: 'number',
+        integer: true,
         defaultValue: 3,
         min: 2,
         max: 6,
@@ -2833,6 +2870,9 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'deadlines',
         label: 'Job Deadlines',
         type: 'array',
+        integer: true,
+        itemMin: 1,
+        maxLength: 7,
         defaultValue: [2, 1, 2, 1, 3],
         placeholder: 'e.g. 2, 1, 2, 1, 3',
         helperText: 'Deadlines for each job (comma-separated integers >= 1).',
@@ -2841,6 +2881,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         name: 'profits',
         label: 'Job Profits',
         type: 'array',
+        itemMin: 0,
+        maxLength: 7,
         defaultValue: [100, 19, 27, 25, 15],
         placeholder: 'e.g. 100, 19, 27, 25, 15',
         helperText: 'Profits earned if each job finishes by its deadline.',
@@ -2887,6 +2929,10 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       return { deadlines, profits };
     },
     summarizeResult: resultSummaries.summarizeJobSelectionBb,
+    validateInputs: (inputs) =>
+      inputs.deadlines.length === inputs.profits.length
+        ? null
+        : `Every job needs one deadline and one profit (${inputs.deadlines.length} deadlines, ${inputs.profits.length} profits).`,
     stepGenerator: jobSelectionBBSteps,
   },
 ];
