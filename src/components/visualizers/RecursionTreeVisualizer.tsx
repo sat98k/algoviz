@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
-import { Check, Calculator } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { CrossScanView } from './CrossScanView';
+import { KaratsubaPanel } from './KaratsubaPanel';
 
 interface RecursionTreeVisualizerProps {
   step: AlgorithmStep;
@@ -570,7 +572,9 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
 
           {/* Literal Array Splitting Visual */}
           <div className="flex flex-col gap-2 py-2">
-            {splitMid !== undefined && activeRange ? (
+            {state.crossScan ? (
+              <CrossScanView array={fullArray} scan={state.crossScan} crossSum={crossSum} />
+            ) : splitMid !== undefined && activeRange ? (
               <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 py-2">
                 {/* Left Half Cluster */}
                 <div className="flex flex-col items-center gap-1.5 p-2.5 bg-amber/5 border border-dashed border-amber/40">
@@ -589,7 +593,7 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
                 <div className="flex flex-col items-center justify-center font-mono text-chalk-500 px-1">
                   <span className="text-[11px] uppercase tracking-widest text-amber font-bold">SPLIT MID</span>
                   <div className="w-px h-8 bg-amber/40 my-1"></div>
-                  <span className="text-xs font-bold text-amber">k = {splitMid}</span>
+                  <span className="text-xs font-bold text-amber">mid = {splitMid}</span>
                 </div>
 
                 {/* Right Half Cluster */}
@@ -665,57 +669,8 @@ export const RecursionTreeVisualizer: React.FC<RecursionTreeVisualizerProps> = (
         </div>
       )}
 
-      {/* --- Karatsuba Explicit 4-Step Mathematical Ledger --- */}
-      {isKaratsuba && (
-        <div className="w-full flex flex-col gap-3 p-4 bg-obsidian-950 border border-hairline font-mono">
-          {/* The current calculation with real numbers (the step title is shown below the visualization). */}
-          {state.formulaExplanation && (
-            <p className="flex items-center gap-2 pb-2 border-b border-hairline font-mono text-sm text-sem-formula-ink [overflow-wrap:anywhere]">
-              <Calculator className="w-3.5 h-3.5 shrink-0 text-amber" aria-hidden="true" />
-              {state.formulaExplanation}
-            </p>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-            <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col gap-1.5">
-              <span className="text-[11px] text-amber uppercase tracking-wider font-bold">1. Split (m={karatsubaData.m ?? '—'})</span>
-              <div className="text-chalk-300">
-                <div>X: a=<strong className="text-chalk-100">{karatsubaData.a ?? '—'}</strong>, b=<strong className="text-chalk-100">{karatsubaData.b ?? '—'}</strong></div>
-                <div>Y: c=<strong className="text-chalk-100">{karatsubaData.c ?? '—'}</strong>, d=<strong className="text-chalk-100">{karatsubaData.d ?? '—'}</strong></div>
-              </div>
-            </div>
-
-            <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col gap-1.5">
-              <span className="text-[11px] text-electric-400 uppercase tracking-wider font-bold">2. Products (P1, P2, P3)</span>
-              <div className="text-chalk-300 space-y-0.5">
-                <div>P1 (a·c) = <strong className="text-electric-400">{karatsubaData.p1 ?? '—'}</strong></div>
-                <div>P2 (b·d) = <strong className="text-electric-400">{karatsubaData.p2 ?? '—'}</strong></div>
-                <div>P3 (sum) = <strong className="text-electric-400">{karatsubaData.p3 ?? '—'}</strong></div>
-              </div>
-            </div>
-
-            <div className="p-3 bg-obsidian-900 border border-hairline flex flex-col gap-1.5">
-              <span className="text-[11px] text-purple-400 uppercase tracking-wider font-bold">3. Cross-Term</span>
-              <div className="text-chalk-300">
-                <div className="text-[11px] text-chalk-500">P3 - P1 - P2</div>
-                <div className="text-purple-300 font-bold text-sm mt-1">
-                  {karatsubaData.crossTerm ?? '—'}
-                </div>
-              </div>
-            </div>
-
-            <div className="p-3 bg-obsidian-900 border border-acid-500/40 flex flex-col gap-1.5">
-              <span className="text-[11px] text-acid-500 uppercase tracking-wider font-bold">4. Combine</span>
-              <div className="text-chalk-300">
-                <div className="text-[11px] text-chalk-500">P1·10²ᵐ + Cross·10ᵐ + P2</div>
-                <div className="text-acid-500 font-bold text-sm mt-1 truncate" title={karatsubaData.finalResult}>
-                  = {karatsubaData.finalResult ?? (step.isFinal ? step.result?.product : '—')}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* --- Karatsuba: 4 vs 3 products, cross term and combination with real numbers --- */}
+      {isKaratsuba && <KaratsubaPanel details={karatsubaData} finalProduct={step.isFinal ? step.result?.product : undefined} />}
 
       {/* ========================================================================= */}
       {/* BOTTOM DECK: COMPACT RESPONSIVE RECURSION TREE SVG (ZERO HORIZONTAL SCROLL)*/}

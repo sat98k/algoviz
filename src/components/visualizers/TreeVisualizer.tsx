@@ -5,6 +5,7 @@ import { getNodeTheme } from '../../utils/treeTheme';
 import { TreeTraversalOverride } from '../../utils/huffmanCodec';
 import { ZoomIn, ZoomOut, RotateCcw, Move, Target } from 'lucide-react';
 import { SuffixListPanel } from './SuffixListPanel';
+import { HuffmanQueueStrip } from './HuffmanQueueStrip';
 
 interface TreeVisualizerProps {
   step: AlgorithmStep;
@@ -326,6 +327,11 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
 
   return (
     <div className="flex flex-col w-full min-h-[460px] p-3 sm:p-4 bg-obsidian-900 border border-hairline transition-all">
+      {/* Huffman construction: the priority queue, in order */}
+      {isHuffman && !activeTraversal && state.queue && state.queue.length > 0 && (
+        <HuffmanQueueStrip queue={state.queue} removed={state.queueRemoved} inserted={state.queueInserted} />
+      )}
+
       {/* Top Banner Details for Huffman */}
       {isHuffman && state.codeTable && Object.keys(state.codeTable).length > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-2 mb-2.5">

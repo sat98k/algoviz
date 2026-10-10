@@ -26,6 +26,26 @@ export interface MaxSubarrayState {
   winner?: 'LSum' | 'RSum' | 'CrossSum';
   optimalRange?: [number, number];
   explanation?: string;
+  /** Crossing case: running sums grown outwards from the midpoint. */
+  crossScan?: CrossScan;
+}
+
+export interface CrossScan {
+  low: number;
+  mid: number;
+  high: number;
+  /** Side being scanned ('done' once both best sums are known). */
+  side: 'start' | 'left' | 'right' | 'done';
+  /** Index just added to the running sum. */
+  index?: number;
+  /** Sum of arr[i..mid] for each left index scanned so far. */
+  leftSums: { index: number; sum: number }[];
+  /** Sum of arr[mid+1..j] for each right index scanned so far. */
+  rightSums: { index: number; sum: number }[];
+  bestLeft?: { sum: number; index: number };
+  bestRight?: { sum: number; index: number };
+  /** True when the index just added gave a new best on its side. */
+  improved?: boolean;
 }
 
 export function* maxSubarraySteps(inputs: {
@@ -194,30 +214,79 @@ export function* maxSubarraySteps(inputs: {
     // 4. Compute Cross-Midpoint Subarray
     node.status = 'combining';
 
-    // Outward scan Left: from mid down to low
+    // Crossing case, step by step: grow a left piece ending at mid, then a right piece starting at mid + 1.
+    const scan: CrossScan = { low, mid, high, side: 'start', leftSums: [], rightSums: [] };
+    const scanExtra = (): Partial<MaxSubarrayState> => ({
+      currentLow: low,
+      currentHigh: high,
+      currentMid: mid,
+      lSum: leftRes.maxSum,
+      rSum: rightRes.maxSum,
+      crossScan: { ...scan, leftSums: [...scan.leftSums], rightSums: [...scan.rightSums] },
+    });
+
+    yield makeSnapshot(
+      `Crossing Case: Scan Out From mid = ${mid}`,
+      `A subarray crossing the middle contains arr[${mid}] and arr[${mid + 1}]: a left piece ending at ${mid} plus a right piece starting at ${mid + 1}.`,
+      [6, 9],
+      nodeId,
+      [low, high],
+      `Crossing case for [${low}..${high}].`,
+      scanExtra()
+    );
+
     let leftSum = 0;
     let maxLeftSum = -Infinity;
     let maxLeftIdx = mid;
     for (let i = mid; i >= low; i--) {
       leftSum += arr[i];
       comparisons++;
-      if (leftSum > maxLeftSum) {
+      const improved = leftSum > maxLeftSum;
+      if (improved) {
         maxLeftSum = leftSum;
         maxLeftIdx = i;
       }
+      scan.side = 'left';
+      scan.index = i;
+      scan.leftSums.push({ index: i, sum: leftSum });
+      scan.bestLeft = { sum: maxLeftSum, index: maxLeftIdx };
+      scan.improved = improved;
+      yield makeSnapshot(
+        `Left Scan: sum(arr[${i}..${mid}]) = ${leftSum}`,
+        `${leftSum - arr[i]} + arr[${i}] (${arr[i]}) = ${leftSum}. ${improved ? `New best left piece: ${leftSum}.` : `Best left piece stays ${maxLeftSum}.`}`,
+        [11, 12, 13],
+        nodeId,
+        [i, mid],
+        `Left piece arr[${i}..${mid}] = ${leftSum}; best ${maxLeftSum}.`,
+        scanExtra()
+      );
     }
 
-    // Outward scan Right: from mid + 1 up to high
     let rightSum = 0;
     let maxRightSum = -Infinity;
     let maxRightIdx = mid + 1;
     for (let j = mid + 1; j <= high; j++) {
       rightSum += arr[j];
       comparisons++;
-      if (rightSum > maxRightSum) {
+      const improved = rightSum > maxRightSum;
+      if (improved) {
         maxRightSum = rightSum;
         maxRightIdx = j;
       }
+      scan.side = 'right';
+      scan.index = j;
+      scan.rightSums.push({ index: j, sum: rightSum });
+      scan.bestRight = { sum: maxRightSum, index: maxRightIdx };
+      scan.improved = improved;
+      yield makeSnapshot(
+        `Right Scan: sum(arr[${mid + 1}..${j}]) = ${rightSum}`,
+        `${rightSum - arr[j]} + arr[${j}] (${arr[j]}) = ${rightSum}. ${improved ? `New best right piece: ${rightSum}.` : `Best right piece stays ${maxRightSum}.`}`,
+        j === mid + 1 ? [14, 15, 16, 17] : [15, 16, 17],
+        nodeId,
+        [mid + 1, j],
+        `Right piece arr[${mid + 1}..${j}] = ${rightSum}; best ${maxRightSum}.`,
+        scanExtra()
+      );
     }
 
     const crossSumVal = maxLeftSum + maxRightSum;
@@ -232,10 +301,13 @@ export function* maxSubarraySteps(inputs: {
     node.crossSum = crossSumVal;
     node.crossRange = [maxLeftIdx, maxRightIdx];
 
+    scan.side = 'done';
+    scan.index = undefined;
+    scan.improved = undefined;
     yield makeSnapshot(
-      `Cross-Midpoint Scan: CrossSum = ${crossSumVal}`,
-      `Scanned outward across midpoint ${mid}: Max Left Wing [${maxLeftIdx}..${mid}] (sum ${maxLeftSum}) + Max Right Wing [${mid + 1}..${maxRightIdx}] (sum ${maxRightSum}) = CrossSum ${crossSumVal}.`,
-      6,
+      `CrossSum = ${maxLeftSum} + ${maxRightSum} = ${crossSumVal}`,
+      `The two pieces do not affect each other, so the best crossing subarray joins the best left piece arr[${maxLeftIdx}..${mid}] and the best right piece arr[${mid + 1}..${maxRightIdx}].`,
+      [18, 6],
       nodeId,
       [maxLeftIdx, maxRightIdx],
       `Cross-Sum: Left Wing (${maxLeftSum}) + Right Wing (${maxRightSum}) = ${crossSumVal} across [${maxLeftIdx}..${maxRightIdx}].`,
@@ -248,6 +320,7 @@ export function* maxSubarraySteps(inputs: {
         lSum: leftRes.maxSum,
         rSum: rightRes.maxSum,
         crossSum: crossSumVal,
+        crossScan: { ...scan, leftSums: [...scan.leftSums], rightSums: [...scan.rightSums] },
       }
     );
 

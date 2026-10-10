@@ -9,6 +9,8 @@ export interface FractionalKnapsackItem {
   weightTaken: number;
   valueTaken: number;
   status: 'pending' | 'sorting' | 'examining' | 'taken_full' | 'taken_fraction' | 'skipped';
+  /** Position in value/weight order (1 = highest ratio); set once the items are sorted. */
+  rank?: number;
 }
 
 export interface FractionalKnapsackState {
@@ -19,6 +21,10 @@ export interface FractionalKnapsackState {
   currentItemIndex: number;
   isSorted: boolean;
   explanation?: string;
+  /** Item ids in the order they were entered. */
+  originalOrder: number[];
+  /** The test on the current item: does it fit in the remaining capacity? */
+  fitCheck?: { weight: number; remaining: number; fits: boolean };
 }
 
 export function* fractionalKnapsackSteps(inputs: {
@@ -52,6 +58,8 @@ export function* fractionalKnapsackSteps(inputs: {
     });
   }
 
+  const originalOrder = initialItems.map((it) => it.id);
+
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Items & Ratios',
@@ -64,6 +72,7 @@ export function* fractionalKnapsackSteps(inputs: {
       currentValue: 0,
       currentItemIndex: -1,
       isSorted: false,
+      originalOrder,
       explanation: 'Calculate value/weight ratio for each item to prepare for greedy selection.',
     },
     highlights: {
@@ -73,10 +82,12 @@ export function* fractionalKnapsackSteps(inputs: {
   };
 
   // 2. Sorting by Ratio descending
-  const sortedItems = [...initialItems].sort((a, b) => {
-    comparisons++;
-    return b.ratio - a.ratio;
-  });
+  const sortedItems = [...initialItems]
+    .sort((a, b) => {
+      comparisons++;
+      return b.ratio - a.ratio;
+    })
+    .map((it, idx) => ({ ...it, rank: idx + 1 }));
 
   yield {
     stepIndex: stepIndex++,
@@ -92,6 +103,7 @@ export function* fractionalKnapsackSteps(inputs: {
       currentValue: 0,
       currentItemIndex: -1,
       isSorted: true,
+      originalOrder,
       explanation: 'Greedy choice property: Prioritize items providing the highest value density per unit weight.',
     },
     highlights: {
@@ -123,7 +135,9 @@ export function* fractionalKnapsackSteps(inputs: {
         currentValue,
         currentItemIndex: i,
         isSorted: true,
+        originalOrder,
         explanation: `Comparing item weight (${item.weight}) against remaining capacity (${remainingCap}).`,
+        fitCheck: remainingCap > 0 ? { weight: item.weight, remaining: remainingCap, fits: item.weight <= remainingCap } : undefined,
       },
       highlights: {
         activeIndices: [i],
@@ -152,6 +166,7 @@ export function* fractionalKnapsackSteps(inputs: {
           currentValue,
           currentItemIndex: i,
           isSorted: true,
+          originalOrder,
           explanation: 'No remaining capacity available; remaining items are skipped.',
         },
         highlights: {
@@ -186,7 +201,9 @@ export function* fractionalKnapsackSteps(inputs: {
           currentValue,
           currentItemIndex: i,
           isSorted: true,
+          originalOrder,
           explanation: `Full item added: fraction = 1.0, weight = ${item.weight}, value = ${item.value}.`,
+          fitCheck: { weight: item.weight, remaining: remainingCap, fits: true },
         },
         highlights: {
           activeIndices: [i],
@@ -222,7 +239,9 @@ export function* fractionalKnapsackSteps(inputs: {
           currentValue,
           currentItemIndex: i,
           isSorted: true,
+          originalOrder,
           explanation: `Fractional slice: fraction = ${fraction.toFixed(3)}, weight added = ${weightTaken}, value added = ${valueTaken}.`,
+          fitCheck: { weight: item.weight, remaining: remainingCap, fits: false },
         },
         highlights: {
           activeIndices: [i],
@@ -246,6 +265,7 @@ export function* fractionalKnapsackSteps(inputs: {
       currentValue,
       currentItemIndex: -1,
       isSorted: true,
+      originalOrder,
       explanation: `Optimal solution achieved by greedy strategy using value/weight sorting.`,
     },
     highlights: {

@@ -58,7 +58,9 @@ describe('Maximum Subarray (M1 Divide & Conquer)', () => {
       const lines = Array.isArray(step.codeLine) ? step.codeLine : [step.codeLine!];
       for (const line of lines) {
         expect(line).toBeGreaterThanOrEqual(1);
-        expect(line).toBeLessThanOrEqual(7);
+        // 1–7: MaxSubarrayDC; 9–18: MaxCrossingSubarray (line 8 is blank)
+        expect(line).toBeLessThanOrEqual(18);
+        expect(line).not.toBe(8);
       }
 
       if (step.callFlow) {

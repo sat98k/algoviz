@@ -7,10 +7,30 @@ export interface NQueensState {
   currentCol: number;
   conflicts: { r: number; c: number }[];
   threatLines?: { r: number; c: number }[];
+  /** A rejected placement: who attacks it, along which line, and the squares in between. */
+  attack?: NQueensAttack;
   solutionCount: number;
   solutions: number[][];
   action: 'place' | 'conflict' | 'backtrack' | 'solution' | 'init';
 }
+
+export interface NQueensAttack {
+  attempted: { r: number; c: number };
+  attacker: { r: number; c: number };
+  /** Queens never share a row (one per row), so only these two lines are possible. */
+  line: 'column' | 'diagonal';
+  /** Squares strictly between the attacker and the attempted square. */
+  between: { r: number; c: number }[];
+}
+
+/** The line of attack from an earlier queen (attacker.r < attempted.r) to the attempted square. */
+export const attackBetween = (attacker: { r: number; c: number }, attempted: { r: number; c: number }): NQueensAttack => {
+  const line = attacker.c === attempted.c ? 'column' : 'diagonal';
+  const dc = Math.sign(attempted.c - attacker.c);
+  const between: { r: number; c: number }[] = [];
+  for (let k = 1; k < attempted.r - attacker.r; k++) between.push({ r: attacker.r + k, c: attacker.c + dc * k });
+  return { attempted, attacker, line, between };
+};
 
 export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generator<AlgorithmStep<NQueensState>> {
   const n = Math.min(10, Math.max(1, inputs.n || 4));
@@ -148,7 +168,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
         yield {
           stepIndex: stepIndex++,
           title: `Conflict at Row ${row + 1}, Column ${col + 1}`,
-          description: `Cannot place a queen at row ${row + 1}, column ${col + 1}: it is attacked by the queen at row ${confRow + 1}, column ${board[confRow] + 1}.`,
+          description: `Row ${row + 1}, column ${col + 1} is attacked along the ${board[confRow] === col ? 'column' : 'diagonal'} by the queen at row ${confRow + 1}, column ${board[confRow] + 1}.`,
           codeLine: 4,
           state: {
             n,
@@ -159,6 +179,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
               { r: row, c: col },
               { r: confRow, c: board[confRow] },
             ],
+            attack: attackBetween({ r: confRow, c: board[confRow] }, { r: row, c: col }),
             solutionCount: solutions.length,
             solutions: [...solutions],
             action: 'conflict',

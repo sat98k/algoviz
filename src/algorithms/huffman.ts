@@ -26,7 +26,31 @@ export interface HuffmanState {
   totalBits?: number;
   accumulatedText?: string;
   codecStep?: any;
+  /** Priority queue in order (smallest frequency first) for this step. */
+  queue?: HuffmanQueueEntry[];
+  /** The two entries taken from the front of the queue in this step. */
+  queueRemoved?: [string, string];
+  /** The merged tree just put back into the queue. */
+  queueInserted?: string;
 }
+
+export interface HuffmanQueueEntry {
+  id: string;
+  /** The character of a leaf, or every character inside a merged tree. */
+  label: string;
+  freq: number;
+  isLeaf: boolean;
+}
+
+/** Characters inside a (sub)tree, left to right: a readable name instead of an internal id. */
+export const leafChars = (node: HuffmanNode): string =>
+  node.char !== undefined ? node.char : `${node.left ? leafChars(node.left) : ''}${node.right ? leafChars(node.right) : ''}`;
+
+/** Queue order the algorithm uses: by frequency, ties in insertion order (stable sort). */
+const queueOf = (forest: HuffmanNode[]): HuffmanQueueEntry[] =>
+  [...forest]
+    .sort((a, b) => a.freq - b.freq)
+    .map((n) => ({ id: n.id, label: leafChars(n), freq: n.freq, isLeaf: n.char !== undefined && !n.left && !n.right }));
 
 export const HUFFMAN_DECODING_PSEUDOCODE = [
   'function HuffmanDecode(root, bitStream):',
@@ -74,6 +98,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
       forest: JSON.parse(JSON.stringify(forest)),
       codeTable: {},
       originalBits: text.length * 8,
+      queue: queueOf(forest),
     },
     highlights: {
       nodes: forest.map((n) => n.id),
@@ -96,7 +121,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
     yield {
       stepIndex: stepIndex++,
       title: `Select 2 Lowest Frequency Trees`,
-      description: `Selected node '${left.char || left.id}' (freq: ${left.freq}) and node '${right.char || right.id}' (freq: ${right.freq}) to merge.`,
+      description: `The two smallest frequencies in the queue are "${leafChars(left)}" (${left.freq}) and "${leafChars(right)}" (${right.freq}). Take both out to merge them.`,
       codeLine: [4, 5, 6],
       state: {
         inputText: text,
@@ -105,6 +130,8 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
         activeMergeNodes: [left.id, right.id],
         codeTable: {},
         originalBits: text.length * 8,
+        queue: queueOf([left, right, ...forest]),
+        queueRemoved: [left.id, right.id],
       },
       highlights: {
         nodes: [left.id, right.id],
@@ -125,7 +152,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
     yield {
       stepIndex: stepIndex++,
       title: `Merged Nodes into Subtree`,
-      description: `Created parent node with combined frequency ${parentNode.freq} = ${left.freq} + ${right.freq}.`,
+      description: `New parent "${leafChars(parentNode)}" with frequency ${left.freq} + ${right.freq} = ${parentNode.freq} goes back into the queue in frequency order.`,
       codeLine: [7, 8],
       state: {
         inputText: text,
@@ -134,6 +161,8 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
         activeMergeNodes: [left.id, right.id],
         codeTable: {},
         originalBits: text.length * 8,
+        queue: queueOf(forest),
+        queueInserted: parentNode.id,
       },
       highlights: {
         nodes: [parentNode.id, left.id, right.id],

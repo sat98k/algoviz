@@ -56,7 +56,7 @@ export const COMPLEXITY_ANALYSIS = define({
     recurrence: 'T(n) = 3T(n/2) + O(n)',
     dominant: 'The three recursive multiplications of half-size numbers.',
     derivation:
-      'Splitting the numbers and recombining p1, p2 and p3 takes only additions, subtractions and shifts by powers of 10, all O(n). Three half-size multiplications remain, so T(n) = 3T(n/2) + O(n). Depth k of the recursion has 3ᵏ subproblems, so the 3^(log₂ n) = n^(log₂ 3) leaves dominate. Schoolbook splitting needs four products, T(n) = 4T(n/2) + O(n) = O(n²).',
+      'Splitting the numbers and recombining P1, P2 and P3 takes only additions, subtractions and shifts by powers of 10, all O(n). Three half-size multiplications remain, so T(n) = 3T(n/2) + O(n). Depth k of the recursion has 3ᵏ subproblems, so the 3^(log₂ n) = n^(log₂ 3) leaves dominate. Schoolbook splitting needs four products, T(n) = 4T(n/2) + O(n) = O(n²).',
     space: { bound: 'O(n)', explanation: 'The recursion is log₂ n deep, and the numbers on the current path have n + n/2 + n/4 + … = O(n) digits in total.' },
   },
 

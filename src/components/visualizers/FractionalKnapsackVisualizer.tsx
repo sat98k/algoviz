@@ -1,163 +1,188 @@
 import React from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
 import { FractionalKnapsackItem } from '../../algorithms/fractionalKnapsack';
+import { SEM } from '../../styles/semantics';
 
 interface FractionalKnapsackVisualizerProps {
   step: AlgorithmStep;
 }
 
+const fmt = (n: number) => String(parseFloat(n.toFixed(2)));
+
+/** The decision made for an item, as a short label (undecided items get none). */
+export const decisionLabel = (item: FractionalKnapsackItem) =>
+  item.status === 'taken_full'
+    ? 'Take whole item'
+    : item.status === 'taken_fraction'
+    ? `Take ${fmt(item.fractionTaken * 100)}%`
+    : item.status === 'skipped'
+    ? 'Left out (full)'
+    : null;
+
 export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizerProps> = ({ step }) => {
   const state = step.state || {};
   const items: FractionalKnapsackItem[] = state.items || [];
-  const capacity = state.capacity || 50;
-  const currentWeight = state.currentWeight || 0;
-  const currentValue = state.currentValue || 0;
-  const currentItemIndex = state.currentItemIndex ?? -1;
+  const capacity: number = state.capacity || 50;
+  const currentWeight: number = state.currentWeight || 0;
+  const currentValue: number = state.currentValue || 0;
+  const currentItemIndex: number = state.currentItemIndex ?? -1;
+  const isSorted: boolean = !!state.isSorted;
+  const originalOrder: number[] = state.originalOrder || items.map((it) => it.id);
+  const fitCheck: { weight: number; remaining: number; fits: boolean } | undefined = state.fitCheck;
 
   const fillPercentage = Math.min(100, Math.max(0, (currentWeight / capacity) * 100));
+  const segments = items.filter((it) => it.weightTaken > 0);
 
-  const getItemCardClasses = (item: FractionalKnapsackItem, index: number) => {
-    if (index === currentItemIndex) {
-      return 'border-amber bg-amber/10 shadow-lg shadow-amber/10 scale-105 z-10 ring-1 ring-amber';
-    }
-    if (item.status === 'taken_full') {
-      return 'border-acid-500/80 bg-acid-500/10 shadow-sm';
-    }
-    if (item.status === 'taken_fraction') {
-      return 'border-electric-400/80 bg-electric-500/10 shadow-sm';
-    }
-    if (item.status === 'skipped') {
-      return 'border-rose-500/40 bg-rose-500/5 opacity-60';
-    }
-    return 'border-hairline bg-obsidian-950/80 hover:border-chalk-500/40';
+  const cardClasses = (item: FractionalKnapsackItem, index: number) => {
+    if (index === currentItemIndex && item.status === 'examining') return `${SEM.current.cell} font-normal shadow-md`;
+    if (index === currentItemIndex) return `${item.status === 'taken_fraction' ? 'bg-sem-compare/10 border-2 border-sem-compare' : item.status === 'skipped' ? 'bg-sem-pruned/5 border-2 border-dashed border-sem-pruned' : 'bg-sem-match/10 border-2 border-sem-match'} shadow-md`;
+    if (item.status === 'taken_full') return 'bg-sem-match/10 border border-sem-match/60';
+    if (item.status === 'taken_fraction') return 'bg-sem-compare/10 border border-sem-compare/60';
+    if (item.status === 'skipped') return 'bg-sem-pruned/5 border border-dashed border-sem-pruned opacity-75';
+    return 'border border-hairline bg-obsidian-950/80';
   };
 
-  const getStatusBadge = (item: FractionalKnapsackItem) => {
+  const statusBadge = (item: FractionalKnapsackItem) => {
+    const base = 'px-2 py-0.5 text-xs font-sans font-semibold';
     switch (item.status) {
       case 'taken_full':
-        return (
-          <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-acid-500/20 text-acid-500 border border-acid-500/40 uppercase">
-            TAKEN 100%
-          </span>
-        );
+        return <span className={`${base} ${SEM.match.badge}`}>✓ Take whole item</span>;
       case 'taken_fraction':
-        return (
-          <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-electric-400/20 text-electric-400 border border-electric-400/40 uppercase">
-            TAKEN {(item.fractionTaken * 100).toFixed(1)}%
-          </span>
-        );
+        return <span className={`${base} ${SEM.compare.badge}`}>½ Take {fmt(item.fractionTaken * 100)}%</span>;
       case 'skipped':
-        return (
-          <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40 uppercase">
-            SKIPPED
-          </span>
-        );
+        return <span className={`${base} ${SEM.pruned.badge}`}>✂ Left out</span>;
       case 'examining':
-        return (
-          <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-amber/20 text-amber-glow border border-amber uppercase animate-pulse">
-            EVALUATING
-          </span>
-        );
-      case 'sorting':
-        return (
-          <span className="px-2 py-0.5 text-[11px] font-mono text-chalk-400 bg-obsidian-800 border border-hairline uppercase">
-            SORTED
-          </span>
-        );
+        return <span className={`${base} ${SEM.current.badge}`}>▶ Deciding</span>;
       default:
-        return (
-          <span className="px-2 py-0.5 text-[11px] font-mono text-chalk-500 bg-obsidian-850 border border-hairline uppercase">
-            PENDING
-          </span>
-        );
+        return null;
     }
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-[380px] p-6 bg-obsidian-900 border border-hairline transition-all">
-      {/* Header telemetry / Knapsack Capacity Gauge */}
-      <div className="w-full max-w-4xl mb-6 p-4 bg-obsidian-950 border border-hairline flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
-          <div className="flex items-center gap-2">
-            <span className="text-chalk-500 uppercase tracking-wider">[ KNAPSACK CAPACITY ]:</span>
-            <span className="text-chalk-100 font-bold tabular-nums">
-              {currentWeight} / {capacity} kg
-            </span>
-            <span className="text-chalk-500 text-[11px]">({fillPercentage.toFixed(1)}% full)</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-chalk-500 uppercase tracking-wider">[ ACCUMULATED VALUE ]:</span>
-            <span className="text-acid-500 font-bold text-sm tabular-nums">
-              ${currentValue}
-            </span>
-          </div>
+    <div className="flex flex-col items-center w-full min-h-[380px] p-4 sm:p-6 bg-obsidian-900 border border-hairline gap-4">
+      {/* Capacity: one segment per item taken */}
+      <section aria-label="Knapsack capacity" className="w-full max-w-4xl p-4 bg-obsidian-950 border border-hairline flex flex-col gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 font-mono text-sm">
+          <span className="text-chalk-400">
+            Capacity used <strong className="text-chalk-100 tabular-nums">{fmt(currentWeight)} / {capacity}</strong>
+          </span>
+          <span className="text-chalk-400">
+            Value <strong className={`${SEM.match.text} tabular-nums`}>{fmt(currentValue)}</strong>
+          </span>
         </div>
-
-        {/* Capacity Bar Visual */}
-        <div className="w-full h-3 bg-obsidian-850 border border-hairline overflow-hidden relative">
-          <div
-            style={{ width: `${fillPercentage}%` }}
-            className={`h-full transition-all duration-300 ${
-              fillPercentage >= 100
-                ? 'bg-gradient-to-r from-amber to-acid-500'
-                : 'bg-electric-400'
-            }`}
-          />
-        </div>
-      </div>
-
-      {/* Item Cards Grid / List */}
-      <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
-        {items.map((item, idx) => {
-          const cardClasses = getItemCardClasses(item, idx);
-          const percentTaken = Math.round(item.fractionTaken * 100);
-
-          return (
+        <div className="w-full h-8 flex bg-obsidian-850 border border-hairline overflow-hidden" role="img" aria-label={`Knapsack ${fillPercentage.toFixed(0)}% full`}>
+          {segments.map((it) => (
             <div
-              key={item.id}
-              className={`p-4 border transition-all duration-200 flex flex-col justify-between gap-3 relative overflow-hidden ${cardClasses}`}
+              key={it.id}
+              data-segment={it.id}
+              style={{ width: `${(it.weightTaken / capacity) * 100}%` }}
+              title={`Item ${it.id}: ${fmt(it.weightTaken)}`}
+              className={`h-full flex items-center justify-center overflow-hidden whitespace-nowrap border-r-2 border-obsidian-950 font-mono text-xs font-bold transition-all duration-300 ${
+                it.status === 'taken_fraction' ? 'bg-sem-compare/30 text-sem-compare-ink' : 'bg-sem-match/30 text-sem-match-ink'
+              }`}
             >
-              {/* Card Header */}
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold text-chalk-200">
-                  Item #{item.id}
+              {it.weightTaken / capacity >= 0.08 ? `#${it.id} · ${fmt(it.weightTaken)}` : `#${it.id}`}
+            </div>
+          ))}
+          {fillPercentage < 100 && (
+            <div className="h-full flex-1 flex items-center justify-center font-mono text-xs text-chalk-500 whitespace-nowrap overflow-hidden">
+              free {fmt(capacity - currentWeight)}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Order: as entered vs sorted by value ÷ weight */}
+      <section aria-label="Item order" className="w-full max-w-4xl flex flex-col gap-1.5 font-mono text-sm">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="font-sans text-xs text-chalk-400 w-28 shrink-0">Entered</span>
+          {originalOrder.map((id) => (
+            <span key={id} className="px-1.5 py-0.5 bg-obsidian-950 border border-hairline text-chalk-300">
+              #{id}
+            </span>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="font-sans text-xs text-chalk-400 w-28 shrink-0">Sorted by v ÷ w</span>
+          {isSorted ? (
+            items.map((it, idx) => (
+              <React.Fragment key={it.id}>
+                {idx > 0 && <span className="text-chalk-500">›</span>}
+                <span className={`px-1.5 py-0.5 border ${idx === currentItemIndex ? SEM.current.badge : 'bg-obsidian-950 border-hairline text-chalk-200'}`}>
+                  #{it.id} <span className="text-chalk-400">({fmt(it.ratio)})</span>
                 </span>
-                {getStatusBadge(item)}
+              </React.Fragment>
+            ))
+          ) : (
+            <span className="font-sans text-xs text-chalk-500">not sorted yet</span>
+          )}
+        </div>
+      </section>
+
+      {/* Item cards */}
+      <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        {items.map((item, idx) => {
+          const percentTaken = Math.round(item.fractionTaken * 100);
+          const isCurrent = idx === currentItemIndex;
+          return (
+            <div key={item.id} data-item={item.id} className={`p-4 transition-all duration-200 flex flex-col gap-3 ${cardClasses(item, idx)}`}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-sans text-sm font-bold text-chalk-100">
+                  Item #{item.id}
+                  {isSorted && item.rank && <span className="ml-1.5 font-normal text-chalk-400">rank {item.rank}</span>}
+                </span>
+                {statusBadge(item)}
               </div>
 
-              {/* Attributes */}
-              <div className="flex flex-col gap-1.5 font-mono text-xs">
+              <div className="flex flex-col gap-1 font-mono text-sm">
                 <div className="flex justify-between text-chalk-400">
-                  <span>Weight (w):</span>
-                  <span className="text-chalk-100 font-semibold">{item.weight} kg</span>
+                  <span className="font-sans text-xs">weight</span>
+                  <span className="text-chalk-100 font-semibold">{item.weight}</span>
                 </div>
                 <div className="flex justify-between text-chalk-400">
-                  <span>Value (v):</span>
-                  <span className="text-chalk-100 font-semibold">${item.value}</span>
+                  <span className="font-sans text-xs">value</span>
+                  <span className="text-chalk-100 font-semibold">{item.value}</span>
                 </div>
-                <div className="flex justify-between text-chalk-400 border-t border-hairline pt-1">
-                  <span>Ratio (v/w):</span>
-                  <span className="text-amber-glow font-bold">{item.ratio}</span>
+                <div className="flex justify-between items-baseline text-chalk-400 border-t border-hairline pt-1">
+                  <span className="font-sans text-xs">value ÷ weight</span>
+                  <span className="text-sem-formula-ink font-bold">
+                    {item.value} ÷ {item.weight} = {fmt(item.ratio)}
+                  </span>
                 </div>
               </div>
 
-              {/* Portion Taken Bar */}
-              <div className="flex flex-col gap-1 pt-1 border-t border-hairline">
-                <div className="flex justify-between font-mono text-[11px] text-chalk-400">
-                  <span>Portion Taken:</span>
-                  <span className="font-bold text-chalk-200">{percentTaken}%</span>
+              {/* The fit test and decision on the item being processed */}
+              {isCurrent && fitCheck && (
+                <div className="flex flex-col gap-1 pt-2 border-t border-hairline">
+                  <span
+                    data-fit-check
+                    className={`self-start px-2 py-0.5 font-mono text-sm font-semibold border ${fitCheck.fits ? SEM.match.badge : SEM.mismatch.badge}`}
+                  >
+                    weight {fitCheck.weight} {fitCheck.fits ? '≤' : '>'} remaining {fmt(fitCheck.remaining)} {fitCheck.fits ? '✓' : '✗'}
+                  </span>
+                  {decisionLabel(item) && (
+                    <span data-decision className="font-sans text-sm font-bold text-chalk-100">
+                      → {decisionLabel(item)}
+                      {item.status === 'taken_fraction' && (
+                        <span className="font-mono font-normal text-chalk-300">
+                          {' '}
+                          ({fmt(item.weightTaken)} ÷ {item.weight} × {item.value} = {fmt(item.valueTaken)})
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between font-sans text-xs text-chalk-400">
+                  <span>portion taken</span>
+                  <span className="font-mono font-bold text-chalk-200">{percentTaken}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-obsidian-850 border border-hairline overflow-hidden">
                   <div
                     style={{ width: `${percentTaken}%` }}
-                    className={`h-full transition-all duration-300 ${
-                      item.status === 'taken_full'
-                        ? 'bg-acid-500'
-                        : item.status === 'taken_fraction'
-                        ? 'bg-electric-400'
-                        : 'bg-chalk-600'
-                    }`}
+                    className={`h-full transition-all duration-300 ${item.status === 'taken_full' ? 'bg-sem-match' : item.status === 'taken_fraction' ? 'bg-sem-compare' : 'bg-chalk-600'}`}
                   />
                 </div>
               </div>
@@ -166,25 +191,19 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
         })}
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-5 mt-6 text-xs font-mono text-chalk-400">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-amber border border-amber"></span>
-          <span>Evaluating Item</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-acid-500/60 border border-acid-500"></span>
-          <span>Full Item Taken (100%)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-electric-400/60 border border-electric-400"></span>
-          <span>Fractional Slice Taken</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-rose-500/40 border border-rose-400"></span>
-          <span>Skipped (Capacity Full)</span>
-        </div>
-      </div>
+      <ul aria-label="Legend" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-sans text-chalk-400">
+        <LegendItem swatch={SEM.current.swatch} symbol="▶" label="Deciding" />
+        <LegendItem swatch={SEM.match.swatch} symbol="✓" label="Taken whole" />
+        <LegendItem swatch={SEM.compare.swatch} symbol="½" label="Taken in part" />
+        <LegendItem swatch={SEM.pruned.swatch} symbol="✂" label="Left out (knapsack full)" />
+      </ul>
     </div>
   );
 };
+
+const LegendItem: React.FC<{ swatch: string; symbol: string; label: string }> = ({ swatch, symbol, label }) => (
+  <li className="flex items-center gap-1.5">
+    <span className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-[11px] font-bold ${swatch}`}>{symbol}</span>
+    <span>{label}</span>
+  </li>
+);

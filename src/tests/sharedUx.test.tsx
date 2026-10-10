@@ -277,8 +277,9 @@ describe('Visualizers do not repeat "What happened and why?"', () => {
 
   it('Karatsuba still shows its calculation with real numbers', () => {
     const { a, steps } = stepsOf('karatsuba');
-    const s = steps.find((x) => /Cross-Term/.test(x.title))!;
+    const s = steps.find((x) => /Cross Term/.test(x.title))!;
+    const k = s.state.karatsubaDetails;
     const html = renderToStaticMarkup(<VisualizerStage config={a} step={s} inputs={getDefaultInputs(a)} />);
-    expect(html).toContain(s.state.formulaExplanation);
+    expect(html.replace(/<[^>]+>/g, '')).toContain(`= ${k.p3} − ${k.p1} − ${k.p2} = ${k.crossTerm}`);
   });
 });
