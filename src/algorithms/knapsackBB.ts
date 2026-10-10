@@ -13,6 +13,10 @@ export interface BBNode {
   children?: BBNode[];
 }
 
+/** Beginner-facing name for a node, matching its tree label (W, V); internal ids stay internal. */
+export const bbNodeName = (node: Pick<BBNode, 'level' | 'weight' | 'value'>) =>
+  node.level === 0 ? 'the root' : `the level-${node.level} node (weight ${node.weight}, value ${node.value})`;
+
 export interface KnapsackBBState {
   items: { id: number; weight: number; value: number; ratio: number }[];
   capacity: number;
@@ -125,7 +129,7 @@ export function* knapsackBBSteps(inputs: {
 
     yield {
       stepIndex: stepIndex++,
-      title: `Explore Node (${curr.id}) at Level ${curr.level}`,
+      title: `Explore Node at Level ${curr.level} (W ${curr.weight}, V ${curr.value})`,
       description: `Exploring node at level ${curr.level} (Weight: ${curr.weight}, Value: ${curr.value}, Bound: ${curr.bound}). Current best value = ${bestValue}.`,
       codeLine: 6,
       callFlow: { type: 'call', nodeId: curr.id },
@@ -156,8 +160,8 @@ export function* knapsackBBSteps(inputs: {
 
       yield {
         stepIndex: stepIndex++,
-        title: `Prune Node ${curr.id} by Bound`,
-        description: `Pruning branch at node ${curr.id} because bound ${curr.bound} cannot beat best known value ${bestValue}.`,
+        title: `Prune Node at Level ${curr.level} by Bound`,
+        description: `Pruning the branch at ${bbNodeName(curr)} because its bound ${curr.bound} cannot beat the best known value ${bestValue}.`,
         codeLine: 7,
         callFlow: { type: 'return', nodeId: curr.id },
         state: {

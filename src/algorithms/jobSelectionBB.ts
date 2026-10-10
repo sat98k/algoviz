@@ -23,6 +23,14 @@ export interface JobBBNode {
   children?: JobBBNode[];
 }
 
+/** Beginner-facing name for a node: the jobs it has chosen (internal ids stay internal). */
+export const jobNodeName = (node: Pick<JobBBNode, 'level' | 'selectedJobs'>) =>
+  node.level === 0
+    ? 'the root'
+    : node.selectedJobs.length > 0
+    ? `the node with {${[...node.selectedJobs].sort((a, b) => a - b).map((id) => `J${id}`).join(', ')}}`
+    : `the node with no jobs chosen (level ${node.level})`;
+
 export interface JobSelectionBBState {
   jobs: Job[];
   maxDeadline: number;
@@ -210,10 +218,10 @@ export function* jobSelectionBBSteps(inputs: {
       prunedNodeIds.push(curr.id);
 
       yield makeStep(
-        `Prune Node ${curr.id} by Bound`,
-        `Upper bound ${curr.bound} cannot beat current best profit ${bestProfit}. Node pruned.`,
+        `Prune Node at Level ${curr.level} by Bound`,
+        `The upper bound ${curr.bound} of ${jobNodeName(curr)} cannot beat the current best profit ${bestProfit}. Node pruned.`,
         7,
-        `Node ${curr.id} pruned: UB (${curr.bound}) <= Best (${bestProfit})`,
+        `Pruned ${jobNodeName(curr)}: UB (${curr.bound}) <= Best (${bestProfit})`,
         curr.id,
         curr.id,
         false,
@@ -227,10 +235,10 @@ export function* jobSelectionBBSteps(inputs: {
     curr.status = 'active';
 
     yield makeStep(
-      `Explore Node ${curr.id} (Level ${curr.level})`,
-      `Took node ${curr.id} from the queue (the live node with the highest upper bound) at level ${curr.level}: profit so far = ${curr.profit}, upper bound = ${curr.bound}. Best profit found so far = ${bestProfit}.`,
+      `Explore Node at Level ${curr.level} (P ${curr.profit}, UB ${curr.bound})`,
+      `Took ${jobNodeName(curr)} from the queue (the live node with the highest upper bound) at level ${curr.level}: profit so far = ${curr.profit}, upper bound = ${curr.bound}. Best profit found so far = ${bestProfit}.`,
       6,
-      `Exploring node ${curr.id}: Profit=${curr.profit}, UB=${curr.bound}`,
+      `Exploring ${jobNodeName(curr)}: Profit=${curr.profit}, UB=${curr.bound}`,
       curr.id,
       undefined,
       false,
@@ -330,10 +338,10 @@ export function* jobSelectionBBSteps(inputs: {
         if (inclBound <= bestProfit || leftNode.level === n) {
           leftNode.status = 'incumbent';
           yield makeStep(
-            `Best Node ${leftNode.id} Needs No Further Branching`,
-            `Node ${leftNode.id} holds the best feasible schedule so far, and its upper bound ${inclBound} equals that profit (${bestProfit}). No schedule below it can earn more, so it is not branched further.`,
+            `Best Node at Level ${leftNode.level} Needs No Further Branching`,
+            `${jobNodeName(leftNode).replace(/^t/, 'T')} holds the best feasible schedule so far, and its upper bound ${inclBound} equals that profit (${bestProfit}). No schedule below it can earn more, so it is not branched further.`,
             11,
-            `Best node ${leftNode.id} closed: UB (${inclBound}) = best (${bestProfit})`,
+            `Best node closed (${jobNodeName(leftNode)}): UB (${inclBound}) = best (${bestProfit})`,
             leftNode.id,
             undefined,
             false,

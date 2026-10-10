@@ -80,7 +80,7 @@ export function* edmondsKarpSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Initialize Edmonds-Karp Network',
     description: `Initialized flow network with Source ${nodes[s].label} and Sink ${nodes[t].label}. Edmonds-Karp uses explicit Breadth-First Search (BFS) to always choose the shortest augmenting path (fewest edges) in residual graph G_f.`,
-    codeLine: 1,
+    codeLine: [1, 2],
     state: {
       nodes,
       edges: getEdges(),
@@ -117,7 +117,7 @@ export function* edmondsKarpSteps(inputs: {
         stepIndex: stepIndex++,
         title: `BFS Frontier: Dequeue ${nodes[u].label}`,
         description: `BFS searching residual edges from ${nodes[u].label}. Queue: [${queue.map((idx) => nodes[idx].label).join(', ') || 'empty'}].`,
-        codeLine: [2, 3],
+        codeLine: 3,
         state: {
           nodes,
           edges: getEdges(),
@@ -183,7 +183,7 @@ export function* edmondsKarpSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Shortest Augmenting Path Discovered: ${pathLabelStr}`,
       description: `BFS reached Sink ${nodes[t].label}. Shortest path length = ${path.length - 1} edges. Bottleneck residual capacity Δf = ${bottleneck}.`,
-      codeLine: [4, 5],
+      codeLine: [3, 4],
       state: {
         nodes,
         edges: getEdges(),
@@ -222,7 +222,7 @@ export function* edmondsKarpSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Augment Residual Flow +${bottleneck} (Total Flow: ${totalFlow})`,
       description: `Pushed flow along shortest path ${pathLabelStr}. Total flow is now ${totalFlow}.`,
-      codeLine: [6, 7, 8],
+      codeLine: [5, 6],
       state: {
         nodes,
         edges: getEdges(),
@@ -250,7 +250,7 @@ export function* edmondsKarpSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'Edmonds-Karp Complete: Maximum Flow Found',
     description: `BFS cannot reach Sink ${nodes[t].label} in residual network G_f. Maximum flow value is ${totalFlow}. Time complexity is bounded by O(V · E²).`,
-    codeLine: 9,
+    codeLine: 7,
     state: {
       nodes,
       edges: getEdges(),

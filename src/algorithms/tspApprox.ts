@@ -189,7 +189,7 @@ export function* tspApproxSteps(inputs: {
       stepIndex: stepIndex++,
       title: `MST Cut Evaluation: Evaluate Edges from {${Array.from(inMst).map((i) => cities[i].label).join(', ')}}`,
       description: `Searching cut edges to unvisited cities. Lightest edge found is (${cities[bestU].label}, ${cities[bestV].label}) with weight ${minWeight}.`,
-      codeLine: [2, 3],
+      codeLine: 2,
       state: {
         isApprox: true,
         metricCheck,
@@ -225,7 +225,7 @@ export function* tspApproxSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Add Edge (${cities[bestU].label}, ${cities[bestV].label}) to MST (Weight +${minWeight})`,
       description: `Added edge (${cities[bestU].label}, ${cities[bestV].label}) to Minimum Spanning Tree. Current MST weight = ${totalMstWeight}.`,
-      codeLine: 4,
+      codeLine: 2,
       state: {
         isApprox: true,
         metricCheck,
@@ -266,7 +266,7 @@ export function* tspApproxSteps(inputs: {
     stepIndex: stepIndex++,
     title: `Phase 2: Double Every MST Edge (Weight: 2 * ${totalMstWeight} = ${doubledWeight})`,
     description: `Doubled all ${mstEdges.length} MST edges to form an Eulerian multigraph (every vertex now has even degree), so a closed walk using each doubled edge once costs 2 × W(MST) = ${doubledWeight}. This is at most 2 × OPT for any non-negative costs: deleting one edge from an optimal tour leaves a spanning tree, so W(MST) ≤ OPT.`,
-    codeLine: 5,
+    codeLine: 3,
     state: {
       isApprox: true,
       metricCheck,
@@ -338,7 +338,7 @@ export function* tspApproxSteps(inputs: {
           ? 'With metric costs a direct hop is never longer than the walk it skips (triangle inequality), so shortcutting cannot increase the cost.'
           : 'These costs break the triangle inequality, so this direct hop may cost more than the walk it skips.'
       } Running tour cost: ${approxTourCost}.`,
-      codeLine: [6, 7],
+      codeLine: [4, 5],
       state: {
         isApprox: true,
         metricCheck,
@@ -381,7 +381,7 @@ export function* tspApproxSteps(inputs: {
     description: guaranteeHolds
       ? `Built the Hamiltonian cycle ${tourText}. Guarantee: tour cost ${approxTourCost} ≤ 2 × W(MST) = ${doubledWeight} (shortcuts never add cost on metric inputs), and W(MST) ≤ OPT, so the tour costs at most 2 × OPT.`
       : `Built the Hamiltonian cycle ${tourText} with cost ${approxTourCost}. No approximation guarantee applies: ${nonMetricReason || 'the costs are not metric'}. Here the tour cost is ${approxTourCost} ${relation(approxTourCost, doubledWeight)} 2 × W(MST) = ${doubledWeight}.`,
-    codeLine: 8,
+    codeLine: 6,
     state: {
       isApprox: true,
       metricCheck,
