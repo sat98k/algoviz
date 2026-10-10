@@ -239,7 +239,7 @@ describe('C26 wording fixes', () => {
   });
 
   it('Vertex Cover separates the NP-hard optimization and NP-complete decision versions', () => {
-    const d = getAlgorithmById('vertex-cover-approx')!.complexity.description!;
+    const d = getAlgorithmById('vertex-cover-approx')!.analysis.derivation;
     expect(d).toContain('NP-hard as an optimization problem');
     expect(d).toContain('decision version');
     expect(d).toContain('NP-complete');

@@ -12,7 +12,7 @@ import { GRAPH_COLORING_PSEUDOCODE_FIRST, GRAPH_COLORING_PSEUDOCODE_ALL } from '
 
 // Controls & Panels
 import { PlaybackControls } from '../components/common/PlaybackControls';
-import { ComplexityBadge } from '../components/common/ComplexityBadge';
+import { ComplexityAnalysisPanel } from '../components/common/ComplexityAnalysisPanel';
 import { MetricsPanel } from '../components/common/MetricsPanel';
 import { ColoringSolutionsPanel } from '../components/common/ColoringSolutionsPanel';
 import { InputControlPanel } from '../components/common/InputControlPanel';
@@ -510,7 +510,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
 
       {/* Paradigm & complexity at the end of the page */}
       <section className="pt-2 border-t border-hairline w-full">
-        <ComplexityBadge complexity={config.complexity} paradigm={config.paradigm} />
+        <ComplexityAnalysisPanel analysis={config.analysis} paradigm={config.paradigm} />
       </section>
     </div>
   );

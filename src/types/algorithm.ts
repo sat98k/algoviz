@@ -37,6 +37,41 @@ export interface ComplexityInfo {
   description?: string;
 }
 
+/** How a bound should be read (shown as chips next to the analysis). */
+export type BoundKind =
+  | 'Worst-case'
+  | 'Expected'
+  | 'Amortized'
+  | 'Pseudo-polynomial'
+  | 'Output-sensitive'
+  | 'Exponential'
+  | 'Randomized (Monte Carlo)'
+  | 'Approximation';
+
+export interface TimeBound {
+  /** 'all' = the same bound in every case (say why in `note`). */
+  case: 'best' | 'expected' | 'average' | 'worst' | 'all';
+  /** Plain-text formula, e.g. "O(n log n)", "O(n²·2ⁿ)". Never LaTeX. */
+  bound: string;
+  /** When this case happens / under which assumption. */
+  note?: string;
+}
+
+/** The teaching analysis shown in the "Time and space complexity" section. */
+export interface ComplexityAnalysis {
+  variables: { symbol: string; meaning: string }[];
+  time: TimeBound[];
+  kinds: BoundKind[];
+  /** What dominates the running time, in one sentence. */
+  dominant: string;
+  recurrence?: string;
+  /** 2–4 sentence derivation. */
+  derivation: string;
+  space: { bound: string; explanation: string };
+  /** Where this visualizer's code is simpler than the textbook version and costs more. */
+  implementationNote?: string;
+}
+
 export interface MetricData {
   comparisons?: number;
   swaps?: number;
@@ -169,7 +204,9 @@ export interface AlgorithmConfig {
   moduleName: string;
   name: string;
   paradigm: Paradigm;
+  /** Short summary used by compact views (derived from `analysis`). */
   complexity: ComplexityInfo;
+  analysis: ComplexityAnalysis;
   problemStatement: string;
   explanation: string;
   /** Glossary terms worth linking in this algorithm's learning text and step descriptions. */

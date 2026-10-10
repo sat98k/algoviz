@@ -36,6 +36,7 @@ import {
 import { jobSelectionBBSteps } from '../algorithms/jobSelectionBB';
 import * as resultSummaries from './resultSummaries';
 import { COMPARISON_PROFILES } from './comparisonProfiles';
+import { COMPLEXITY_ANALYSIS, complexityFrom } from './complexityAnalysis';
 
 export const algorithmRegistry: AlgorithmConfig[] = [
   // Module 1: Greedy — Fractional Knapsack
@@ -45,13 +46,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 1: Greedy Algorithms',
     name: 'Fractional Knapsack',
     paradigm: 'Greedy',
-    complexity: {
-      timeBest: 'O(n log n)',
-      timeAverage: 'O(n log n)',
-      timeWorst: 'O(n log n)',
-      spaceWorst: 'O(n)',
-      description: 'Sorting items by value/weight ratio descending + O(n) greedy linear fill',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['fractional-knapsack']),
+    analysis: COMPLEXITY_ANALYSIS['fractional-knapsack'],
     problemStatement:
       'Given weights and values of n items and a knapsack capacity W, determine the maximum value achievable by taking entire items or fractional portions of items.',
     explanation:
@@ -146,12 +142,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 1: Greedy Algorithms',
     name: 'Huffman Coding',
     paradigm: 'Greedy',
-    complexity: {
-      timeAverage: 'O(n log n)',
-      timeWorst: 'O(n log n)',
-      spaceWorst: 'O(n)',
-      description: 'Building priority queue forest & prefix tree',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['huffman']),
+    analysis: COMPLEXITY_ANALYSIS['huffman'],
     problemStatement:
       'Construct a lossless, variable-length prefix code for characters in a given string based on their frequencies, minimizing total encoded bit length.',
     explanation:
@@ -205,13 +197,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 1: Divide & Conquer',
     name: 'Maximum Subarray (Divide & Conquer)',
     paradigm: 'Divide & Conquer',
-    complexity: {
-      timeBest: 'O(n log n)',
-      timeAverage: 'O(n log n)',
-      timeWorst: 'O(n log n)',
-      spaceWorst: 'O(log n)',
-      description: 'Master theorem T(n) = 2T(n/2) + O(n) -> O(n log n) recursive recursion tree',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['max-subarray']),
+    analysis: COMPLEXITY_ANALYSIS['max-subarray'],
     problemStatement:
       'Find the contiguous subarray within a one-dimensional array of numbers which has the largest sum, using the classic Divide & Conquer paradigm.',
     explanation:
@@ -280,13 +267,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 1: Divide & Conquer',
     name: 'Karatsuba Fast Multiplication',
     paradigm: 'Divide & Conquer',
-    complexity: {
-      timeBest: 'O(n^log2(3)) ≈ O(n^1.585)',
-      timeAverage: 'O(n^log2(3)) ≈ O(n^1.585)',
-      timeWorst: 'O(n^log2(3)) ≈ O(n^1.585)',
-      spaceWorst: 'O(n)',
-      description: 'T(n) = 3T(n/2) + O(n) solves to O(n^log2(3)) ≈ O(n^1.585): three half-size multiplications instead of four (which would give O(n²))',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['karatsuba']),
+    analysis: COMPLEXITY_ANALYSIS['karatsuba'],
     problemStatement:
       'Multiply two large n-digit integers faster than standard O(n²) grade-school multiplication using recursive 3-way algebraic decomposition.',
     explanation:
@@ -368,12 +350,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 2: Dynamic Programming',
     name: '0-1 Knapsack (DP)',
     paradigm: 'Dynamic Programming',
-    complexity: {
-      timeAverage: 'O(n · W)',
-      timeWorst: 'O(n · W)',
-      spaceWorst: 'O(n · W)',
-      description: 'Pseudo-polynomial bottom-up table fill',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['knapsack-dp']),
+    analysis: COMPLEXITY_ANALYSIS['knapsack-dp'],
     problemStatement:
       'Given weights and values of n items, determine the items to include in a knapsack of capacity W to maximize total value without exceeding capacity.',
     explanation:
@@ -453,12 +431,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 2: Dynamic Programming',
     name: 'Longest Common Subsequence (LCS)',
     paradigm: 'Dynamic Programming',
-    complexity: {
-      timeAverage: 'O(m · n)',
-      timeWorst: 'O(m · n)',
-      spaceWorst: 'O(m · n)',
-      description: '2D matrix comparison & backtrack',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['lcs']),
+    analysis: COMPLEXITY_ANALYSIS['lcs'],
     problemStatement:
       'Find the longest subsequence common to two sequences X and Y (characters appear in the same relative order, not necessarily contiguous).',
     explanation:
@@ -515,13 +489,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 2: Dynamic Programming',
     name: 'Matrix Chain Multiplication',
     paradigm: 'Dynamic Programming',
-    complexity: {
-      timeBest: 'O(n³)',
-      timeAverage: 'O(n³)',
-      timeWorst: 'O(n³)',
-      spaceWorst: 'O(n²)',
-      description: 'Tabular computation across all chain lengths L=2..n testing split points k',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['matrix-chain-multiplication']),
+    analysis: COMPLEXITY_ANALYSIS['matrix-chain-multiplication'],
     problemStatement:
       'Given a sequence of matrices A1, A2, ..., An with specified dimensions, find the optimal parenthesization that minimizes the total number of scalar multiplications.',
     explanation:
@@ -596,13 +565,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 2: Dynamic Programming',
     name: 'Assembly Line Scheduling',
     paradigm: 'Dynamic Programming',
-    complexity: {
-      timeBest: 'O(n)',
-      timeAverage: 'O(n)',
-      timeWorst: 'O(n)',
-      spaceWorst: 'O(n)',
-      description: 'Single-pass dynamic programming across n stations per line + O(n) path backtrack',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['assembly-line-scheduling']),
+    analysis: COMPLEXITY_ANALYSIS['assembly-line-scheduling'],
     problemStatement:
       'Given two parallel assembly lines with n manufacturing stations, processing times, line transfer penalties, and entry/exit times, determine the fastest path to assemble an automobile.',
     explanation:
@@ -773,13 +737,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 2: Dynamic Programming',
     name: 'Travelling Salesman Problem (Held-Karp DP)',
     paradigm: 'Dynamic Programming',
-    complexity: {
-      timeBest: 'O(n² · 2ⁿ)',
-      timeAverage: 'O(n² · 2ⁿ)',
-      timeWorst: 'O(n² · 2ⁿ)',
-      spaceWorst: 'O(n · 2ⁿ)',
-      description: 'Held-Karp dynamic programming memoizing subproblems indexed by (subset S, ending city j)',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['tsp']),
+    analysis: COMPLEXITY_ANALYSIS['tsp'],
     problemStatement:
       'Given a list of cities and pairwise travel costs, find the minimum-weight Hamiltonian cycle that visits every city exactly once and returns to the origin.',
     explanation:
@@ -891,11 +850,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 2: Backtracking',
     name: 'N-Queens Problem',
     paradigm: 'Backtracking',
-    complexity: {
-      timeWorst: 'O(N!)',
-      spaceWorst: 'O(N)',
-      description: 'Systematic constraint search with pruning',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['n-queens']),
+    analysis: COMPLEXITY_ANALYSIS['n-queens'],
     problemStatement:
       'Place N non-attacking queens on an N×N chessboard so that no two queens share the same row, column, or diagonal.',
     explanation:
@@ -945,11 +901,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 2: Branch & Bound',
     name: '0-1 Knapsack (Branch & Bound)',
     paradigm: 'Branch & Bound',
-    complexity: {
-      timeWorst: 'O(2ⁿ)',
-      spaceWorst: 'O(2ⁿ)',
-      description: 'State-space tree with fractional knapsack bounding',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['knapsack-bb']),
+    analysis: COMPLEXITY_ANALYSIS['knapsack-bb'],
     problemStatement:
       'Solve 0-1 Knapsack by exploring a state-space decision tree, computing optimistic upper bounds to prune subtrees that cannot beat the current best solution.',
     explanation:
@@ -1024,13 +977,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 3: String Matching',
     name: 'Naive (Brute-Force) String Matching',
     paradigm: 'String Matching',
-    complexity: {
-      timeBest: 'O(n)',
-      timeAverage: 'O(n · m)',
-      timeWorst: 'O((n − m + 1) · m)',
-      spaceWorst: 'O(1)',
-      description: 'Checks every text alignment; no preprocessing',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['naive-string-match']),
+    analysis: COMPLEXITY_ANALYSIS['naive-string-match'],
     problemStatement:
       'Find all occurrences of a pattern P of length m in a text T of length n by testing every possible alignment of P against T.',
     explanation:
@@ -1089,12 +1037,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 3: String Matching',
     name: 'Knuth-Morris-Pratt (KMP) Algorithm',
     paradigm: 'String Matching',
-    complexity: {
-      timeAverage: 'O(m + n)',
-      timeWorst: 'O(m + n)',
-      spaceWorst: 'O(m)',
-      description: 'Zero backtrack in text via LPS array',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['kmp']),
+    analysis: COMPLEXITY_ANALYSIS['kmp'],
     problemStatement:
       'Find all occurrences of a pattern P of length m in a text T of length n in linear time without rolling back the text pointer.',
     explanation:
@@ -1177,13 +1121,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 3: String Matching',
     name: 'Rabin-Karp Algorithm',
     paradigm: 'String Matching',
-    complexity: {
-      timeBest: 'O(n + m)',
-      timeAverage: 'O(n + m)',
-      timeWorst: 'O((n − m + 1) · m)',
-      spaceWorst: 'O(1)',
-      description: 'Rolling hash filters alignments; verify only on a hash hit',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['rabin-karp']),
+    analysis: COMPLEXITY_ANALYSIS['rabin-karp'],
     problemStatement:
       'Find all occurrences of a pattern P of length m in a text T of length n by comparing a rolling hash of each text window against the hash of the pattern.',
     explanation:
@@ -1246,13 +1185,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 3: String Matching',
     name: 'Suffix Tree String Matching (Ukkonen)',
     paradigm: 'String Matching',
-    complexity: {
-      timeBest: 'O(n) build',
-      timeAverage: 'O(n + m + z)',
-      timeWorst: 'O(n + m + z)',
-      spaceWorst: 'O(n)',
-      description: "Ukkonen O(n) construction; each query O(m + occ)",
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['suffix-tree']),
+    analysis: COMPLEXITY_ANALYSIS['suffix-tree'],
     problemStatement:
       'Preprocess the text T (length n) into a suffix tree so that every occurrence of any pattern P (length m) can be reported in O(m + z), where z is the number of occurrences.',
     explanation:
@@ -1307,12 +1241,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 4: Graph Algorithms',
     name: 'Floyd-Warshall (All-Pairs Shortest Path)',
     paradigm: 'Graph',
-    complexity: {
-      timeAverage: 'O(V³)',
-      timeWorst: 'O(V³)',
-      spaceWorst: 'O(V²)',
-      description: 'Triply nested dynamic programming matrix updates',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['floyd-warshall']),
+    analysis: COMPLEXITY_ANALYSIS['floyd-warshall'],
     problemStatement:
       'Compute the shortest path distances between every pair of vertices in a directed, weighted graph (which may contain negative edge weights but no negative cycles).',
     explanation:
@@ -1377,13 +1307,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 4: Graph Algorithms',
     name: 'Bellman-Ford (Single-Source Shortest Path)',
     paradigm: 'Graph',
-    complexity: {
-      timeBest: 'O(V + E)',
-      timeAverage: 'O(V · E)',
-      timeWorst: 'O(V · E)',
-      spaceWorst: 'O(V)',
-      description: 'Relax every edge V−1 times; handles negative weights',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['bellman-ford']),
+    analysis: COMPLEXITY_ANALYSIS['bellman-ford'],
     problemStatement:
       'Compute the shortest-path distance from a single source vertex to every other vertex in a directed, weighted graph that may contain negative edge weights, and report whether a negative-weight cycle is reachable from the source.',
     explanation:
@@ -1483,12 +1408,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 4: Network Flow',
     name: 'Ford-Fulkerson (Edmonds-Karp Max Flow)',
     paradigm: 'Max Flow',
-    complexity: {
-      timeAverage: 'O(V · E²)',
-      timeWorst: 'O(V · E²)',
-      spaceWorst: 'O(V + E)',
-      description: 'Edmonds-Karp BFS augmenting paths',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['ford-fulkerson']),
+    analysis: COMPLEXITY_ANALYSIS['ford-fulkerson'],
     problemStatement:
       'Compute the maximum feasible flow from a source vertex s to a sink vertex t in a directed flow network with edge capacity constraints.',
     explanation:
@@ -1591,13 +1512,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 4: Graph Algorithms & Network Flow',
     name: 'Edmonds-Karp (BFS Maximum Flow)',
     paradigm: 'Max Flow',
-    complexity: {
-      timeBest: 'O(V · E²)',
-      timeAverage: 'O(V · E²)',
-      timeWorst: 'O(V · E²)',
-      spaceWorst: 'O(V + E)',
-      description: 'Polynomial time bound by finding the shortest augmenting path using BFS',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['edmonds-karp']),
+    analysis: COMPLEXITY_ANALYSIS['edmonds-karp'],
     problemStatement:
       'Compute the maximum feasible flow from source S to sink T through a directed capacity network using Edmonds-Karp with explicit breadth-first search path discovery.',
     explanation:
@@ -1675,13 +1591,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 4: Graph Algorithms & Network Flow',
     name: 'Push-Relabel (Goldberg-Tarjan Max Flow)',
     paradigm: 'Max Flow',
-    complexity: {
-      timeBest: 'O(V² · E)',
-      timeAverage: 'O(V² · E)',
-      timeWorst: 'O(V² · E)',
-      spaceWorst: 'O(V + E)',
-      description: 'Preflow-push algorithm running in O(V²E) time, superior to Ford-Fulkerson on dense networks',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['push-relabel']),
+    analysis: COMPLEXITY_ANALYSIS['push-relabel'],
     problemStatement:
       'Compute maximum feasible flow from source S to sink T using localized push and relabel operations on an active preflow network.',
     explanation:
@@ -1761,12 +1672,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 5: Computational Geometry',
     name: 'Graham’s Scan (2D Convex Hull)',
     paradigm: 'Geometric',
-    complexity: {
-      timeAverage: 'O(n log n)',
-      timeWorst: 'O(n log n)',
-      spaceWorst: 'O(n)',
-      description: 'Polar angle sorting & linear stack scan',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['graham-scan']),
+    analysis: COMPLEXITY_ANALYSIS['graham-scan'],
     problemStatement:
       'Compute the convex hull (smallest enclosing convex polygon) for a given set of n points in the 2D Cartesian plane.',
     explanation:
@@ -1853,13 +1760,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 5: Computational Geometry',
     name: 'Jarvis’ March (Gift Wrapping)',
     paradigm: 'Geometric',
-    complexity: {
-      timeBest: 'O(n · h)',
-      timeAverage: 'O(n · h)',
-      timeWorst: 'O(n · h)',
-      spaceWorst: 'O(h)',
-      description: 'Output-sensitive O(nh) where h is the number of vertices on the convex hull',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['jarvis-march']),
+    analysis: COMPLEXITY_ANALYSIS['jarvis-march'],
     problemStatement:
       'Compute the 2D convex hull of a point set by gift wrapping: start from the lowest point and repeatedly find the next hull point that forms the smallest counter-clockwise turn.',
     explanation:
@@ -1958,13 +1860,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 5: Computational Geometry',
     name: 'Line Segment Intersection (Sweep-Line)',
     paradigm: 'Geometric',
-    complexity: {
-      timeBest: 'O(n log n)',
-      timeAverage: 'O(n log n)',
-      timeWorst: 'O(n log n)',
-      spaceWorst: 'O(n)',
-      description: 'Sorting the 2n endpoints costs O(n log n) even when an intersection is found early; each sweep event then costs O(log n)',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['line-segment-intersection']),
+    analysis: COMPLEXITY_ANALYSIS['line-segment-intersection'],
     problemStatement:
       'Given a collection of 2D line segments, determine whether any two segments intersect using a vertical sweep line moving left to right.',
     explanation:
@@ -2043,13 +1940,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 6: Randomized Algorithms',
     name: 'Randomized Quicksort',
     paradigm: 'Randomized',
-    complexity: {
-      timeBest: 'O(n log n)',
-      timeAverage: 'O(n log n)',
-      timeWorst: 'O(n²)',
-      spaceWorst: 'O(log n)',
-      description: 'Expected linearithmic time by avoiding worst-case pivot bias',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['randomized-quicksort']),
+    analysis: COMPLEXITY_ANALYSIS['randomized-quicksort'],
     problemStatement:
       'Sort an array of n numbers by choosing a pivot uniformly at random, partitioning around the pivot, and recursively sorting the left and right subarrays.',
     explanation:
@@ -2102,13 +1994,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 6: Randomized Algorithms',
     name: 'The Hiring Problem',
     paradigm: 'Randomized',
-    complexity: {
-      timeBest: 'O(n)',
-      timeAverage: 'O(n)',
-      timeWorst: 'O(n)',
-      spaceWorst: 'O(1)',
-      description: 'O(n) candidate interviews with expected O(ln n) hiring events under random permutation',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['hiring-problem']),
+    analysis: COMPLEXITY_ANALYSIS['hiring-problem'],
     problemStatement:
       'Evaluate candidates sequentially: pay an interview cost c_i for every applicant, but pay a much larger hiring cost c_h only when an applicant is strictly better than everyone interviewed so far.',
     explanation:
@@ -2186,13 +2073,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 6: Randomized Algorithms',
     name: 'Karger’s Algorithm (Randomized Min-Cut)',
     paradigm: 'Randomized',
-    complexity: {
-      timeBest: 'O(V²)',
-      timeAverage: 'O(V²)',
-      timeWorst: 'O(V²)',
-      spaceWorst: 'O(V + E)',
-      description: 'O(V²) per contraction run; success probability >= 2 / (V(V-1)), amplified by repeating O(V² ln V) times',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['karger-min-cut']),
+    analysis: COMPLEXITY_ANALYSIS['karger-min-cut'],
     problemStatement:
       'Find a global minimum cut in a connected undirected graph: a partition of vertices (A, B) minimizing the number of crossing edges, using randomized edge contraction.',
     explanation:
@@ -2291,12 +2173,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 7: Complexity & Approximation',
     name: 'Vertex Cover (2-Approximation)',
     paradigm: 'Approximation',
-    complexity: {
-      timeAverage: 'O(V + E)',
-      timeWorst: 'O(V + E)',
-      spaceWorst: 'O(V + E)',
-      description: 'Polynomial-time 2-approximation. Minimum vertex cover is NP-hard as an optimization problem; its decision version (is there a cover of size ≤ k?) is NP-complete',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['vertex-cover-approx']),
+    analysis: COMPLEXITY_ANALYSIS['vertex-cover-approx'],
     problemStatement:
       'Find a subset of vertices C ⊆ V such that every edge (u, v) ∈ E has at least one endpoint in C, with size |C| ≤ 2 · OPT.',
     explanation:
@@ -2364,13 +2242,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 7: Complexity & Approximation',
     name: 'Set Cover (Greedy Approximation)',
     paradigm: 'Approximation',
-    complexity: {
-      timeBest: 'O(m · n)',
-      timeAverage: 'O(m · n)',
-      timeWorst: 'O(m · n)',
-      spaceWorst: 'O(m + n)',
-      description: 'Greedy O(ln |U| + 1) approximation factor for NP-hard Set Cover problem',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['set-cover']),
+    analysis: COMPLEXITY_ANALYSIS['set-cover'],
     problemStatement:
       'Given a universe of elements U and a family of subsets S, find a minimum number of subsets whose union contains every element in U.',
     explanation:
@@ -2466,13 +2339,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 7: Complexity & Approximation',
     name: 'Travelling Salesman Problem (2-Approximation)',
     paradigm: 'Approximation',
-    complexity: {
-      timeBest: 'O(V²)',
-      timeAverage: 'O(V²)',
-      timeWorst: 'O(V²)',
-      spaceWorst: 'O(V²)',
-      description: 'Polynomial time MST-doubling algorithm with 2.0x approximation factor for metric TSP',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['tsp-approx']),
+    analysis: COMPLEXITY_ANALYSIS['tsp-approx'],
     problemStatement:
       'Find a minimum-cost Hamiltonian cycle visiting every city exactly once and returning to the origin in a complete metric graph with cost(Tour) <= 2 · OPT.',
     explanation:
@@ -2586,11 +2454,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 2: Backtracking',
     name: 'Subset Sum (Backtracking)',
     paradigm: 'Backtracking',
-    complexity: {
-      timeWorst: 'O(2ⁿ)',
-      spaceWorst: 'O(n)',
-      description: 'Backtracking with pruning — sum-exceeds and remaining-insufficient cutoffs',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['subset-sum']),
+    analysis: COMPLEXITY_ANALYSIS['subset-sum'],
     problemStatement:
       'Given a set of positive integers and a target sum, determine whether any subset of the integers sums exactly to the target value using backtracking with pruning.',
     explanation:
@@ -2693,11 +2558,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 2: Backtracking',
     name: 'Graph Coloring (m-Coloring)',
     paradigm: 'Backtracking',
-    complexity: {
-      timeWorst: 'O(kⁿ)',
-      spaceWorst: 'O(n)',
-      description: 'Exponential backtracking trying k colors per vertex with neighbor conflict pruning',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['graph-coloring']),
+    analysis: COMPLEXITY_ANALYSIS['graph-coloring'],
     problemStatement:
       'Given an undirected graph G = (V, E) and an integer k, determine if vertices can be assigned at most k colors such that no two adjacent vertices share the same color.',
     explanation:
@@ -2858,11 +2720,8 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     moduleName: 'Module 2: Branch & Bound',
     name: 'Job Selection Problem (Branch & Bound)',
     paradigm: 'Branch & Bound',
-    complexity: {
-      timeWorst: 'O(2ⁿ)',
-      spaceWorst: 'O(2ⁿ)',
-      description: 'Best-first search branch & bound with deadline feasibility pruning and greedy upper-bound cutoff',
-    },
+    complexity: complexityFrom(COMPLEXITY_ANALYSIS['job-selection-bb']),
+    analysis: COMPLEXITY_ANALYSIS['job-selection-bb'],
     problemStatement:
       'Given n jobs with individual deadlines and profits, select a subset of jobs that can be scheduled within their deadlines to maximize total profit.',
     explanation:

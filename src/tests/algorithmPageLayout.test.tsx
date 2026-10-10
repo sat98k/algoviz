@@ -40,7 +40,7 @@ describe.each(['split', 'stacked'] as const)('AlgorithmPage layout (%s)', (mode)
     const explanation = html.indexOf('What happened and why?');
     const answer = html.indexOf('Final answer');
     const inputs = html.indexOf('Input &amp; presets');
-    const complexity = html.indexOf('TIME BOUND');
+    const complexity = html.indexOf('Time and space complexity');
     expect(explanation).toBeGreaterThan(-1);
     expect(answer).toBeGreaterThan(explanation);
     expect(inputs).toBeGreaterThan(answer);

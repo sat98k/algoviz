@@ -10,7 +10,7 @@ import {
   TermPopoverAction,
 } from '../components/common/Term';
 import { ProblemIntuitionPanel } from '../components/common/ProblemIntuitionPanel';
-import { ComplexityBadge } from '../components/common/ComplexityBadge';
+import { ComplexityAnalysisPanel } from '../components/common/ComplexityAnalysisPanel';
 import { CodeExplanation } from '../components/common/CodeExplanation';
 
 const linkedKeys = (text: string, keys: readonly GlossaryKey[], exclude?: Set<GlossaryKey>) =>
@@ -189,7 +189,7 @@ describe('Rendered markup', () => {
 
   it('paradigm badge links the paradigm term', () => {
     const c = getAlgorithmById('karatsuba')!;
-    const html = renderToStaticMarkup(<ComplexityBadge complexity={c.complexity} paradigm={c.paradigm} />);
+    const html = renderToStaticMarkup(<ComplexityAnalysisPanel analysis={c.analysis} paradigm={c.paradigm} />);
     expect(html).toContain('data-glossary-term="divide-and-conquer"');
   });
 
