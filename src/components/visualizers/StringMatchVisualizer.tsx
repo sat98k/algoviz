@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
 import { ArrowRight, CheckCircle2, AlertTriangle, XCircle, Hash } from 'lucide-react';
+import { SEM } from '../../styles/semantics';
 
 interface StringMatchVisualizerProps {
   step: AlgorithmStep;
@@ -84,17 +85,9 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
 
         {comparison && (
           <div
-            className={`px-3 py-1 text-xs font-mono border flex items-center gap-2 ${
-              comparison.isMatch
-                ? 'bg-obsidian-950 border-acid-500/60 text-acid-400 shadow-sm shadow-acid-500/10'
-                : 'bg-obsidian-950 border-rose-500/60 text-rose-300 shadow-sm shadow-rose-500/10'
-            }`}
+            className={`px-3 py-1 text-xs font-mono flex items-center gap-2 ${comparison.isMatch ? SEM.match.badge : SEM.mismatch.badge}`}
           >
-            {comparison.isMatch ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-acid-400" />
-            ) : (
-              <XCircle className="w-3.5 h-3.5 text-rose-400" />
-            )}
+            {comparison.isMatch ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
             <span>'{comparison.textChar}'</span>
             <span>{comparison.isMatch ? '==' : '!='}</span>
             <span>'{comparison.patternChar}'</span>
@@ -117,14 +110,14 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
             style={{ paddingLeft: `${safeShift * 42}px` }}
           >
             <div
-              className={`h-6 border flex items-center justify-between px-2 text-[10px] font-mono uppercase tracking-wider transition-colors duration-200 ${
+              className={`h-6 flex items-center justify-between px-2 text-[10px] font-mono uppercase tracking-wider transition-colors duration-200 ${
                 hashInfo
                   ? hashInfo.hashMatch
                     ? hashInfo.spurious
-                      ? 'border-rose-500/70 bg-rose-500/10 text-rose-300'
-                      : 'border-acid-500/70 bg-acid-500/10 text-acid-400'
-                    : 'border-amber/50 bg-amber/5 text-chalk-400'
-                  : 'border-amber/60 bg-amber/10 text-amber-glow'
+                      ? SEM.warning.badge
+                      : SEM.compare.badge
+                    : 'border border-hairline bg-obsidian-900 text-chalk-400'
+                  : SEM.current.badge
               }`}
               style={{ width: `${m * 42 - 6}px` }}
             >
@@ -133,10 +126,10 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
                 {hashInfo
                   ? hashInfo.hashMatch
                     ? hashInfo.spurious
-                      ? 'COLLISION'
-                      : 'HASH HIT'
-                    : 'HASH MISMATCH'
-                  : 'ACTIVE SLICE'}
+                      ? '⚠ Collision'
+                      : '⇄ Hash hit · checking'
+                    : 'Hash differs · skip'
+                  : '▶ Current window'}
               </span>
             </div>
           </div>
@@ -162,48 +155,47 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
               const isLeaving = rollingInfo && rollingInfo.removedIndex === idx;
               const isIncoming = rollingInfo && rollingInfo.addedIndex === idx;
 
-              let cellStyle = 'bg-obsidian-850 border-hairline text-chalk-400';
+              let cellStyle = 'bg-obsidian-850 border border-hairline text-chalk-400';
               let badgeText = '';
               let badgeClass = '';
+              let verdict: 'match' | 'mismatch' | null = null;
 
               if (isMatchedOccur) {
-                cellStyle = 'bg-acid-500/20 border-acid-500/80 text-acid-400 font-bold';
+                cellStyle = SEM.match.cell;
               } else if (isCurrentChar && comparison) {
-                cellStyle = comparison.isMatch
-                  ? 'bg-acid-500/30 border-acid-500 text-acid-300 font-bold scale-105 shadow-md shadow-acid-500/20 ring-1 ring-acid-400'
-                  : 'bg-rose-500/30 border-rose-500 text-rose-200 font-bold scale-105 shadow-md shadow-rose-500/20 ring-1 ring-rose-400';
+                verdict = comparison.isMatch ? 'match' : 'mismatch';
+                cellStyle = `${SEM[verdict].cell} scale-105 shadow-md`;
               } else if (isVerifiedInWindow) {
-                cellStyle = 'bg-acid-500/15 border-acid-500/60 text-acid-400 font-semibold';
+                cellStyle = 'bg-sem-match/10 border border-sem-match/50 text-sem-match-ink font-semibold';
               } else if (isLeaving) {
-                cellStyle = 'bg-rose-500/20 border-rose-400 text-rose-300 font-bold ring-1 ring-rose-400/50';
-                badgeText = '-OUT';
-                badgeClass = 'text-rose-400 bg-rose-950/80 border-rose-500/40';
+                // Leaving the window is routine, not an error: neutral, dashed, struck through.
+                cellStyle = 'bg-obsidian-850 border border-dashed border-chalk-500 text-chalk-400 line-through';
+                badgeText = 'OUT';
+                badgeClass = 'text-chalk-300 bg-obsidian-950 border-chalk-500/60';
               } else if (isIncoming) {
-                cellStyle = 'bg-electric-500/20 border-electric-400 text-electric-300 font-bold ring-1 ring-electric-400/50';
-                badgeText = '+IN';
-                badgeClass = 'text-electric-400 bg-electric-950/80 border-electric-500/40';
+                cellStyle = SEM.compare.cell;
+                badgeText = 'IN';
+                badgeClass = SEM.compare.badge;
               } else if (isCurrentChar && !comparison) {
-                // Focus / cursor on window or character without false-red mismatch
-                cellStyle = 'bg-amber/20 border-amber text-amber-glow font-bold scale-105 shadow-sm shadow-amber/20';
+                cellStyle = `${SEM.current.cell} scale-105`;
               } else if (isInActiveWindow) {
-                cellStyle = hashInfo?.hashMatch
-                  ? 'bg-amber/15 border-amber/40 text-chalk-200 font-medium'
-                  : 'bg-obsidian-800 border-hairline/80 text-chalk-300';
+                cellStyle = 'bg-obsidian-800 border border-hairline text-chalk-300';
               }
 
               return (
                 <div key={idx} className="flex flex-col items-center relative">
                   {badgeText && (
                     <span
-                      className={`absolute -top-4 text-[8px] font-mono font-bold px-1 py-0.2 border rounded-none whitespace-nowrap z-10 ${badgeClass}`}
+                      className={`absolute -top-[18px] text-[10px] leading-none font-mono font-bold px-1 py-0.5 border whitespace-nowrap z-10 ${badgeClass}`}
                     >
                       {badgeText}
                     </span>
                   )}
                   <div
-                    className={`w-9 h-10 flex items-center justify-center border text-sm font-mono transition-all duration-200 ${cellStyle}`}
+                    className={`relative w-9 h-10 flex items-center justify-center text-sm font-mono transition-all duration-200 ${cellStyle}`}
                   >
                     {char}
+                    {verdict && <VerdictMark verdict={verdict} />}
                   </div>
                   <span className="text-[9px] font-mono text-chalk-600 mt-1 tabular-nums">{idx}</span>
                 </div>
@@ -228,27 +220,27 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
               const isVerified = verifiedIndices.includes(idx);
               const isFullPatternMatched = verifiedIndices.length === m;
 
-              let cellStyle = 'bg-obsidian-850 border-hairline text-chalk-400';
+              let cellStyle = 'bg-obsidian-850 border border-hairline text-chalk-400';
+              let verdict: 'match' | 'mismatch' | null = null;
 
               if (isFullPatternMatched) {
-                cellStyle = 'bg-acid-500/25 border-acid-500 text-acid-400 font-bold';
+                cellStyle = SEM.match.cell;
               } else if (isCurrent && comparison) {
-                cellStyle = comparison.isMatch
-                  ? 'bg-acid-500/30 border-acid-500 text-acid-300 font-bold scale-105 shadow-md shadow-acid-500/20'
-                  : 'bg-rose-500/30 border-rose-500 text-rose-200 font-bold scale-105 shadow-md shadow-rose-500/20';
+                verdict = comparison.isMatch ? 'match' : 'mismatch';
+                cellStyle = `${SEM[verdict].cell} scale-105 shadow-md`;
               } else if (isVerified) {
-                cellStyle = 'bg-acid-500/15 border-acid-500/60 text-acid-400 font-semibold';
+                cellStyle = 'bg-sem-match/10 border border-sem-match/50 text-sem-match-ink font-semibold';
               } else if (isCurrent && !comparison) {
-                // Active focus without false-red mismatch
-                cellStyle = 'bg-amber/20 border-amber text-amber-glow font-bold scale-105';
+                cellStyle = `${SEM.current.cell} scale-105`;
               }
 
               return (
                 <div key={idx} className="flex flex-col items-center">
                   <div
-                    className={`w-9 h-10 flex items-center justify-center border text-sm font-mono transition-all duration-200 ${cellStyle}`}
+                    className={`relative w-9 h-10 flex items-center justify-center text-sm font-mono transition-all duration-200 ${cellStyle}`}
                   >
                     {char}
+                    {verdict && <VerdictMark verdict={verdict} />}
                   </div>
                   <span className="text-[9px] font-mono text-chalk-600 mt-1 tabular-nums">{idx}</span>
                 </div>
@@ -277,9 +269,7 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
                   <div key={idx} className="flex flex-col items-center">
                     <div
                       className={`w-9 h-8 flex items-center justify-center border text-xs font-mono font-bold transition-all ${
-                        isLpsActive
-                          ? 'bg-amber/25 border-amber text-amber-glow shadow-sm'
-                          : 'bg-obsidian-850 border-hairline text-chalk-400'
+                        isLpsActive ? SEM.current.cell : 'bg-obsidian-850 border-hairline text-chalk-400'
                       }`}
                     >
                       {lpsVal}
@@ -314,19 +304,13 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
                 <strong className="text-chalk-100 text-sm">{hashInfo.patternHash}</strong>
               </div>
 
-              <span
-                className={`font-bold text-sm ${
-                  hashInfo.hashMatch ? 'text-acid-400' : 'text-chalk-500'
-                }`}
-              >
-                {hashInfo.hashMatch ? '==' : '!='}
+              <span className={`font-bold text-sm ${hashInfo.hashMatch ? SEM.compare.text : 'text-chalk-500'}`}>
+                {hashInfo.hashMatch ? '=' : '≠'}
               </span>
 
               <div
-                className={`flex items-center gap-2 px-3 py-1.5 border ${
-                  hashInfo.hashMatch
-                    ? 'bg-acid-500/15 border-acid-500/60 text-acid-400 shadow-sm'
-                    : 'bg-obsidian-950 border-hairline text-chalk-300'
+                className={`flex items-center gap-2 px-3 py-1.5 ${
+                  hashInfo.hashMatch ? SEM.compare.cell : 'border bg-obsidian-950 border-hairline text-chalk-300'
                 }`}
               >
                 <span className="text-chalk-500">Window Hash T[{safeShift}…{safeShift + m - 1}]:</span>
@@ -337,19 +321,18 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
               <div className="ml-auto">
                 {hashInfo.hashMatch ? (
                   hashInfo.spurious ? (
-                    <span className="px-3 py-1.5 border bg-rose-500/15 border-rose-500/60 text-rose-300 text-xs flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                      SPURIOUS HIT (Hash collision: hashes match, but characters differ)
+                    <span className={`px-3 py-1.5 text-xs flex items-center gap-1.5 ${SEM.warning.badge}`}>
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      Spurious hit: the hashes match, but the characters differ (a collision)
                     </span>
                   ) : (
-                    <span className="px-3 py-1.5 border bg-acid-500/15 border-acid-500/60 text-acid-400 text-xs flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-acid-400" />
-                      HASH HIT (p == t: verifying characters)
+                    <span className={`px-3 py-1.5 text-xs flex items-center gap-1.5 ${SEM.compare.badge}`}>
+                      ⇄ Hash hit: hashes match, so the characters are checked one by one
                     </span>
                   )
                 ) : (
                   <span className="px-3 py-1.5 border bg-obsidian-950 border-hairline text-chalk-400 text-xs flex items-center gap-1.5">
-                    HASH MISMATCH (No match possible: skip verification)
+                    Hashes differ: no match is possible here, so no characters are checked
                   </span>
                 )}
               </div>
@@ -372,19 +355,19 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
                     <strong className="text-chalk-200 text-sm">{rollingInfo.prevHash}</strong>
                   </div>
 
-                  <div className="p-2 bg-rose-950/30 border border-rose-500/40 text-rose-300">
-                    <span className="text-rose-400 block text-[10px]">Outgoing Char (drop):</span>
-                    <strong>'{rollingInfo.removedChar}'</strong> (ASCII {rollingInfo.removedAscii}) × h ={' '}
+                  <div className="p-2 bg-obsidian-900 border border-dashed border-chalk-500 text-chalk-300">
+                    <span className="text-chalk-400 block text-[10px]">OUT · leaving character (removed):</span>
+                    <strong className="line-through">'{rollingInfo.removedChar}'</strong> (ASCII {rollingInfo.removedAscii}) × h ={' '}
                     <strong>{rollingInfo.removedTerm} mod q</strong>
                   </div>
 
-                  <div className="p-2 bg-electric-950/30 border border-electric-500/40 text-electric-300">
-                    <span className="text-electric-400 block text-[10px]">Incoming Char (append):</span>
+                  <div className={`p-2 ${SEM.compare.cell} font-normal`}>
+                    <span className="block text-[10px]">IN · entering character (added):</span>
                     <strong>'{rollingInfo.addedChar}'</strong> (ASCII {rollingInfo.addedAscii})
                   </div>
 
-                  <div className="p-2 bg-acid-950/30 border border-acid-500/40 text-acid-300">
-                    <span className="text-acid-400 block text-[10px]">New Rolled Hash:</span>
+                  <div className="p-2 bg-obsidian-900 border border-hairline text-chalk-200">
+                    <span className="text-chalk-400 block text-[10px]">New rolled hash:</span>
                     <strong className="text-sm">{rollingInfo.nextHash}</strong>
                   </div>
                 </div>
@@ -399,39 +382,41 @@ export const StringMatchVisualizer: React.FC<StringMatchVisualizerProps> = ({ st
         )}
       </div>
 
-      {/* Visualizer Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-4 text-xs font-mono text-chalk-400">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-acid-500/30 border border-acid-500"></span>
-          <span>Character Match</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-rose-500/30 border border-rose-500"></span>
-          <span>Character Mismatch</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-amber/25 border border-amber"></span>
-          <span>Active Window / Pointer</span>
-        </div>
+      {/* Legend: every colour is paired with a symbol or word */}
+      <ul aria-label="Legend" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-4 text-xs font-mono text-chalk-400">
+        <LegendItem swatch={SEM.match.swatch} symbol="✓" label="Characters match" />
+        <LegendItem swatch={SEM.mismatch.swatch} symbol="✗" label="Characters differ" />
+        <LegendItem swatch={SEM.current.swatch} symbol="▶" label={hasLps && phase === 'lps' ? 'Current LPS entry' : 'Current position'} />
         {hashInfo && (
           <>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 bg-rose-500/30 border border-rose-400"></span>
-              <span>Outgoing Char (-T[s]·h)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 bg-electric-500/30 border border-electric-400"></span>
-              <span>Incoming Char (+T[s+m])</span>
-            </div>
+            <LegendItem swatch="bg-obsidian-850 border border-dashed border-chalk-500" symbol="OUT" label="Leaving the window" />
+            <LegendItem swatch={SEM.compare.swatch} symbol="IN" label="Entering the window" />
+            <LegendItem swatch={SEM.warning.swatch} symbol="⚠" label="Hash collision" />
           </>
         )}
-        {hasLps && (
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 bg-amber border border-amber-glow"></span>
-            <span>Active LPS Entry</span>
-          </div>
-        )}
-      </div>
+      </ul>
     </div>
   );
 };
+
+/** Corner ✓/✗ so a match or mismatch is readable without relying on colour. */
+const VerdictMark: React.FC<{ verdict: 'match' | 'mismatch' }> = ({ verdict }) => (
+  <>
+    <span
+      aria-hidden="true"
+      className={`absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[10px] font-bold leading-none text-obsidian-950 ${
+        verdict === 'match' ? 'bg-sem-match' : 'bg-sem-mismatch'
+      }`}
+    >
+      {verdict === 'match' ? '✓' : '✗'}
+    </span>
+    <span className="sr-only">{verdict === 'match' ? '(match)' : '(mismatch)'}</span>
+  </>
+);
+
+const LegendItem: React.FC<{ swatch: string; symbol: string; label: string }> = ({ swatch, symbol, label }) => (
+  <li className="flex items-center gap-1.5">
+    <span className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-[10px] font-bold ${swatch}`}>{symbol}</span>
+    <span>{label}</span>
+  </li>
+);

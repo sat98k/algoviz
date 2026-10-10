@@ -32,10 +32,10 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({
   };
 
   return (
-    <section aria-label={title} className="flex flex-col gap-4 p-5 bg-obsidian-900 border border-acid-500/50 border-l-4 border-l-acid-500">
+    <section aria-label={title} className="flex flex-col gap-4 p-5 bg-obsidian-900 border border-sem-final/50 border-l-4 border-l-sem-final">
       <div className="flex items-center gap-2 pb-3 border-b border-hairline">
-        <CheckCircle2 className="w-3.5 h-3.5 text-acid-500" />
-        <h3 className="font-mono text-xs uppercase tracking-widest text-acid-500 font-semibold">
+        <CheckCircle2 className="w-3.5 h-3.5 text-sem-final-ink" />
+        <h3 className="font-mono text-xs uppercase tracking-widest text-sem-final-ink font-semibold">
           {title}
         </h3>
       </div>

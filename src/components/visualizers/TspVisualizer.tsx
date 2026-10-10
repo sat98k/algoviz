@@ -596,8 +596,8 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
                 MST 2-Approximation Telemetry
               </span>
               {state.metricCheck?.isMetric === false ? (
-                <span className="px-2 py-0.5 rounded text-[10px] bg-rose-500/15 text-rose-400 border border-rose-500/40 font-bold uppercase">
-                  Not metric · no guarantee
+                <span className="px-2 py-0.5 rounded text-[10px] bg-sem-warning/15 text-sem-warning-ink border border-sem-warning/60 font-bold uppercase">
+                  ⚠ Not metric · no guarantee
                 </span>
               ) : (
                 <span className="px-2 py-0.5 rounded text-[10px] bg-amber/20 text-amber-glow border border-amber/30 font-bold uppercase">
@@ -622,7 +622,7 @@ export const TspVisualizer: React.FC<TspVisualizerProps> = ({
               <div className="flex justify-between gap-3 py-1 text-chalk-400">
                 <span>Theoretical Guarantee:</span>
                 {state.metricCheck?.isMetric === false ? (
-                  <strong className="text-rose-400 text-right">None: costs break the triangle inequality</strong>
+                  <strong className="text-sem-warning-ink text-right">⚠ None: costs break the triangle inequality</strong>
                 ) : (
                   <strong className="text-chalk-200 text-right">Cost(Tour) ≤ 2 · W(T) ≤ 2 · OPT (metric costs)</strong>
                 )}

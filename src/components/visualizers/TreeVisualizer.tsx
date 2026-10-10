@@ -753,7 +753,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                         : theme.border
                     }
                     strokeWidth={isActive || isBest ? 2.5 : isOnOptPath ? 2 : isOnActiveBranch ? 2 : 1.5}
-                    strokeDasharray={isOnOptPath && !isOptimal && !isActive ? '4 2' : undefined}
+                    strokeDasharray={isPruned && !isOptimal ? '5 3' : isOnOptPath && !isOptimal && !isActive ? '4 2' : undefined}
                     className="shadow-md transition-all"
                   />
 
@@ -807,7 +807,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
                         fontWeight="bold"
                         className="font-mono uppercase tracking-wider pointer-events-none"
                       >
-                        {node.rawNode?.pruneType === 'infeasible' ? 'INFEASIBLE' : 'PRUNED'}
+                        {node.rawNode?.pruneType === 'infeasible' ? '✂ INFEASIBLE' : '✂ PRUNED'}
                       </text>
                     </g>
                   )}
@@ -887,8 +887,8 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
           <span>Optimal / Solution</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-rose-950 border border-rose-500" />
-          <span>Pruned Subtree</span>
+          <span className="w-3 h-3 rounded bg-sem-pruned/20 border border-dashed border-sem-pruned" />
+          <span>✂ Pruned (skipped, cannot beat the best)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-obsidian-850 border border-slate-700" />

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { semColor } from '../../styles/semantics';
 import { AlgorithmStep } from '../../types/algorithm';
 import { GraphNode, GraphEdge } from '../../algorithms/floydWarshall';
 
@@ -108,7 +109,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
           markerHeight="7.5"
           orient="auto-start-reverse"
         >
-          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#fbbf24" />
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" style={{ fill: semColor('current') }} />
         </marker>
 
         {/* Shortest Path Tree Edge Arrow - Vivid Emerald */}
@@ -121,7 +122,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
           markerHeight="7.5"
           orient="auto-start-reverse"
         >
-          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" style={{ fill: semColor('decision') }} />
         </marker>
 
         {/* Negative Cycle Edge Arrow - Bold Crimson */}
@@ -134,7 +135,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
           markerHeight="7.5"
           orient="auto-start-reverse"
         >
-          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#ef4444" />
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" style={{ fill: semColor('mismatch') }} />
         </marker>
       </defs>
 
@@ -164,21 +165,23 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
         let strokeDasharray: string | undefined = undefined;
         let marker = isDirected ? 'url(#graph-arrow-default)' : undefined;
 
+        // Semantic, theme-aware edge colours (docs/visual-semantics.md); dashes keep a
+        // violation readable without colour.
         if (isNegCycleEdge) {
-          strokeColor = '#ef4444';
+          strokeColor = semColor('mismatch');
           strokeWidth = 3;
           strokeDasharray = '5 3';
           marker = isDirected ? 'url(#graph-arrow-negcycle)' : undefined;
         } else if (isEdgeActive) {
-          strokeColor = '#fbbf24';
+          strokeColor = semColor('current');
           strokeWidth = 3;
           marker = isDirected ? 'url(#graph-arrow-active)' : undefined;
         } else if (isTreeEdge) {
-          strokeColor = '#10b981';
+          strokeColor = semColor('decision');
           strokeWidth = 2.8;
           marker = isDirected ? 'url(#graph-arrow-tree)' : undefined;
         } else if (edgeStatus === 'flow' || edgeStatus === 'cover') {
-          strokeColor = '#10b981';
+          strokeColor = semColor('decision');
           strokeWidth = 2.5;
         }
 
@@ -192,7 +195,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               y1={p1.y}
               x2={p2.x}
               y2={p2.y}
-              stroke={strokeColor}
+              style={{ stroke: strokeColor }}
               strokeWidth={strokeWidth}
               strokeDasharray={strokeDasharray}
               markerEnd={marker}
@@ -275,7 +278,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 <circle
                   r={28}
                   fill="none"
-                  stroke={isConflict ? '#ef4444' : attemptedColorInfo?.bg || '#f59e0b'}
+                  style={{ stroke: isConflict ? semColor('mismatch') : attemptedColorInfo?.bg || semColor('current') }}
                   strokeWidth={2.5}
                   strokeDasharray={isConflict ? '4 3' : undefined}
                   className="animate-pulse"
@@ -286,7 +289,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                 <circle
                   r={29}
                   fill="none"
-                  stroke="#ef4444"
+                  style={{ stroke: semColor('mismatch') }}
                   strokeWidth={2.5}
                   strokeDasharray="4 3"
                 />
@@ -295,15 +298,15 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
               <circle
                 r={21}
                 fill={assignedColor > 0 ? colorInfo.bg : '#1e293b'}
-                stroke={
-                  isConflict
-                    ? '#ef4444'
+                style={{
+                  stroke: isConflict
+                    ? semColor('mismatch')
                     : assignedColor > 0
                     ? colorInfo.border
                     : isCurrent
-                    ? '#f59e0b'
-                    : '#64748b'
-                }
+                    ? semColor('current')
+                    : '#64748b',
+                }}
                 strokeWidth={isCurrent || isConflict || assignedColor > 0 ? 2.5 : 1.8}
                 className="shadow-md transition-all"
               />

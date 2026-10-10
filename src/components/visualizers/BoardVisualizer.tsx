@@ -36,8 +36,8 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
           SOLUTIONS FOUND: <strong>{solutionCount}</strong>
         </span>
         {action === 'conflict' && (
-          <span className="px-3 py-1 bg-obsidian-950 border border-rose-500/50 text-rose-300 flex items-center gap-1.5 animate-pulse">
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-400" /> CONFLICT DETECTED
+          <span className="px-3 py-1 bg-sem-mismatch/15 border border-sem-mismatch/60 text-sem-mismatch-ink flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5" /> ✗ Conflict: this square is attacked
           </span>
         )}
       </div>
@@ -65,13 +65,13 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
                   data-tree-node-id={`${r}-${c}`}
                   className={`relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 transition-all duration-200 select-none ${
                     hasConflict
-                      ? 'bg-rose-950/80 border border-rose-500'
+                      ? 'bg-sem-mismatch/15 border-2 border-sem-mismatch'
                       : isCurrentCell
-                      ? 'bg-amber/30 border border-amber'
+                      ? 'bg-sem-current/20 border border-sem-current'
                       : hasQueen
-                      ? 'bg-obsidian-850 border border-amber/60'
+                      ? 'bg-sem-decision/10 border border-sem-decision/70'
                       : isThreatened && action === 'conflict'
-                      ? 'bg-rose-950/20 border border-rose-900/30'
+                      ? 'bg-sem-mismatch/5 border border-dashed border-sem-mismatch/40'
                       : isDarkTile
                       ? 'bg-obsidian-850 border border-hairline'
                       : 'bg-obsidian-800/60 border border-hairline'
@@ -82,14 +82,19 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
                     {r + 1},{c + 1}
                   </span>
 
+                  {/* Conflict mark: readable without colour */}
+                  {hasConflict && (
+                    <span className="absolute top-0.5 right-1 text-[11px] font-bold leading-none text-sem-mismatch-ink" aria-label="attacked">
+                      ✗
+                    </span>
+                  )}
+
                   {/* Queen Icon */}
                   {hasQueen && (
                     <div className="flex flex-col items-center justify-center">
                       <Crown
                         className={`w-6 h-6 md:w-7 md:h-7 ${
-                          hasConflict
-                            ? 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.8)]'
-                            : 'text-amber-glow drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]'
+                          hasConflict ? 'text-sem-mismatch-ink' : isCurrentCell ? 'text-sem-current-ink' : 'text-sem-decision-ink'
                         }`}
                       />
                     </div>
@@ -102,24 +107,20 @@ export const BoardVisualizer: React.FC<BoardVisualizerProps> = ({ step }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-5 mt-6 text-xs font-mono text-chalk-400">
-        <div className="flex items-center gap-1.5">
-          <Crown className="w-4 h-4 text-amber-glow" />
-          <span>Placed Queen</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-rose-950 border border-rose-500"></span>
-          <span>Conflict / Attack</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-amber/40 border border-amber"></span>
-          <span>Probe Cell</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-obsidian-850 border border-amber/60"></span>
-          <span>Valid Placement</span>
-        </div>
-      </div>
+      <ul aria-label="Legend" className="flex flex-wrap items-center justify-center gap-5 mt-6 text-xs font-mono text-chalk-400">
+        <li className="flex items-center gap-1.5">
+          <Crown className="w-4 h-4 text-sem-decision-ink" />
+          <span>Queen placed</span>
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span className="px-1 text-[10px] font-bold bg-sem-current/30 border border-sem-current text-sem-current-ink">▶</span>
+          <span>Square being tried</span>
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span className="px-1 text-[10px] font-bold bg-sem-mismatch/20 border-2 border-sem-mismatch text-sem-mismatch-ink">✗</span>
+          <span>Attacked (conflict)</span>
+        </li>
+      </ul>
     </div>
   );
 };

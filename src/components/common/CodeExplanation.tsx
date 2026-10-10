@@ -112,13 +112,13 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
                   data-line-num={lineNum}
                   className={`grid grid-cols-[auto_1fr] items-start px-2 py-1 transition-all duration-200 rounded-none group ${
                     isActive
-                      ? 'bg-amber/20 text-amber-glow font-semibold border-l-4 border-amber pl-2.5 shadow-sm shadow-amber/10'
+                      ? 'bg-sem-current/15 text-sem-current-ink font-semibold border-l-4 border-sem-current pl-2.5'
                       : 'text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-900/50'
                   }`}
                 >
                   <span
                     className={`w-7 shrink-0 text-[10px] select-none mr-2 font-mono tabular-nums text-right pr-1 pt-0.5 ${
-                      isActive ? 'text-amber font-bold' : 'text-chalk-600 group-hover:text-chalk-400'
+                      isActive ? 'text-sem-current-ink font-bold' : 'text-chalk-600 group-hover:text-chalk-400'
                     }`}
                   >
                     {String(lineNum).padStart(2, '0')}

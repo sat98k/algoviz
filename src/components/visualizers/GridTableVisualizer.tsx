@@ -65,16 +65,16 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
 
     const status = getCellStatus(r, c);
     if (status === 'active') {
-      return 'bg-amber/25 border border-amber text-amber-glow font-bold scale-105 z-10 shadow-sm';
+      return 'bg-sem-current/15 border border-sem-current text-sem-current-ink font-bold scale-105 z-10 shadow-sm';
     }
     if (status === 'source') {
-      return 'bg-electric-500/20 border border-electric-400 text-electric-400 font-bold';
+      return 'bg-sem-compare/15 border border-sem-compare text-sem-compare-ink font-bold';
     }
     if (status === 'path') {
-      return 'bg-acid-500/25 border border-acid-500 text-acid-500 font-bold';
+      return 'bg-sem-final/20 border-2 border-sem-final text-sem-final-ink font-bold';
     }
     if (status === 'check') {
-      return 'bg-rose-500/20 border border-rose-400 text-rose-300';
+      return 'bg-sem-compare/10 border border-dashed border-sem-compare text-sem-compare-ink';
     }
     if (val === Infinity) {
       return 'bg-obsidian-950/60 border border-hairline text-chalk-600';
@@ -234,21 +234,21 @@ export const GridTableVisualizer: React.FC<GridTableVisualizerProps> = ({ step }
         </table>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-5 mt-2 text-xs font-mono text-chalk-400">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-amber/40 border border-amber"></span>
-          <span>Active Cell (i, j)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-electric-500/40 border border-electric-400"></span>
-          <span>Split Source Cells (i..k, k+1..j)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-acid-500/40 border border-acid-500"></span>
-          <span>Backtrack / Solution Path</span>
-        </div>
-      </div>
+      {/* Legend: the answer path also uses a thicker border, so it is distinguishable without colour */}
+      <ul aria-label="Legend" className="flex flex-wrap items-center justify-center gap-5 mt-2 text-xs font-mono text-chalk-400">
+        <li className="flex items-center gap-1.5">
+          <span className="px-1 text-[10px] font-bold bg-sem-current/30 border border-sem-current text-sem-current-ink">▶</span>
+          <span>Cell being computed</span>
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span className="px-1 text-[10px] font-bold bg-sem-compare/30 border border-sem-compare text-sem-compare-ink">⇄</span>
+          <span>Cells it reads from</span>
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span className="px-1 text-[10px] font-bold bg-sem-final/30 border-2 border-sem-final text-sem-final-ink">★</span>
+          <span>Answer path (traceback)</span>
+        </li>
+      </ul>
     </div>
   );
 };

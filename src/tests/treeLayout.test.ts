@@ -117,8 +117,9 @@ describe('Tree Layout & Contrast Theme System', () => {
     expect(NODE_THEMES.active.primaryText).toBe('#0a0a0c');
     // Best (emerald bg) must have white text
     expect(NODE_THEMES.best.primaryText).toBe('#ffffff');
-    // Pruned (maroon bg) must have white text
-    expect(NODE_THEMES.pruned.primaryText).toBe('#ffffff');
-    expect(NODE_THEMES.pruned.subText).toBe('#fecdd3');
+    // Pruned is a deliberate skip, not an error: neutral slate (sem-pruned), never red.
+    expect(NODE_THEMES.pruned.border).toBe('#64748b');
+    expect(NODE_THEMES.pruned.badgeBorder).toBe('#64748b');
+    expect(NODE_THEMES.pruned.bg).not.toMatch(/^#4c0519$/i);
   });
 });

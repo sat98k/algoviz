@@ -39,14 +39,16 @@ export const NODE_THEMES: Record<string, NodeTheme> = {
     badgeText: '#a7f3d0',
     ringColor: '#10b981',
   },
+  // Pruned is a deliberate skip, not an error: neutral slate (the "pruned" semantic),
+  // drawn with a dashed outline and a "✂ PRUNED" badge in TreeVisualizer.
   pruned: {
-    bg: '#4c0519', // Deep maroon 950
-    border: '#f43f5e', // Rose 500
-    primaryText: '#ffffff', // Pure white (> 12:1)
-    subText: '#fecdd3', // Soft rose white (> 8:1)
-    badgeBg: '#881337',
-    badgeBorder: '#f43f5e',
-    badgeText: '#ffe4e6',
+    bg: '#161a22',
+    border: '#64748b', // Slate 500 (sem-pruned)
+    primaryText: '#cbd5e1', // Slate 300 (> 10:1)
+    subText: '#94a3b8', // Slate 400 (> 6:1)
+    badgeBg: '#1e293b',
+    badgeBorder: '#64748b',
+    badgeText: '#e2e8f0',
   },
   explored: {
     bg: '#1e2433', // Deep navy slate

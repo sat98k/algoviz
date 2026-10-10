@@ -18,6 +18,20 @@
   --amber-dim: 217 119 6;
   --acid-color: 4 120 87;
   --electric-color: 2 132 199;
+
+  /* Semantic colours (see docs/visual-semantics.md). Each has an accent (borders, fills,
+     icons) and an ink (text on its own 15% tint or on the page). Mirrored in
+     src/styles/semantics.ts; a test keeps them in sync and checks contrast. */
+  --sem-current: 180 83 9;      --sem-current-ink: 120 53 15;
+  --sem-compare: 2 132 199;     --sem-compare-ink: 7 89 133;
+  --sem-match: 4 120 87;        --sem-match-ink: 6 78 59;
+  --sem-mismatch: 190 18 60;    --sem-mismatch-ink: 136 19 55;
+  --sem-pruned: 100 116 139;    --sem-pruned-ink: 51 65 85;
+  --sem-backtrack: 109 40 217;  --sem-backtrack-ink: 76 29 149;
+  --sem-decision: 15 118 110;   --sem-decision-ink: 19 78 74;
+  --sem-final: 4 120 87;        --sem-final-ink: 6 78 59;
+  --sem-formula: 67 56 202;     --sem-formula-ink: 49 46 129;
+  --sem-warning: 194 65 12;     --sem-warning-ink: 124 45 18;
 }
 
 .dark {
@@ -36,6 +50,17 @@
   --amber-dim: 217 119 6;
   --acid-color: 212 255 50;
   --electric-color: 56 189 248;
+
+  --sem-current: 245 158 11;    --sem-current-ink: 252 211 77;
+  --sem-compare: 56 189 248;    --sem-compare-ink: 186 230 253;
+  --sem-match: 212 255 50;      --sem-match-ink: 236 252 203;
+  --sem-mismatch: 251 113 133;  --sem-mismatch-ink: 254 205 211;
+  --sem-pruned: 100 116 139;    --sem-pruned-ink: 148 163 184;
+  --sem-backtrack: 167 139 250; --sem-backtrack-ink: 221 214 254;
+  --sem-decision: 45 212 191;   --sem-decision-ink: 153 246 228;
+  --sem-final: 212 255 50;      --sem-final-ink: 236 252 203;
+  --sem-formula: 165 180 252;   --sem-formula-ink: 199 210 254;
+  --sem-warning: 251 146 60;    --sem-warning-ink: 254 215 170;
 }
 
 @layer base {

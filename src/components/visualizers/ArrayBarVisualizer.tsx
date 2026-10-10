@@ -22,48 +22,24 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
   const minVal = Math.min(...array, 0);
   const range = Math.max(maxVal - minVal, 1);
 
+  // Semantic tints (see docs/visual-semantics.md). Every coloured bar also carries a text badge.
   const getBarColor = (index: number) => {
     if (state.mode === 'hiring') {
-      if (index === state.currentBestIndex) {
-        return 'bg-purple-500 border-purple-300 shadow-purple-500/50';
-      }
-      if (index === state.currentIndex && state.currentDecision === 'hire') {
-        return 'bg-emerald-500 border-emerald-300 shadow-emerald-500/40 animate-pulse';
-      }
-      if (index === state.currentIndex && state.currentDecision === 'skip') {
-        return 'bg-rose-500 border-rose-300 shadow-rose-500/50';
-      }
-      if (index === state.currentIndex) {
-        return 'bg-amber-400 border-amber-200 shadow-amber-400/50';
-      }
-      if (state.hiredIndices?.includes(index)) {
-        return 'bg-emerald-600 border-emerald-400';
-      }
-      if (index < state.currentIndex) {
-        return 'bg-slate-700 border-slate-600 opacity-60';
-      }
-      return 'bg-slate-800 border-slate-700';
+      if (index === state.currentIndex && state.currentDecision === 'hire') return 'bg-sem-decision/35 border-sem-decision';
+      if (index === state.currentIndex && state.currentDecision === 'skip') return 'bg-sem-pruned/15 border-dashed border-sem-pruned';
+      if (index === state.currentIndex) return 'bg-sem-current/30 border-sem-current';
+      if (state.hiredIndices?.includes(index)) return 'bg-sem-decision/20 border-sem-decision/70';
+      if (index < state.currentIndex) return 'bg-obsidian-800 border-hairline opacity-60';
+      return 'bg-obsidian-800 border-hairline';
     }
 
-    if (index === pivotIndex) {
-      return 'bg-purple-500 border-purple-300 shadow-purple-500/50';
-    }
-    if (swapIndices.includes(index)) {
-      return 'bg-rose-500 border-rose-300 shadow-rose-500/50 animate-pulse';
-    }
-    if (compareIndices.includes(index)) {
-      return 'bg-amber-400 border-amber-200 shadow-amber-400/50';
-    }
-    if (sortedIndices.includes(index)) {
-      return 'bg-emerald-500 border-emerald-300 shadow-emerald-500/40';
-    }
-    if (activeIndices.includes(index)) {
-      return 'bg-sky-500 border-sky-300 shadow-sky-500/40';
-    }
-    if (windowRange && index >= windowRange[0] && index <= windowRange[1]) {
-      return 'bg-cyan-600 border-cyan-400 shadow-cyan-600/40';
-    }
-    return 'bg-slate-700 border-slate-600';
+    if (index === pivotIndex) return 'bg-sem-decision/30 border-sem-decision';
+    if (swapIndices.includes(index)) return 'bg-sem-current/35 border-sem-current';
+    if (compareIndices.includes(index)) return 'bg-sem-compare/30 border-sem-compare';
+    if (sortedIndices.includes(index)) return 'bg-sem-final/25 border-sem-final';
+    if (activeIndices.includes(index)) return 'bg-sem-compare/10 border-sem-compare/50';
+    if (windowRange && index >= windowRange[0] && index <= windowRange[1]) return 'bg-obsidian-850 border-chalk-500';
+    return 'bg-obsidian-800 border-hairline';
   };
 
   const getBarBadge = (index: number) => {
@@ -132,7 +108,7 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
                   idx
                 )}`}
               >
-                <span className="text-xs font-bold font-mono text-white drop-shadow select-none tabular-nums">
+                <span className="text-xs font-bold font-mono text-chalk-100 select-none tabular-nums">
                   {val}
                 </span>
               </div>
@@ -146,29 +122,27 @@ export const ArrayBarVisualizer: React.FC<ArrayBarVisualizerProps> = ({ step }) 
         })}
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-5 mt-6 text-xs font-mono text-chalk-400">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-purple-500 border border-purple-300"></span>
-          <span>Pivot</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-amber-400 border border-amber-200"></span>
-          <span>Comparing</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-rose-500 border border-rose-300"></span>
-          <span>Swapping</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-emerald-500 border border-emerald-300"></span>
-          <span>Sorted / Final</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 bg-cyan-600 border border-cyan-400"></span>
-          <span>Window</span>
-        </div>
-      </div>
+      {/* Legend: colours match the badges above each bar */}
+      <ul aria-label="Legend" className="flex flex-wrap items-center justify-center gap-5 mt-6 text-xs font-mono text-chalk-400">
+        {(state.mode === 'hiring'
+          ? [
+              ['bg-sem-current/30 border border-sem-current', 'INTV', 'Being interviewed'],
+              ['bg-sem-decision/35 border border-sem-decision', 'HIRED', 'Hired (better than everyone so far)'],
+              ['bg-sem-pruned/15 border border-dashed border-sem-pruned', 'SKIP', 'Not hired'],
+            ]
+          : [
+              ['bg-sem-decision/30 border border-sem-decision', 'PIVOT', 'Pivot'],
+              ['bg-sem-compare/30 border border-sem-compare', 'CMP', 'Being compared'],
+              ['bg-sem-current/35 border border-sem-current', 'SWAP', 'Being swapped'],
+              ['bg-sem-final/25 border border-sem-final', 'DONE', 'In final position'],
+            ]
+        ).map(([swatch, tag, label]) => (
+          <li key={tag} className="flex items-center gap-1.5">
+            <span className={`px-1 text-[9px] font-bold ${swatch}`}>{tag}</span>
+            <span>{label}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
