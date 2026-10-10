@@ -23,9 +23,9 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({ metrics }) => {
       <div className="p-5 bg-obsidian-900 border border-hairline flex flex-col gap-2">
         <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-chalk-500 pb-2 border-b border-hairline">
           <Activity className="w-3.5 h-3.5 text-amber" />
-          <span>LIVE OPERATION TELEMETRY</span>
+          <span>Current values</span>
         </div>
-        <p className="font-mono text-xs text-chalk-500 italic pt-2">No discrete operations recorded for this step.</p>
+        <p className="font-mono text-xs text-chalk-500 italic pt-2">This algorithm records no counts for this step.</p>
       </div>
     );
   }
@@ -35,9 +35,9 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({ metrics }) => {
       <div className="flex items-center justify-between pb-3 border-b border-hairline">
         <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-chalk-200">
           <Activity className="w-3.5 h-3.5 text-amber" />
-          <span>LIVE OPERATION TELEMETRY</span>
+          <span>Current values</span>
         </div>
-        <span className="font-mono text-[10px] text-chalk-500">REALTIME DISPATCH</span>
+        <span className="font-mono text-[10px] text-chalk-500">updated every step</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

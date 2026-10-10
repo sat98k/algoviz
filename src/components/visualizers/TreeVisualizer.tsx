@@ -481,7 +481,8 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ step, traversalO
       )}
 
       {/* Narrative callout */}
-      {(activeTraversal?.explanationOverride || state.explanation) && (
+      {/* Skip when it merely repeats the step description, which the page's explanation panel already shows. */}
+      {(activeTraversal?.explanationOverride || (state.explanation !== step.description && state.explanation)) && (
         <div className="w-full mb-2.5 px-3 py-1.5 bg-obsidian-950 border border-amber/30 text-xs font-mono text-amber-glow flex items-center gap-2">
           <span className="font-semibold text-chalk-500 uppercase">[ STATE ]:</span>
           <span>{activeTraversal?.explanationOverride || state.explanation}</span>

@@ -232,7 +232,7 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({ config, cu
       <div className="flex items-center justify-between pb-3 border-b border-hairline">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="w-3.5 h-3.5 text-amber" />
-          <h3 className="font-mono text-xs uppercase tracking-widest text-chalk-200">INPUT PARAMETERS & PRESETS</h3>
+          <h3 className="font-mono text-xs uppercase tracking-widest text-chalk-200">Input &amp; presets</h3>
         </div>
         <button
           type="button"
@@ -312,7 +312,7 @@ export const InputControlPanel: React.FC<InputControlPanelProps> = ({ config, cu
             className="flex items-center justify-center gap-2 mt-1 px-4 py-2.5 bg-obsidian-800 hover:bg-obsidian-700 text-chalk-100 border border-hairline font-mono text-xs uppercase tracking-wider font-semibold transition-colors"
           >
             <Play className="w-3.5 h-3.5 text-amber fill-current" />
-            <span>INITIALIZE & RUN SIMULATION</span>
+            <span>Run with these inputs</span>
           </button>
         </form>
       )}

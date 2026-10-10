@@ -14,22 +14,24 @@ import { GRAPH_COLORING_PSEUDOCODE_FIRST, GRAPH_COLORING_PSEUDOCODE_ALL } from '
 import { PlaybackControls } from '../components/common/PlaybackControls';
 import { ComplexityBadge } from '../components/common/ComplexityBadge';
 import { MetricsPanel } from '../components/common/MetricsPanel';
-import { ResultPanel } from '../components/common/ResultPanel';
 import { ColoringSolutionsPanel } from '../components/common/ColoringSolutionsPanel';
 import { InputControlPanel } from '../components/common/InputControlPanel';
 import { CodeExplanation } from '../components/common/CodeExplanation';
 import { CallFlowOverlay } from '../components/common/CallFlowOverlay';
 import { ProblemIntuitionPanel } from '../components/common/ProblemIntuitionPanel';
-import { GlossaryText } from '../components/common/GlossaryText';
+import { StepExplanation } from '../components/common/StepExplanation';
+import { FinalAnswerCard } from '../components/common/FinalAnswerCard';
 
-import { ArrowLeft, Terminal, Columns, Maximize2, Play, Pause, RotateCcw, SkipBack, SkipForward, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Columns, Maximize2, Play, RefreshCw } from 'lucide-react';
 
 interface AlgorithmPageProps {
   algorithmId: string;
   onBack: () => void;
+  /** Starting layout; the reader can switch at any time. */
+  initialLayoutMode?: 'split' | 'stacked';
 }
 
-export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBack }) => {
+export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBack, initialLayoutMode = 'split' }) => {
   const config = useMemo(() => getAlgorithmById(algorithmId), [algorithmId]);
   const shouldReduceMotion = useReducedMotion();
 
@@ -186,102 +188,9 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
     />
   );
 
-  const [layoutMode, setLayoutMode] = useState<'split' | 'stacked'>('split');
+  const [layoutMode, setLayoutMode] = useState<'split' | 'stacked'>(initialLayoutMode);
 
   const moduleNumStr = String(config.module).padStart(2, '0');
-
-  const liveCaptionBanner = (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 px-3 py-2 sm:px-4 sm:py-2.5 bg-obsidian-950 border border-amber/40 shadow-sm">
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
-        <div className="flex items-center gap-1.5 shrink-0 px-2 py-0.5 bg-amber/15 border border-amber/30 text-amber font-mono text-[11px] font-bold uppercase tracking-wider">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse"></span>
-          <span>STEP {currentStepIndex + 1}/{activeSteps.length}</span>
-        </div>
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-amber font-semibold shrink-0">
-            ACTION:
-          </span>
-          <h3 className="font-display font-bold text-xs sm:text-sm text-chalk-100 truncate">
-            {currentStep.title}
-          </h3>
-        </div>
-        <span className="hidden lg:inline text-xs text-chalk-300 font-sans border-l border-hairline pl-2.5 truncate max-w-lg">
-          <GlossaryText text={currentStep.description} terms={config.glossaryTerms} />
-        </span>
-      </div>
-      {currentStep.codeLine && (
-        <div className="shrink-0 font-mono text-[11px] px-2.5 py-1 bg-obsidian-900 border border-amber/40 text-amber-glow font-bold flex items-center gap-1.5 self-end sm:self-center shadow-sm">
-          <Terminal className="w-3 h-3 text-amber" />
-          <span>
-            {Array.isArray(currentStep.codeLine)
-              ? `L${currentStep.codeLine[0]}–${currentStep.codeLine[currentStep.codeLine.length - 1]}`
-              : `L${currentStep.codeLine}`}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-
-  const topPlaybackBar = (
-    <div className="flex items-center justify-between gap-3 p-2 bg-obsidian-950 border border-hairline shadow-sm font-mono text-xs">
-      <div className="flex items-center gap-1.5">
-        {/* Reset button */}
-        <button
-          onClick={handleReset}
-          title="Reset to start (R)"
-          className="p-1.5 text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-850 border border-hairline transition-colors"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Step Backward */}
-        <button
-          onClick={stepBackward}
-          disabled={currentStepIndex === 0}
-          title="Step backward (←)"
-          className="p-1.5 text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-850 disabled:opacity-30 disabled:hover:bg-transparent border border-hairline transition-colors"
-        >
-          <SkipBack className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Play/Pause Button */}
-        <button
-          onClick={() => setIsPlaying(!isPlaying)}
-          disabled={currentStepIndex >= activeSteps.length - 1 && !isPlaying}
-          title={isPlaying ? "Pause (Space)" : "Play (Space)"}
-          className={`flex items-center gap-1.5 px-3 py-1.5 font-bold transition-all border ${
-            isPlaying
-              ? 'bg-amber text-obsidian-950 border-amber shadow-sm shadow-amber/20'
-              : 'bg-obsidian-850 hover:bg-amber hover:text-obsidian-950 text-chalk-200 border-hairline'
-          }`}
-        >
-          {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-          <span className="text-[11px] uppercase tracking-wider">{isPlaying ? 'PAUSE' : 'PLAY'}</span>
-        </button>
-
-        {/* Step Forward */}
-        <button
-          onClick={stepForward}
-          disabled={currentStepIndex >= activeSteps.length - 1}
-          title="Step forward (→)"
-          className="p-1.5 text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-850 disabled:opacity-30 disabled:hover:bg-transparent border border-hairline transition-colors"
-        >
-          <SkipForward className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Progress tracking */}
-      <div className="flex items-center gap-2 text-chalk-400 text-[11px]">
-        <span>STEP {currentStepIndex + 1} / {activeSteps.length}</span>
-        <div className="w-20 sm:w-28 h-1.5 bg-obsidian-800 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-amber transition-all duration-150"
-            style={{ width: `${Math.round(((currentStepIndex + 1) / Math.max(activeSteps.length, 1)) * 100)}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  );
 
   const huffmanStageSwitch = (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-obsidian-950 border border-amber/40 shadow-sm">
@@ -452,7 +361,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
             ? 'bg-amber/15 text-amber-glow font-bold border border-amber/30'
             : 'text-chalk-400 hover:text-chalk-200'
         }`}
-        title="Side-by-side view: visualizer and pseudocode visible simultaneously"
+        title="Split view: visualization and explanation on the left, pseudocode and current values beside them"
       >
         <Columns className="w-3.5 h-3.5" />
         <span className="hidden sm:inline">SPLIT VIEW</span>
@@ -464,7 +373,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
             ? 'bg-amber/15 text-amber-glow font-bold border border-amber/30'
             : 'text-chalk-400 hover:text-chalk-200'
         }`}
-        title="Full-width visualizer view"
+        title="Full width: the largest visualization, with pseudocode and current values below it"
       >
         <Maximize2 className="w-3.5 h-3.5" />
         <span className="hidden sm:inline">FULL WIDTH</span>
@@ -472,45 +381,55 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
     </div>
   );
 
-  const lowerDeckStatusFallback = (
-    <div className="p-5 bg-obsidian-950 border border-hairline flex flex-col justify-between gap-4">
-      <div className="flex items-center justify-between border-b border-hairline pb-2.5">
-        <div className="flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-amber" />
-          <span className="font-mono text-xs uppercase font-bold text-chalk-200 tracking-wider">
-            EXECUTION STATUS & TELEMETRY
-          </span>
-        </div>
-        <span className="px-2 py-0.5 text-[10px] font-mono text-amber bg-amber/10 border border-amber/30 uppercase font-semibold">
-          ACTIVE
-        </span>
-      </div>
+  const stepNumber = Math.min(currentStepIndex + 1, Math.max(activeSteps.length, 1));
+  const totalSteps = Math.max(activeSteps.length, 1);
 
-      <div className="space-y-2.5 font-mono text-xs">
-        <div className="flex justify-between py-1 border-b border-hairline/50 text-chalk-400">
-          <span>Algorithm:</span>
-          <strong className="text-chalk-100">{config.name}</strong>
-        </div>
-        <div className="flex justify-between py-1 border-b border-hairline/50 text-chalk-400">
-          <span>Paradigm:</span>
-          <strong className="text-amber">{config.paradigm}</strong>
-        </div>
-        <div className="flex justify-between py-1 border-b border-hairline/50 text-chalk-400">
-          <span>Worst-Case Time:</span>
-          <strong className="text-chalk-200">{config.complexity.timeWorst}</strong>
-        </div>
-        <div className="flex justify-between py-1 text-chalk-400">
-          <span>Execution Progress:</span>
-          <strong className="text-electric-400">
-            Step {currentStepIndex + 1} of {activeSteps.length} ({Math.round(((currentStepIndex + 1) / Math.max(activeSteps.length, 1)) * 100)}%)
-          </strong>
-        </div>
-      </div>
+  const playbackControls = (
+    <PlaybackControls
+      currentStep={currentStepIndex}
+      totalSteps={activeSteps.length}
+      isPlaying={isPlaying}
+      speed={speed}
+      onPlay={() => setIsPlaying(true)}
+      onPause={() => setIsPlaying(false)}
+      onStepForward={stepForward}
+      onStepBackward={stepBackward}
+      onReset={handleReset}
+      onSeek={(idx) => {
+        setHuffmanTraversal(null);
+        setCurrentStepIndex(idx);
+      }}
+      onSpeedChange={(newSpeed) => setSpeed(newSpeed)}
+    />
+  );
 
-      <div className="p-2.5 bg-obsidian-900 border border-hairline text-chalk-400 font-sans text-xs">
-        Computed solution artifact and optimal result metrics will render here upon reaching the final step.
-      </div>
-    </div>
+  const stepExplanation = (
+    <StepExplanation step={currentStep} stepNumber={stepNumber} totalSteps={totalSteps} glossaryTerms={config.glossaryTerms} />
+  );
+
+  // The step explanation above carries the description, so the pseudocode panel never repeats it.
+  const pseudocodePanel = <CodeExplanation step={currentStep} pseudocode={activePseudocode} hideStepHeader={true} />;
+  const currentValuesPanel = <MetricsPanel metrics={currentStep.metrics || {}} />;
+
+  const showColoringSolutions =
+    config.id === 'graph-coloring' && (inputs.findMode === 'all' || currentStep.state?.allSolutions?.length);
+
+  const finalAnswer = showColoringSolutions ? (
+    <ColoringSolutionsPanel
+      solutions={currentStep.state?.allSolutions || (finalStep?.result?.allSolutions ?? [])}
+      numColors={currentStep.state?.numColors ?? inputs.numColors ?? 3}
+      numVertices={currentStep.state?.nodes?.length}
+      isFinal={currentStep.isFinal}
+    />
+  ) : (
+    <FinalAnswerCard
+      isFinal={!!currentStep.isFinal}
+      result={currentStep.result ?? finalStep?.result}
+      summarizer={config.summarizeResult}
+      inputs={inputs}
+      stepNumber={stepNumber}
+      totalSteps={totalSteps}
+    />
   );
 
   return (
@@ -554,155 +473,59 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
           </div>
         </div>
 
-        {/* Learning flow: Problem → Core Idea → visualization. Sits above the live
-            CURRENT ACTION banner and stays collapsible while stepping. */}
+        {/* Learning flow: Problem → Core Idea → visualization (collapsible while stepping). */}
         <ProblemIntuitionPanel
           problemStatement={config.problemStatement}
           explanation={config.explanation}
           terms={config.glossaryTerms}
         />
-
-        {liveCaptionBanner}
       </motion.div>
 
-      {/* Main Execution Stage with Call-Flow Overlay */}
-      <div ref={stageContainerRef} className="relative w-full">
+      {/* Visual learning stage. CallFlowOverlay draws between the visualizer and the
+          pseudocode, so both must stay inside this container and render exactly once. */}
+      <div ref={stageContainerRef} className="relative w-full flex flex-col gap-3">
         <CallFlowOverlay step={currentStep} containerRef={stageContainerRef} />
 
-        {/* Top Control Deck: Mode Switches & Primary Playback (Full Width) */}
-        <div className="flex flex-col gap-2.5 mb-3 w-full">
-          {config.id === 'huffman' && huffmanStageSwitch}
-          {subsetSumModeSwitch}
-          {graphColoringModeSwitch}
-          {topPlaybackBar}
-        </div>
+        {config.id === 'huffman' && huffmanStageSwitch}
+        {subsetSumModeSwitch}
+        {graphColoringModeSwitch}
 
         {layoutMode === 'split' ? (
-          /* Split Mode: Main Visualizer Stage on Left, Pseudocode directly adjacent on Right */
+          /* Split: visualization, explanation and controls on the left; pseudocode and values beside them. */
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
-            {/* Left: Visualizer Canvas + Scrubber Controls */}
-            <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-3">
-              <div className="w-full relative">
-                {renderVisualizer()}
-              </div>
-
-              <PlaybackControls
-                currentStep={currentStepIndex}
-                totalSteps={activeSteps.length}
-                isPlaying={isPlaying}
-                speed={speed}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-                onStepForward={stepForward}
-                onStepBackward={stepBackward}
-                onReset={handleReset}
-                onSeek={(idx) => {
-                  setHuffmanTraversal(null);
-                  setCurrentStepIndex(idx);
-                }}
-                onSpeedChange={(newSpeed) => setSpeed(newSpeed)}
-              />
+            <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-3 min-w-0">
+              {playbackControls}
+              <div className="w-full relative">{renderVisualizer()}</div>
+              {stepExplanation}
             </div>
-
-            {/* Right: Pseudocode Panel (Right Adjacent) + Live Telemetry */}
-            <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3">
-              <CodeExplanation step={currentStep} pseudocode={activePseudocode} hideStepHeader={true} />
-              <MetricsPanel metrics={currentStep.metrics || {}} />
+            <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 min-w-0">
+              {pseudocodePanel}
+              {currentValuesPanel}
             </div>
           </section>
         ) : (
-          /* Stacked Mode: Full Width Visualizer Stage */
+          /* Full width: the largest visualization, with pseudocode and values side by side below it. */
           <section className="flex flex-col gap-3">
-            <div className="w-full relative">
-              {renderVisualizer()}
-            </div>
-
-            <PlaybackControls
-              currentStep={currentStepIndex}
-              totalSteps={activeSteps.length}
-              isPlaying={isPlaying}
-              speed={speed}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onStepForward={stepForward}
-              onStepBackward={stepBackward}
-              onReset={handleReset}
-              onSeek={(idx) => {
-                setHuffmanTraversal(null);
-                setCurrentStepIndex(idx);
-              }}
-              onSpeedChange={(newSpeed) => setSpeed(newSpeed)}
-            />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
-              <CodeExplanation step={currentStep} pseudocode={activePseudocode} hideStepHeader={true} />
-              <MetricsPanel metrics={currentStep.metrics || {}} />
+            {playbackControls}
+            <div className="w-full relative">{renderVisualizer()}</div>
+            {stepExplanation}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
+              {pseudocodePanel}
+              {currentValuesPanel}
             </div>
           </section>
         )}
       </div>
 
-      {/* Lower Deck: Inputs & Solution Artifact */}
-      {layoutMode === 'split' ? (
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4 border-t border-hairline">
-          <InputControlPanel
-            config={config}
-            currentInputs={inputs}
-            onApplyInputs={(newInputs) => setInputs(newInputs)}
-          />
-          {config.id === 'graph-coloring' && (inputs.findMode === 'all' || currentStep.state?.allSolutions?.length) ? (
-            <ColoringSolutionsPanel
-              solutions={currentStep.state?.allSolutions || (finalStep?.result?.allSolutions ?? [])}
-              numColors={currentStep.state?.numColors ?? inputs.numColors ?? 3}
-              numVertices={currentStep.state?.nodes?.length}
-              isFinal={currentStep.isFinal}
-            />
-          ) : currentStep.result || currentStep.isFinal || finalStep?.result ? (
-            <ResultPanel
-              result={currentStep.result || (currentStep.isFinal ? finalStep?.result : undefined)}
-              title="COMPUTED SOLUTION ARTIFACT"
-              isFinal={currentStep.isFinal}
-              summarizer={config.summarizeResult}
-              inputs={inputs}
-            />
-          ) : (
-            lowerDeckStatusFallback
-          )}
-        </section>
-      ) : (
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4 border-t border-hairline">
-          <div className="flex flex-col gap-8">
-            <CodeExplanation step={currentStep} pseudocode={activePseudocode} glossaryTerms={config.glossaryTerms} />
-            <InputControlPanel
-              config={config}
-              currentInputs={inputs}
-              onApplyInputs={(newInputs) => setInputs(newInputs)}
-            />
-          </div>
-          <div className="flex flex-col gap-8">
-            <MetricsPanel metrics={currentStep.metrics || {}} />
-            {config.id === 'graph-coloring' && (inputs.findMode === 'all' || currentStep.state?.allSolutions?.length) ? (
-              <ColoringSolutionsPanel
-                solutions={currentStep.state?.allSolutions || (finalStep?.result?.allSolutions ?? [])}
-                numColors={currentStep.state?.numColors ?? inputs.numColors ?? 3}
-                numVertices={currentStep.state?.nodes?.length}
-                isFinal={currentStep.isFinal}
-              />
-            ) : currentStep.result || currentStep.isFinal || finalStep?.result ? (
-              <ResultPanel
-                result={currentStep.result || (currentStep.isFinal ? finalStep?.result : undefined)}
-                title="COMPUTED SOLUTION ARTIFACT"
-                isFinal={currentStep.isFinal}
-                summarizer={config.summarizeResult}
-                inputs={inputs}
-              />
-            ) : (
-              lowerDeckStatusFallback
-            )}
-          </div>
-        </section>
-      )}
-      {/* Paradigm & Complexity Bounds Card at the end of the page */}
+      {/* Final answer, immediately after the visual stage */}
+      <section className="w-full">{finalAnswer}</section>
+
+      {/* Inputs */}
+      <section className="pt-4 border-t border-hairline w-full">
+        <InputControlPanel config={config} currentInputs={inputs} onApplyInputs={(newInputs) => setInputs(newInputs)} />
+      </section>
+
+      {/* Paradigm & complexity at the end of the page */}
       <section className="pt-2 border-t border-hairline w-full">
         <ComplexityBadge complexity={config.complexity} paradigm={config.paradigm} />
       </section>

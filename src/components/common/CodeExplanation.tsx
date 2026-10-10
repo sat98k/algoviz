@@ -51,7 +51,7 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-amber animate-pulse"></span>
               <span className="font-mono text-xs uppercase tracking-wider text-amber font-semibold">
-                STEP {step.stepIndex + 1} • EXECUTION STATE
+                STEP {step.stepIndex + 1}
               </span>
             </div>
             {activeLineText && (
@@ -78,7 +78,7 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
             <div className="flex items-center gap-1.5">
               <Terminal className="w-3.5 h-3.5 text-amber" />
               <span className="uppercase tracking-wider font-semibold text-chalk-300">
-                ALGORITHM PSEUDOCODE
+                Pseudocode
               </span>
             </div>
             {activeLineText && hideStepHeader && (

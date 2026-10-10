@@ -15,7 +15,7 @@ interface ResultPanelProps {
 
 export const ResultPanel: React.FC<ResultPanelProps> = ({
   result,
-  title = 'FINAL SOLUTION & COMPUTED ARTIFACTS',
+  title = 'Final answer',
   isFinal = false,
   summarizer,
   inputs,
@@ -32,7 +32,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 p-5 bg-obsidian-900 border border-hairline">
+    <section aria-label={title} className="flex flex-col gap-4 p-5 bg-obsidian-900 border border-acid-500/50 border-l-4 border-l-acid-500">
       <div className="flex items-center gap-2 pb-3 border-b border-hairline">
         <CheckCircle2 className="w-3.5 h-3.5 text-acid-500" />
         <h3 className="font-mono text-xs uppercase tracking-widest text-acid-500 font-semibold">
@@ -121,6 +121,6 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({
           </div>
         </details>
       )}
-    </div>
+    </section>
   );
 };
