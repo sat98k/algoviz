@@ -21,9 +21,10 @@ const text = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&#x27;/g, "
 describe('Fractional knapsack', () => {
   const inputs = { weights: [10, 40, 20, 30], values: [60, 280, 120, 150], capacity: 60 };
   const steps = [...fractionalKnapsackSteps(inputs)] as any[];
-  const render = (s: any) => renderToStaticMarkup(<FractionalKnapsackVisualizer step={s} />);
+  const render = (s: any) => renderToStaticMarkup(<FractionalKnapsackVisualizer step={s} defaultViewMode="technical" />);
+  const renderStory = (s: any) => renderToStaticMarkup(<FractionalKnapsackVisualizer step={s} defaultViewMode="story" />);
 
-  it('keeps the entered order and ranks items by value ÷ weight', () => {
+  it('keeps the entered order and ranks items by value ÷ weight in technical view', () => {
     expect(steps[0].state.originalOrder).toEqual([1, 2, 3, 4]);
     const sorted = steps[1].state.items;
     expect(sorted.map((it: any) => it.id)).toEqual([2, 1, 3, 4]);
@@ -89,6 +90,31 @@ describe('Fractional knapsack', () => {
       if (/^Take 100%/.test(s.title)) expect(codeOf('fractional-knapsack', s)).toMatch(/fits completely|Take 100%/);
       if (/Fraction of Item/.test(s.title)) expect(codeOf('fractional-knapsack', s)).toMatch(/fraction/);
     }
+  });
+
+  // ─── Animated Story Mode Tests ───
+  it('renders Animated Story Mode with the workbench, knapsack, and unit blocks', () => {
+    const step0Html = renderStory(steps[0]);
+    expect(text(step0Html)).toContain('Kitchen Table');
+    expect(text(step0Html)).toContain('The Leather Knapsack');
+    expect(text(step0Html)).toContain('Animation Mode');
+    expect(text(step0Html)).toContain('Technical View');
+    expect(text(step0Html)).toContain('Cheese');
+  });
+
+  it('renders knife slicing animation view when examining/taking a fractional item', () => {
+    const fracStep = steps.find((s) => s.state.currentItemIndex >= 0 && s.state.items?.[s.state.currentItemIndex]?.status === 'taken_fraction')!;
+    const fracHtml = renderStory(fracStep);
+    expect(text(fracHtml)).toContain('Replay Slicing & Packing');
+    expect(text(fracHtml)).toContain('Cut piece slides into bag!');
+    expect(text(fracHtml)).toContain('Left on board');
+  });
+
+  it('renders closed buckled lid and total profit when capacity is reached', () => {
+    const finalStep = steps.at(-1)!;
+    const finalHtml = renderStory(finalStep);
+    expect(text(finalHtml)).toContain('Capacity Reached • Total Profit:');
+    expect(text(finalHtml)).toContain('LID CLOSED & BUCKLED');
   });
 });
 

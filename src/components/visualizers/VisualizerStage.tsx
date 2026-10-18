@@ -14,6 +14,7 @@ import { AssemblyLineVisualizer } from './AssemblyLineVisualizer';
 import { TspVisualizer } from './TspVisualizer';
 import { SetCoverVisualizer } from './SetCoverVisualizer';
 import { SweepLineVisualizer } from './SweepLineVisualizer';
+import { LCSVisualizer } from './LCSVisualizer';
 
 interface VisualizerStageProps {
   config: AlgorithmConfig;
@@ -78,6 +79,14 @@ export const VisualizerStage: React.FC<VisualizerStageProps> = ({
       return <SetCoverVisualizer step={step} />;
     case 'SweepLineVisualizer':
       return <SweepLineVisualizer step={step} />;
+    case 'LCSVisualizer':
+      return (
+        <LCSVisualizer
+          step={step}
+          inputs={inputs}
+          onApplyInputs={(newInputs) => onApplyInputs?.(newInputs)}
+        />
+      );
     default:
       return (
         <div className="p-12 text-center font-mono text-xs text-chalk-500 border border-hairline bg-obsidian-950">

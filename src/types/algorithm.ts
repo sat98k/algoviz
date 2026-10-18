@@ -27,7 +27,8 @@ export type VisualizerType =
   | 'AssemblyLineVisualizer'
   | 'TspVisualizer'
   | 'SetCoverVisualizer'
-  | 'SweepLineVisualizer';
+  | 'SweepLineVisualizer'
+  | 'LCSVisualizer';
 
 export interface ComplexityInfo {
   timeBest?: string;

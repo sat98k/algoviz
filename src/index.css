@@ -146,3 +146,66 @@
   animation: flowDash 0.75s linear infinite;
 }
 
+@keyframes sliceLaser {
+  0% { transform: translateY(-20%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(120%); opacity: 0; }
+}
+
+.animate-slice-laser {
+  animation: sliceLaser 1.4s ease-in-out infinite;
+}
+
+@keyframes bagSettle {
+  0% { transform: translateY(-16px); }
+  60% { transform: translateY(4px); }
+  85% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-bag-settle {
+  animation: bagSettle 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes stampIn {
+  0% { transform: scale(2.2) rotate(-15deg); opacity: 0; }
+  60% { transform: scale(0.95) rotate(-3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-5deg); opacity: 1; }
+}
+
+.animate-stamp-in {
+  animation: stampIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes lidClose {
+  0% {
+    transform: perspective(600px) rotateX(85deg);
+    opacity: 0.8;
+  }
+  70% {
+    transform: perspective(600px) rotateX(-8deg);
+  }
+  100% {
+    transform: perspective(600px) rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-lid-close {
+  transform-origin: top center;
+  animation: lidClose 0.85s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+@keyframes knifeChop {
+  0% { transform: translateY(-40px) rotate(-20deg); opacity: 0; }
+  30% { transform: translateY(-30px) rotate(-10deg); opacity: 1; }
+  60% { transform: translateY(14px) rotate(0deg); opacity: 1; }
+  85% { transform: translateY(14px) rotate(0deg); opacity: 0.9; }
+  100% { transform: translateY(-40px) rotate(-20deg); opacity: 0; }
+}
+
+.animate-knife-chop {
+  animation: knifeChop 1.2s ease-in-out forwards;
+}
+

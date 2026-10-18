@@ -475,7 +475,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '    else: j-- // ← value came from the left cell',
       '  return { length: dpTable[len1][len2], lcsString: lcs }',
     ],
-    visualizer: 'GridTableVisualizer',
+    visualizer: 'LCSVisualizer',
     inputSchema: [
       {
         name: 'str1',
@@ -1719,7 +1719,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     problemStatement:
       'Find the convex hull of a set of points: the smallest convex polygon that encloses all of them.',
     explanation:
-      'Finds the lowest y-coordinate anchor point P0. Sorts all other points by polar angle with P0. Iterates through points using a stack, popping vertices that make a clockwise (right) turn via cross-product orientation check.',
+      'Finds the lowest y-coordinate anchor point P0 (leftmost if tied) and sorts all remaining points counter-clockwise by polar angle around P0. It then scans the sorted points with a hull stack: for each candidate point p3 and the top two stack vertices p1 -> p2, it evaluates the 2D cross-product orientation (p2.x - p1.x)(p3.y - p1.y) - (p2.y - p1.y)(p3.x - p1.x). Positive values indicate a counter-clockwise (CCW) left turn relative to the dotted straight-ahead extension of p1 -> p2, whereas zero or negative values indicate a collinear or clockwise (CW) right turn and trigger popping p2 before pushing p3.',
     coreSteps: CORE_STEPS['graham-scan'],
     glossaryTerms: ['convex-hull'],
     pseudocode: [
@@ -1732,6 +1732,9 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '      pop(stack)  // Remove clockwise (right-turn) or collinear dent vertex',
       '    push(stack, sorted[i])  // Valid counter-clockwise left turn: add to hull',
       '  return stack  // Convex hull vertices in counter-clockwise boundary order',
+      '',
+      'function orientation(p1, p2, p3):  // 2D cross product (p2 - p1) × (p3 - p1)',
+      '  return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)  // >0 CCW (left), <0 CW (right), 0 collinear',
     ],
     visualizer: 'PointCanvasVisualizer',
     inputSchema: [
@@ -1808,20 +1811,25 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     problemStatement:
       'Find the convex hull of a set of points: the smallest convex polygon that encloses all of them.',
     explanation:
-      'Starting from the lowest-y anchor pivot, Jarvis’ March tests each point to find the most counter-clockwise candidate relative to the current hull point. It wraps around the exterior until returning to the start pivot.',
+      'Starting from the lowest-y anchor pivot, Jarvis’ March wraps counter-clockwise around the exterior (heading right first from the bottom pivot) by testing each point against the current candidate ray via the 2D cross-product orientation test—updating the candidate whenever a point lies to the right (outside) so that every other point lies to the left (CCW) of each hull edge.',
     coreSteps: CORE_STEPS['jarvis-march'],
     glossaryTerms: ['convex-hull'],
     pseudocode: [
       'function JarvisMarch(points):',
       '  pivot = findLowestPoint(points)  // Anchor: lowest y-coordinate (tiebreaker: lowest x)',
-      '  hull = [pivot], current = pivot',
-      '  repeat:  // Wrap around perimeter until returning to anchor pivot',
-      '    nextPoint = selectInitialCandidate(points, current)  // Start with any other point',
-      '    for each point in points:  // Find point with smallest CCW turn',
-      '      if orientation(current, nextPoint, point) > 0: nextPoint = point  // Left turn updates candidate',
-      '    hull.push(nextPoint); current = nextPoint  // Confirm hull vertex',
-      '  until current == pivot  // Complete loop around perimeter',
+      '  hull = [], current = pivot',
+      '  repeat:  // Wrap counter-clockwise around perimeter (heading right from bottom pivot)',
+      '    hull.push(current)',
+      '    nextPoint = selectInitialCandidate(points, current)  // Start with any point != current',
+      '    for each point in points:  // All points must lie to the left (CCW) of current -> nextPoint',
+      '      if orientation(current, nextPoint, point) < 0:  // point lies to the right (outside) of candidate ray',
+      '        nextPoint = point  // Update candidate to the more exterior point',
+      '    current = nextPoint  // Confirm next counter-clockwise hull vertex',
+      '  until current == pivot  // Complete CCW loop back to anchor pivot',
       '  return hull  // Convex hull in counter-clockwise order',
+      '',
+      'function orientation(p1, p2, p3):  // 2D cross product (p2 - p1) × (p3 - p1)',
+      '  return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)  // >0 left (CCW), <0 right (CW/outside)',
     ],
     visualizer: 'PointCanvasVisualizer',
     inputSchema: [
@@ -1909,7 +1917,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     problemStatement:
       'Given some line segments in the plane, decide whether any two of them intersect.',
     explanation:
-      'The Bentley-Ottmann sweep-line paradigm sorts all segment endpoints by x-coordinate. As the sweep line moves left to right, segments currently cutting the sweep line are stored in an active status structure T ordered by y-coordinate. Only segments that are neighbours in T are ever tested: when a segment is inserted it is tested against the segments directly above and below it, and when a segment is deleted its former above and below neighbours become adjacent and are tested against each other. The leftmost intersection always involves two segments that are neighbours just before it, so these checks are enough, reducing naive O(n²) comparisons to O(n log n).',
+      'The Bentley-Ottmann sweep-line paradigm sorts all segment endpoints by x-coordinate. As the sweep line moves left to right, segments currently cutting the sweep line are stored in an active status structure T ordered by y-coordinate. Only segments that are neighbours in T are ever tested: when a segment is inserted it is tested against the segments directly above and below it, and when a segment is deleted its former above and below neighbours become adjacent and are tested against each other. Each pairwise test intersects(s1, s2) computes four 2D cross-product orientations (d1, d2, d3, d4): the segments intersect if they strictly straddle each other (d1, d2 have opposite signs and d3, d4 have opposite signs), or if an endpoint is collinear (d = 0, on the same line) and passes the onSegment bounding-box check rather than lying out of segment bounds. The leftmost intersection always involves two segments that are neighbours just before it, so these checks are enough, reducing naive O(n²) comparisons to O(n log n).',
     coreSteps: CORE_STEPS['line-segment-intersection'],
     glossaryTerms: ['sweep-line'],
     pseudocode: [
@@ -1926,6 +1934,23 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '      delete(T, event.segment)',
       '      if intersects(aboveSeg, belowSeg): return true  // Former neighbors are now adjacent',
       '  return false  // No intersecting pairs found across entire plane',
+      '',
+      'function intersects(s1 = (p1, p2), s2 = (p3, p4)):',
+      '  d1 = direction(p3, p4, p1); d2 = direction(p3, p4, p2)  // Orientation of p1, p2 vs line p3->p4',
+      '  d3 = direction(p1, p2, p3); d4 = direction(p1, p2, p4)  // Orientation of p3, p4 vs line p1->p2',
+      '  if ((d1 > 0 and d2 < 0) or (d1 < 0 and d2 > 0)) and ((d3 > 0 and d4 < 0) or (d3 < 0 and d4 > 0)):',
+      '    return true  // General case: each segment straddles the infinite line of the other',
+      '  if d1 == 0 and onSegment(p3, p4, p1): return true  // Same line (collinear): p1 inside s2 bounds',
+      '  if d2 == 0 and onSegment(p3, p4, p2): return true  // Same line (collinear): p2 inside s2 bounds',
+      '  if d3 == 0 and onSegment(p1, p2, p3): return true  // Same line (collinear): p3 inside s1 bounds',
+      '  if d4 == 0 and onSegment(p1, p2, p4): return true  // Same line (collinear): p4 inside s1 bounds',
+      '  return false  // Same-side endpoints or collinear point out of segment bounds',
+      '',
+      'function direction(pi, pj, pk):  // Cross-product orientation of (pk - pi) vs (pj - pi)',
+      '  return (pj.x - pi.x) * (pk.y - pi.y) - (pj.y - pi.y) * (pk.x - pi.x)  // >0 CCW, <0 CW, 0 collinear',
+      '',
+      'function onSegment(pi, pj, pk):  // Check if collinear point pk is within segment pi->pj or out of segment',
+      '  return min(pi.x, pj.x) <= pk.x <= max(pi.x, pj.x) and min(pi.y, pj.y) <= pk.y <= max(pi.y, pj.y)',
     ],
     visualizer: 'SweepLineVisualizer',
     inputSchema: [],

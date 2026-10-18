@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
 import { FractionalKnapsackItem } from '../../algorithms/fractionalKnapsack';
 import { SEM } from '../../styles/semantics';
+import { FractionalKnapsackAnimatedView } from './FractionalKnapsackAnimatedView';
 
-interface FractionalKnapsackVisualizerProps {
+export interface FractionalKnapsackVisualizerProps {
   step: AlgorithmStep;
+  defaultViewMode?: 'story' | 'technical';
 }
 
 const fmt = (n: number) => String(parseFloat(n.toFixed(2)));
@@ -19,7 +21,12 @@ export const decisionLabel = (item: FractionalKnapsackItem) =>
     ? 'Left out (full)'
     : null;
 
-export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizerProps> = ({ step }) => {
+export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizerProps> = ({
+  step,
+  defaultViewMode = 'story',
+}) => {
+  const [viewMode, setViewMode] = useState<'story' | 'technical'>(defaultViewMode);
+
   const state = step.state || {};
   const items: FractionalKnapsackItem[] = state.items || [];
   const capacity: number = state.capacity || 50;
@@ -59,10 +66,54 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-[380px] p-4 sm:p-6 bg-obsidian-900 border border-hairline gap-4">
-      {/* Capacity: one segment per item taken */}
-      <section aria-label="Knapsack capacity" className="w-full max-w-4xl p-4 bg-obsidian-950 border border-hairline flex flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-3 font-mono text-sm">
+    <div className="flex flex-col items-center w-full min-h-[380px] p-3 sm:p-6 bg-obsidian-900 border border-hairline gap-5">
+      {/* ─── Mode Switcher Header ─── */}
+      <div className="flex flex-wrap items-center justify-between w-full max-w-5xl px-1 pb-3 border-b border-hairline gap-3">
+        <div className="flex items-center gap-3">
+          <span className="font-sans text-xs text-chalk-400 font-semibold uppercase tracking-wider">
+            View Mode:
+          </span>
+          <div className="inline-flex p-1 bg-obsidian-950 border border-hairline rounded-lg shadow-sm">
+            <button
+              type="button"
+              onClick={() => setViewMode('story')}
+              data-view-mode="story"
+              className={`px-3 py-1.5 text-xs font-sans font-semibold rounded-md transition-all flex items-center gap-1.5 ${
+                viewMode === 'story'
+                  ? 'bg-amber text-obsidian-950 shadow-sm font-bold'
+                  : 'text-chalk-400 hover:text-chalk-200'
+              }`}
+            >
+              <span>🎬</span> Animation Mode
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('technical')}
+              data-view-mode="technical"
+              className={`px-3 py-1.5 text-xs font-sans font-semibold rounded-md transition-all flex items-center gap-1.5 ${
+                viewMode === 'technical'
+                  ? 'bg-obsidian-800 text-chalk-100 border border-hairline font-bold'
+                  : 'text-chalk-400 hover:text-chalk-200'
+              }`}
+            >
+              <span>📊</span> Technical View
+            </button>
+          </div>
+        </div>
+        <span className="text-xs font-sans text-chalk-400">
+          {viewMode === 'story' ? 'Interactive physical knapsack, block piles & laser slicing' : 'Formulas, detailed cards & segmented capacity bar'}
+        </span>
+      </div>
+
+      {/* ─── Story / Animation Mode ─── */}
+      {viewMode === 'story' ? (
+        <FractionalKnapsackAnimatedView step={step} />
+      ) : (
+        /* ─── Technical View ─── */
+        <>
+          {/* Capacity: one segment per item taken */}
+          <section aria-label="Knapsack capacity" className="w-full max-w-4xl p-4 bg-obsidian-950 border border-hairline flex flex-col gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3 font-mono text-sm">
           <span className="text-chalk-400">
             Capacity used <strong className="text-chalk-100 tabular-nums">{fmt(currentWeight)} / {capacity}</strong>
           </span>
@@ -197,8 +248,10 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
         <LegendItem swatch={SEM.compare.swatch} symbol="½" label="Taken in part" />
         <LegendItem swatch={SEM.pruned.swatch} symbol="✂" label="Left out (knapsack full)" />
       </ul>
-    </div>
-  );
+    </>
+  )}
+</div>
+);
 };
 
 const LegendItem: React.FC<{ swatch: string; symbol: string; label: string }> = ({ swatch, symbol, label }) => (
