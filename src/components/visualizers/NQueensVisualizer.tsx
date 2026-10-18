@@ -59,6 +59,11 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
     return tree.stepToActivePath[step.stepIndex] || [tree.rootId];
   }, [tree, step.stepIndex]);
 
+  // Tree nodes array and bounds
+  const treeNodesArray = useMemo(() => Object.values(tree.nodes), [tree]);
+  const maxX = useMemo(() => Math.max(...treeNodesArray.map((nd) => nd.x), 800), [treeNodesArray]);
+  const maxY = useMemo(() => Math.max(...treeNodesArray.map((nd) => nd.y), 450), [treeNodesArray]);
+
   // Center pan on a specific tree node with specified zoom
   const centerOnNode = (nodeId: string, currentZoom = zoomScale) => {
     const target = tree.nodes[nodeId];
@@ -72,26 +77,54 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
     }
   };
 
-  // AUTOFOCUS: Automatically zoom in fully (1.85x) and center on the active node being operated on
+  // Compute overview zoom that fits the entire tree into the viewport on final step
+  const getOverviewFit = () => {
+    const containerWidth = treeContainerRef.current?.clientWidth || 700;
+    const containerHeight = treeContainerRef.current?.clientHeight || 380;
+    const fitScale = Math.min(
+      0.9,
+      Math.max(0.1, (containerWidth - 60) / (maxX + 120)),
+      Math.max(0.1, (containerHeight - 60) / (maxY + 120))
+    );
+    const fitPan = {
+      x: containerWidth / 2 - (maxX / 2) * fitScale,
+      y: 40,
+    };
+    return { fitScale, fitPan };
+  };
+
+  // AUTOFOCUS: During active exploration, zoom in FULLY (1.85x) on the operating node.
+  // On final step, smoothly zoom out to overview to show all green solutions and red non-solutions.
   useEffect(() => {
     if (autofocus && !inspectedNodeId) {
-      // During active search: zoom in fully (1.85x). On final complete step: show overview (0.9x)
-      const targetZoom = step.isFinal ? 0.9 : 1.85;
-      setZoomScale(targetZoom);
-      centerOnNode(activeNodeId, targetZoom);
+      if (step.isFinal) {
+        const { fitScale, fitPan } = getOverviewFit();
+        setZoomScale(fitScale);
+        setPan(fitPan);
+      } else {
+        const activeZoom = 1.85;
+        setZoomScale(activeZoom);
+        centerOnNode(activeNodeId, activeZoom);
+      }
     }
-  }, [step.stepIndex, activeNodeId, autofocus, inspectedNodeId, step.isFinal]);
+  }, [step.stepIndex, activeNodeId, autofocus, inspectedNodeId, step.isFinal, maxX, maxY]);
 
   // Reset inspected node on step change to allow autofocus to follow active operation
   useEffect(() => {
     setInspectedNodeId(null);
   }, [step.stepIndex]);
 
-  // Initial centering on mount
+  // Initial centering on mount or when tree changes (e.g. switching between find first and find all)
   useEffect(() => {
-    const initialZoom = step.isFinal ? 0.9 : 1.85;
-    setZoomScale(initialZoom);
-    centerOnNode(activeNodeId, initialZoom);
+    if (step.isFinal) {
+      const { fitScale, fitPan } = getOverviewFit();
+      setZoomScale(fitScale);
+      setPan(fitPan);
+    } else {
+      const activeZoom = 1.85;
+      setZoomScale(activeZoom);
+      centerOnNode(activeNodeId, activeZoom);
+    }
   }, [tree]);
 
   // Handle pan drag
@@ -111,10 +144,16 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
   };
 
   const resetView = () => {
-    const targetZoom = step.isFinal ? 0.9 : 1.85;
-    setZoomScale(targetZoom);
+    if (step.isFinal) {
+      const { fitScale, fitPan } = getOverviewFit();
+      setZoomScale(fitScale);
+      setPan(fitPan);
+    } else {
+      const activeZoom = 1.85;
+      setZoomScale(activeZoom);
+      centerOnNode(activeNodeId, activeZoom);
+    }
     setInspectedNodeId(null);
-    centerOnNode(activeNodeId, targetZoom);
   };
 
   // Helper to determine node visual status at current step
@@ -230,13 +269,6 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
       ? '↘'
       : '↙'
     : '';
-
-  // SVG dimensions
-  const treeNodesArray = Object.values(tree.nodes);
-  const maxX = Math.max(...treeNodesArray.map((nd) => nd.x), 800);
-  const maxY = Math.max(...treeNodesArray.map((nd) => nd.y), 450);
-  const svgWidth = Math.max(maxX + 160, 800);
-  const svgHeight = Math.max(maxY + 120, 480);
 
   // Render node in the SVG tree
   const renderTreeNode = (node: NQueensTreeNode) => {
@@ -795,8 +827,7 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
             ref={treeSvgRef}
             width="100%"
             height="100%"
-            viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-            className="w-full h-full"
+            className="w-full h-full overflow-hidden"
           >
             <g
               transform={`translate(${pan.x}, ${pan.y}) scale(${zoomScale})`}
