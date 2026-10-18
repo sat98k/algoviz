@@ -35,7 +35,8 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
 
   // SVG Pan and Zoom for the State Space Tree
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [zoomScale, setZoomScale] = useState<number>(1);
+  // Zoom scale: defaults to 1.85 for fully zoomed-in active node focus
+  const [zoomScale, setZoomScale] = useState<number>(1.85);
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const treeContainerRef = useRef<HTMLDivElement>(null);
@@ -58,12 +59,12 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
     return tree.stepToActivePath[step.stepIndex] || [tree.rootId];
   }, [tree, step.stepIndex]);
 
-  // Center pan on a specific tree node
+  // Center pan on a specific tree node with specified zoom
   const centerOnNode = (nodeId: string, currentZoom = zoomScale) => {
     const target = tree.nodes[nodeId];
     if (target && treeContainerRef.current) {
-      const containerWidth = treeContainerRef.current.clientWidth;
-      const containerHeight = treeContainerRef.current.clientHeight;
+      const containerWidth = treeContainerRef.current.clientWidth || 700;
+      const containerHeight = treeContainerRef.current.clientHeight || 380;
       setPan({
         x: containerWidth / 2 - target.x * currentZoom,
         y: containerHeight / 2 - target.y * currentZoom,
@@ -71,12 +72,15 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
     }
   };
 
-  // AUTOFOCUS: Automatically pan the tree to focus on the active node where the operation is occurring
+  // AUTOFOCUS: Automatically zoom in fully (1.85x) and center on the active node being operated on
   useEffect(() => {
     if (autofocus && !inspectedNodeId) {
-      centerOnNode(activeNodeId, zoomScale);
+      // During active search: zoom in fully (1.85x). On final complete step: show overview (0.9x)
+      const targetZoom = step.isFinal ? 0.9 : 1.85;
+      setZoomScale(targetZoom);
+      centerOnNode(activeNodeId, targetZoom);
     }
-  }, [step.stepIndex, activeNodeId, autofocus, inspectedNodeId, zoomScale]);
+  }, [step.stepIndex, activeNodeId, autofocus, inspectedNodeId, step.isFinal]);
 
   // Reset inspected node on step change to allow autofocus to follow active operation
   useEffect(() => {
@@ -85,7 +89,9 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
 
   // Initial centering on mount
   useEffect(() => {
-    centerOnNode(activeNodeId, 1);
+    const initialZoom = step.isFinal ? 0.9 : 1.85;
+    setZoomScale(initialZoom);
+    centerOnNode(activeNodeId, initialZoom);
   }, [tree]);
 
   // Handle pan drag
@@ -105,9 +111,10 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
   };
 
   const resetView = () => {
-    setZoomScale(1);
+    const targetZoom = step.isFinal ? 0.9 : 1.85;
+    setZoomScale(targetZoom);
     setInspectedNodeId(null);
-    centerOnNode(activeNodeId, 1);
+    centerOnNode(activeNodeId, targetZoom);
   };
 
   // Helper to determine node visual status at current step
@@ -648,24 +655,45 @@ export const NQueensVisualizer: React.FC<NQueensVisualizerProps> = ({ step, inpu
 
             {/* Target Active Node Button */}
             <button
-              onClick={() => centerOnNode(activeNodeId)}
+              onClick={() => centerOnNode(activeNodeId, zoomScale)}
               className="px-2.5 py-1 text-xs font-mono rounded bg-obsidian-900 border border-hairline text-chalk-300 hover:text-chalk-100 active:scale-95 transition-all"
               title="Center view on currently operating node"
             >
               Target Active 🎯
             </button>
 
+            {/* Toggle Fully Zoomed In vs Overview */}
+            <button
+              onClick={() => {
+                const nextZoom = zoomScale >= 1.5 ? 0.9 : 1.85;
+                setZoomScale(nextZoom);
+                centerOnNode(activeNodeId, nextZoom);
+              }}
+              className="px-2.5 py-1 text-xs font-mono rounded bg-obsidian-900 border border-hairline text-amber-300 hover:text-amber-200"
+              title="Toggle between fully zoomed-in active node view and overview"
+            >
+              {zoomScale >= 1.5 ? '🔭 Overview (0.9x)' : '🔍 Focus Node (1.85x)'}
+            </button>
+
             {/* Zoom Controls */}
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setZoomScale((z) => Math.min(z + 0.15, 2.0))}
+                onClick={() => {
+                  const z = Math.min(zoomScale + 0.2, 2.5);
+                  setZoomScale(z);
+                  centerOnNode(activeNodeId, z);
+                }}
                 className="p-1 rounded bg-obsidian-900 border border-hairline text-chalk-300 hover:text-chalk-100"
                 title="Zoom in"
               >
                 <ZoomIn className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => setZoomScale((z) => Math.max(z - 0.15, 0.4))}
+                onClick={() => {
+                  const z = Math.max(zoomScale - 0.2, 0.4);
+                  setZoomScale(z);
+                  centerOnNode(activeNodeId, z);
+                }}
                 className="p-1 rounded bg-obsidian-900 border border-hairline text-chalk-300 hover:text-chalk-100"
                 title="Zoom out"
               >
