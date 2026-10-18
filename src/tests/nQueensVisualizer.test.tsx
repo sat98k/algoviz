@@ -4,19 +4,22 @@ import { nQueensSteps } from '../algorithms/nQueens';
 import { NQueensVisualizer } from '../components/visualizers/NQueensVisualizer';
 import { buildNQueensStateSpaceTree } from '../algorithms/nQueensTree';
 
-describe('NQueensVisualizer - State Space Tree & Zoom Exploration', () => {
+describe('NQueensVisualizer - Chessboard & State Space Tree Autofocus', () => {
   const steps = [...nQueensSteps({ n: 4 })] as any[];
 
-  it('renders cinematic mode by default with both focused chessboard and state space tree', () => {
+  it('renders main chessboard on top and state space tree with autofocus down below', () => {
     const s = steps[1]; // First placement at (0, 0)
     const html = renderToStaticMarkup(<NQueensVisualizer step={s} inputs={{ n: 4 }} />);
 
-    expect(html).toContain('Cinematic Tree &amp; Zoom');
-    expect(html).toContain('State Space Tree');
-    expect(html).toContain('Classic Board');
-    expect(html).toContain('Camera Focus');
-    expect(html).toContain('Zoom In (Solve)');
-    expect(html).toContain('Zoom Out');
+    // Chessboard on top
+    expect(html).toContain('Board <strong class="font-mono">4 × 4</strong>');
+    expect(html).toContain('Solutions found');
+    expect(html).toContain('tree-node-0-0');
+
+    // State space tree down below
+    expect(html).toContain('State Space Tree Exploration');
+    expect(html).toContain('Autofocus: ON');
+    expect(html).toContain('Target Active 🎯');
   });
 
   it('renders conflict steps with attacker ray, attempted square and pruning banner', () => {
@@ -34,9 +37,9 @@ describe('NQueensVisualizer - State Space Tree & Zoom Exploration', () => {
     const html = renderToStaticMarkup(<NQueensVisualizer step={finalStep} inputs={{ n: 4 }} />);
 
     expect(html).toContain('Search Complete');
-    expect(html).toContain('Solutions Found:');
-    expect(html).toContain('Pruned Dead-Ends:');
-    // Check color tokens for solutions (#10b981 or emerald) and conflicts (#f43f5e or rose)
+    expect(html).toContain('Solutions Only');
+    expect(html).toContain('Pruned Non-Solutions');
+    // Check color tokens for solutions (#10b981 / emerald) and conflicts (#f43f5e / rose)
     expect(html).toContain('#10b981'); // Green
     expect(html).toContain('#f43f5e'); // Red
   });
