@@ -15,6 +15,7 @@ import { TspVisualizer } from './TspVisualizer';
 import { SetCoverVisualizer } from './SetCoverVisualizer';
 import { SweepLineVisualizer } from './SweepLineVisualizer';
 import { LCSVisualizer } from './LCSVisualizer';
+import { NQueensVisualizer } from './NQueensVisualizer';
 
 interface VisualizerStageProps {
   config: AlgorithmConfig;
@@ -87,6 +88,8 @@ export const VisualizerStage: React.FC<VisualizerStageProps> = ({
           onApplyInputs={(newInputs) => onApplyInputs?.(newInputs)}
         />
       );
+    case 'NQueensVisualizer':
+      return <NQueensVisualizer step={step} inputs={inputs} />;
     default:
       return (
         <div className="p-12 text-center font-mono text-xs text-chalk-500 border border-hairline bg-obsidian-950">

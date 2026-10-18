@@ -899,7 +899,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '      board[row] = -1  // Backtrack: remove queen and try next column',
       '  return  // Exhausted all columns for this row',
     ],
-    visualizer: 'BoardVisualizer',
+    visualizer: 'NQueensVisualizer',
     inputSchema: [
       {
         name: 'n',
