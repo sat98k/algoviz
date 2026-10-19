@@ -7,6 +7,8 @@ import { STORY_SCENES } from '../components/story/storyRegistry';
 import { stepDurationMs } from '../components/story/useAnimPhases';
 import { createHuffmanDecodingAlgorithmSteps } from '../utils/huffmanCodec';
 import { nQueensSteps } from '../algorithms/nQueens';
+import { subsetSumSteps } from '../algorithms/subsetSum';
+import { graphColoringSteps } from '../algorithms/graphColoring';
 
 const stepsOf = (id: string) => {
   const a = getAlgorithmById(id)!;
@@ -123,5 +125,26 @@ describe('Story (Animation) Mode', () => {
     const html = renderScene('floyd-warshall', steps[steps.length - 1]);
     expect(html).toContain('Trip planner');
     expect(html).toContain('aria-label="From town"');
+  });
+
+  it('Subset Sum (find all) lists every balanced group', () => {
+    const steps = [...subsetSumSteps({ numbers: [1, 2, 3, 4], targetSum: 5, findMode: 'all' })];
+    for (const s of steps) expect(narrationOf(renderScene('subset-sum', s)), s.title).not.toMatch(/undefined|NaN/);
+    const html = renderScene('subset-sum', steps[steps.length - 1]);
+    expect(html).toContain('1 + 4');
+    expect(html).toContain('2 + 3');
+  });
+
+  it('Graph Coloring says when there are not enough colours', () => {
+    const steps = [...graphColoringSteps({ numColors: 2 })];
+    for (const s of steps) expect(narrationOf(renderScene('graph-coloring', s)), s.title).not.toMatch(/undefined|NaN/);
+    expect(narrationOf(renderScene('graph-coloring', steps[steps.length - 1]))).toMatch(/not enough/);
+  });
+
+  it.each(['knapsack-bb', 'job-selection-bb'])('%s ropes off caves that cannot beat the trophy chest', (id) => {
+    const { steps } = stepsOf(id);
+    const final = renderScene(id, steps[steps.length - 1]);
+    expect(narrationOf(final)).toMatch(/best treasure is/);
+    expect(final).toContain('⛔');
   });
 });

@@ -7,6 +7,9 @@ import { CubbyWallScene } from './CubbyWallScene';
 import { HuffmanMobileScene } from './HuffmanMobileScene';
 import { ChessboardScene } from './ChessboardScene';
 import { TownMapScene } from './TownMapScene';
+import { CoinScaleScene } from './CoinScaleScene';
+import { PaintHousesScene } from './PaintHousesScene';
+import { TreasureCaveScene } from './TreasureCaveScene';
 
 export interface StorySceneEntry {
   component: React.FC<StorySceneProps>;
@@ -33,4 +36,8 @@ export const STORY_SCENES: Record<string, StorySceneEntry> = {
   'n-queens': { component: ChessboardScene, hint: 'Queens on a wooden chessboard' },
   'floyd-warshall': { component: TownMapScene, hint: 'Hub towns and a trip planner' },
   'bellman-ford': { component: TownMapScene, hint: 'Delivery vans and price tags' },
+  'subset-sum': { component: CoinScaleScene, hint: 'Coins on a balance scale' },
+  'graph-coloring': { component: PaintHousesScene, hint: 'Painting houses so neighbours differ' },
+  'knapsack-bb': { component: TreasureCaveScene, hint: 'Treasure caves, crystal balls and rope barriers' },
+  'job-selection-bb': { component: TreasureCaveScene, hint: 'Treasure caves, crystal balls and rope barriers' },
 };
