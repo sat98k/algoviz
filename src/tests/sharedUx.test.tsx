@@ -283,3 +283,17 @@ describe('Visualizers do not repeat "What happened and why?"', () => {
     expect(html.replace(/<[^>]+>/g, '')).toContain(`= ${k.p3} − ${k.p1} − ${k.p2} = ${k.crossTerm}`);
   });
 });
+
+// ─── Switching algorithms by URL ──────────────────────────────────────────────
+describe('Switching algorithms', () => {
+  it('remounts the algorithm page per algorithm, so inputs never carry over (e.g. #/algorithm/a → #/algorithm/b)', () => {
+    expect(read('App.tsx')).toMatch(/<AlgorithmPage[\s\S]*?key=\{selectedAlgoId\}[\s\S]*?algorithmId=\{selectedAlgoId\}/);
+  });
+
+  it('every algorithm generates steps from its own default inputs', () => {
+    for (const a of algorithmRegistry) {
+      const steps = [...a.stepGenerator(getDefaultInputs(a))];
+      expect(steps.length, a.id).toBeGreaterThan(0);
+    }
+  });
+});

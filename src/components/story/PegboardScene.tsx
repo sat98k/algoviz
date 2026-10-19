@@ -34,10 +34,10 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
   // ── Board coordinates (y flipped so "up" is up) ──
   const xs = points.map((p) => p.x);
   const ys = points.map((p) => p.y);
-  const minX = Math.min(...xs, 0);
-  const maxX = Math.max(...xs, 1);
-  const minY = Math.min(...ys, 0);
-  const maxY = Math.max(...ys, 1);
+  const minX = (xs.length ? Math.min(...xs) : 0);
+  const maxX = (xs.length ? Math.max(...xs) : 1);
+  const minY = (ys.length ? Math.min(...ys) : 0);
+  const maxY = (ys.length ? Math.max(...ys) : 1);
   const scale = Math.min((W - 2 * M) / (maxX - minX || 1), (H - 2 * M) / (maxY - minY || 1));
   const offX = (W - (maxX - minX) * scale) / 2;
   const offY = (H - (maxY - minY) * scale) / 2;

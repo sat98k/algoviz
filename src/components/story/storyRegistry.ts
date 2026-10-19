@@ -10,6 +10,20 @@ import { TownMapScene } from './TownMapScene';
 import { CoinScaleScene } from './CoinScaleScene';
 import { PaintHousesScene } from './PaintHousesScene';
 import { TreasureCaveScene } from './TreasureCaveScene';
+import { CoinRoadScene } from './CoinRoadScene';
+import { HelpersWorkshopScene } from './HelpersWorkshopScene';
+import { BeadNecklaceScene } from './BeadNecklaceScene';
+import { GiftWrapScene } from './GiftWrapScene';
+import { CarFactoryScene } from './CarFactoryScene';
+import { PostmanScene } from './PostmanScene';
+import { WordTreeScene } from './WordTreeScene';
+import { SweepCurtainScene } from './SweepCurtainScene';
+import { HeightLineupScene } from './HeightLineupScene';
+import { InterviewRoomScene } from './InterviewRoomScene';
+import { ClayBlobsScene } from './ClayBlobsScene';
+import { StreetCamerasScene } from './StreetCamerasScene';
+import { RadioTowersScene } from './RadioTowersScene';
+import { RopeNetworkScene } from './RopeNetworkScene';
 
 export interface StorySceneEntry {
   component: React.FC<StorySceneProps>;
@@ -40,4 +54,18 @@ export const STORY_SCENES: Record<string, StorySceneEntry> = {
   'graph-coloring': { component: PaintHousesScene, hint: 'Painting houses so neighbours differ' },
   'knapsack-bb': { component: TreasureCaveScene, hint: 'Treasure caves, crystal balls and rope barriers' },
   'job-selection-bb': { component: TreasureCaveScene, hint: 'Treasure caves, crystal balls and rope barriers' },
+  'max-subarray': { component: CoinRoadScene, hint: 'A road of coins and thieves' },
+  karatsuba: { component: HelpersWorkshopScene, hint: 'Three helpers instead of four' },
+  lcs: { component: BeadNecklaceScene, hint: 'Two bead necklaces' },
+  'matrix-chain-multiplication': { component: GiftWrapScene, hint: 'Gluing wooden panels in the cheapest order' },
+  'assembly-line-scheduling': { component: CarFactoryScene, hint: 'A car factory with two belts' },
+  tsp: { component: PostmanScene, hint: 'A postman with a stamp card and notebook' },
+  'suffix-tree': { component: WordTreeScene, hint: 'A word tree with apples and an ant' },
+  'line-segment-intersection': { component: SweepCurtainScene, hint: 'Sticks on a table and a sliding curtain' },
+  'randomized-quicksort': { component: HeightLineupScene, hint: 'Kids lining up by height' },
+  'hiring-problem': { component: InterviewRoomScene, hint: 'An interview room with two coin jars' },
+  'karger-min-cut': { component: ClayBlobsScene, hint: 'Squishing balls of clay tied with ropes' },
+  'vertex-cover-approx': { component: StreetCamerasScene, hint: 'Security cameras at street corners' },
+  'set-cover': { component: RadioTowersScene, hint: 'Radio towers lighting up houses' },
+  'tsp-approx': { component: RopeNetworkScene, hint: 'A rope network walked around like a hedge' },
 };

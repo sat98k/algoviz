@@ -125,6 +125,8 @@ export function App() {
 
         {view === 'algorithm' && (
           <AlgorithmPage
+            // A fresh page per algorithm, so inputs and playback never carry over between algorithms.
+            key={selectedAlgoId}
             algorithmId={selectedAlgoId}
             onBack={() => {
               if (selectedModuleNumber === 2 && selectedSubCategory) {

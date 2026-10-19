@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { getAlgorithmById } from '../config/algorithmRegistry';
+import { algorithmRegistry, getAlgorithmById } from '../config/algorithmRegistry';
 import { getDefaultInputs } from '../utils/comparison';
 import { VisualizerStage } from '../components/visualizers/VisualizerStage';
 import { STORY_SCENES } from '../components/story/storyRegistry';
@@ -42,8 +42,8 @@ describe('Story (Animation) Mode', () => {
     expect(html).not.toContain('data-story-stage');
   });
 
-  it('algorithms without a scene render exactly as before (no toggle)', () => {
-    const { a, steps } = stepsOf('karatsuba');
+  it('Fractional Knapsack keeps its own built-in toggle (no second one is added)', () => {
+    const { a, steps } = stepsOf('fractional-knapsack');
     const html = renderToStaticMarkup(<VisualizerStage config={a} step={steps[0]} inputs={getDefaultInputs(a)} />);
     expect(html).not.toContain('data-story-toggle');
   });
@@ -146,5 +146,73 @@ describe('Story (Animation) Mode', () => {
     const final = renderScene(id, steps[steps.length - 1]);
     expect(narrationOf(final)).toMatch(/best treasure is/);
     expect(final).toContain('⛔');
+  });
+
+  it('Karatsuba: the final step shows the product and the empty fourth chair appears while splitting', () => {
+    const { steps } = stepsOf('karatsuba');
+    const final = steps[steps.length - 1];
+    expect(narrationOf(renderScene('karatsuba', final))).toContain(`= ${final.result.product}`);
+    const split = steps.find((s) => /^Step 2A/.test(s.title));
+    expect(renderScene('karatsuba', split)).toContain('not needed!');
+  });
+
+  it('LCS: the final step ties the shared chain with golden threads', () => {
+    const { steps } = stepsOf('lcs');
+    const final = steps[steps.length - 1];
+    expect(narrationOf(renderScene('lcs', final))).toContain(final.state.lcsString);
+  });
+
+  it('Matrix Chain: the best order is shown as nested gift boxes', () => {
+    const { steps } = stepsOf('matrix-chain-multiplication');
+    expect(renderScene('matrix-chain-multiplication', steps[steps.length - 1])).toContain('🎀');
+  });
+
+  it('Assembly Line and TSP finish with the fastest / cheapest route', () => {
+    const al = stepsOf('assembly-line-scheduling').steps;
+    expect(narrationOf(renderScene('assembly-line-scheduling', al[al.length - 1]))).toMatch(/fastest route through the factory takes \d+ minutes/);
+    const tsp = stepsOf('tsp').steps;
+    expect(narrationOf(renderScene('tsp', tsp[tsp.length - 1]))).toMatch(/cheapest round trip costs \d+/);
+  });
+
+  it('every algorithm now has an Animation Mode', () => {
+    for (const a of algorithmRegistry) {
+      expect(!!STORY_SCENES[a.id] || a.id === 'fractional-knapsack', a.id).toBe(true);
+    }
+  });
+
+  it('Randomized Quicksort crowns the pivot and hands out medals', () => {
+    const { steps } = stepsOf('randomized-quicksort');
+    const placed = steps.find((s) => /^Pivot in Final/.test(s.title));
+    const html = renderScene('randomized-quicksort', placed);
+    expect(html).toContain('👑');
+    expect(html).toContain('🏅');
+  });
+
+  it('Hiring Problem fills the hiring jar once per hire', () => {
+    const { steps } = stepsOf('hiring-problem');
+    const final = steps[steps.length - 1];
+    expect(narrationOf(renderScene('hiring-problem', final))).toContain(`${final.state.hiredIndices.length} hired`);
+  });
+
+  it('Karger ends with two balls and counts the ropes between them', () => {
+    const { steps } = stepsOf('karger-min-cut');
+    const final = steps[steps.length - 1];
+    expect(final.state.nodes).toHaveLength(2);
+    expect(narrationOf(renderScene('karger-min-cut', final))).toMatch(/cut of size \d+/);
+  });
+
+  it('Suffix Tree search marks the apples where the pattern starts', () => {
+    const { steps } = stepsOf('suffix-tree');
+    const final = steps[steps.length - 1];
+    expect(narrationOf(renderScene('suffix-tree', final))).toContain(final.state.matchIndices.join(', '));
+  });
+
+  it('Vertex Cover, Set Cover and TSP Approx explain their guarantee at the end', () => {
+    const vc = stepsOf('vertex-cover-approx').steps;
+    expect(narrationOf(renderScene('vertex-cover-approx', vc[vc.length - 1]))).toMatch(/at most twice/);
+    const sc = stepsOf('set-cover').steps;
+    expect(narrationOf(renderScene('set-cover', sc[sc.length - 1]))).toMatch(/Every house has signal/);
+    const tsp = stepsOf('tsp-approx').steps;
+    expect(narrationOf(renderScene('tsp-approx', tsp[tsp.length - 1]))).toMatch(/at most twice the best/);
   });
 });
