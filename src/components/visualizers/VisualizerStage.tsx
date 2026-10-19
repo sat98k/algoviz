@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AlgorithmConfig, AlgorithmStep } from '../../types/algorithm';
 import { TreeTraversalOverride } from '../../utils/huffmanCodec';
 import { ArrayBarVisualizer } from './ArrayBarVisualizer';
@@ -16,6 +16,9 @@ import { SetCoverVisualizer } from './SetCoverVisualizer';
 import { SweepLineVisualizer } from './SweepLineVisualizer';
 import { LCSVisualizer } from './LCSVisualizer';
 import { NQueensVisualizer } from './NQueensVisualizer';
+import { STORY_SCENES } from '../story/storyRegistry';
+import { StoryModeToggle, StoryViewMode } from '../story/StoryModeToggle';
+import { stepDurationMs } from '../story/useAnimPhases';
 
 interface VisualizerStageProps {
   config: AlgorithmConfig;
@@ -25,10 +28,42 @@ interface VisualizerStageProps {
   traversalOverride?: TreeTraversalOverride | null;
   /** Lets visualizers with built-in editors (TSP) change the inputs. */
   onApplyInputs?: (newInputs: Record<string, any>) => void;
+  /** Playback speed (steps per second); paces story-mode animations. */
+  speed?: number;
 }
 
-/** Renders the visualizer registered for an algorithm (`config.visualizer`). */
-export const VisualizerStage: React.FC<VisualizerStageProps> = ({
+/** View mode chosen per algorithm, so it survives the stage remounting (e.g. a layout switch). */
+const chosenMode: Record<string, StoryViewMode> = {};
+
+/**
+ * Renders the visualizer registered for an algorithm. Algorithms with a story scene
+ * (see storyRegistry) get a 📊 / 🎬 toggle; the technical view stays the default.
+ */
+export const VisualizerStage: React.FC<VisualizerStageProps> = (props) => {
+  const { config, step, speed } = props;
+  const [mode, setModeState] = useState<StoryViewMode>(chosenMode[config.id] ?? 'technical');
+  const setMode = (m: StoryViewMode) => {
+    chosenMode[config.id] = m;
+    setModeState(m);
+  };
+  const scene = STORY_SCENES[config.id];
+  if (!scene) return <TechnicalVisualizer {...props} />;
+
+  const Scene = scene.component;
+  return (
+    <div className="flex flex-col w-full gap-3">
+      <StoryModeToggle mode={mode} onChange={setMode} storyHint={scene.hint} />
+      {mode === 'story' ? (
+        <Scene step={step} algorithmId={config.id} stepMs={stepDurationMs(speed)} />
+      ) : (
+        <TechnicalVisualizer {...props} />
+      )}
+    </div>
+  );
+};
+
+/** The existing (technical) visualizer registered for an algorithm (`config.visualizer`). */
+const TechnicalVisualizer: React.FC<VisualizerStageProps> = ({
   config,
   step,
   inputs,

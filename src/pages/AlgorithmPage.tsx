@@ -187,6 +187,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
       inputs={inputs}
       traversalOverride={huffmanTraversal}
       onApplyInputs={(newInputs) => setInputs(newInputs)}
+      speed={speed}
     />
   );
 

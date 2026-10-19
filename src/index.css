@@ -205,6 +205,55 @@
   100% { transform: translateY(-40px) rotate(-20deg); opacity: 0; }
 }
 
+/* Story scenes: a ring spreading out like a ripple on water (SVG-safe). */
+@keyframes storyRipple {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+.animate-story-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: storyRipple 1.4s ease-out infinite;
+}
+
+/* Story scenes: gentle bob for something waiting or overflowing. */
+@keyframes storyBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-story-bob {
+  transform-box: fill-box;
+  animation: storyBob 1.2s ease-in-out infinite;
+}
+
+/* Story scenes: a mismatch shake. */
+@keyframes storyShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+.animate-story-shake {
+  animation: storyShake 0.5s ease-in-out;
+}
+
+/* Story scenes: something popping into place. */
+@keyframes storyPop {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-story-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: storyPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 .animate-knife-chop {
   animation: knifeChop 1.2s ease-in-out forwards;
 }
