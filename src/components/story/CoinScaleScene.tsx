@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases } from './useAnimPhases';
+import { StateSpaceTree, SpaceTreeNode, SpaceNodeKind } from './StateSpaceTree';
+import type { SubsetSumTreeNode } from '../../algorithms/subsetSum';
 
 /**
  * ⚖️ Subset Sum as coins on a balance scale.
@@ -10,6 +12,8 @@ import { useAnimPhases } from './useAnimPhases';
  * the skip tray (exclude). If a coin would tip the scale past the target, it bounces
  * back (pruned). If even all the coins still waiting can't reach the target, the branch
  * is given up. Backtracking lifts the last coin back off the pan.
+ * Below the scale, the search tree shows every take / skip decision, with the pan
+ * total on each node and pruned branches snipped off.
  */
 
 type CoinState = 'table' | 'pan' | 'skipped' | 'trying';
@@ -67,6 +71,43 @@ export const CoinScaleScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
   const remainingAfter = numbers.slice(index + 1).reduce((a, b) => a + b, 0);
   const tilt = Math.max(-14, Math.min(14, target > 0 ? ((panSum - target) / target) * 22 : 0));
   const balanced = panSum === target;
+
+  // ── State-space tree, flattened from the step's tree snapshot ──
+  const treeRoot: SubsetSumTreeNode | undefined = st.treeRoot;
+  const { treeNodes, sums } = useMemo(() => {
+    const out: Record<string, SpaceTreeNode> = {};
+    const sumOf: Record<string, number> = {};
+    const walk = (nd: SubsetSumTreeNode, parentId: string | null) => {
+      sumOf[nd.id] = nd.currentSum;
+      out[nd.id] = {
+        id: nd.id,
+        parentId,
+        children: (nd.children || []).map((c) => c.id),
+        edgeLabel: nd.element === undefined ? undefined : `${nd.itemIncluded ? 'take' : 'skip'} ${nd.element}`,
+        status: nd.status === 'pruned' ? 'pruned' : nd.status === 'solution' ? 'solution' : 'open',
+        pruneNote: nd.status === 'pruned' ? (/^Sum/.test(nd.pruneReason || '') ? 'too heavy' : 'can’t reach it') : undefined,
+      };
+      (nd.children || []).forEach((c) => walk(c, nd.id));
+    };
+    if (treeRoot) walk(treeRoot, null);
+    return { treeNodes: out, sums: sumOf };
+  }, [treeRoot]);
+  const activeNodeId: string = st.activeNodeId && treeNodes[st.activeNodeId] ? st.activeNodeId : treeRoot?.id ?? '';
+  const createdNow = ['include', 'exclude', 'overflow', 'short-in', 'short-out'].includes(kind);
+
+  const renderTreeNode = (id: string, k: SpaceNodeKind) => {
+    const v = sums[id] ?? 0;
+    const over = v > target;
+    return (
+      <g>
+        <circle r="19" cy="2" fill="#a16207" />
+        <circle r="19" fill={k === 'solution' ? '#fbbf24' : k === 'pruned' || k === 'trying' ? '#fde68a' : '#facc15'} stroke="#a16207" strokeWidth="1.5" />
+        <text textAnchor="middle" y="5" fontSize="14" fontWeight="900" fill={over && k === 'pruned' ? '#b91c1c' : '#713f12'}>
+          {v}
+        </text>
+      </g>
+    );
+  };
 
   // ── Geometry ──
   const maxV = Math.max(1, ...numbers);
@@ -192,6 +233,23 @@ export const CoinScaleScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
           );
         })}
       </svg>
+
+      {treeRoot && (
+        <StateSpaceTree
+          nodes={treeNodes}
+          rootId={treeRoot.id}
+          activeId={activeNodeId}
+          newId={createdNow ? activeNodeId : undefined}
+          revealPrune={!(kind === 'overflow' || kind === 'short-in') || phase === 'reject'}
+          stepKey={step.stepIndex}
+          nodeW={40}
+          nodeH={40}
+          leafGap={92}
+          renderNode={renderTreeNode}
+          levelLabel={(d) => (d === 0 ? 'start' : d <= numbers.length ? `coin ${numbers[d - 1]}?` : undefined)}
+          caption={`Each level decides one coin: take it or skip it. The number on each node is what the pan holds there. Branches that are too heavy, or can no longer reach ${target}, are cut off.`}
+        />
+      )}
 
       {solutions.length > 0 && (
         <div className="mt-3 flex flex-wrap justify-center gap-2 font-sans text-xs">

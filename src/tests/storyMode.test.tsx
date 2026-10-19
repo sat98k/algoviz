@@ -9,6 +9,7 @@ import { createHuffmanDecodingAlgorithmSteps } from '../utils/huffmanCodec';
 import { nQueensSteps } from '../algorithms/nQueens';
 import { subsetSumSteps } from '../algorithms/subsetSum';
 import { graphColoringSteps } from '../algorithms/graphColoring';
+import { buildNQueensStateSpaceTree } from '../algorithms/nQueensTree';
 
 const stepsOf = (id: string) => {
   const a = getAlgorithmById(id)!;
@@ -214,5 +215,72 @@ describe('Story (Animation) Mode', () => {
     expect(narrationOf(renderScene('set-cover', sc[sc.length - 1]))).toMatch(/Every house has signal/);
     const tsp = stepsOf('tsp-approx').steps;
     expect(narrationOf(renderScene('tsp-approx', tsp[tsp.length - 1]))).toMatch(/at most twice the best/);
+  });
+
+  const kindsOf =(html: string) => [...html.matchAll(/data-tree-node="([^"]+)" data-kind="([a-z]+)"/g)].map((m) => ({ id: m[1], kind: m[2] }));
+
+  it.each([
+    [4, false],
+    [4, true],
+    [5, false],
+  ] as const)('N-Queens (n=%i, findAll=%s): the search tree grows in step with the board', (n, findAll) => {
+    const steps = [...nQueensSteps({ n, findAll })];
+    const tree = buildNQueensStateSpaceTree(n, true);
+    for (const s of steps) {
+      const html = renderScene('n-queens', s);
+      expect(html, s.title).toContain('data-state-space-tree');
+      const nodes = kindsOf(html);
+      // Exactly one node is "current" (now / being tried / just cut / an answer).
+      const current = nodes.filter((x) => x.kind === 'active' || x.kind === 'trying');
+      expect(current.length, s.title).toBeLessThanOrEqual(1);
+      if (s.state.action === 'place') expect(current[0]?.kind, s.title).toBe('active');
+      if (s.state.action === 'conflict') expect(current[0]?.kind, s.title).toBe('trying'); // cut only after the arrow fires
+      // Only nodes visited so far are drawn.
+      for (const x of nodes) expect(tree.nodes[x.id].firstStepIndex, `${s.title} ${x.id}`).toBeLessThanOrEqual(s.stepIndex);
+    }
+    const end = kindsOf(renderScene('n-queens', steps[steps.length - 1]));
+    expect(end.some((x) => x.kind === 'solution')).toBe(true);
+    expect(end.some((x) => x.kind === 'pruned')).toBe(true);
+  });
+
+  it('N-Queens: big searches fold finished branches so the tree stays small', () => {
+    const steps = [...nQueensSteps({ n: 6, findAll: true })];
+    const total = Object.keys(buildNQueensStateSpaceTree(6, true).nodes).length;
+    const html = renderScene('n-queens', steps[steps.length - 1]);
+    const shown = kindsOf(html);
+    expect(shown.length).toBeLessThan(total / 2);
+    expect(html).toContain('finished branch, folded up');
+    // The few answers stay reachable: all 4 solutions of 6-queens are drawn.
+    expect(shown.filter((x) => x.kind === 'solution').length).toBe(4);
+  });
+
+  it('Subset Sum: the tree shows take / skip choices and cuts pruned branches', () => {
+    const steps = [...subsetSumSteps({ numbers: [1, 2, 3, 4, 6], targetSum: 7, findMode: 'all' })];
+    for (const s of steps) {
+      const html = renderScene('subset-sum', s);
+      expect(html, s.title).toContain('data-state-space-tree');
+      expect(html, s.title).toContain(`data-tree-node="${s.state.activeNodeId}"`);
+    }
+    const prune = steps.find((s) => /^Prune: \+/.test(s.title))!;
+    const html = renderScene('subset-sum', prune);
+    expect(kindsOf(html).find((x) => x.id === prune.state.activeNodeId)?.kind).toBe('trying');
+    const end = renderScene('subset-sum', steps[steps.length - 1]);
+    expect(end).toMatch(/take \d+/);
+    expect(end).toMatch(/skip \d+/);
+    expect(kindsOf(end).some((x) => x.kind === 'solution')).toBe(true);
+    // Cut branches stay visible, either as snipped nodes or counted on a folded bundle.
+    expect(kindsOf(end).some((x) => x.kind === 'pruned') || /done · ✂\d+/.test(end)).toBe(true);
+  });
+
+  it.each(['ford-fulkerson', 'edmonds-karp'])('%s: every pipe carries a flow / capacity tag, and routes show room and the bottleneck', (id) => {
+    const { steps } = stepsOf(id);
+    for (const s of steps) {
+      const html = renderScene(id, s);
+      const tags = [...html.matchAll(/data-pipe-tag="[^"]+"/g)].length;
+      const pipes = [...html.matchAll(/data-pipe="[^"]+"/g)].length;
+      expect(tags, s.title).toBe(pipes);
+      expect(html, s.title).toMatch(/\d+ \/ \d+|full \d+\/\d+/);
+      expect(html, s.title).not.toMatch(/undefined|NaN/);
+    }
   });
 });

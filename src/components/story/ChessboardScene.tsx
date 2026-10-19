@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases } from './useAnimPhases';
+import { StateSpaceTree, SpaceTreeNode, SpaceNodeKind } from './StateSpaceTree';
+import { buildNQueensStateSpaceTree } from '../../algorithms/nQueensTree';
 
 /**
  * ♛ N-Queens on a real wooden chessboard.
@@ -9,6 +11,8 @@ import { useAnimPhases } from './useAnimPhases';
  * faint red mark, so the safe squares are easy to spot. When a square is blocked, the
  * attacking queen fires an arrow along its column or diagonal. On a dead end, the last
  * queen is lifted off the board (backtracking) and the next column is tried.
+ * Below the board, the search tree grows one choice at a time: each level is a row,
+ * each branch a column, and attacked squares are snipped off as pruned branches.
  */
 
 const S = 56;
@@ -59,6 +63,70 @@ export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
   // Squares reachable by a standing queen (faint red marks) — the rest are safe.
   const attacked = (r: number, c: number) =>
     queens.some((q) => !(q.r === r && q.c === c) && (q.c === c || q.r === r || Math.abs(q.r - r) === Math.abs(q.c - c)));
+
+  // ── State-space tree: the full search is precomputed; show what has been visited so far ──
+  // The find-all tree shares every step with find-first up to the first answer.
+  const tree = useMemo(() => buildNQueensStateSpaceTree(n, true), [n]);
+  const pathId = (cols: number[]) => (cols.length ? cols.map((c, r) => `${r}:${c}`).join('/') : 'root');
+  const activeId = (() => {
+    let id = 'root';
+    if (action === 'place') id = pathId(board.slice(0, row + 1));
+    else if ((action === 'conflict' || action === 'backtrack') && row >= 0) id = pathId([...board.slice(0, row), col]);
+    else if (action === 'solution')
+      id = board.every((c) => c >= 0) ? pathId(board) : solutions.length ? pathId(solutions[solutions.length - 1]) : 'root';
+    return tree.nodes[id] ? id : tree.stepToNodeId[step.stepIndex] ?? 'root';
+  })();
+  const treeNodes = useMemo(() => {
+    const out: Record<string, SpaceTreeNode> = {};
+    for (const nd of Object.values(tree.nodes)) {
+      if (nd.firstStepIndex > step.stepIndex) continue;
+      out[nd.id] = {
+        id: nd.id,
+        parentId: nd.parentId,
+        children: nd.children.filter((k) => tree.nodes[k].firstStepIndex <= step.stepIndex),
+        edgeLabel: nd.col >= 0 ? `col ${nd.col + 1}` : undefined,
+        status:
+          nd.status === 'conflict'
+            ? 'pruned'
+            : nd.status === 'solution' && (nd.solutionStepIndex ?? Infinity) <= step.stepIndex
+            ? 'solution'
+            : 'open',
+        pruneNote: nd.attack ? `same ${nd.attack.line}` : undefined,
+      };
+    }
+    return out;
+  }, [tree, step.stepIndex]);
+
+  // Each tree node is a tiny copy of the board at that moment.
+  const cell = Math.max(6, Math.min(12, Math.floor(52 / n)));
+  const renderTreeNode = (id: string, kind: SpaceNodeKind) => {
+    const nd = tree.nodes[id];
+    const half = (n * cell) / 2;
+    const tested = kind === 'pruned' || kind === 'trying';
+    return (
+      <g transform={`translate(${-half}, ${-half})`}>
+        {Array.from({ length: n }, (_, r) =>
+          Array.from({ length: n }, (_, c) => (
+            <rect key={`${r}-${c}`} x={c * cell} y={r * cell} width={cell} height={cell} fill={(r + c) % 2 ? DARK : LIGHT} />
+          ))
+        )}
+        {nd.board.map((c, r) =>
+          c < 0 ? null : (
+            <text
+              key={`q-${r}`}
+              x={c * cell + cell / 2}
+              y={r * cell + cell * 0.82}
+              textAnchor="middle"
+              fontSize={cell * 0.95}
+              fill={r === nd.row && tested ? RED : kind === 'solution' ? '#b45309' : '#1c1917'}
+            >
+              ♛
+            </text>
+          )
+        )}
+      </g>
+    );
+  };
 
   const cx = (c: number) => M + c * S + S / 2;
   const cy = (r: number) => M + r * S + S / 2;
@@ -194,6 +262,21 @@ export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
           </g>
         )}
       </svg>
+
+      <StateSpaceTree
+        nodes={treeNodes}
+        rootId="root"
+        activeId={activeId}
+        newId={action === 'place' || action === 'conflict' ? activeId : undefined}
+        revealPrune={action !== 'conflict' || phase === 'attack'}
+        stepKey={step.stepIndex}
+        nodeW={n * cell}
+        nodeH={n * cell}
+        leafGap={Math.max(n * cell + 30, 80)}
+        renderNode={renderTreeNode}
+        levelLabel={(d) => (d === 0 ? 'start' : d <= n ? `row ${d}` : undefined)}
+        caption="Each level decides where the queen in one row goes. A square under attack is cut off at once, so nothing below it is ever tried."
+      />
 
       {/* trophy shelf of solutions (find-all mode) */}
       {solutions.length > 0 && (

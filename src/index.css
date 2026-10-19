@@ -217,6 +217,18 @@
   animation: storyRipple 1.4s ease-out infinite;
 }
 
+/* Story scenes: a soft halo pulsing around the current node of a search tree. */
+@keyframes storyHalo {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+.animate-story-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: storyHalo 1.6s ease-out infinite;
+}
+
 /* Story scenes: gentle bob for something waiting or overflowing. */
 @keyframes storyBob {
   0%, 100% { transform: translateY(0); }
