@@ -1,6 +1,7 @@
 import React from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases } from './useAnimPhases';
+import { StateSpaceTree, SpaceTreeNode, SpaceNodeKind } from './StateSpaceTree';
 
 /**
  * 🔦 Branch & Bound as explorers in treasure caves (0-1 Knapsack B&B, Job Selection B&B).
@@ -9,7 +10,9 @@ import { useAnimPhases } from './useAnimPhases';
  * leave it. A crystal ball in each cave promises the most treasure that cave could ever
  * lead to (the bound). Explorers always visit the most promising cave first. A cave
  * whose promise can't beat the trophy chest — or whose plan is impossible — is roped off
- * without being explored (pruned).
+ * without being explored (pruned). The caves are drawn as the shared search tree: the camera
+ * follows the explorers as best-first search jumps around, and caves still waiting in line
+ * stay visible with a ⏳ badge.
  */
 
 type Cave = {
@@ -22,12 +25,9 @@ type Cave = {
   decided?: number;
   status: string;
   pruneType?: string;
+  pruneReason?: string;
   children?: Cave[];
 };
-
-const LEVEL_H = 104;
-const LEAF_W = 104;
-const GOLD = '#f59e0b';
 
 export const TreasureCaveScene: React.FC<StorySceneProps> = ({ step, algorithmId, stepMs }) => {
   const st: any = step.state || {};
@@ -51,32 +51,94 @@ export const TreasureCaveScene: React.FC<StorySceneProps> = ({ step, algorithmId
     decided: isJobs ? n.jobId : n.level > 0 ? items[n.level - 1]?.id : undefined,
     status: n.status,
     pruneType: n.pruneType,
+    pruneReason: n.pruneReason,
     children: (n.children || []).map((c: any) => toCave(c, parentPicks)),
   });
   const root: Cave | undefined = st.treeRoot ? toCave(st.treeRoot) : undefined;
 
-  // ── Tidy tree layout: leaves side by side, parents centred above children ──
-  const placed: { cave: Cave; x: number; y: number; parent?: Cave }[] = [];
-  let leafCursor = 0;
-  const layout = (c: Cave, depth: number, parent?: Cave): number => {
-    const kids = c.children || [];
-    let x: number;
-    if (!kids.length) {
-      x = 60 + leafCursor * LEAF_W;
-      leafCursor++;
-    } else {
-      const xs = kids.map((k) => layout(k, depth + 1, c));
-      x = (xs[0] + xs[xs.length - 1]) / 2;
-    }
-    placed.push({ cave: c, x, y: 70 + depth * LEVEL_H, parent });
-    return x;
+  // ── State-space tree: caves become nodes of the shared search tree ──
+  const caveById = new Map<string, Cave>();
+  const parentOf = new Map<string, string | null>();
+  const walk = (c: Cave, parent: string | null) => {
+    caveById.set(c.id, c);
+    parentOf.set(c.id, parent);
+    (c.children || []).forEach((k) => walk(k, c.id));
   };
-  if (root) layout(root, 0);
-  const byId = new Map(placed.map((p) => [p.cave.id, p]));
-  const width = Math.max(520, 120 + leafCursor * LEAF_W - LEAF_W + 60);
-  const depth = Math.max(0, ...placed.map((p) => p.cave.level));
-  const height = 70 + depth * LEVEL_H + 70;
+  if (root) walk(root, null);
 
+  // What each cave has taken so far (its own choice plus every choice above it).
+  const picksOf = (id: string): number[] => {
+    const out: number[] = [];
+    let cur: string | null = id;
+    while (cur) {
+      const c = caveById.get(cur)!;
+      if (c.took && c.decided !== undefined) out.push(c.decided);
+      cur = parentOf.get(cur) ?? null;
+    }
+    return out.sort((a, b) => a - b);
+  };
+  // Knapsack doesn't mark its best cave, so find the shallowest cave holding exactly the best picks.
+  const bestKey = [...bestPicks].sort((a, b) => a - b).join(',');
+  const bestCaveId = (() => {
+    const marked = [...caveById.values()].filter((c) => ['best', 'incumbent', 'optimal'].includes(c.status));
+    if (marked.length) return marked.sort((a, b) => a.level - b.level)[0].id;
+    if (isJobs || best <= 0) return undefined;
+    const match = [...caveById.values()].filter((c) => c.loot === best && c.level > 0 && picksOf(c.id).join(',') === bestKey);
+    return match.sort((a, b) => a.level - b.level)[0]?.id;
+  })();
+
+  const treeNodes: Record<string, SpaceTreeNode> = {};
+  for (const c of caveById.values()) {
+    const isPruned = pruned.includes(c.id) || c.status === 'pruned';
+    // Job Selection marks queued caves 'queued'; Knapsack leaves them 'active'. Either way a cave that
+    // already has tunnels below it has been explored, so only childless ones are still in line.
+    const unexplored = !(c.children || []).length && c.id !== activeId;
+    const waiting = unexplored && (c.status === 'queued' || (!isJobs && c.status === 'active'));
+    treeNodes[c.id] = {
+      id: c.id,
+      parentId: parentOf.get(c.id) ?? null,
+      children: (c.children || []).map((k) => k.id),
+      edgeLabel: c.level > 0 && c.decided !== undefined ? `${c.took ? 'take' : 'skip'} ${isJobs ? `J${c.decided}` : `🧀${c.decided}`}` : undefined,
+      status: c.id === bestCaveId ? 'solution' : isPruned ? 'pruned' : waiting ? 'waiting' : 'open',
+      pruneNote: isPruned
+        ? c.pruneType === 'infeasible' || /^Weight|Infeasible/.test(c.pruneReason || '')
+          ? isJobs
+            ? 'misses a deadline'
+            : 'too heavy'
+          : 'can’t beat 🏆'
+        : undefined,
+    };
+  }
+  // Which choice each level of the tree decides.
+  const decidedAt = new Map<number, number>();
+  for (const c of caveById.values()) if (c.level > 0 && c.decided !== undefined) decidedAt.set(c.level, c.decided);
+
+  const renderCave = (id: string, k: SpaceNodeKind) => {
+    const c = caveById.get(id)!;
+    const fill = k === 'solution' ? '#fef3c7' : k === 'waiting' ? '#eef6fb' : '#e7d8c1';
+    return (
+      <g>
+        <rect x="-42" y="-29" width="84" height="58" rx="22" fill={fill} stroke="#8b6b4a" strokeWidth="1.2" />
+        <text x="-22" y="-7" textAnchor="middle" fontSize="13">
+          💰
+        </text>
+        <text x="10" y="-6" textAnchor="middle" fontSize="13" fontWeight="900" fill="#451a03">
+          {money(c.loot)}
+        </text>
+        <text x="-22" y="12" textAnchor="middle" fontSize="12">
+          🔮
+        </text>
+        <text x="10" y="13" textAnchor="middle" fontSize="11" fontWeight="700" fill="#6b21a8">
+          ≤{money(c.bound)}
+        </text>
+        {!isJobs && c.weight !== undefined && c.level > 0 && (
+          <text y="26" textAnchor="middle" fontSize="9" fontWeight="600" fill="#78716c">
+            {c.weight} of {capacity} kg
+          </text>
+        )}
+      </g>
+    );
+  };
   const kind = (() => {
     if (step.isFinal) return 'final';
     if (/^Initialize/.test(title)) return 'intro';
@@ -91,7 +153,7 @@ export const TreasureCaveScene: React.FC<StorySceneProps> = ({ step, algorithmId
   const phases: readonly (readonly [string, number])[] = kind.startsWith('prune') ? [['look', 0], ['rope', 0.4]] : [['idle', 0]];
   const phase = useAnimPhases(step.stepIndex, phases, stepMs);
 
-  const active = activeId ? byId.get(activeId)?.cave : undefined;
+  const active = activeId ? caveById.get(activeId) : undefined;
   const thing = isJobs ? 'job' : 'cheese';
   const pickName = (id?: number) => (id === undefined ? '' : isJobs ? `J${id}` : `cheese ${id}`);
   const money = (v: number) => (isJobs ? `${v}` : `$${v}`);
@@ -150,100 +212,21 @@ export const TreasureCaveScene: React.FC<StorySceneProps> = ({ step, algorithmId
         </div>
       </div>
 
-      <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.1 }} role="img" aria-label="Cave map">
-        <rect x="0" y="0" width={width} height={height} rx="18" fill="#efe3d3" />
-
-        {/* tunnels */}
-        {placed
-          .filter((p) => p.parent)
-          .map((p) => {
-            const a = byId.get(p.parent!.id)!;
-            const isPruned = pruned.includes(p.cave.id) || p.cave.status === 'pruned';
-            const roping = isPruned && p.cave.id === activeId && kind.startsWith('prune') && phase === 'look';
-            const mx = a.x + (p.x - a.x) * 0.62;
-            const my = a.y + (p.y - a.y) * 0.62;
-            return (
-              <g key={`t-${p.cave.id}`}>
-                <line x1={a.x} y1={a.y + 26} x2={p.x} y2={p.y - 28} stroke="#a8896a" strokeWidth="14" strokeLinecap="round" />
-                <line x1={a.x} y1={a.y + 26} x2={p.x} y2={p.y - 28} stroke="#5c4033" strokeWidth="8" strokeLinecap="round" opacity="0.55" />
-                <g transform={`translate(${(a.x + p.x) / 2 + (p.cave.took ? -26 : 26)}, ${(a.y + p.y) / 2 - 4})`}>
-                  <rect x="-24" y="-10" width="48" height="19" rx="9" fill={p.cave.took ? '#dcfce7' : '#f5f5f4'} stroke={p.cave.took ? '#16a34a' : '#a8a29e'} />
-                  <text textAnchor="middle" y="4" fontSize="10" fontWeight="800" fill={p.cave.took ? '#166534' : '#57534e'}>
-                    {p.cave.took ? '+' : '−'}
-                    {isJobs ? `J${p.cave.decided}` : `🧀${p.cave.decided}`}
-                  </text>
-                </g>
-                {isPruned && !roping && (
-                  <g transform={`translate(${mx}, ${my})`}>
-                    <g className={p.cave.id === activeId ? 'animate-story-pop' : undefined}>
-                      <rect x="-22" y="-5" width="44" height="10" rx="3" fill="#ffffff" stroke="#b91c1c" strokeWidth="1.5" />
-                      {[-16, -6, 4, 14].map((dx) => (
-                        <rect key={dx} x={dx} y="-5" width="5" height="10" fill="#dc2626" />
-                      ))}
-                    </g>
-                  </g>
-                )}
-              </g>
-            );
-          })}
-
-        {/* caves */}
-        {placed.map((p) => {
-          const c = p.cave;
-          const isActive = c.id === activeId && kind !== 'final';
-          const isPruned = pruned.includes(c.id) || c.status === 'pruned';
-          const isBest = ['best', 'incumbent', 'optimal'].includes(c.status);
-          const waiting = c.status === 'queued';
-          return (
-            <g key={c.id} transform={`translate(${p.x}, ${p.y})`} opacity={isPruned ? 0.5 : 1}>
-              {isActive && <circle r="48" fill="#fde68a" opacity="0.55" className="animate-story-ripple" />}
-              <rect
-                x="-42"
-                y="-28"
-                width="84"
-                height="56"
-                rx="24"
-                fill={isBest ? '#fef3c7' : '#d6c3a5'}
-                stroke={isBest ? GOLD : isActive ? '#ea580c' : '#8b6b4a'}
-                strokeWidth={isBest || isActive ? 3.5 : 2}
-                strokeDasharray={waiting ? '6 4' : undefined}
-              />
-              <text x="-20" y="-4" textAnchor="middle" fontSize="15">
-                💰
-              </text>
-              <text x="12" y="-3" textAnchor="middle" fontSize="13" fontWeight="900" fill="#451a03">
-                {money(c.loot)}
-              </text>
-              <text x="-20" y="18" textAnchor="middle" fontSize="13">
-                🔮
-              </text>
-              <text x="12" y="19" textAnchor="middle" fontSize="11" fontWeight="700" fill="#6b21a8">
-                ≤{money(c.bound)}
-              </text>
-              {!isJobs && c.weight !== undefined && c.level > 0 && (
-                <text x="0" y="42" textAnchor="middle" fontSize="10" fill="#78716c">
-                  {c.weight} kg
-                </text>
-              )}
-              {isBest && (
-                <text x="40" y="-22" fontSize="16">
-                  🏆
-                </text>
-              )}
-              {isActive && (
-                <text x="-48" y="-20" fontSize="18">
-                  🧭
-                </text>
-              )}
-              {isPruned && (
-                <text x="40" y="-20" fontSize="14">
-                  ⛔
-                </text>
-              )}
-            </g>
-          );
-        })}
-      </svg>
+      <StateSpaceTree
+        nodes={treeNodes}
+        rootId={root?.id ?? ""}
+        activeId={kind === "final" ? bestCaveId ?? root?.id ?? "" : activeId ?? root?.id ?? ""}
+        newId={["queued", "prune-infeasible", "best", "leaf-best"].includes(kind) ? activeId : undefined}
+        revealPrune={!(kind.startsWith("prune") && phase === "look")}
+        stepKey={step.stepIndex}
+        nodeW={84}
+        nodeH={58}
+        leafGap={118}
+        panelHeight={420}
+        renderNode={renderCave}
+        levelLabel={(d) => (d === 0 ? "start" : decidedAt.has(d) ? `${isJobs ? "J" : "🧀"}${decidedAt.get(d)}?` : undefined)}
+        caption={`Each level decides one ${thing}: take it or skip it. 💰 = treasure so far, 🔮 = the most this cave could still lead to. Explorers visit the brightest crystal ball first, so the search jumps around the tree.`}
+      />
     </StoryStage>
   );
 };

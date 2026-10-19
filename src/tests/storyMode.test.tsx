@@ -146,7 +146,24 @@ describe('Story (Animation) Mode', () => {
     const { steps } = stepsOf(id);
     const final = renderScene(id, steps[steps.length - 1]);
     expect(narrationOf(final)).toMatch(/best treasure is/);
-    expect(final).toContain('⛔');
+    const kinds = [...final.matchAll(/data-tree-node="([^"]+)" data-kind="([a-z]+)"/g)].map((m) => m[2]);
+    expect(kinds).toContain('pruned');
+    expect(final).toMatch(/can’t beat 🏆|too heavy|misses a deadline/);
+    // The camera ends on the trophy cave.
+    expect(kinds.filter((k) => k === 'solution').length).toBe(1);
+  });
+
+  it.each(['knapsack-bb', 'job-selection-bb'])('%s: the cave tree follows best-first search and shows caves waiting in line', (id) => {
+    const { steps } = stepsOf(id);
+    let sawWaiting = false;
+    for (const s of steps) {
+      const html = renderScene(id, s);
+      expect(html, s.title).toContain('data-state-space-tree');
+      if (s.state.activeNodeId && !s.isFinal) expect(html, s.title).toContain(`data-tree-node="${s.state.activeNodeId}"`);
+      if (/data-kind="waiting"/.test(html)) sawWaiting = true;
+      expect(html, s.title).not.toMatch(/undefined|NaN/);
+    }
+    expect(sawWaiting).toBe(true);
   });
 
   it('Karatsuba: the final step shows the product and the empty fourth chair appears while splitting', () => {

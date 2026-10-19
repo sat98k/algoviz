@@ -19,12 +19,13 @@ export interface SpaceTreeNode {
   children: string[];
   /** Short text on the edge into this node, e.g. "col 2" or "take 4". */
   edgeLabel?: string;
-  status: 'open' | 'pruned' | 'solution';
+  /** 'waiting': discovered but not explored yet (best-first searches keep a queue of these). */
+  status: 'open' | 'waiting' | 'pruned' | 'solution';
   /** Why the branch was cut, in a couple of words ("same column", "too heavy"). */
   pruneNote?: string;
 }
 
-export type SpaceNodeKind = 'active' | 'trying' | 'path' | 'pruned' | 'solution' | 'explored';
+export type SpaceNodeKind = 'active' | 'trying' | 'path' | 'waiting' | 'pruned' | 'solution' | 'explored';
 
 interface StateSpaceTreeProps {
   /** Nodes discovered so far (undiscovered children must not be listed). */
@@ -45,11 +46,13 @@ interface StateSpaceTreeProps {
   /** Label for a depth, shown in the left margin (e.g. "Row 2"). */
   levelLabel?: (depth: number) => string | undefined;
   caption: string;
+  /** Height of the tree window in CSS pixels (taller nodes want a taller window). */
+  panelHeight?: number;
 }
 
 type Pt = { x: number; y: number };
 
-const PANEL_H = 340;
+const DEFAULT_PANEL_H = 340;
 const FOLD_LIMIT = 36;
 const MAX_OPEN_ANSWERS = 4;
 const AMBER = '#d97706';
@@ -131,6 +134,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
   renderNode,
   levelLabel,
   caption,
+  panelHeight = DEFAULT_PANEL_H,
 }) => {
   const [mode, setMode] = useState<'follow' | 'whole'>('follow');
   const [wrapRef, widthPx] = useWidth(640);
@@ -152,8 +156,9 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
   const leadsToAnswer = useMemo(() => {
     const set = new Set<string>();
     const answers = Object.values(nodes).filter((nd) => nd.status === 'solution');
-    if (answers.length > MAX_OPEN_ANSWERS) return set;
-    for (const a of answers) {
+    // Nodes still waiting to be explored are unfinished work: never fold them away.
+    const keep = [...(answers.length > MAX_OPEN_ANSWERS ? [] : answers), ...Object.values(nodes).filter((nd) => nd.status === 'waiting')];
+    for (const a of keep) {
       let cur: string | null = a.id;
       while (cur && nodes[cur] && !set.has(cur)) {
         set.add(cur);
@@ -218,13 +223,14 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
     if (nd.status === 'pruned') return 'pruned';
     if (nd.status === 'solution') return 'solution';
     if (path.has(id)) return 'path';
+    if (nd.status === 'waiting') return 'waiting';
     return 'explored';
   };
 
   // ── Camera: fixed zoom that follows the current node; never zooms in past real size ──
   const pxPerUnit = widthPx < 480 ? 0.8 : 1;
   const viewW = widthPx / pxPerUnit;
-  const viewH = PANEL_H / pxPerUnit;
+  const viewH = panelHeight / pxPerUnit;
   const xs = visible.map((id) => pos[id].x);
   const ys = visible.map((id) => pos[id].y);
   const LEFT_GUTTER = levelLabel ? 64 : 0;
@@ -324,7 +330,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
     const common = { x: -w / 2, y: -h / 2, width: w, height: h, rx: 10 };
     const fill = kind === 'solution' ? '#fef3c7' : kind === 'pruned' ? '#fef2f2' : '#ffffff';
     const stroke =
-      kind === 'active' ? AMBER : kind === 'trying' ? AMBER : kind === 'path' ? '#f59e0b' : kind === 'solution' ? '#b45309' : kind === 'pruned' ? '#fca5a5' : '#d6d3d1';
+      kind === 'active' ? AMBER : kind === 'trying' ? AMBER : kind === 'path' ? '#f59e0b' : kind === 'solution' ? '#b45309' : kind === 'pruned' ? '#fca5a5' : kind === 'waiting' ? '#0ea5e9' : '#d6d3d1';
     return (
       <>
         {isFolded && (
@@ -339,7 +345,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
           fill={fill}
           stroke={stroke}
           strokeWidth={kind === 'active' || kind === 'trying' ? 3 : kind === 'solution' || kind === 'path' ? 2.5 : 1.5}
-          strokeDasharray={kind === 'trying' ? '5 4' : undefined}
+          strokeDasharray={kind === 'trying' || kind === 'waiting' ? '5 4' : undefined}
         />
       </>
     );
@@ -373,6 +379,14 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
             <text x={nodeW / 2 + 2} y={-nodeH / 2 + 4} textAnchor="middle" fontSize="16">
               🏆
             </text>
+          )}
+          {kind === 'waiting' && (
+            <g transform={`translate(${nodeW / 2 + 2}, ${-nodeH / 2 - 2})`}>
+              <circle r="10" fill="#e0f2fe" stroke="#0ea5e9" strokeWidth="1.5" />
+              <text textAnchor="middle" y="4" fontSize="11">
+                ⏳
+              </text>
+            </g>
           )}
           {kind === 'trying' && (
             <g transform={`translate(${nodeW / 2 + 2}, ${-nodeH / 2 - 2})`}>
@@ -418,7 +432,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
   const my = (y: number) => (y - bounds.y0) * ms + (mapH - bh * ms) / 2;
 
   const dotColor = (kind: SpaceNodeKind) =>
-    kind === 'active' || kind === 'trying' ? AMBER : kind === 'pruned' ? RED : kind === 'solution' ? GOLD : kind === 'path' ? '#fbbf24' : STONE;
+    kind === 'active' || kind === 'trying' ? AMBER : kind === 'pruned' ? RED : kind === 'solution' ? GOLD : kind === 'path' ? '#fbbf24' : kind === 'waiting' ? '#0ea5e9' : STONE;
 
   return (
     <div className="flex flex-col gap-2 mt-4" data-state-space-tree>
@@ -447,7 +461,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
         </div>
       </div>
 
-      <div ref={wrapRef} className="relative w-full rounded-xl border border-amber-200 bg-[#fdfaf5]" style={{ height: PANEL_H }}>
+      <div ref={wrapRef} className="relative w-full rounded-xl border border-amber-200 bg-[#fdfaf5]" style={{ height: panelHeight }}>
         <svg
           viewBox={`${camX} ${camY} ${camW} ${camH}`}
           preserveAspectRatio="xMidYMid meet"
@@ -511,6 +525,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
         </span>
         <span>✂ cut off: can never work</span>
         <span>🏆 answer</span>
+        {visible.some((id) => kindOf(id) === 'waiting') && <span>⏳ found, waiting to be explored</span>}
         {fold && <span>▤ finished branch, folded up</span>}
       </div>
     </div>
