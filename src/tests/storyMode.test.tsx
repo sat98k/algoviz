@@ -5,6 +5,8 @@ import { getDefaultInputs } from '../utils/comparison';
 import { VisualizerStage } from '../components/visualizers/VisualizerStage';
 import { STORY_SCENES } from '../components/story/storyRegistry';
 import { stepDurationMs } from '../components/story/useAnimPhases';
+import { createHuffmanDecodingAlgorithmSteps } from '../utils/huffmanCodec';
+import { nQueensSteps } from '../algorithms/nQueens';
 
 const stepsOf = (id: string) => {
   const a = getAlgorithmById(id)!;
@@ -39,7 +41,7 @@ describe('Story (Animation) Mode', () => {
   });
 
   it('algorithms without a scene render exactly as before (no toggle)', () => {
-    const { a, steps } = stepsOf('huffman');
+    const { a, steps } = stepsOf('karatsuba');
     const html = renderToStaticMarkup(<VisualizerStage config={a} step={steps[0]} inputs={getDefaultInputs(a)} />);
     expect(html).not.toContain('data-story-toggle');
   });
@@ -81,5 +83,45 @@ describe('Story (Animation) Mode', () => {
     const relabel = steps.find((s) => s.state.phase === 'relabel');
     expect(narrationOf(renderScene('push-relabel', push))).toMatch(/pours down/);
     expect(narrationOf(renderScene('push-relabel', relabel))).toMatch(/jack lifts/);
+  });
+
+  it('Huffman: decoding steps roll a marble down the mobile and spell the message', () => {
+    const { steps } = stepsOf('huffman');
+    const last = steps[steps.length - 1];
+    const decode = createHuffmanDecodingAlgorithmSteps(last.state.treeRoot, last.state.encodedBits, last.state.inputText);
+    for (const s of decode) {
+      const text = narrationOf(renderScene('huffman', s));
+      expect(text, s.title).not.toMatch(/undefined|NaN/);
+      expect(text.length, s.title).toBeGreaterThan(15);
+    }
+    const end = renderScene('huffman', decode[decode.length - 1]);
+    expect(narrationOf(end)).toContain(last.state.inputText);
+  });
+
+  it('N-Queens find-all mode fills the solutions shelf', () => {
+    const steps = [...nQueensSteps({ n: 4, findAll: true })];
+    for (const s of steps) expect(narrationOf(renderScene('n-queens', s)), s.title).not.toMatch(/undefined|NaN/);
+    const html = renderScene('n-queens', steps[steps.length - 1]);
+    expect(html).toContain('Solutions shelf');
+    expect(narrationOf(html)).toMatch(/2 different ways/);
+  });
+
+  it('N-Queens: a conflict names the attacking queen once the arrow has fired', () => {
+    const { steps } = stepsOf('n-queens');
+    const conflict = steps.find((s) => s.state.action === 'conflict');
+    expect(narrationOf(renderScene('n-queens', conflict))).toMatch(/^Row \d+: what about column \d+\?$/);
+  });
+
+  it('Bellman-Ford: the van narrates the price it carries', () => {
+    const { steps } = stepsOf('bellman-ford');
+    const relax = steps.find((s) => /^Relax/.test(s.title));
+    expect(narrationOf(renderScene('bellman-ford', relax))).toMatch(/A van drives .* coins\./);
+  });
+
+  it('Floyd-Warshall: the final step offers an interactive trip planner', () => {
+    const { steps } = stepsOf('floyd-warshall');
+    const html = renderScene('floyd-warshall', steps[steps.length - 1]);
+    expect(html).toContain('Trip planner');
+    expect(html).toContain('aria-label="From town"');
   });
 });

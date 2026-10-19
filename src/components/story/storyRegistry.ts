@@ -4,6 +4,9 @@ import { WaterPipesScene } from './WaterPipesScene';
 import { StencilScene } from './StencilScene';
 import { PegboardScene } from './PegboardScene';
 import { CubbyWallScene } from './CubbyWallScene';
+import { HuffmanMobileScene } from './HuffmanMobileScene';
+import { ChessboardScene } from './ChessboardScene';
+import { TownMapScene } from './TownMapScene';
 
 export interface StorySceneEntry {
   component: React.FC<StorySceneProps>;
@@ -26,4 +29,8 @@ export const STORY_SCENES: Record<string, StorySceneEntry> = {
   'graham-scan': { component: PegboardScene, hint: 'A rubber band hooked around pegs' },
   'jarvis-march': { component: PegboardScene, hint: 'Gift-wrapping pegs with a ribbon' },
   'knapsack-dp': { component: CubbyWallScene, hint: 'A wall of cubbies, a balance scale and a backpack' },
+  huffman: { component: HuffmanMobileScene, hint: 'Marble jars tied into a hanging mobile' },
+  'n-queens': { component: ChessboardScene, hint: 'Queens on a wooden chessboard' },
+  'floyd-warshall': { component: TownMapScene, hint: 'Hub towns and a trip planner' },
+  'bellman-ford': { component: TownMapScene, hint: 'Delivery vans and price tags' },
 };

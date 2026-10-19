@@ -71,4 +71,4 @@ Never trigger actions simultaneously if they depend on each other physically:
   * `useHeldValue(value, release)` keeps the old value on screen until the causing action has played.
   * `useProgress` / `useTweened` drive travel along paths and smooth movement.
 * **SVG gotcha**: never put an `animate-story-*` class on a `<g>` that also has a `transform` attribute; the CSS animation overrides the position. Nest the animated group inside the positioned one.
-* **Existing scenes**: Water pipes (Ford-Fulkerson, Edmonds-Karp, Push-Relabel), Stencil (Naive, KMP, Rabin-Karp), Pegboard (Graham's Scan, Jarvis' March), Cubby wall (0-1 Knapsack DP).
+* **Existing scenes**: Water pipes (Ford-Fulkerson, Edmonds-Karp, Push-Relabel), Stencil (Naive, KMP, Rabin-Karp), Pegboard (Graham's Scan, Jarvis' March), Cubby wall (0-1 Knapsack DP), Huffman mobile (Huffman, incl. decoding), Chessboard (N-Queens), Town map (Floyd-Warshall, Bellman-Ford).
