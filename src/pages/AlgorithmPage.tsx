@@ -26,6 +26,10 @@ import { RoadmapStrip } from '../components/common/RoadmapStrip';
 import { ROADMAPS, roadmapPhases, spanHas } from '../config/roadmaps';
 import { OWL_BRIEFINGS } from '../config/owlBriefings';
 import { InputDialog } from '../components/common/InputDialog';
+import { FitToScreenContext } from '../components/common/FitToBox';
+import { VisualizerErrorBoundary } from '../components/common/VisualizerErrorBoundary';
+import { prepareOwlFlight } from '../components/common/owlFlight';
+import { OwlFlightLayer } from '../components/common/OwlFlightLayer';
 
 import { ArrowLeft, Columns, Maximize2, Play, RefreshCw, SlidersHorizontal } from 'lucide-react';
 
@@ -179,8 +183,17 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
     setCurrentStepIndex(0);
   }, []);
 
+  // Animation Mode: the owl reads each step first, so Play moves on only when the step has
+  // settled (animation played, owl finished reading). Technical View keeps the timer.
+  const [narrated, setNarrated] = useState(false);
+  const [settledIndex, setSettledIndex] = useState(-1);
+  useEffect(() => setSettledIndex(-1), [currentStepIndex, activeSteps]);
   useEffect(() => {
-    if (isPlaying) {
+    if (isPlaying && narrated && settledIndex === currentStepIndex) stepForward();
+  }, [isPlaying, narrated, settledIndex, currentStepIndex, stepForward]);
+
+  useEffect(() => {
+    if (isPlaying && !narrated) {
       const intervalMs = Math.max(150, 1000 / speed);
       timerRef.current = window.setInterval(() => {
         stepForward();
@@ -195,7 +208,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
         clearInterval(timerRef.current);
       }
     };
-  }, [isPlaying, speed, stepForward]);
+  }, [isPlaying, narrated, speed, stepForward]);
 
   const currentStep = activeSteps[currentStepIndex] || {
     stepIndex: 0,
@@ -209,6 +222,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
   const finalStep = steps[steps.length - 1];
 
   const renderVisualizer = () => (
+    <VisualizerErrorBoundary resetKey={`${config.id}|${currentStepIndex}`}>
     <VisualizerStage
       config={config}
       step={currentStep}
@@ -216,7 +230,13 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
       traversalOverride={huffmanTraversal}
       onApplyInputs={(newInputs) => setInputs(newInputs)}
       speed={speed}
+      // The player opens on the beginner-friendly animation; Technical View is one click away.
+      defaultMode="story"
+      narrate
+      onStepSettled={setSettledIndex}
+      onNarratedChange={setNarrated}
     />
+    </VisualizerErrorBoundary>
   );
 
   const [layoutMode, setLayoutMode] = useState<'split' | 'stacked'>(initialLayoutMode);
@@ -515,7 +535,11 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
     <button
       type="button"
       data-start-animation
-      onClick={() => setView('play')}
+      onClick={() => {
+        // The owl flies from here to the player's owl spot.
+        prepareOwlFlight(document.querySelector('[data-owl-button]'));
+        setView('play');
+      }}
       className="flex items-center gap-2 px-4 py-2 bg-amber text-obsidian-950 font-sans text-sm font-bold hover:bg-amber-glow transition-colors shadow-sm"
     >
       <Play className="w-4 h-4 fill-current" aria-hidden />
@@ -565,8 +589,10 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
   return (
     <div
       data-view="play"
-      className={`flex flex-col gap-2 px-2 sm:px-3 py-2 w-full max-w-[1920px] mx-auto ${fitToScreen ? 'lg:h-[calc(100dvh-5rem)]' : ''}`}
+      className={`flex flex-col gap-2 px-2 sm:px-3 py-2 w-full max-w-[1920px] mx-auto ${fitToScreen ? 'lg:h-[calc(100dvh-2.75rem-1px)]' : ''}`}
     >
+      <OwlFlightLayer />
+
       {/* Compact header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2 min-w-0">
@@ -582,6 +608,8 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
           </button>
           <h1 className="font-display font-bold text-base sm:text-lg tracking-tight text-chalk-100">{config.name}</h1>
         </div>
+        {/* The roadmap shares the header row on wide screens (its own row when narrow). */}
+        {roadmapStrip && <div className="order-last lg:order-none basis-full lg:basis-0 lg:flex-1 min-w-0">{roadmapStrip}</div>}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -607,27 +635,30 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
         {graphColoringModeSwitch}
         {nQueensModeSwitch}
 
-        {/* One playback toolbar across the whole learning stage, with the roadmap under it.
+        {/* One playback toolbar across the whole learning stage (the roadmap sits in the header row).
             On wider screens the dock stays visible under the navbar while scrolling. */}
-        <div ref={dockRef} data-playback-dock className="sm:sticky sm:top-20 z-40 flex flex-col gap-1 bg-obsidian-900 shadow-sm">
+        <div ref={dockRef} data-playback-dock className="sm:sticky sm:top-11 z-40 flex flex-col gap-1 bg-obsidian-900 shadow-sm">
           {playbackControls}
-          {roadmapStrip}
         </div>
 
         {layoutMode === 'split' ? (
-          /* Split: visualization and pseudocode side by side, tops aligned; explanation and the final
-             answer under the visualization, DP rule and operation counts under the pseudocode. On wide
-             screens the two columns fill the screen and scroll on their own, so the page does not. */
+          /* Split: the visualization gets the whole left column; on the right, the step explanation sits
+             above the pseudocode it describes, then the DP rule, operation counts and the final answer.
+             On wide screens the player fills the screen and the visualization is scaled to fit its
+             column, so the whole player is visible without scrolling. */
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-start lg:items-stretch lg:flex-1 lg:min-h-0">
             <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-2 min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1 lg:[--owl-top:0px]">
-              <div className="w-full relative">{renderVisualizer()}</div>
-              {stepExplanation}
-              <section className="w-full">{finalAnswer}</section>
+              {/* The pane fills the column at a fixed size; only the drawing inside zooms to fit. */}
+              <FitToScreenContext.Provider value={{ enabled: fitToScreen, resetKey: `${JSON.stringify(inputs)}|${huffmanPhase}` }}>
+                <div className={`w-full relative flex flex-col ${fitToScreen ? 'lg:flex-1 lg:min-h-0' : ''}`}>{renderVisualizer()}</div>
+              </FitToScreenContext.Provider>
             </div>
             <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-2 min-w-0 lg:min-h-0 lg:overflow-y-auto">
-              {pseudocodeFor('max-h-[22rem] lg:max-h-[min(34rem,58vh)]')}
+              {stepExplanation}
+              {pseudocodeFor('max-h-[22rem] lg:max-h-[min(30rem,42vh)]')}
               {dpRulePanel}
               {operationCounts}
+              <section className="w-full">{finalAnswer}</section>
             </div>
           </section>
         ) : (

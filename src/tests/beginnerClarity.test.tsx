@@ -64,10 +64,12 @@ describe('Roadmap strip ("How it works" — you are here)', () => {
 
   it('sits inside the playback dock on the algorithm page', () => {
     const html = renderToStaticMarkup(<AlgorithmPage algorithmId="knapsack-dp" onBack={() => {}} initialView="play" />);
+    // The roadmap shares the header row, right above the playback dock.
     const dock = html.indexOf('data-playback-dock');
     expect(dock).toBeGreaterThan(-1);
     expect(html.indexOf('role="toolbar"')).toBeGreaterThan(dock);
-    expect(html.indexOf('data-roadmap')).toBeGreaterThan(html.indexOf('role="toolbar"'));
+    expect(html.indexOf('data-roadmap')).toBeGreaterThan(html.indexOf('data-back-to-learn'));
+    expect(html.indexOf('data-roadmap')).toBeLessThan(dock);
     expect(html).toContain('Fill every cell');
   });
 
@@ -237,7 +239,7 @@ describe('Owl briefing ("The owl explains: Problem & how it works")', () => {
     }
   });
 
-  it('the owl explains the problem and the whole procedure first, then the short steps', () => {
+  it('the owl explains the problem and the whole procedure, with one "How it works" only', () => {
     const html = renderToStaticMarkup(<AlgorithmPage algorithmId="knapsack-dp" onBack={() => {}} />);
     const b = OWL_BRIEFINGS['knapsack-dp'];
     const pane = html.indexOf('aria-label="Problem and how it works"');
@@ -245,19 +247,212 @@ describe('Owl briefing ("The owl explains: Problem & how it works")', () => {
     expect(html).toContain('data-owl-briefing');
     expect(html).toContain('The owl explains: Problem &amp; how it works');
     const bigPicture = html.indexOf('How it works: the big picture');
-    const shortSteps = html.indexOf('The steps in short');
     expect(bigPicture).toBeGreaterThan(pane);
-    expect(shortSteps).toBeGreaterThan(bigPicture);
+    // The short numbered list under it is gone: one "How it works" section.
+    expect(html).not.toContain('The steps in short');
+    expect(html.split('>How it works').length - 1).toBe(1);
     expect(html.split('data-owl-stage').length - 1).toBe(b.overview.length);
     for (const s of b.overview) expect(html).toContain(s.title);
     expect(html).toContain('While you watch');
     expect(html).toContain('Why it works');
-    expect(html.indexOf('aria-label="Recurrence cases"')).toBeGreaterThan(shortSteps);
+    // DP pages keep their formulas, after the big picture.
+    expect(html.indexOf('aria-label="Recurrence cases"')).toBeGreaterThan(bigPicture);
+  });
+
+  it('the statement flows in word by word, with Show everything, Replay, chirps and a clickable owl', async () => {
+    const { wordUnits, revealSchedule } = await import('../components/common/OwlBriefingReveal');
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="fractional-knapsack" onBack={() => {}} />);
+    // Before the reveal runs, every word is in the page but hidden (so nothing jumps when it appears).
+    expect(html).toContain('data-owl-skip');
+    expect(html).toContain('Show everything');
+    expect(html).toContain('data-owl-sound');
+    expect(html).toContain('data-owl-button');
+    expect(html).toMatch(/data-owl-state="talking"/);
+    const hiddenWords = html.split('class="owl-reveal owl-reveal-word" data-on="false"').length - 1;
+    expect(hiddenWords).toBeGreaterThan(30);
+    const text = html.replace(/<[^>]+>/g, '');
+    expect(text).toContain('Fill the backpack so the cheese inside is worth as much money as possible.');
+
+    // Words keep their spaces, and chips / bold / glossary terms stay whole.
+    const units = wordUnits([
+      { kind: 'text', text: 'Work out ' },
+      { kind: 'code', text: 'value ÷ weight' },
+      { kind: 'text', text: ' per kg.' },
+    ]);
+    expect(units.map((u) => u.map((t) => t.text).join(''))).toEqual(['Work ', 'out ', 'value ÷ weight ', 'per ', 'kg.']);
+
+    // Units appear in order and at reading speed; chirps where asked.
+    const s = revealSchedule([
+      { key: 'story', durations: [300, 300, 1000], chirps: [true, false, false] },
+      { key: 'stages', durations: [2400, 2400], chirps: [true, true] },
+    ]);
+    expect(s.total).toBe(5);
+    expect(s.offsets.stages).toBe(3);
+    expect(s.times).toEqual([700, 1000, 1300, 2300 + 800, 2300 + 800 + 2400]);
+    expect(s.chirps).toEqual([700, 3100, 5500]);
+  });
+
+  it('Slower / Faster change the reading speed in 0.25 steps, from 0.25× to 3×', async () => {
+    const { nextSpeed, OWL_SPEED } = await import('../components/common/OwlBriefingReveal');
+    expect(OWL_SPEED.initial).toBe(1);
+    expect(nextSpeed(1, 1)).toBe(1.25);
+    expect(nextSpeed(1, -1)).toBe(0.75);
+    expect(nextSpeed(0.25, -1)).toBe(0.25);
+    expect(nextSpeed(3, 1)).toBe(3);
+    let s = 1;
+    for (let i = 0; i < 3; i++) s = nextSpeed(s, -1);
+    expect(s).toBe(0.25);
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="fractional-knapsack" onBack={() => {}} />);
+    expect(html).toContain('data-owl-slower');
+    expect(html).toContain('data-owl-faster');
+    expect(html).toMatch(/data-owl-speed-value="?[^>]*>1×</);
+    expect(html).toContain('--owl-fade:1.10s');
+  });
+
+  it('reads at reading speed: about 250 words a minute, with pauses at sentences', async () => {
+    const { wordDuration, cardDuration } = await import('../components/common/OwlBriefingReveal');
+    expect(wordDuration('the ')).toBeGreaterThanOrEqual(220);
+    expect(wordDuration('kilograms, ')).toBeGreaterThan(wordDuration('kilograms '));
+    expect(wordDuration('wheel. ')).toBeGreaterThan(wordDuration('wheel, '));
+    // A 25-word stage card stays alone for about 5 seconds.
+    expect(cardDuration(25)).toBeGreaterThanOrEqual(5000);
+    expect(cardDuration(3)).toBeGreaterThanOrEqual(2400);
   });
 
   it('the sweep line page keeps the classic pane', () => {
     const html = renderToStaticMarkup(<AlgorithmPage algorithmId="line-segment-intersection" onBack={() => {}} />);
     expect(html).toContain('aria-label="Problem and how it works"');
     expect(html).not.toContain('data-owl-briefing');
+  });
+});
+
+describe('Less chrome, less scrolling', () => {
+  it('the top bar is thin and only links the catalog (no Compare, no theme toggle)', async () => {
+    const { Navbar } = await import('../components/layout/Navbar');
+    const html = renderToStaticMarkup(<Navbar currentView="algorithm" onNavigate={() => {}} />);
+    expect(html).toContain('h-11');
+    expect(html).toContain('CATALOG');
+    expect(html).not.toMatch(/Compare|Light|Dark/);
+  });
+
+  it('algorithm pages have no footer, and the site always uses the light theme', async () => {
+    const { readFileSync } = await import('fs');
+    const { join } = await import('path');
+    const root = join(__dirname, '..', '..');
+    expect(readFileSync(join(root, 'src', 'App.tsx'), 'utf8')).toContain("{view !== 'algorithm' && <Footer />}");
+    const html = readFileSync(join(root, 'index.html'), 'utf8');
+    expect(html).toContain("classList.add('light')");
+    expect(html).not.toContain("classList.add('dark')");
+  });
+
+  it('the player opens on Animation Mode, with a fixed pane where only the drawing zooms', () => {
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="knapsack-dp" onBack={() => {}} initialView="play" />);
+    // Animation Mode is the default view.
+    expect(html).toMatch(/data-view-mode="story" role="radio" aria-checked="true"/);
+    expect(html).toContain('data-story-stage');
+    // The frame fills its pane; the header and the owl stay outside the zoom box.
+    const stage = html.indexOf('data-story-stage');
+    expect(html.slice(stage, stage + 400)).toContain('lg:flex-1 lg:min-h-0');
+    const narration = html.indexOf('data-story-narration');
+    const fit = html.indexOf('data-fit-box="off" class="lg:flex-1 lg:min-h-0"');
+    expect(fit).toBeGreaterThan(narration);
+    // The owl's bubble keeps a steady height, so the drawing does not move between steps.
+    expect(html.slice(narration, narration + 400)).toContain('lg:min-h-[4.25rem]');
+    // The explanation sits beside the visualization (top of the right column), not under it.
+    expect(html.indexOf('What happened and why?')).toBeGreaterThan(fit);
+    expect(html.indexOf('What happened and why?')).toBeLessThan(html.indexOf('aria-label="Pseudocode"'));
+    // The final answer sits in the pseudocode column, after the operation counts.
+    expect(html.indexOf('The answer appears here')).toBeGreaterThan(html.indexOf('aria-label="Operation counts"'));
+    // Full width keeps the natural size: no zoom box in the scene.
+    const stacked = renderToStaticMarkup(<AlgorithmPage algorithmId="knapsack-dp" onBack={() => {}} initialView="play" initialLayoutMode="stacked" />);
+    expect(stacked).not.toContain('class="lg:flex-1 lg:min-h-0"');
+    expect(stacked).not.toContain('lg:min-h-[4.25rem]');
+  });
+
+  it('the technical view zooms as one drawing inside the same fixed pane', () => {
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="fractional-knapsack" onBack={() => {}} initialView="play" />);
+    expect(html).toContain('data-fit-box="off" class="lg:flex-1 lg:min-h-0"');
+  });
+});
+
+describe('The owl narrates the player, and the animation waits for it', () => {
+  it('in the player, the owl reads each step with speed controls and Skip; elsewhere it is a plain bubble', async () => {
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="knapsack-dp" onBack={() => {}} initialView="play" />);
+    expect(html).toContain('data-owl-narrated');
+    expect(html).toContain('data-owl-skip');
+    expect(html).toContain('data-owl-slower');
+    expect(html).toContain('data-owl-faster');
+    expect(html).toContain('data-owl-avatar');
+    // Words wait to fade in.
+    expect(html.split('class="owl-reveal owl-reveal-word" data-on="false"').length - 1).toBeGreaterThan(5);
+
+    // The same scene outside the player keeps the plain bubble (used by the scene tests).
+    const { VisualizerStage } = await import('../components/visualizers/VisualizerStage');
+    const a = getAlgorithmById('knapsack-dp')!;
+    const step = [...a.stepGenerator(getDefaultInputs(a))][0];
+    const plain = renderToStaticMarkup(<VisualizerStage config={a} step={step} inputs={getDefaultInputs(a)} defaultMode="story" />);
+    expect(plain).toContain('data-story-narration');
+    expect(plain).not.toContain('data-owl-narrated');
+  });
+
+  it('nothing waits without an owl, and the shared voice settings stay in sync', async () => {
+    const { useNarrationHold } = await import('../components/story/narrationGate');
+    const Probe = () => <span>{String(useNarrationHold())}</span>;
+    expect(renderToStaticMarkup(<Probe />)).toContain('false');
+
+    const voice = await import('../components/common/owlVoice');
+    expect(voice.getOwlPrefs().sound).toBe(true);
+    voice.setOwlSpeed(1.5);
+    expect(voice.getOwlPrefs().speed).toBe(1.5);
+    voice.setOwlSpeed(1);
+    expect(voice.fadeFor(1)).toBe('1.10s');
+    expect(voice.plainWords('Hoo! Two words.')).toEqual(['Hoo! ', 'Two ', 'words.']);
+  });
+
+  it('Start the animation records where the owl takes off', async () => {
+    const flight = await import('../components/common/owlFlight');
+    flight.prepareOwlFlight({ getBoundingClientRect: () => ({ left: 10, top: 20, width: 40, height: 40 }) } as any);
+    expect(flight.peekOwlFlight()).toMatchObject({ x: 30, y: 40, size: 40 });
+    flight.clearOwlFlight();
+    expect(flight.peekOwlFlight()).toBeNull();
+  });
+});
+
+describe('Fractional Knapsack: a proper cheese cut', () => {
+  it('the slice and the leftover are two pieces of the same full-size wheel', async () => {
+    const { FractionalKnapsackAnimatedView } = await import('../components/visualizers/FractionalKnapsackAnimatedView');
+    const a = getAlgorithmById('fractional-knapsack')!;
+    const steps = [...a.stepGenerator(getDefaultInputs(a))];
+    const cut = steps.find((s) => /Fraction of Item/.test(s.title))!;
+    const html = renderToStaticMarkup(<FractionalKnapsackAnimatedView step={cut} />);
+    const pieces = [...html.matchAll(/<svg width="([\d.]+)" height="([\d.]+)" viewBox="([\d.]+) 0 ([\d.]+) [\d.]+"[^>]*data-cheese-piece="(slice|leftover)"/g)].map((m) => ({
+      width: Number(m[1]),
+      height: Number(m[2]),
+      x: Number(m[3]),
+      kind: m[5],
+    }));
+    const slice = pieces.find((p) => p.kind === 'slice')!;
+    const leftover = pieces.find((p) => p.kind === 'leftover')!;
+    expect(slice).toBeDefined();
+    expect(leftover).toBeDefined();
+    // Same height (not squeezed), the slice starts at the wheel's edge, the leftover where it was cut.
+    expect(slice.height).toBe(leftover.height);
+    expect(slice.x).toBe(0);
+    expect(leftover.x).toBeCloseTo(slice.width, 5);
+    // Both pieces show the pale cut face.
+    expect(html.split('url(#cheeseCutFace)').length - 1).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('Fractional Knapsack keeps a fixed frame in the player', () => {
+  it('its view-mode bar, frame and owl stay outside the zoom box; only the table and bag zoom', () => {
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="fractional-knapsack" onBack={() => {}} initialView="play" />);
+    const fits = html.split('data-fit-box=').length - 1;
+    expect(fits).toBe(1);
+    const fit = html.indexOf('data-fit-box=');
+    expect(html.indexOf('View Mode:')).toBeLessThan(fit);
+    expect(html.indexOf('The Cheese Knapsack')).toBeLessThan(fit);
+    expect(html.indexOf('data-story-narration')).toBeLessThan(fit);
+    expect(html.indexOf('Kitchen Table')).toBeGreaterThan(fit);
   });
 });

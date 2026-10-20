@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNarrationHold } from './narrationGate';
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
@@ -14,6 +15,9 @@ const prefersReducedMotion = () =>
  * (e.g. water must reach a pipe before the pipe fills).
  *
  * Users who prefer reduced motion jump straight to the last phase.
+ *
+ * In the player, the phases wait at the first one until the owl has read the step's sentence
+ * (see narrationGate.tsx): cause first, then effect, with the story told before it happens.
  */
 export function useAnimPhases<P extends string>(
   stepKey: string | number,
@@ -26,6 +30,7 @@ export function useAnimPhases<P extends string>(
 
   // Serialise so callers can pass an inline array without re-triggering the effect.
   const signature = phases.map(([p, t]) => `${p}:${t}`).join('|');
+  const hold = useNarrationHold();
 
   useEffect(() => {
     if (prefersReducedMotion()) {
@@ -33,12 +38,13 @@ export function useAnimPhases<P extends string>(
       return;
     }
     setCurrent({ key: stepKey, phase: first });
+    if (hold) return;
     const timers = phases
       .slice(1)
       .map(([p, t]) => window.setTimeout(() => setCurrent({ key: stepKey, phase: p }), t * stepMs));
     return () => timers.forEach((id) => window.clearTimeout(id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stepKey, signature, stepMs]);
+  }, [stepKey, signature, stepMs, hold]);
 
   // A new step always starts from its first phase, even before the effect above runs.
   return current.key === stepKey ? current.phase : prefersReducedMotion() ? last : first;

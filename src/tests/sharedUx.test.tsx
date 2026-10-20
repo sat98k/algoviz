@@ -134,10 +134,10 @@ describe('Learning stage layout', () => {
       expect(toolbar).toBeGreaterThan(-1);
       expect(toolbar).toBeLessThan(left);
       expect(left).toBeLessThan(right);
-      // The left column holds the visualization and then the explanation.
-      expect(html.indexOf('What happened and why?')).toBeGreaterThan(left);
-      expect(html.indexOf('What happened and why?')).toBeLessThan(right);
-      // The right column starts with the pseudocode (tops aligned with the visualization).
+      // The left column holds only the visualization; the explanation tops the right column.
+      expect(html.indexOf('What happened and why?')).toBeGreaterThan(right);
+      expect(html.indexOf('What happened and why?')).toBeLessThan(html.indexOf('aria-label="Pseudocode"'));
+      // The first labelled panel in the right column is the pseudocode.
       expect(html.slice(right).match(/<section [^>]*aria-label="([^"]+)"/)![1]).toBe('Pseudocode');
       expect(html.indexOf('aria-label="Operation counts"')).toBeGreaterThan(html.indexOf('aria-label="Pseudocode"'));
       if (getAlgorithmById(id)!.dpBrief) {
@@ -227,12 +227,12 @@ describe('Problem & how it works', () => {
     expect(step.split('\n').filter((l) => l.startsWith('- '))).toHaveLength(2);
   });
 
-  it('the panel renders numbered steps with condition chips and bold actions', () => {
+  it('the panel renders the owl\'s stages with condition chips and bold actions', () => {
     const html = renderLearn('fractional-knapsack');
     expect(html).toContain('Problem &amp; how it works');
     expect(html).toContain('How it works');
     expect(html).toMatch(/<code class="[^"]*sem-formula[^"]*">value ÷ weight<\/code>/);
-    expect(html).toContain('<strong class="font-semibold text-chalk-100">take the whole item</strong>');
+    expect(html).toContain('<strong class="font-semibold text-chalk-100">whole wheel</strong>');
     expect(html).not.toContain('Core Idea');
   });
 

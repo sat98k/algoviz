@@ -7,10 +7,12 @@ interface StoryModeToggleProps {
   onChange: (mode: StoryViewMode) => void;
   /** What the animation shows, e.g. "Water pipes & droplet scouts". */
   storyHint: string;
+  /** Slimmer bar for the fit-to-screen player. */
+  compact?: boolean;
 }
 
 /** The 🎬 / 📊 switch shown above any visualizer that has a story scene. */
-export const StoryModeToggle: React.FC<StoryModeToggleProps> = ({ mode, onChange, storyHint }) => {
+export const StoryModeToggle: React.FC<StoryModeToggleProps> = ({ mode, onChange, storyHint, compact = false }) => {
   const button = (value: StoryViewMode, icon: string, label: string, activeClass: string) => (
     <button
       type="button"
@@ -29,7 +31,7 @@ export const StoryModeToggle: React.FC<StoryModeToggleProps> = ({ mode, onChange
   return (
     <div
       data-story-toggle
-      className="flex flex-wrap items-center justify-between w-full px-3 py-2 bg-obsidian-950 border border-hairline gap-3"
+      className={`flex flex-wrap items-center justify-between w-full px-3 py-2 bg-obsidian-950 border border-hairline gap-3 ${compact ? 'lg:py-1 lg:gap-2' : ''}`}
     >
       <div className="flex items-center gap-3">
         <span className="font-sans text-xs text-chalk-400 font-semibold uppercase tracking-wider">View Mode:</span>

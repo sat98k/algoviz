@@ -1,10 +1,11 @@
 import React, { useId, useMemo, useState } from 'react';
-import { BookOpen, ChevronDown, Eye, Lightbulb } from 'lucide-react';
+import { BookOpen, ChevronDown } from 'lucide-react';
 import { GlossaryKey } from '../../config/glossary';
 import { OwlBriefing } from '../../config/owlBriefings';
 import { DpBrief } from '../../types/algorithm';
 import { RichToken, RichTokens, richTokens } from './RichText';
 import { DpCases } from './DpBriefPanel';
+import { OwlBriefingReveal } from './OwlBriefingReveal';
 
 interface ProblemIntuitionPanelProps {
   problemStatement: string;
@@ -83,8 +84,8 @@ const StepList: React.FC<{ steps: StepTokens[] }> = ({ steps }) => (
 
 /**
  * Before the visualization: the problem and how the algorithm works. With a briefing, the
- * 🦉 owl tells the problem as a story and walks through the whole procedure in plain words,
- * then the short numbered steps follow. Collapsible so it stays out of the way while stepping.
+ * 🦉 owl tells the problem as a story while it flows in, then the whole procedure appears stage
+ * by stage (OwlBriefingReveal). Without one, the classic problem + numbered steps layout.
  */
 export const ProblemIntuitionPanel: React.FC<ProblemIntuitionPanelProps> = ({ problemStatement, explanation, coreSteps, dpBrief, terms, briefing }) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -121,92 +122,8 @@ export const ProblemIntuitionPanel: React.FC<ProblemIntuitionPanelProps> = ({ pr
       </button>
 
       {isOpen && owl && (
-        <div id={contentId} data-owl-briefing className="flex flex-col gap-4 px-3 py-4 sm:px-4 border-t border-hairline">
-          {/* The owl tells the problem */}
-          <div className="flex items-start gap-3">
-            <span className="text-3xl leading-none shrink-0 mt-1" aria-hidden>
-              🦉
-            </span>
-            <div className="flex-1 min-w-0 flex flex-col gap-2 px-4 py-3 bg-obsidian-900 border border-amber/40 rounded-2xl rounded-tl-sm">
-              <h2 className="font-sans text-sm font-semibold text-amber">The problem</h2>
-              <p className="font-sans text-[15px] sm:text-base leading-relaxed text-chalk-100">
-                <RichTokens tokens={owl.story} />
-              </p>
-              <p className="font-sans text-[15px] leading-relaxed text-chalk-100">
-                <strong className="font-semibold text-amber">Our goal: </strong>
-                <RichTokens tokens={owl.goal} />
-              </p>
-              {owl.example && (
-                <p className="font-sans text-sm leading-relaxed text-chalk-300">
-                  <span className="font-semibold text-chalk-200">A tiny example: </span>
-                  <RichTokens tokens={owl.example} />
-                </p>
-              )}
-              <p className="font-sans text-xs leading-relaxed text-chalk-400">
-                <span className="font-semibold">In textbook words: </span>
-                <RichTokens tokens={tokens.problem} />
-              </p>
-            </div>
-          </div>
-
-          {/* The whole procedure, start to finish */}
-          <div className="flex flex-col gap-2" aria-label="How it works, the big picture">
-            <h2 className="font-sans text-sm font-semibold text-chalk-200">How it works: the big picture</h2>
-            <ol className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
-              {owl.overview.map((stage, i) => (
-                <li key={i} data-owl-stage className="flex gap-2.5 px-3 py-2.5 bg-obsidian-900 border border-hairline">
-                  <span aria-hidden className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-amber text-obsidian-950 text-xs font-bold tabular-nums">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex flex-col gap-0.5">
-                    <h3 className="font-sans text-sm font-semibold text-chalk-100">{stage.title}</h3>
-                    <p className="font-sans text-sm leading-relaxed text-chalk-300">
-                      <RichTokens tokens={stage.text} />
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <p className="flex items-start gap-2 px-3 py-2.5 bg-amber/10 border border-amber/30 font-sans text-sm leading-relaxed text-chalk-200">
-            <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-amber" aria-hidden />
-            <span>
-              <strong className="font-semibold text-chalk-100">Why it works: </strong>
-              <RichTokens tokens={owl.insight} />
-            </span>
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-3">
-            <div className="flex flex-col gap-2.5 px-3 py-3 border border-hairline">
-              <div>
-                <h2 className="font-sans text-sm font-semibold text-chalk-200">How it works</h2>
-                <p className="font-sans text-xs text-chalk-400">The steps in short. The roadmap above the player uses the same numbers.</p>
-              </div>
-              {tokens.steps ? (
-                <StepList steps={tokens.steps} />
-              ) : (
-                <p className="font-sans text-[15px] leading-relaxed text-chalk-200">
-                  <RichTokens tokens={tokens.explanation!} />
-                </p>
-              )}
-              {dpBrief && <DpCases brief={dpBrief} />}
-            </div>
-            <div className="flex flex-col gap-2 px-3 py-3 border border-hairline">
-              <h2 className="flex items-center gap-1.5 font-sans text-sm font-semibold text-chalk-200">
-                <Eye className="w-3.5 h-3.5 text-amber" aria-hidden />
-                While you watch
-              </h2>
-              <ul className="flex flex-col gap-1.5 list-disc pl-5 marker:text-amber font-sans text-sm leading-relaxed text-chalk-300">
-                {owl.watch.map((w, i) => (
-                  <li key={i}>
-                    <RichTokens tokens={w} />
-                  </li>
-                ))}
-              </ul>
-              <p className="font-sans text-xs text-chalk-400">Tip: switch on 🎬 Animation Mode to see the owl's story, then press Step (→) at your own pace.</p>
-            </div>
-          </div>
+        <div id={contentId}>
+          <OwlBriefingReveal owl={owl} problem={tokens.problem} dpBrief={dpBrief} />
         </div>
       )}
 

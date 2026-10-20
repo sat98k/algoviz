@@ -153,7 +153,7 @@ export function App() {
         {view === 'compare' && <ComparisonPage />}
       </main>
 
-      <Footer />
+      {view !== 'algorithm' && <Footer />}
     </div>
   );
 }

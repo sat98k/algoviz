@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
+import { useNarrationHold } from '../story/narrationGate';
+import { FitToBox, FitToScreenContext } from '../common/FitToBox';
 import { AlgorithmStep } from '../../types/algorithm';
 import { FractionalKnapsackItem } from '../../algorithms/fractionalKnapsack';
 import { RotateCcw } from 'lucide-react';
@@ -113,6 +115,91 @@ const renderNormalCheese = (
   );
 };
 
+/**
+ * One piece of a cut cheese wheel: the real full-size wheel, clipped between `from` and `to`
+ * (fractions of its width), with a pale cut face along the cut edge. The left piece (0 → f)
+ * is the slice that is taken; the right piece (f → 1) is the leftover that stays on the board.
+ * Pieces are never squeezed, so the slice and the leftover fit back together into the wheel.
+ */
+const renderCheesePiece = (width: number, height: number, from: number, to: number, id: string) => {
+  const rx = width / 2;
+  const ry = height * 0.32;
+  const cx = rx;
+  const topY = ry + 2;
+  const cylinderHeight = height * 0.44;
+  const bottomY = topY + cylinderHeight;
+  const x0 = Math.max(0, from) * width;
+  const x1 = Math.min(1, to) * width;
+  const faceDepth = 7;
+  // Where the cut runs, and which side of it this piece is on.
+  const cutX = from > 0 ? x0 : x1;
+  const faceSide = from > 0 ? 1 : -1; // the face sits inside the piece, on its cut edge
+  const k = Math.sqrt(Math.max(0, 1 - ((cutX - cx) / (rx - 1)) ** 2));
+  const faceTop = topY - ry * k;
+  const faceBottom = bottomY + ry * k;
+  const fx = cutX + faceSide * faceDepth;
+  const clipId = `cheese-cut-${id}`;
+  const hasCut = from > 0 || to < 1;
+
+  return (
+    <svg
+      width={x1 - x0}
+      height={height}
+      viewBox={`${x0} 0 ${x1 - x0} ${height}`}
+      className="drop-shadow-sm select-none overflow-visible"
+      data-cheese-piece={from > 0 ? 'leftover' : 'slice'}
+    >
+      <defs>
+        <linearGradient id="normalCheeseRind" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor={NORMAL_CHEESE_THEME.rindBorder} />
+          <stop offset="25%" stopColor={NORMAL_CHEESE_THEME.rindColor} />
+          <stop offset="75%" stopColor={NORMAL_CHEESE_THEME.rindColor} />
+          <stop offset="100%" stopColor={NORMAL_CHEESE_THEME.rindBorder} />
+        </linearGradient>
+        <linearGradient id="normalCheesePaste" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={NORMAL_CHEESE_THEME.highlight} />
+          <stop offset="60%" stopColor={NORMAL_CHEESE_THEME.pasteColor} />
+          <stop offset="100%" stopColor={NORMAL_CHEESE_THEME.rindColor} />
+        </linearGradient>
+        <linearGradient id="cheeseCutFace" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#fffbe6" />
+          <stop offset="100%" stopColor={NORMAL_CHEESE_THEME.pasteColor} />
+        </linearGradient>
+        <clipPath id={clipId}>
+          <rect x={x0} y={-2} width={x1 - x0} height={height + 4} />
+        </clipPath>
+      </defs>
+
+      <g clipPath={`url(#${clipId})`}>
+        <ellipse cx={cx} cy={bottomY} rx={rx - 1} ry={ry} fill={NORMAL_CHEESE_THEME.rindBorder} />
+        <rect x={1} y={topY} width={width - 2} height={cylinderHeight} fill="url(#normalCheeseRind)" />
+        <ellipse cx={cx} cy={bottomY} rx={rx - 1} ry={ry} fill="url(#normalCheeseRind)" />
+        <ellipse cx={cx * 0.48} cy={topY + cylinderHeight * 0.55} rx={rx * 0.16} ry={cylinderHeight * 0.22} fill={NORMAL_CHEESE_THEME.holeColor} opacity="0.85" />
+        <ellipse cx={cx * 1.42} cy={topY + cylinderHeight * 0.42} rx={rx * 0.18} ry={cylinderHeight * 0.25} fill={NORMAL_CHEESE_THEME.holeColor} opacity="0.85" />
+        <ellipse cx={cx} cy={topY} rx={rx - 1} ry={ry} fill="url(#normalCheesePaste)" stroke={NORMAL_CHEESE_THEME.rindBorder} strokeWidth="1.5" />
+        <ellipse cx={cx * 0.65} cy={topY * 0.9} rx={rx * 0.17} ry={ry * 0.28} fill={NORMAL_CHEESE_THEME.holeColor} />
+        <ellipse cx={cx * 1.3} cy={topY * 1.08} rx={rx * 0.22} ry={ry * 0.35} fill={NORMAL_CHEESE_THEME.holeColor} />
+        <ellipse cx={cx * 1.02} cy={topY * 0.72} rx={rx * 0.12} ry={ry * 0.22} fill={NORMAL_CHEESE_THEME.holeColor} />
+
+        {/* The cut face: the pale inside of the cheese, along the cut */}
+        {hasCut && k > 0 && (
+          <g>
+            <polygon
+              points={`${cutX},${faceTop} ${fx},${faceTop + 3} ${fx},${faceBottom - 3} ${cutX},${faceBottom}`}
+              fill="url(#cheeseCutFace)"
+              stroke={NORMAL_CHEESE_THEME.rindBorder}
+              strokeWidth="1"
+              strokeLinejoin="round"
+            />
+            <ellipse cx={(cutX + fx) / 2} cy={faceTop + (faceBottom - faceTop) * 0.35} rx={1.8} ry={3} fill={NORMAL_CHEESE_THEME.holeColor} />
+            <ellipse cx={(cutX + fx) / 2} cy={faceTop + (faceBottom - faceTop) * 0.7} rx={1.5} ry={2.4} fill={NORMAL_CHEESE_THEME.holeColor} />
+          </g>
+        )}
+      </g>
+    </svg>
+  );
+};
+
 export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimatedViewProps> = ({ step }) => {
   const state = step.state || {};
   const items: FractionalKnapsackItem[] = state.items || [];
@@ -131,10 +218,19 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
     step.isFinal ? 'closed' : isFractionStep ? 'slicing' : isBagFullAtStep ? 'closed' : 'idle'
   );
 
+  // In the player the owl tells the step first; the knife waits for it.
+  const hold = useNarrationHold();
+  // Player, fit-to-screen: the frame fills its pane at a fixed size; only the table and bag zoom.
+  const { enabled: fit } = useContext(FitToScreenContext);
+
   // Control sequential timing for slicing and physically dragging cheese into bag
   useEffect(() => {
     if (step.isFinal) {
       setAnimPhase('closed');
+      return;
+    }
+    if (isFractionStep && hold) {
+      setAnimPhase('idle');
       return;
     }
     if (isFractionStep) {
@@ -172,7 +268,7 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
     } else {
       setAnimPhase('idle');
     }
-  }, [step.stepIndex, step.isFinal, isFractionStep, isBagFullAtStep]);
+  }, [step.stepIndex, step.isFinal, isFractionStep, isBagFullAtStep, hold]);
 
   // Is lid closed or currently in closing animation?
   const isLidActive = step.isFinal || animPhase === 'lidClosing' || animPhase === 'closed';
@@ -187,14 +283,18 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
   };
 
   return (
-    <div className="flex flex-col w-full min-h-[620px] bg-[#faf7f2] border border-amber-200/90 rounded-2xl p-4 sm:p-8 select-none relative shadow-md text-stone-800">
+    <div
+      className={`flex flex-col w-full min-h-[620px] bg-[#faf7f2] border border-amber-200/90 rounded-2xl p-4 sm:p-8 select-none relative shadow-md text-stone-800 ${
+        fit ? 'lg:flex-1 lg:min-h-0 lg:px-4 lg:py-2.5' : ''
+      }`}
+    >
       
       {/* ─── STAGE HEADER: Clean Light-Mode Story Bar ─── */}
-      <div className="flex flex-wrap items-center justify-between pb-4 border-b border-amber-200/80 gap-3 z-30">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl filter drop-shadow">🧀</span>
-          <div>
-            <h2 className="font-display font-bold text-lg sm:text-xl text-stone-900 flex items-center gap-2">
+      <div className={`flex flex-wrap items-center justify-between pb-4 border-b border-amber-200/80 gap-3 z-30 ${fit ? 'lg:pb-1.5' : ''}`}>
+        <div className={`flex items-center gap-3 ${fit ? 'lg:gap-2' : ''}`}>
+          <span className={`text-3xl filter drop-shadow ${fit ? 'lg:text-xl' : ''}`}>🧀</span>
+          <div className={fit ? 'lg:flex lg:items-baseline lg:gap-3 lg:flex-wrap' : undefined}>
+            <h2 className={`font-display font-bold text-lg sm:text-xl text-stone-900 flex items-center gap-2 ${fit ? 'lg:text-base' : ''}`}>
               The Cheese Knapsack
             </h2>
             <p className="font-sans text-xs text-stone-600">
@@ -230,10 +330,11 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
         </div>
       </div>
 
-      <OwlBubble narration={cheeseNarration(step)} className="mt-4" />
+      <OwlBubble narration={cheeseNarration(step)} className={fit ? 'mt-4 lg:mt-1.5' : 'mt-4'} steady={fit} />
 
+      <ZoomIf fit={fit}>
       {/* ─── UNCLIPPED FULL-STAGE ARENA (TABLE TOP & BAG BOTTOM) ─── */}
-      <div className="relative w-full min-h-[500px] mt-4 flex flex-col justify-between">
+      <div className={`relative w-full min-h-[500px] mt-4 flex flex-col justify-between ${fit ? 'lg:mt-1' : ''}`}>
         
         {/* ─── WOODEN CUTTING BOARD (TABLE) ─── */}
         <div className="relative w-full h-[180px] bg-gradient-to-b from-[#f8f1e7] via-[#efe3d3] to-[#e4d2bc] border-2 border-[#d5be9f] rounded-2xl shadow-inner z-10">
@@ -317,37 +418,37 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
                   )}
 
                   {/* During slicing: show both halves on the board before separation */}
-                  {isFractionStep && animPhase === 'slicing' ? (
-                    <div className="flex items-end gap-3">
-                      {/* Taken Half */}
-                      <div className="flex flex-col items-center">
-                        <div className="p-1 rounded-xl border-2 border-amber-400 bg-amber-50/90 shadow-md">
-                          {renderNormalCheese(baseWidth * item.fractionTaken, baseHeight, 1)}
+                  {isFractionStep && (animPhase === 'slicing' || animPhase === 'idle') ? (
+                    /* The whole wheel, cut through: the slice on the left eases away from the leftover */
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-end" data-cheese-cut>
+                        <div
+                          className="transition-transform duration-700 ease-out"
+                          style={{ transform: animPhase === 'slicing' ? 'translateX(-10px) rotate(-3deg)' : 'none', transitionDelay: animPhase === 'slicing' ? '0.9s' : '0s' }}
+                        >
+                          {renderCheesePiece(baseWidth, baseHeight, 0, item.fractionTaken, `slice-${item.id}`)}
                         </div>
-                        <span className="text-[10px] font-bold text-amber-900 bg-white/95 px-2 py-0.5 rounded-full border border-amber-400 shadow-xs mt-1">
-                          ✓ Cut piece slides into bag!
-                        </span>
+                        {renderCheesePiece(baseWidth, baseHeight, item.fractionTaken, 1, `left-${item.id}`)}
                       </div>
-
-                      {/* Cut guide line */}
-                      <div className="w-0.5 h-14 bg-rose-500 rounded-full shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
-
-                      {/* Leftover Half */}
-                      <div className="flex flex-col items-center opacity-80">
-                        <div className="p-1 rounded-xl border-2 border-dashed border-stone-400 bg-stone-100">
-                          {renderNormalCheese(baseWidth * (1 - item.fractionTaken), baseHeight, 1)}
+                      {animPhase === 'slicing' ? (
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-[10px] font-bold text-amber-900 bg-white/95 px-2 py-0.5 rounded-full border border-amber-400 shadow-xs">
+                            ✓ Cut piece slides into bag! ({fmt(item.fractionTaken * 100)}%)
+                          </span>
+                          <span className="text-[10px] font-medium text-stone-600 bg-white/95 px-2 py-0.5 rounded-full border border-stone-300">
+                            Left on board ({fmt((1 - item.fractionTaken) * 100)}%)
+                          </span>
                         </div>
-                        <span className="text-[10px] font-medium text-stone-600 bg-white/95 px-2 py-0.5 rounded-full border border-stone-300 mt-1">
-                          Left on board
+                      ) : (
+                        <span className="text-xs font-bold text-stone-800 mt-1 bg-white/80 px-2 py-0.5 rounded-full border border-stone-200 shadow-xs">
+                          🧀 Cheese #{item.id}
                         </span>
-                      </div>
+                      )}
                     </div>
                   ) : (
-                    /* Leftover wedge permanently sitting on the cutting board */
-                    <div className="flex flex-col items-center opacity-85">
-                      <div className="p-1 rounded-xl border-2 border-dashed border-stone-400 bg-stone-100 shadow-xs">
-                        {renderNormalCheese(baseWidth * (1 - item.fractionTaken), baseHeight, 1)}
-                      </div>
+                    /* Leftover piece permanently sitting on the cutting board, its cut face showing */
+                    <div className="flex flex-col items-center">
+                      {renderCheesePiece(baseWidth, baseHeight, item.fractionTaken, 1, `left-${item.id}`)}
                       <span className="text-[10px] font-bold text-stone-700 bg-white/95 px-2.5 py-0.5 rounded-full border border-stone-300 shadow-xs mt-1">
                         Left on board ({fmt((1 - item.fractionTaken) * 100)}%)
                       </span>
@@ -411,9 +512,7 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
                   opacity: targetOpacity,
                 }}
               >
-                <div className="p-1 rounded-xl border-2 border-amber-400 bg-amber-50/95 shadow-xl">
-                  {renderNormalCheese(baseWidth * fracItem.fractionTaken, baseHeight, 1)}
-                </div>
+                <div className="drop-shadow-xl">{renderCheesePiece(baseWidth, baseHeight, 0, fracItem.fractionTaken, `fly-${fracItem.id}`)}</div>
                 <span className="text-[10px] font-bold text-amber-900 bg-white px-2 py-0.5 rounded-full border border-amber-400 shadow-sm mt-1">
                   ✓ Cut piece slides into bag!
                 </span>
@@ -512,7 +611,7 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
                       return null;
                     }
 
-                    const inBagWidth = Math.max(50, Math.min(100, item.weight * 2.8 * (item.fractionTaken || 1)));
+                    const inBagWidth = Math.max(50, Math.min(100, item.weight * 2.8));
                     const inBagHeight = Math.max(34, Math.min(55, 20 + item.weight * 1.1));
 
                     return (
@@ -521,7 +620,9 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
                         className="flex flex-col items-center animate-fade-in transition-all duration-700"
                       >
                         <div className="p-1 rounded-xl bg-amber-950/40 border border-amber-400/40 shadow-sm">
-                          {renderNormalCheese(inBagWidth, inBagHeight, 1)}
+                          {isFraction
+                            ? renderCheesePiece(inBagWidth, inBagHeight, 0, item.fractionTaken, `bag-${item.id}`)
+                            : renderNormalCheese(inBagWidth, inBagHeight, 1)}
                         </div>
                         <span className="text-[10px] font-bold text-amber-200 mt-0.5">
                           {isFraction ? `${Math.round(item.fractionTaken * 100)}% wedge` : `Cheese #${item.id}`}
@@ -543,7 +644,14 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
         </div>
 
       </div>
+      </ZoomIf>
 
     </div>
   );
 };
+
+/** In the player's fit-to-screen layout, the table and bag zoom to fit; otherwise as is. */
+const ZoomIf: React.FC<{ fit: boolean; children: React.ReactNode }> = ({ fit, children }) =>
+  // The table and bag do not get taller when wider, so they re-flow to the full width before zooming.
+  // With room to spare they zoom in (up to 1.6×), so the cheese and the bag read large.
+  fit ? <FitToBox widen maxScale={1.6}>{children}</FitToBox> : <>{children}</>;
