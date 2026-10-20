@@ -188,7 +188,7 @@ export function* tspApproxSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `MST Cut Evaluation: Evaluate Edges from {${Array.from(inMst).map((i) => cities[i].label).join(', ')}}`,
-      description: `Searching cut edges to unvisited cities. Lightest edge found is (${cities[bestU].label}, ${cities[bestV].label}) with weight ${minWeight}.`,
+      description: `Look at every road from a city already in the tree to a city not yet in it. The cheapest is (${cities[bestU].label}, ${cities[bestV].label}) with cost ${minWeight}.`,
       codeLine: 2,
       state: {
         isApprox: true,
@@ -224,7 +224,7 @@ export function* tspApproxSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Add Edge (${cities[bestU].label}, ${cities[bestV].label}) to MST (Weight +${minWeight})`,
-      description: `Added edge (${cities[bestU].label}, ${cities[bestV].label}) to Minimum Spanning Tree. Current MST weight = ${totalMstWeight}.`,
+      description: `Add that road to the minimum spanning tree (the cheapest set of roads joining all cities). Tree cost so far: ${totalMstWeight}.`,
       codeLine: 2,
       state: {
         isApprox: true,

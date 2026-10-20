@@ -20,24 +20,24 @@ export const COLOR_NAMES = ['—', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', '
 
 export const GRAPH_COLORING_PSEUDOCODE_FIRST = [
   'function GraphColoring(vertexIndex, colorAssignment, k):',
-  '  if vertexIndex == |V|: return true  // Base case: all vertices validly colored',
-  '  for c = 1 to k:  // Try each of the k available colors on vertex',
-  '    if isSafe(vertexIndex, c, colorAssignment):  // Check neighbor conflict',
-  '      colorAssignment[vertexIndex] = c  // Tentatively assign color c',
-  '      if GraphColoring(vertexIndex + 1, colorAssignment, k): return true  // Recurse',
-  '      colorAssignment[vertexIndex] = 0  // Backtrack: uncolor vertex on dead end',
-  '  return false  // Exhausted all k colors without a valid configuration',
+  '  if vertexIndex == |V|: return true  // every vertex is coloured: done',
+  '  for c = 1 to k:  // try each colour in turn',
+  '    if isSafe(vertexIndex, c, colorAssignment):  // does any neighbour already have colour c?',
+  '      colorAssignment[vertexIndex] = c  // no: colour the vertex',
+  '      if GraphColoring(vertexIndex + 1, colorAssignment, k): return true  // go on to the next vertex',
+  '      colorAssignment[vertexIndex] = 0  // backtrack: a dead end further on, so remove the colour',
+  '  return false  // no colour worked: go back to the previous vertex',
 ];
 
 export const GRAPH_COLORING_PSEUDOCODE_ALL = [
   'function GraphColoringAll(vertexIndex, colorAssignment, k):',
-  '  if vertexIndex == |V|: recordSolution(colorAssignment); return  // Valid coloring found',
-  '  for c = 1 to k:  // Try each of the k available colors on vertex',
-  '    if isSafe(vertexIndex, c, colorAssignment):  // Check neighbor conflict',
-  '      colorAssignment[vertexIndex] = c  // Tentatively assign color c',
-  '      GraphColoringAll(vertexIndex + 1, colorAssignment, k)  // Continue searching remaining colorings',
-  '      colorAssignment[vertexIndex] = 0  // Backtrack: explore alternative colors for vertex',
-  '  return allSolutions  // Return exhaustive set of all valid colorings',
+  '  if vertexIndex == |V|: recordSolution(colorAssignment); return  // every vertex is coloured: save it, keep looking',
+  '  for c = 1 to k:  // try each colour in turn',
+  '    if isSafe(vertexIndex, c, colorAssignment):  // does any neighbour already have colour c?',
+  '      colorAssignment[vertexIndex] = c  // no: colour the vertex',
+  '      GraphColoringAll(vertexIndex + 1, colorAssignment, k)  // go on to the next vertex',
+  '      colorAssignment[vertexIndex] = 0  // backtrack: remove the colour to try the others',
+  '  return allSolutions  // every valid colouring found',
 ];
 
 export function* graphColoringSteps(inputs: {
@@ -166,9 +166,9 @@ export function* graphColoringSteps(inputs: {
   // Initialize
   yield makeStep(
     'Initialize Graph Coloring',
-    `Graph has ${nodes.length} vertices and ${allEdges.length} edges. Search mode: ${
-      findMode === 'all' ? 'FIND ALL VALID COLORINGS (exhaustive)' : 'FIND FIRST SOLUTION'
-    }. Available colors k = ${k}: [${COLOR_NAMES.slice(1, k + 1).join(', ')}].`,
+    `The graph has ${nodes.length} vertices and ${allEdges.length} edges, and we have k = ${k} colours: ${COLOR_NAMES.slice(1, k + 1).join(', ')}. We colour the vertices one at a time in order, trying the colours in order, and back up whenever a vertex has no safe colour. ${
+      findMode === 'all' ? 'We keep going after each answer to find every valid colouring.' : 'We stop at the first valid colouring.'
+    }`,
     1,
     `${nodes.length} vertices, ${allEdges.length} edges, k = ${k}`
   );
@@ -221,7 +221,7 @@ export function* graphColoringSteps(inputs: {
 
     yield makeStep(
       `Considering Vertex ${vertexLabel}`,
-      `Attempting to assign a valid color to vertex ${vertexLabel} (vertex ${vertexIndex + 1} of ${sortedIds.length}).`,
+      `Next: vertex ${vertexLabel} (vertex ${vertexIndex + 1} of ${sortedIds.length}). Which colour is safe for it?`,
       3,
       `Trying colors 1..${k} for ${vertexLabel}`,
       vertexId
@@ -235,7 +235,7 @@ export function* graphColoringSteps(inputs: {
         const conflictLabel = `V${parseInt(safeCheck.conflict!) + 1}`;
         yield makeStep(
           `Conflict: ${vertexLabel} ← ${colorName}`,
-          `Color ${colorName} (${c}) conflicts with adjacent vertex ${conflictLabel} which already has ${colorName}. Trying next color.`,
+          `${colorName} is not allowed: its neighbour ${conflictLabel} is already ${colorName}. Try the next colour.`,
           4,
           `${vertexLabel} ← ${colorName} CONFLICTS with ${conflictLabel}`,
           vertexId,
@@ -250,7 +250,7 @@ export function* graphColoringSteps(inputs: {
 
       yield makeStep(
         `Assign: ${vertexLabel} ← ${colorName}`,
-        `Color ${colorName} (${c}) is safe for vertex ${vertexLabel}. No adjacent vertex has this color. Proceeding to next vertex.`,
+        `${colorName} is safe: no neighbour of ${vertexLabel} is ${colorName}. Colour it and move on to the next vertex.`,
         findMode === 'all' ? [4, 5] : [4, 5, 6],
         `${vertexLabel} = ${colorName} ✓`,
         vertexId,
@@ -305,7 +305,7 @@ export function* graphColoringSteps(inputs: {
 
       yield makeStep(
         `Exhaustive Search Complete: ${allSolutions.length} Valid Coloring(s) Found!`,
-        `Successfully explored all branches and discovered ${allSolutions.length} distinct valid ${k}-coloring(s). View all assignments in the output pane below.`,
+        `Every branch has been explored: there ${allSolutions.length === 1 ? 'is 1 valid colouring' : `are ${allSolutions.length} different valid colourings`} with ${k} colours (listed below the player).`,
         8,
         `Total Valid Colorings: ${allSolutions.length}`,
         undefined,
@@ -326,7 +326,7 @@ export function* graphColoringSteps(inputs: {
     } else {
       yield makeStep(
         `No Valid ${k}-Coloring Exists`,
-        `Exhaustive backtracking search confirmed that the graph cannot be colored with ${k} colors without adjacent vertices sharing the same color. Total valid colorings: 0.`,
+        `Every possible way has been tried: ${k} colours are not enough, because some neighbours would always end up with the same colour. Total valid colourings: 0.`,
         8,
         `Not ${k}-colorable (0 solutions)`,
         undefined,
@@ -354,7 +354,7 @@ export function* graphColoringSteps(inputs: {
 
       yield makeStep(
         `Valid ${k}-Coloring Found!`,
-        `Successfully colored all ${nodes.length} vertices with ${k} colors. Assignment: ${colorSummary}.`,
+        `Done: all ${nodes.length} vertices are coloured with ${k} colours and no two neighbours match: ${colorSummary}.`,
         2,
         colorSummary,
         undefined,
@@ -377,7 +377,7 @@ export function* graphColoringSteps(inputs: {
     } else {
       yield makeStep(
         `No Valid ${k}-Coloring Exists`,
-        `Exhaustive backtracking search confirmed that the graph cannot be colored with ${k} colors without adjacent vertices sharing the same color.`,
+        `Every possible way has been tried: ${k} colours are not enough, because some neighbours would always end up with the same colour.`,
         8,
         `Not ${k}-colorable`,
         undefined,

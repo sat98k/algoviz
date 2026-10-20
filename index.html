@@ -6,19 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AlgoViz — Algorithm Visualizer</title>
     <script>
-      (function() {
-        try {
-          var saved = localStorage.getItem('algoviz_theme');
-          if (saved === 'light') {
-            document.documentElement.classList.remove('dark');
-            document.documentElement.classList.add('light');
-          } else {
-            document.documentElement.classList.add('dark');
-          }
-        } catch(e) {
-          document.documentElement.classList.add('dark');
-        }
-      })();
+      // The site uses the light theme only (warm daylight palette, matching the animations).
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

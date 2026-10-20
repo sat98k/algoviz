@@ -47,7 +47,7 @@ export function* jarvisMarchSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Jarvis’ March (Gift Wrapping)',
-    description: `Loaded ${points.length} 2D points. Phase 1: Locate starting anchor pivot point with lowest y-coordinate.`,
+    description: `${points.length} points on a board. We want the tightest fence around all of them. Idea: start at a point surely on the fence and wrap a ribbon around the outside, one corner at a time.`,
     codeLine: 1,
     state: {
       points: [...points],
@@ -75,7 +75,7 @@ export function* jarvisMarchSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: `Anchor Pivot Found: ${pivot.label} (${pivot.x}, ${pivot.y})`,
-    description: `Found lowest anchor point ${pivot.label}. Gift wrapping will start here and wrap counter-clockwise around the exterior.`,
+    description: `${pivot.label} is the lowest point, so nothing is below it and it is surely on the fence. The ribbon starts here and wraps counter-clockwise.`,
     codeLine: 2,
     state: {
       points: [...points],
@@ -104,7 +104,7 @@ export function* jarvisMarchSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Wrap from ${currentHullPoint.label}: Initial Candidate ${candidateNext.label}`,
-      description: `Searching for the most counter-clockwise point from ${currentHullPoint.label}. Initial candidate is ${candidateNext.label}.`,
+      description: `From ${currentHullPoint.label}, find the next corner: the point with every other point on its left. Aim the ribbon at ${candidateNext.label} first, then test every other point.`,
       codeLine: 3,
       state: {
         points: [...points],
@@ -133,7 +133,7 @@ export function* jarvisMarchSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Orientation Check: ${currentHullPoint.label} → ${candidateNext.label} vs ${checkPoint.label}`,
-        description: `Checking triplet (${currentHullPoint.label} → ${candidateNext.label} → ${checkPoint.label}). Turn is ${turnType.toUpperCase()} (cross product = ${o}).`,
+        description: `Is ${checkPoint.label} further out than ${candidateNext.label}? ${o < 0 ? `Yes: it lies to the right of the ribbon ${currentHullPoint.label} → ${candidateNext.label} (cross product ${o} < 0).` : o > 0 ? `No: it lies to the left of the ribbon (cross product ${o} > 0).` : `It lies on the same line (cross product 0).`}`,
         codeLine: [4, 5],
         state: {
           points: [...points],
@@ -163,7 +163,7 @@ export function* jarvisMarchSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Update Candidate: ${candidateNext.label} is More Counter-Clockwise`,
-          description: `Point ${candidateNext.label} forms a wider left turn. Updated best candidate for next hull edge.`,
+          description: `So the ribbon swings out to ${candidateNext.label}: it is the furthest-out point found so far.`,
           codeLine: 6,
           state: {
             points: [...points],
@@ -188,7 +188,7 @@ export function* jarvisMarchSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Confirmed Hull Vertex: ${currentHullPoint.label}`,
-      description: `Point ${currentHullPoint.label} is confirmed as the next convex hull vertex.`,
+      description: `Every point has been tested and none is further out, so ${currentHullPoint.label} is the next corner of the fence. Move the ribbon there.`,
       codeLine: 7,
       state: {
         points: [...points],
@@ -209,7 +209,7 @@ export function* jarvisMarchSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Jarvis’ March Complete',
-    description: `Convex Hull completed! Returned to anchor pivot ${pivot.label}. Total hull vertices: ${hull.length} [${hull.map((p) => p.label).join(' → ')}].`,
+    description: `Done: the ribbon is back at ${pivot.label}. The fence has ${hull.length} corners: [${hull.map((p) => p.label).join(' → ')}]. Every other point is inside.`,
     codeLine: 8,
     state: {
       points: [...points],

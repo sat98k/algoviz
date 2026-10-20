@@ -179,7 +179,7 @@ describe('N-Queens First / All solutions', () => {
   });
 
   it('the page offers the First / All switch', () => {
-    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="n-queens" onBack={() => {}} />);
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="n-queens" onBack={() => {}} initialView="play" />);
     expect(html).toContain('Find first solution');
     expect(html).toContain('Find all solutions');
     expect(html).toMatch(/aria-pressed="true"[^>]*>Find first solution/);

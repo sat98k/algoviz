@@ -60,3 +60,16 @@ Never trigger actions simultaneously if they depend on each other physically:
   * `[🎬 Animation Mode]`: The tangible physical storytelling view.
   * `[📊 Technical View]`: The existing classic cards, capacity bars, and mathematical formulas.
 * **100% Backward Compatibility**: Both modes must consume the same `step.state` data and pass all unit and regression tests.
+
+---
+
+## 8. Adding a Story Scene for Another Algorithm
+* **Shared toggle**: `VisualizerStage` shows the `📊 Technical View / 🎬 Animation Mode` toggle for every algorithm listed in `src/components/story/storyRegistry.ts`. The technical view stays the default; the scene only appears on toggle press.
+* **Scene contract**: a scene is a `React.FC<StorySceneProps>` (`step`, `algorithmId`, `stepMs`) wrapped in `StoryStage` (warm frame, narrator bubble, status pill). It reads the existing `step.state` only, so no algorithm changes are needed.
+* **Timing helpers** (`src/components/story/useAnimPhases.ts`):
+  * `useAnimPhases(stepIndex, [[phase, startFraction], …], stepMs)` plays ordered phases per step (cause before effect).
+  * `useHeldValue(value, release)` keeps the old value on screen until the causing action has played.
+  * `useProgress` / `useTweened` drive travel along paths and smooth movement.
+* **Search trees** (`src/components/story/StateSpaceTree.tsx`): backtracking scenes (N-Queens, Subset Sum) show their state-space tree under the physical scene. The camera follows the current node at real size (never zoomed in past it, never shrunk to fit unless the viewer picks "Whole tree"), pruned branches are snipped with ✂ and a short reason, and once a tree passes ~36 nodes, finished branches fold into bundles (answers stay open when there are four or fewer). Each scene supplies its own node drawing (mini chessboards, coins).
+* **SVG gotcha**: never put an `animate-story-*` class on a `<g>` that also has a `transform` attribute; the CSS animation overrides the position. Nest the animated group inside the positioned one.
+* **Existing scenes**: Water pipes (Ford-Fulkerson, Edmonds-Karp, Push-Relabel), Stencil (Naive, KMP, Rabin-Karp), Pegboard (Graham's Scan, Jarvis' March), Cubby wall (0-1 Knapsack DP), Huffman mobile (Huffman, incl. decoding), Chessboard (N-Queens), Town map (Floyd-Warshall, Bellman-Ford), Balance scale (Subset Sum), Painting houses (Graph Coloring), Treasure caves (0-1 Knapsack B&B, Job Selection B&B), Coin road (Maximum Subarray), Helpers workshop (Karatsuba), Bead necklaces (LCS), Gluing panels (Matrix Chain), Car factory (Assembly Line), Postman's notebook (TSP Held-Karp), Word tree (Suffix Tree), Sliding curtain (Line Segment Intersection), Height line-up (Randomized Quicksort), Interview room (Hiring Problem), Clay balls (Karger), Street cameras (Vertex Cover), Radio towers (Set Cover), Rope network (TSP 2-Approximation). Every algorithm now has a story scene.

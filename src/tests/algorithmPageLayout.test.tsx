@@ -17,7 +17,8 @@ const decode = (html: string) =>
     .replace(/&gt;/g, '>');
 const count = (hay: string, needle: string) => hay.split(needle).length - 1;
 const renderPage = (id: string, mode: 'split' | 'stacked') =>
-  renderToStaticMarkup(<AlgorithmPage algorithmId={id} onBack={() => {}} initialLayoutMode={mode} />);
+  renderToStaticMarkup(<AlgorithmPage algorithmId={id} onBack={() => {}} initialLayoutMode={mode} initialView="play" />);
+const renderLearn = (id: string) => renderToStaticMarkup(<AlgorithmPage algorithmId={id} onBack={() => {}} />);
 
 describe.each(['split', 'stacked'] as const)('AlgorithmPage layout (%s)', (mode) => {
   it.each(algorithmRegistry.map((a) => [a.id, a] as const))('%s', (id, a) => {
@@ -37,15 +38,17 @@ describe.each(['split', 'stacked'] as const)('AlgorithmPage layout (%s)', (mode)
     expect(count(html, 'id="pseudocode-line-1"')).toBe(1);
     expect(count(html, 'aria-label="Operation counts"')).toBe(1);
 
-    // Learning order: explanation → final answer → inputs → complexity.
+    // Player order: explanation → final answer. The input form lives in the "Edit input" popup
+    // (closed until opened) and the complexity analysis on the learn view.
     const explanation = html.indexOf('What happened and why?');
     const answer = html.indexOf('Final answer');
-    const inputs = html.indexOf('Input &amp; presets');
-    const complexity = html.indexOf('Time and space complexity');
     expect(explanation).toBeGreaterThan(-1);
     expect(answer).toBeGreaterThan(explanation);
-    expect(inputs).toBeGreaterThan(answer);
-    expect(complexity).toBeGreaterThan(inputs);
+    expect(html).toContain('data-edit-input');
+    expect(html).toContain('data-back-to-learn');
+    expect(html).not.toContain('Input &amp; presets');
+    expect(html).not.toContain('Time and space complexity');
+    expect(html).not.toContain('aria-label="Problem and how it works"');
 
     // Before the run finishes, only a placeholder sits in the answer slot.
     if (!(id === 'graph-coloring' && getDefaultInputs(a).findMode === 'all')) {
@@ -54,6 +57,43 @@ describe.each(['split', 'stacked'] as const)('AlgorithmPage layout (%s)', (mode)
 
     // Plain language only.
     expect(html).not.toMatch(/LIVE OPERATION TELEMETRY|COMPUTED SOLUTION ARTIFACT|REALTIME DISPATCH|INITIALIZE &amp; RUN SIMULATION|EXECUTION STATUS/);
+  });
+});
+
+describe.each(algorithmRegistry.map((a) => [a.id] as const))('Learn view (%s)', (id) => {
+  it('shows the problem & how it works and the complexity, with a start button, but no player', () => {
+    const html = renderLearn(id);
+    expect(html).toContain('data-view="learn"');
+    expect(html).toContain('aria-label="Problem and how it works"');
+    expect(html).toContain('Time and space complexity');
+    expect(count(html, 'data-start-animation')).toBe(2);
+    expect(html).not.toContain('role="toolbar"');
+    expect(html).not.toContain('What happened and why?');
+  });
+});
+
+describe('Player view fits the screen', () => {
+  it('split layout fills the screen height on wide screens and scrolls its two columns, not the page', () => {
+    const html = renderPage('knapsack-dp', 'split');
+    expect(html).toContain('data-view="play"');
+    expect(html).toContain('lg:h-[calc(100dvh-2.75rem-1px)]');
+    expect(count(html, 'lg:overflow-y-auto')).toBe(2);
+    // Narrow side padding.
+    expect(html).toMatch(/data-view="play" class="[^"]*\bpx-2\b/);
+  });
+
+  it('full-width layout keeps normal page scrolling', () => {
+    expect(renderPage('knapsack-dp', 'stacked')).not.toContain('lg:h-[calc(100dvh-2.75rem-1px)]');
+  });
+
+  it('the input popup holds the full input form', async () => {
+    const { InputDialog } = await import('../components/common/InputDialog');
+    const cfg = getAlgorithmById('knapsack-dp')!;
+    const html = renderToStaticMarkup(<InputDialog config={cfg} currentInputs={getDefaultInputs(cfg)} onApply={() => {}} onClose={() => {}} />);
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain('aria-modal="true"');
+    expect(html).toContain('Edit input: ' + cfg.name);
+    expect(html).toContain('Input &amp; presets');
   });
 });
 

@@ -45,7 +45,7 @@ export function* hiringProblemSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize The Hiring Problem',
-    description: `Loaded ${scores.length} candidates. Interview cost c_i = ${ci}, Hiring cost c_h = ${ch}. Objective: Hire sequentially only when a candidate strictly surpasses all previous candidates.`,
+    description: `${scores.length} candidates wait in line. Each interview costs ${ci} and each hire costs ${ch}. Rule: hire a candidate right away if they are better than everyone seen so far.`,
     codeLine: 1,
     state: {
       mode: 'hiring',
@@ -67,8 +67,8 @@ export function* hiringProblemSteps(inputs: {
 
     yield {
       stepIndex: stepIndex++,
-      title: `Interview Candidate ${i} (Score: ${candidateScore})`,
-      description: `Interviewing candidate ${i} with score ${candidateScore}. Interview cost incurred (+${ci}, Total Cost: ${totalCost}). Comparing against current best (${currentBestIndex >= 0 ? `Candidate ${currentBestIndex} with ${currentBestScore}` : 'None'}).`,
+      title: `Interview Candidate ${i + 1} (Score: ${candidateScore})`,
+      description: `Interview candidate ${i + 1}: score ${candidateScore} (+${ci}, total cost so far ${totalCost}). ${currentBestIndex >= 0 ? `The best so far is candidate ${currentBestIndex + 1} with ${currentBestScore}.` : 'Nobody has been hired yet.'}`,
       codeLine: [2, 3],
       state: {
         mode: 'hiring',
@@ -102,8 +102,8 @@ export function* hiringProblemSteps(inputs: {
 
       yield {
         stepIndex: stepIndex++,
-        title: `HIRE: Candidate ${i} Sets New High Score (${candidateScore})`,
-        description: `Candidate ${i} (score ${candidateScore}) is strictly better than all previous candidates. Hired! Hiring cost incurred (+${ch}, Total Cost: ${totalCost}).`,
+        title: `HIRE: Candidate ${i + 1} Sets New High Score (${candidateScore})`,
+        description: `Candidate ${i + 1} (score ${candidateScore}) is better than everyone so far, so hire them (+${ch}, total cost ${totalCost}).`,
         codeLine: [4, 5, 6],
         state: {
           mode: 'hiring',
@@ -129,8 +129,8 @@ export function* hiringProblemSteps(inputs: {
     } else {
       yield {
         stepIndex: stepIndex++,
-        title: `SKIP: Candidate ${i} (${candidateScore}) ≤ Best (${currentBestScore})`,
-        description: `Candidate ${i} (score ${candidateScore}) did not exceed the current best score of ${currentBestScore}. Candidate is skipped without hiring.`,
+        title: `SKIP: Candidate ${i + 1} (${candidateScore}) ≤ Best (${currentBestScore})`,
+        description: `Candidate ${i + 1} (score ${candidateScore}) is not better than the best so far (${currentBestScore}), so they are not hired. Only the interview was paid.`,
         codeLine: 7,
         state: {
           mode: 'hiring',
@@ -163,7 +163,7 @@ export function* hiringProblemSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'The Hiring Problem Complete',
-    description: `All ${scores.length} candidates interviewed. Total hires: ${hiredIndices.length} (Candidates [${hiredIndices.join(', ')}]). Total expense: $${totalCost} (Interviews: $${scores.length * ci}, Hires: $${hiredIndices.length * ch}). If candidates arrived in random order, the expected number of hires would be the harmonic number H_${scores.length} = 1 + 1/2 + … + 1/${scores.length} ≈ ${harmonicSum.toFixed(2)} (H_n ≈ ln n + 0.577; here ln ${scores.length} ≈ ${Math.log(scores.length).toFixed(2)}).`,
+    description: `All ${scores.length} candidates interviewed. Total hires: ${hiredIndices.length} (Candidates [${hiredIndices.map((idx) => idx + 1).join(', ')}]). Total expense: $${totalCost} (Interviews: $${scores.length * ci}, Hires: $${hiredIndices.length * ch}). If candidates arrived in random order, the expected number of hires would be the harmonic number H_${scores.length} = 1 + 1/2 + … + 1/${scores.length} ≈ ${harmonicSum.toFixed(2)} (H_n ≈ ln n + 0.577; here ln ${scores.length} ≈ ${Math.log(scores.length).toFixed(2)}).`,
     codeLine: 8,
     state: {
       mode: 'hiring',

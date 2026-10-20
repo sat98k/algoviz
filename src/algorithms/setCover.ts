@@ -58,7 +58,7 @@ export function* setCoverSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Greedy Set Cover',
-    description: `Loaded Universe U with ${universe.length} elements {1..${uSize}} and ${rawSubsets.length} candidate subsets. Goal: Find minimal subset collection covering all elements.`,
+    description: `${universe.length} elements (1 to ${uSize}) must be covered, and there are ${rawSubsets.length} subsets to choose from. Goal: choose as few subsets as possible so that every element is in one. Greedy rule: always take the subset that adds the most uncovered elements.`,
     codeLine: 1,
     state: {
       universe: [...universe],
@@ -100,7 +100,7 @@ export function* setCoverSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Greedily Select ${bestSubset.label} (Covers +${maxUncovered} New Elements)`,
-      description: `Evaluated candidate subsets. ${bestSubset.label} contains the highest number of currently uncovered elements (${maxUncovered} new elements: {${newlyCovered.join(', ')}}).`,
+      description: `Which subset would cover the most elements that are still uncovered? ${bestSubset.label} adds ${maxUncovered} new ones ({${newlyCovered.join(', ')}}), more than any other, so choose it.`,
       codeLine: [2, 3, 4],
       state: {
         universe: [...universe],
@@ -127,7 +127,7 @@ export function* setCoverSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Update Covered Elements (+${newlyCovered.length} Covered)`,
-      description: `Added ${bestSubset.label} to the cover. Total elements covered: ${covered.size} / ${universe.length} (${Math.round((covered.size / universe.length) * 100)}%).`,
+      description: `${bestSubset.label} is chosen. ${covered.size} of ${universe.length} elements are now covered (${Math.round((covered.size / universe.length) * 100)}%).`,
       codeLine: [5, 6],
       state: {
         universe: [...universe],
@@ -155,7 +155,7 @@ export function* setCoverSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Greedy Set Cover Complete',
-    description: `Set cover finished! ${selectedSubsetIds.length} subsets selected: [${selectedSubsetIds.join(', ')}]. ${covered.size}/${universe.length} elements covered. Greedy approximation guarantee: |C| <= OPT * (ln |U| + 1) = OPT * ${harmonicBound.toFixed(2)}.`,
+    description: `Done: every element is covered using ${selectedSubsetIds.length} subsets: [${selectedSubsetIds.join(', ')}]. Greedy is not always the very best, but it never uses more than about ${harmonicBound.toFixed(2)} times as many subsets as the best answer (|C| ≤ OPT × (ln |U| + 1)).`,
     codeLine: 7,
     state: {
       universe: [...universe],

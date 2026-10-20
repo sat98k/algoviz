@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
+import { FitToBox, FitToScreenContext } from '../common/FitToBox';
 import { AlgorithmStep } from '../../types/algorithm';
 import { FractionalKnapsackItem } from '../../algorithms/fractionalKnapsack';
 import { SEM } from '../../styles/semantics';
@@ -26,6 +27,8 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
   defaultViewMode = 'story',
 }) => {
   const [viewMode, setViewMode] = useState<'story' | 'technical'>(defaultViewMode);
+  // Player, fit-to-screen: the frame fills its pane; only the drawing inside zooms.
+  const { enabled: fit } = useContext(FitToScreenContext);
 
   const state = step.state || {};
   const items: FractionalKnapsackItem[] = state.items || [];
@@ -66,9 +69,9 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-[380px] p-3 sm:p-6 bg-obsidian-900 border border-hairline gap-5">
+    <div className={`flex flex-col items-center w-full min-h-[380px] p-3 sm:p-6 bg-obsidian-900 border border-hairline gap-5 ${fit ? 'lg:flex-1 lg:min-h-0 lg:p-2 lg:gap-1.5' : ''}`}>
       {/* ─── Mode Switcher Header ─── */}
-      <div className="flex flex-wrap items-center justify-between w-full max-w-5xl px-1 pb-3 border-b border-hairline gap-3">
+      <div className={`flex flex-wrap items-center justify-between w-full max-w-5xl px-1 pb-3 border-b border-hairline gap-3 ${fit ? 'lg:pb-1.5 lg:max-w-none' : ''}`}>
         <div className="flex items-center gap-3">
           <span className="font-sans text-xs text-chalk-400 font-semibold uppercase tracking-wider">
             View Mode:
@@ -107,10 +110,14 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
 
       {/* ─── Story / Animation Mode ─── */}
       {viewMode === 'story' ? (
-        <FractionalKnapsackAnimatedView step={step} />
+        <div className={`flex flex-col w-full ${fit ? 'lg:flex-1 lg:min-h-0' : ''}`}>
+          <FractionalKnapsackAnimatedView step={step} />
+        </div>
       ) : (
         /* ─── Technical View ─── */
-        <>
+        <div className={`flex flex-col w-full ${fit ? 'lg:flex-1 lg:min-h-0' : ''}`}>
+        <FitToBox>
+        <div className="flex flex-col items-center gap-5 w-full">
           {/* Capacity: one segment per item taken */}
           <section aria-label="Knapsack capacity" className="w-full max-w-4xl p-4 bg-obsidian-950 border border-hairline flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-3 font-mono text-sm">
@@ -248,7 +255,9 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
         <LegendItem swatch={SEM.compare.swatch} symbol="½" label="Taken in part" />
         <LegendItem swatch={SEM.pruned.swatch} symbol="✂" label="Left out (knapsack full)" />
       </ul>
-    </>
+        </div>
+        </FitToBox>
+        </div>
   )}
 </div>
 );

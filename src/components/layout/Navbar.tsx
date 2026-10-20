@@ -1,112 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, GitCompare, Sun, Moon } from 'lucide-react';
+import React from 'react';
+import { BookOpen } from 'lucide-react';
 
 interface NavbarProps {
   currentView: 'home' | 'module' | 'algorithm' | 'compare';
   onNavigate: (view: 'home' | 'compare') => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('algoviz_theme') as 'dark' | 'light' | null;
-    const initialTheme = savedTheme || 'dark';
-    setTheme(initialTheme);
-    if (initialTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    try {
-      localStorage.setItem('algoviz_theme', nextTheme);
-    } catch (e) {
-      console.warn('Unable to persist theme to localStorage', e);
-    }
-    if (nextTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    }
-  };
-
-  return (
-    <header className="sticky top-0 z-50 w-full bg-obsidian-950/85 backdrop-blur-xl border-b border-hairline transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        {/* Brand Typographic Lock */}
-        <div
-          onClick={() => onNavigate('home')}
-          className="flex items-baseline gap-3 cursor-pointer group select-none"
-        >
-          <span className="font-display font-bold text-2xl tracking-tighter text-chalk-100 group-hover:text-amber transition-colors">
-            ALGO<span className="font-serif italic font-normal text-amber-glow">VIZ</span>
-          </span>
-          <span className="hidden sm:inline-block font-mono text-[11px] uppercase tracking-wider text-chalk-400 border-l border-hairline pl-3">
-            Algorithm Visualizer
-          </span>
-        </div>
-
-        {/* Navigation & Theme Toggle */}
-        <nav className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => onNavigate('home')}
-            className={`group relative px-3 sm:px-4 py-2 text-xs font-mono tracking-wider uppercase transition-all duration-200 ${
-              currentView === 'home' || currentView === 'module'
-                ? 'text-chalk-100 bg-obsidian-800 border border-hairline font-bold'
-                : 'text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-850'
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Catalog</span>
-            </span>
-          </button>
-
-          <button
-            onClick={() => onNavigate('compare')}
-            aria-current={currentView === 'compare' ? 'page' : undefined}
-            className={`group relative px-3 sm:px-4 py-2 text-xs font-mono tracking-wider uppercase transition-all duration-200 ${
-              currentView === 'compare'
-                ? 'text-chalk-100 bg-obsidian-800 border border-hairline font-bold'
-                : 'text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-850'
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              <GitCompare className="w-3.5 h-3.5 text-amber" />
-              <span>Compare</span>
-            </span>
-          </button>
-
-          {/* Theme Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="group relative flex items-center gap-1.5 px-3 py-2 text-xs font-mono tracking-wider uppercase bg-obsidian-850 hover:bg-obsidian-800 text-chalk-300 hover:text-amber-glow border border-hairline transition-all"
-          >
-            {theme === 'dark' ? (
-              <>
-                <Sun className="w-3.5 h-3.5 text-amber" />
-                <span className="hidden md:inline">Light</span>
-              </>
-            ) : (
-              <>
-                <Moon className="w-3.5 h-3.5 text-amber" />
-                <span className="hidden md:inline">Dark</span>
-              </>
-            )}
-          </button>
-        </nav>
+/**
+ * A thin top bar (h-11 = 2.75rem; the player view and sticky panels are sized from it):
+ * the logo and the catalog. The site uses the light theme only.
+ */
+export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => (
+  <header className="sticky top-0 z-50 w-full bg-obsidian-950/90 backdrop-blur-xl border-b border-hairline">
+    <div className="px-3 sm:px-4 h-11 flex items-center justify-between">
+      <div onClick={() => onNavigate('home')} className="flex items-baseline gap-2.5 cursor-pointer group select-none">
+        <span className="font-display font-bold text-lg tracking-tighter text-chalk-100 group-hover:text-amber transition-colors">
+          ALGO<span className="font-serif italic font-normal text-amber-glow">VIZ</span>
+        </span>
+        <span className="hidden sm:inline-block font-mono text-[11px] tracking-wider text-chalk-400 border-l border-hairline pl-2.5">
+          ALGORITHM VISUALIZER
+        </span>
       </div>
-    </header>
-  );
-};
 
+      <nav className="flex items-center">
+        <button
+          onClick={() => onNavigate('home')}
+          className={`px-3 py-1 text-xs font-mono tracking-wider transition-colors ${
+            currentView === 'home' || currentView === 'module'
+              ? 'text-chalk-100 bg-obsidian-800 border border-hairline font-bold'
+              : 'text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-850 border border-transparent'
+          }`}
+        >
+          <span className="flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>CATALOG</span>
+          </span>
+        </button>
+      </nav>
+    </div>
+  </header>
+);

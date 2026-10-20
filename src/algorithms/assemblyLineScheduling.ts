@@ -77,7 +77,7 @@ export function* assemblyLineSchedulingSteps(
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Assembly Line Entry Costs',
-    description: `Station 1 base cases: Line 1 entry cost f1[1] = e1 (${e1}) + a1[1] (${a1[0]}) = ${f1[0]}. Line 2 entry cost f2[1] = e2 (${e2}) + a2[1] (${a2[0]}) = ${f2[0]}.`,
+    description: `Trying every route (two choices at every station) takes too long, so we work out the fastest time to finish each station, one station at a time. Station 1: on line 1, entry ${e1} + station ${a1[0]} = ${f1[0]}; on line 2, entry ${e2} + station ${a2[0]} = ${f2[0]}.`,
     codeLine: 2,
     state: {
       numStations: n,
@@ -137,7 +137,7 @@ export function* assemblyLineSchedulingSteps(
     yield {
       stepIndex: stepIndex++,
       title: `Compute Station ${j + 1} on Line 1`,
-      description: `To finish station ${j + 1} on line 1, either stay on line 1 or switch from line 2 and pay the transfer time. ${l1[j] === 1 ? 'Staying' : 'Switching'} is faster (${stayLine1} vs ${transferFrom2}).`,
+      description: `To finish station ${j + 1} on line 1, either stay on line 1 or switch from line 2 and pay the transfer time. ${l1[j] === 1 ? 'Staying' : 'Switching'} is faster (stay ${stayLine1} vs switch ${transferFrom2}).`,
       codeLine: 4,
       state: {
         numStations: n,
@@ -195,7 +195,7 @@ export function* assemblyLineSchedulingSteps(
     yield {
       stepIndex: stepIndex++,
       title: `Compute Station ${j + 1} on Line 2`,
-      description: `To finish station ${j + 1} on line 2, either stay on line 2 or switch from line 1 and pay the transfer time. ${l2[j] === 2 ? 'Staying' : 'Switching'} is faster (${stayLine2} vs ${transferFrom1}).`,
+      description: `To finish station ${j + 1} on line 2, either stay on line 2 or switch from line 1 and pay the transfer time. ${l2[j] === 2 ? 'Staying' : 'Switching'} is faster (stay ${stayLine2} vs switch ${transferFrom1}).`,
       codeLine: 5,
       state: {
         numStations: n,
@@ -248,7 +248,7 @@ export function* assemblyLineSchedulingSteps(
   yield {
     stepIndex: stepIndex++,
     title: 'Forward DP Pass Complete: Choose Optimal Exit Line',
-    description: `Exit comparison: Line 1 exit = f1[${n}] (${f1[n - 1]}) + x1 (${x1}) = ${exitLine1}. Line 2 exit = f2[${n}] (${f2[n - 1]}) + x2 (${x2}) = ${exitLine2}. Minimum total time: ${minTotalTime} exiting from Line ${winningLine}.`,
+    description: `Last stretch to the exit: finishing on line 1 takes ${f1[n - 1]} + exit ${x1} = ${exitLine1}; finishing on line 2 takes ${f2[n - 1]} + exit ${x2} = ${exitLine2}. The fastest total is ${minTotalTime}, leaving from line ${winningLine}.`,
     codeLine: 6,
     state: {
       numStations: n,
@@ -312,7 +312,7 @@ export function* assemblyLineSchedulingSteps(
     yield {
       stepIndex: stepIndex++,
       title: `Backtrack: Station ${j + 1} ➔ Station ${j}`,
-      description: `Station ${j + 1} was reached on Line ${currLine} from Line ${prevLine} at Station ${j} (${isTransfer ? `Line Transfer: Line ${prevLine} ➔ Line ${currLine}` : `Stay on Line ${currLine}`}).`,
+      description: `Walking back: the fastest car reached station ${j + 1} on line ${currLine} ${isTransfer ? `by switching over from line ${prevLine}` : `by staying on line ${currLine}`} after station ${j}.`,
       codeLine: 7,
       state: {
         numStations: n,
@@ -355,7 +355,7 @@ export function* assemblyLineSchedulingSteps(
   yield {
     stepIndex: stepIndex++,
     title: 'Assembly Line Scheduling Complete',
-    description: `Optimal manufacturing path verified: Total Minimum Time = ${minTotalTime}. Path sequence: [${fullPath.map((p) => `Station ${p.station} on Line ${p.line}`).join(' ➔ ')}].`,
+    description: `Done: the fastest route takes ${minTotalTime}: ${fullPath.map((p) => `station ${p.station} on line ${p.line}`).join(' ➔ ')}. Every other route is slower.`,
     codeLine: 8,
     state: {
       numStations: n,

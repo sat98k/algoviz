@@ -131,7 +131,7 @@ export const PointCanvasVisualizer: React.FC<PointCanvasVisualizerProps> = ({ st
       <div className="flex flex-wrap items-center justify-center gap-5 mt-5 text-xs font-mono text-chalk-400">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-amber border border-amber-glow"></span>
-          <span>Pivot Point P0</span>
+          <span>Anchor (lowest point)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-acid-500 border border-acid-400"></span>

@@ -47,7 +47,7 @@ export function* knapsackDPSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize DP Table',
-    description: `Created a ${n + 1} × ${capacity + 1} table. dp[i][w] will hold the best value using only the first i items with capacity w. Row 0 is all zeros because with no items there is nothing to carry, and column 0 is all zeros because with no capacity nothing fits.`,
+    description: `Trying every combination of items takes too long, so we answer small questions first and write the answers in a table. Cell dp[i][w] = the best value using only the first i items in a knapsack of size w. The table has ${n + 1} rows (0 to ${n} items) and ${capacity + 1} columns (sizes 0 to ${capacity}). Row 0 is all zeros because with no items there is nothing to carry, and column 0 is all zeros because with no capacity nothing fits.`,
     codeLine: 2,
     state: {
       items,
@@ -79,7 +79,7 @@ export function* knapsackDPSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Item ${i} Exceeds Weight ${w}`,
-          description: `Item ${i} (weight ${item.weight}) does not fit in capacity ${w}, so the best value is the same as without it.`,
+          description: `Item ${i} (weight ${item.weight}) does not fit in capacity ${w}, so the best value is the same as without it: copy the cell above, dp[${i - 1}][${w}] = ${dp[i][w]}.`,
           codeLine: [6, 7],
           state: {
             items,
@@ -115,7 +115,7 @@ export function* knapsackDPSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Evaluate Item ${i} at Weight ${w}`,
-          description: `Item ${i} fits in capacity ${w}, so compare leaving it out with taking it. ${includeVal > excludeVal ? 'Taking it gives more value.' : includeVal === excludeVal ? 'Both give the same value, so it is left out.' : 'Leaving it out gives more value.'}`,
+          description: `Item ${i} fits in capacity ${w}, so compare leaving it out with taking it. Leave it out: dp[${i - 1}][${w}] = ${excludeVal}. Take it: its value ${item.value} + dp[${i - 1}][${w - item.weight}] = ${item.value} + ${dp[i - 1][w - item.weight]} = ${includeVal}. ${includeVal > excludeVal ? 'Taking it gives more value.' : includeVal === excludeVal ? 'Both give the same value, so it is left out.' : 'Leaving it out gives more value.'}`,
           codeLine: [8, 9, 10, 11],
           state: {
             items,
@@ -155,7 +155,7 @@ export function* knapsackDPSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'DP Table Complete: Begin Item Backtracking',
-    description: `DP table fill completed with optimal value dp[${n}][${capacity}] = ${dp[n][capacity]}. Starting backtrack from cell (${n}, ${capacity}) to identify which items were selected.`,
+    description: `The table is full. The bottom-right cell dp[${n}][${capacity}] = ${dp[n][capacity]} is the answer: the best value using all ${n} items in the full knapsack. To find which items give it, walk back from that cell.`,
     codeLine: 12,
     state: {
       items,
@@ -189,7 +189,7 @@ export function* knapsackDPSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Backtrack: Item ${i} INCLUDED`,
-        description: `At cell (i=${i}, w=${currW}): dp[${i}][${currW}] = ${valCurr} vs dp[${i - 1}][${currW}] = ${valPrev} (NOT EQUAL). Item ${i} (weight: ${item.weight}, value: ${item.value}) was INCLUDED! Moving cursor to (i=${i - 1}, w=${nextW}).`,
+        description: `dp[${i}][${currW}] = ${valCurr} is more than the cell above (${valPrev}), so the best answer needed item ${i}: it is in the knapsack (weight ${item.weight}, value ${item.value}). Its ${item.weight} kg are used up, so move up a row and ${item.weight} columns left, to dp[${i - 1}][${nextW}].`,
         codeLine: 12,
         state: {
           items,
@@ -228,7 +228,7 @@ export function* knapsackDPSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Backtrack: Item ${i} NOT Included`,
-        description: `At cell (i=${i}, w=${currW}): dp[${i}][${currW}] = ${valCurr} vs dp[${i - 1}][${currW}] = ${valPrev} (EQUAL). Item ${i} was NOT included. Moving cursor directly up to (i=${i - 1}, w=${currW}).`,
+        description: `dp[${i}][${currW}] = ${valCurr} is the same as the cell above, so the best answer did not need item ${i}: it is left out. Move straight up to dp[${i - 1}][${currW}].`,
         codeLine: 12,
         state: {
           items,
@@ -272,7 +272,7 @@ export function* knapsackDPSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: '0-1 Knapsack Complete',
-    description: `Backtrack completed. Optimal solution achieved: Total Value = ${totalVal}, Total Weight = ${totalWeight}/${capacity}. Selected Items: [${selectedItems.map((id) => `Item ${id}`).join(', ')}].`,
+    description: `Done: take ${selectedItems.map((id) => `Item ${id}`).join(', ') || 'no items'} for a total value of ${totalVal}, using ${totalWeight} of ${capacity} kg. No other set of whole items that fits is worth more.`,
     codeLine: 13,
     state: {
       items,

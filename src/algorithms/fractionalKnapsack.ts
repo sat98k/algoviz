@@ -63,7 +63,7 @@ export function* fractionalKnapsackSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Items & Ratios',
-    description: `Initialized ${n} items with capacity W = ${capacity}. Computed value-to-weight ratio (v/w) for each item.`,
+    description: `We have ${n} items and a knapsack that holds ${capacity} kg. For each item, value ÷ weight tells us what one kg of it is worth: the higher, the better the deal.`,
     codeLine: 2,
     state: {
       items: initialItems.map((it) => ({ ...it })),
@@ -92,7 +92,7 @@ export function* fractionalKnapsackSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Sort Items by Value/Weight Ratio Descending',
-    description: `Sorted items by value-per-unit-weight (the greedy choice, which is provably optimal for the fractional problem): [${sortedItems
+    description: `Sorted the items by value per kg, best deal first. We will always pack the best deal first (the greedy choice): [${sortedItems
       .map((it) => `Item ${it.id} (${it.ratio})`)
       .join(' > ')}].`,
     codeLine: 3,
@@ -126,7 +126,7 @@ export function* fractionalKnapsackSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Examining Item ${item.id} (Ratio: ${item.ratio})`,
-      description: `Examining Item ${item.id} with weight ${item.weight}, value ${item.value}. Remaining knapsack capacity: ${remainingCap} / ${capacity}.`,
+      description: `Next best deal: Item ${item.id} (weight ${item.weight} kg, value ${item.value}). The knapsack has ${remainingCap} kg of space left. Does the whole item fit?`,
       codeLine: 5,
       state: {
         items: sortedItems.map((it) => ({ ...it })),
@@ -157,7 +157,7 @@ export function* fractionalKnapsackSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Skip Item ${item.id} (Capacity Saturated)`,
-        description: `Knapsack capacity is fully saturated (current weight = ${currentWeight}/${capacity}). Skipping Item ${item.id}.`,
+        description: `The knapsack is already full (${currentWeight}/${capacity} kg), so Item ${item.id} is left out.`,
         codeLine: 10,
         state: {
           items: sortedItems.map((it) => ({ ...it })),
@@ -192,7 +192,7 @@ export function* fractionalKnapsackSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Take 100% of Item ${item.id}`,
-        description: `Item ${item.id} fits entirely (${item.weight} <= ${remainingCap}). Added weight +${item.weight}, value +${item.value}. Cumulative Weight: ${currentWeight}/${capacity}, Cumulative Value: ${currentValue}.`,
+        description: `Yes: Item ${item.id} weighs ${item.weight} kg and ${remainingCap} kg of space is left, so we take all of it (+${item.value} value). The knapsack now holds ${currentWeight}/${capacity} kg worth ${currentValue}.`,
         codeLine: [6, 7],
         state: {
           items: sortedItems.map((it) => ({ ...it })),
@@ -230,7 +230,7 @@ export function* fractionalKnapsackSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Take ${(fraction * 100).toFixed(1)}% Fraction of Item ${item.id}`,
-        description: `Item ${item.id} (weight ${item.weight}) exceeds remaining capacity ${remainingCap}. Sliced item to take fraction ${remainingCap}/${item.weight} (${(fraction * 100).toFixed(1)}%). Added weight +${weightTaken}, value +${valueTaken}. Knapsack is now 100% full.`,
+        description: `No: Item ${item.id} weighs ${item.weight} kg but only ${remainingCap} kg of space is left. Because items can be cut, we take just ${remainingCap}/${item.weight} of it (${(fraction * 100).toFixed(1)}%), which adds ${valueTaken} value. The knapsack is now exactly full.`,
         codeLine: [8, 9, 10],
         state: {
           items: sortedItems.map((it) => ({ ...it })),
@@ -256,7 +256,7 @@ export function* fractionalKnapsackSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Fractional Knapsack Complete',
-    description: `Greedy selection completed. Maximum achievable value: ${currentValue} with total knapsack weight ${currentWeight} / ${capacity}.`,
+    description: `Done: the knapsack is full (${currentWeight}/${capacity} kg) with total value ${currentValue}. When items can be cut, packing the best value per kg first can never be beaten.`,
     codeLine: 11,
     state: {
       items: sortedItems.map((it) => ({ ...it })),

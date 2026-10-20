@@ -28,7 +28,8 @@ export type VisualizerType =
   | 'TspVisualizer'
   | 'SetCoverVisualizer'
   | 'SweepLineVisualizer'
-  | 'LCSVisualizer';
+  | 'LCSVisualizer'
+  | 'NQueensVisualizer';
 
 export interface ComplexityInfo {
   timeBest?: string;

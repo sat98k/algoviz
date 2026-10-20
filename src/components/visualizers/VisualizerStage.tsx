@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { AlgorithmConfig, AlgorithmStep } from '../../types/algorithm';
 import { TreeTraversalOverride } from '../../utils/huffmanCodec';
 import { ArrayBarVisualizer } from './ArrayBarVisualizer';
@@ -15,6 +15,12 @@ import { TspVisualizer } from './TspVisualizer';
 import { SetCoverVisualizer } from './SetCoverVisualizer';
 import { SweepLineVisualizer } from './SweepLineVisualizer';
 import { LCSVisualizer } from './LCSVisualizer';
+import { NQueensVisualizer } from './NQueensVisualizer';
+import { STORY_SCENES } from '../story/storyRegistry';
+import { StoryModeToggle, StoryViewMode } from '../story/StoryModeToggle';
+import { stepDurationMs } from '../story/useAnimPhases';
+import { FitResetKey, FitToBox, FitToScreenContext } from '../common/FitToBox';
+import { NarrationGateProvider } from '../story/narrationGate';
 
 interface VisualizerStageProps {
   config: AlgorithmConfig;
@@ -24,10 +30,86 @@ interface VisualizerStageProps {
   traversalOverride?: TreeTraversalOverride | null;
   /** Lets visualizers with built-in editors (TSP) change the inputs. */
   onApplyInputs?: (newInputs: Record<string, any>) => void;
+  /** Playback speed (steps per second); paces story-mode animations. */
+  speed?: number;
+  /** View shown first when the reader has not picked one for this algorithm yet. */
+  defaultMode?: StoryViewMode;
+  /**
+   * Player only: the owl reads each step's sentence first, and the step's animation waits for it.
+   * `onStepSettled` fires once the animation has played and the owl has finished reading;
+   * `onNarratedChange` tells whether an owl is narrating (Animation Mode) or not.
+   */
+  narrate?: boolean;
+  onStepSettled?: (stepIndex: number) => void;
+  onNarratedChange?: (narrated: boolean) => void;
 }
 
-/** Renders the visualizer registered for an algorithm (`config.visualizer`). */
-export const VisualizerStage: React.FC<VisualizerStageProps> = ({
+/** View mode chosen per algorithm, so it survives the stage remounting (e.g. a layout switch). */
+const chosenMode: Record<string, StoryViewMode> = {};
+
+/**
+ * Renders the visualizer registered for an algorithm. Algorithms with a story scene
+ * (see storyRegistry) get a 📊 / 🎬 toggle; the technical view stays the default.
+ */
+export const VisualizerStage: React.FC<VisualizerStageProps> = (props) => {
+  const { narrate, step, speed, onStepSettled, onNarratedChange } = props;
+  // A new key on every step change (even back to a step seen before), so the owl reads again.
+  const visit = useRef({ index: step.stepIndex, n: 0 });
+  if (visit.current.index !== step.stepIndex) visit.current = { index: step.stepIndex, n: visit.current.n + 1 };
+  if (!narrate) return <StageBody {...props} />;
+  return (
+    <NarrationGateProvider
+      stepKey={`${props.config.id}|${visit.current.n}|${step.stepIndex}`}
+      stepIndex={step.stepIndex}
+      stepMs={stepDurationMs(speed)}
+      onSettled={onStepSettled}
+      onNarrated={onNarratedChange}
+    >
+      <StageBody {...props} />
+    </NarrationGateProvider>
+  );
+};
+
+const StageBody: React.FC<VisualizerStageProps> = (props) => {
+  const { config, step, speed, defaultMode = 'technical' } = props;
+  const { enabled: fit } = useContext(FitToScreenContext);
+  const [mode, setModeState] = useState<StoryViewMode>(chosenMode[config.id] ?? defaultMode);
+  const setMode = (m: StoryViewMode) => {
+    chosenMode[config.id] = m;
+    setModeState(m);
+  };
+  // In the fit-to-screen player the pane fills its column; only the drawing zooms.
+  const fill = fit ? 'lg:flex-1 lg:min-h-0' : '';
+  const scene = STORY_SCENES[config.id];
+  // Fractional Knapsack draws its own frame and toggle; it zooms only its drawing itself.
+  if (!scene)
+    return (
+      <div className={`flex flex-col w-full ${fill}`}>
+        <TechnicalVisualizer {...props} />
+      </div>
+    );
+
+  const Scene = scene.component;
+  return (
+    <FitResetKey part={mode}>
+      <div className={`flex flex-col w-full gap-3 ${fill} ${fit ? 'lg:gap-1.5' : ''}`}>
+        <StoryModeToggle mode={mode} onChange={setMode} storyHint={scene.hint} compact={fit} />
+        {mode === 'story' ? (
+          <div className={`flex flex-col w-full ${fill}`}>
+            <Scene step={step} algorithmId={config.id} stepMs={stepDurationMs(speed)} />
+          </div>
+        ) : (
+          <FitToBox>
+            <TechnicalVisualizer {...props} />
+          </FitToBox>
+        )}
+      </div>
+    </FitResetKey>
+  );
+};
+
+/** The existing (technical) visualizer registered for an algorithm (`config.visualizer`). */
+const TechnicalVisualizer: React.FC<VisualizerStageProps> = ({
   config,
   step,
   inputs,
@@ -87,6 +169,8 @@ export const VisualizerStage: React.FC<VisualizerStageProps> = ({
           onApplyInputs={(newInputs) => onApplyInputs?.(newInputs)}
         />
       );
+    case 'NQueensVisualizer':
+      return <NQueensVisualizer step={step} inputs={inputs} />;
     default:
       return (
         <div className="p-12 text-center font-mono text-xs text-chalk-500 border border-hairline bg-obsidian-950">

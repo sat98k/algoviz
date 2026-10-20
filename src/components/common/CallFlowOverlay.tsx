@@ -108,10 +108,13 @@ export const CallFlowOverlay: React.FC<CallFlowOverlayProps> = ({ step, containe
 
     animFrameId = requestAnimationFrame(tick);
     window.addEventListener('resize', computeCoordinates);
+    // Capture phase: also follows the scrolling columns of the player view.
+    window.addEventListener('scroll', computeCoordinates, true);
 
     return () => {
       cancelAnimationFrame(animFrameId);
       window.removeEventListener('resize', computeCoordinates);
+      window.removeEventListener('scroll', computeCoordinates, true);
       if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
     };
   }, [step.stepIndex, step.callFlow, containerRef]);

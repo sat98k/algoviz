@@ -196,7 +196,7 @@ export function* jobSelectionBBSteps(inputs: {
 
   yield makeStep(
     'Initialize Job Selection Branch & Bound',
-    `Sorted ${n} jobs by profit descending. Root node initialized with Upper Bound = ${initialBound} across max deadline ${maxDeadline}.`,
+    `Sorted the ${n} jobs by profit, highest first. There are ${maxDeadline} time slots. Each node of the tree decides one job: include it or not. Every node gets an optimistic estimate (upper bound): its profit plus the best remaining profits that could still fit in the free slots. For the root (nothing decided yet) that is ${initialBound}.`,
     [2, 3, 4],
     `Jobs: [${jobs.map((j) => `J${j.id}(d=${j.deadline},p=${j.profit})`).join(', ')}] | Max D=${maxDeadline}`,
     rootNode.id
@@ -219,7 +219,7 @@ export function* jobSelectionBBSteps(inputs: {
 
       yield makeStep(
         `Prune Node at Level ${curr.level} by Bound`,
-        `The upper bound ${curr.bound} of ${jobNodeName(curr)} cannot beat the current best profit ${bestProfit}. Node pruned.`,
+        `${jobNodeName(curr).replace(/^t/, 'T')} could earn at most ${curr.bound} (its upper bound), which cannot beat the best profit already found (${bestProfit}). It is pruned.`,
         7,
         `Pruned ${jobNodeName(curr)}: UB (${curr.bound}) <= Best (${bestProfit})`,
         curr.id,
@@ -236,7 +236,7 @@ export function* jobSelectionBBSteps(inputs: {
 
     yield makeStep(
       `Explore Node at Level ${curr.level} (P ${curr.profit}, UB ${curr.bound})`,
-      `Took ${jobNodeName(curr)} from the queue (the live node with the highest upper bound) at level ${curr.level}: profit so far = ${curr.profit}, upper bound = ${curr.bound}. Best profit found so far = ${bestProfit}.`,
+      `Took ${jobNodeName(curr)} from the queue: it is the most promising waiting node (profit so far ${curr.profit}, upper bound ${curr.bound}). Best profit found so far: ${bestProfit}.`,
       6,
       `Exploring ${jobNodeName(curr)}: Profit=${curr.profit}, UB=${curr.bound}`,
       curr.id,
@@ -290,7 +290,7 @@ export function* jobSelectionBBSteps(inputs: {
 
       yield makeStep(
         `Prune Left Branch (+J${nextJob.id}): Infeasible`,
-        `Adding Job J${nextJob.id} (deadline=${nextJob.deadline}) makes schedule infeasible. Branch pruned.`,
+        `Adding J${nextJob.id} (deadline ${nextJob.deadline}) is infeasible: no free slot is left for it by its deadline, so not every chosen job could finish in time. Branch pruned.`,
         10,
         `+J${nextJob.id} infeasible — deadline conflict`,
         leftNode.id,
@@ -319,7 +319,7 @@ export function* jobSelectionBBSteps(inputs: {
 
         yield makeStep(
           `New Best Profit Found: ${bestProfit}`,
-          `Feasible schedule with Job J${nextJob.id} achieves profit ${bestProfit}. Schedule: [${bestSchedule.map((id, slot) => `Slot ${slot + 1}: ${id == null ? 'empty' : `J${id}`}`).join(', ')}].`,
+          `Adding J${nextJob.id} still lets every chosen job meet its deadline, for a profit of ${bestProfit}: the best so far. Each job goes in the latest free slot before its deadline, which keeps earlier slots open for other jobs: [${bestSchedule.map((id, slot) => `Slot ${slot + 1}: ${id == null ? 'empty' : `J${id}`}`).join(', ')}].`,
           9,
           `New best profit = ${bestProfit} with J${nextJob.id}`,
           leftNode.id,
@@ -353,7 +353,7 @@ export function* jobSelectionBBSteps(inputs: {
           queue.push(leftNode);
           yield makeStep(
             `Best Schedule (with J${nextJob.id}) Added to Queue`,
-            `The new best schedule (including J${nextJob.id}) may still be improved, so its node joins the queue for deeper exploration (profit = ${inclProfit}, upper bound = ${inclBound}).`,
+            `This new best schedule (with J${nextJob.id}) might still grow, so its node waits in the queue to be explored later (profit ${inclProfit}, upper bound ${inclBound}).`,
             11,
             `+J${nextJob.id} best-so-far queued: Profit=${inclProfit}, UB=${inclBound}`,
             leftNode.id,
@@ -375,7 +375,7 @@ export function* jobSelectionBBSteps(inputs: {
 
           yield makeStep(
             `Prune Left Branch (+J${nextJob.id}) by Bound`,
-            `Including J${nextJob.id} yields UB ${inclBound} <= best profit ${bestProfit}. Branch pruned.`,
+            `Including J${nextJob.id}: its upper bound ${inclBound} cannot beat the best profit ${bestProfit}, so this branch is pruned.`,
             10,
             `+J${nextJob.id} pruned: UB (${inclBound}) <= Best (${bestProfit})`,
             leftNode.id,
@@ -388,7 +388,7 @@ export function* jobSelectionBBSteps(inputs: {
           queue.push(leftNode);
           yield makeStep(
             `Include J${nextJob.id} Added to Queue`,
-            `Feasible node with J${nextJob.id} added (Profit = ${inclProfit}, UB = ${inclBound}).`,
+            `Including J${nextJob.id} keeps every deadline and might beat the best (profit ${inclProfit}, upper bound ${inclBound}), so it waits in the queue.`,
             11,
             `+J${nextJob.id} active: Profit=${inclProfit}, UB=${inclBound}`,
             leftNode.id,
@@ -436,7 +436,7 @@ export function* jobSelectionBBSteps(inputs: {
 
       yield makeStep(
         `Prune Right Branch (-J${nextJob.id}) by Bound`,
-        `Excluding J${nextJob.id} yields UB ${exclBound} <= best profit ${bestProfit}. Branch pruned.`,
+        `Leaving out J${nextJob.id}: its upper bound ${exclBound} cannot beat the best profit ${bestProfit}, so this branch is pruned.`,
         13,
         `-J${nextJob.id} pruned: UB (${exclBound}) <= Best (${bestProfit})`,
         rightNode.id,
@@ -449,7 +449,7 @@ export function* jobSelectionBBSteps(inputs: {
       queue.push(rightNode);
       yield makeStep(
         `Exclude J${nextJob.id} Added to Queue`,
-        `Node excluding J${nextJob.id} added (Profit = ${exclProfit}, UB = ${exclBound}).`,
+        `Leaving out J${nextJob.id} might still beat the best (profit ${exclProfit}, upper bound ${exclBound}), so it waits in the queue.`,
         14,
         `-J${nextJob.id} active: Profit=${exclProfit}, UB=${exclBound}`,
         rightNode.id,

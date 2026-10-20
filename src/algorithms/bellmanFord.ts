@@ -57,6 +57,8 @@ export function* bellmanFordSteps(inputs: {
   const totalPasses = Math.max(n - 1, 0);
   const lbl = (id: string) => labels[+id];
   const fmt = (v: number | null | undefined) => (v === null || v === undefined ? '∞' : `${v}`);
+  /** A weight as it reads after a plus sign: 5 or (−4). */
+  const plusW = (w: number) => (w < 0 ? `(−${-w})` : `${w}`);
 
   let stepIndex = 0;
   let comparisons = 0;
@@ -112,7 +114,7 @@ export function* bellmanFordSteps(inputs: {
 
   yield snapshot(
     'Initialize single-source distances',
-    `Set dist[${lbl(source)}] = 0 and every other vertex to ∞. Then relax all ${edges.length} edges up to ${totalPasses} time${totalPasses === 1 ? '' : 's'}.`,
+    `Start: ${lbl(source)} is 0 away from itself, and every other vertex is ∞ (no route known yet). Then we "relax" edges: for an edge u → v, if going through u gives v a shorter distance, update it. We go over all ${edges.length} edges up to ${totalPasses} time${totalPasses === 1 ? '' : 's'}.`,
     2,
     { pass: 0, highlights: { activeNode: source } }
   );
@@ -121,7 +123,7 @@ export function* bellmanFordSteps(inputs: {
   for (let pass = 1; pass <= totalPasses && !earlyStop; pass++) {
     yield snapshot(
       `Pass ${pass} of ${totalPasses}`,
-      `Relax every edge once. A shortest path has at most ${totalPasses} edges, so ${totalPasses} passes are enough.`,
+      `Go over every edge once. Why ${totalPasses} passes? A shortest path never needs to visit a vertex twice, so it has at most ${totalPasses} edges, and each pass fixes at least one more of them.`,
       3,
       { pass, highlights: { activeNode: source } }
     );
@@ -144,7 +146,7 @@ export function* bellmanFordSteps(inputs: {
         updatedThisPass = true;
         yield snapshot(
           `Relax ${lbl(e.u)} → ${lbl(e.v)}  (w = ${e.weight})`,
-          `dist[${lbl(e.u)}] + ${e.weight} = ${newDv} < ${fmt(oldDv)} → update dist[${lbl(e.v)}] = ${newDv}, pred[${lbl(e.v)}] = ${lbl(e.u)}.`,
+          `dist[${lbl(e.u)}] + w = ${du} + ${plusW(e.weight)} = ${newDv} < ${fmt(oldDv)} → update dist[${lbl(e.v)}] = ${newDv}, pred[${lbl(e.v)}] = ${lbl(e.u)}.`,
           [5, 6],
           {
             pass,
@@ -161,7 +163,7 @@ export function* bellmanFordSteps(inputs: {
           `Check ${lbl(e.u)} → ${lbl(e.v)}  (w = ${e.weight})`,
           du === null
             ? `${lbl(e.u)} is still unreachable (∞), so this edge cannot relax ${lbl(e.v)} yet.`
-            : `dist[${lbl(e.u)}] + ${e.weight} = ${(du as number) + e.weight} ≥ dist[${lbl(e.v)}] = ${fmt(dv)} → no improvement.`,
+            : `dist[${lbl(e.u)}] + w = ${du} + ${plusW(e.weight)} = ${(du as number) + e.weight} ≥ dist[${lbl(e.v)}] = ${fmt(dv)} → no improvement.`,
           [4, 5],
           {
             pass,
@@ -201,7 +203,7 @@ export function* bellmanFordSteps(inputs: {
       negEdge = { u: e.u, v: e.v };
       yield snapshot(
         `Negative cycle via ${lbl(e.u)} → ${lbl(e.v)}`,
-        `Edge ${lbl(e.u)} → ${lbl(e.v)} still relaxes (${du} + ${e.weight} < ${fmt(dv)}). A negative-weight cycle is reachable — no shortest path exists.`,
+        `Edge ${lbl(e.u)} → ${lbl(e.v)} still improves (${du} + ${plusW(e.weight)} < ${fmt(dv)}) after all passes. That only happens when a loop with a negative total can be reached: going round it again and again makes distances smaller forever, so no shortest path exists.`,
         8,
         {
           pass: totalPasses + 1,
@@ -220,7 +222,7 @@ export function* bellmanFordSteps(inputs: {
   if (negEdge) {
     yield snapshot(
       'Bellman-Ford Halted — Negative Cycle',
-      `A negative-weight cycle reachable from ${lbl(source)} was detected at edge ${lbl(negEdge.u)} → ${lbl(negEdge.v)}. Shortest paths are undefined.`,
+      `A negative-weight cycle reachable from ${lbl(source)} was found at edge ${lbl(negEdge.u)} → ${lbl(negEdge.v)}. Going round it lowers the cost forever, so no shortest paths exist.`,
       8,
       {
         pass: totalPasses + 1,
@@ -269,7 +271,7 @@ export function* bellmanFordSteps(inputs: {
 
   yield snapshot(
     'Bellman-Ford Complete',
-    `Shortest paths from ${lbl(source)} computed with ${relaxations} relaxation${relaxations === 1 ? '' : 's'}. No negative cycle is reachable.`,
+    `Done: the shortest distances from ${lbl(source)} are final (${relaxations} update${relaxations === 1 ? ' was' : 's were'} made). The extra pass changed nothing, so no negative cycle can be reached.`,
     9,
     {
       pass: totalPasses + 1,

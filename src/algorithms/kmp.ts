@@ -42,7 +42,7 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
   yield {
     stepIndex: stepIndex++,
     title: 'Phase 1: Build the LPS Table (Pattern Only)',
-    description: `Before reading the text, KMP studies the pattern alone. For each position i, LPS[i] is the length of the longest proper prefix of P[0…i] that is also a suffix of it (proper = not the whole string). LPS[0] = 0 because a single character has no proper prefix. Start with len = 0 and i = 1.`,
+    description: `Before reading the text, KMP studies the pattern alone. LPS[i] answers: in the first i + 1 letters of the pattern, how long is the longest piece at the start that also appears at the end (a "proper prefix that is also a suffix", never the whole piece)? Later, that number tells KMP how much it can keep after a mismatch. LPS[0] = 0 because a single letter has no shorter piece. Start with len = 0 and i = 1.`,
     codeLine: [2, 3, 4, 5],
     state: {
       text,
@@ -194,7 +194,7 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
   yield {
     stepIndex: stepIndex++,
     title: 'LPS Table Complete',
-    description: `LPS = [${lps.join(', ')}]. Phase 1 used only the pattern; the text has not been read yet.`,
+    description: `LPS = [${lps.join(', ')}]. Phase 1 used only the pattern; the text has not been read yet. These numbers will tell us how far to jump back in the pattern after a mismatch.`,
     codeLine: 16,
     state: {
       text,
@@ -248,7 +248,7 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
       title: `Compare text[i = ${txtIdx}] with P[j = ${patIdx}]`,
       description: isCharMatch
         ? `text[${txtIdx}] = '${text[txtIdx]}' equals P[${patIdx}]: advance both i and j.`
-        : `text[${txtIdx}] = '${text[txtIdx]}' differs from P[${patIdx}] = '${pattern[patIdx]}'.`,
+        : `text[${txtIdx}] = '${text[txtIdx]}' differs from P[${patIdx}] = '${pattern[patIdx]}'. Instead of starting over, KMP looks at what was already matched.`,
       codeLine: [23, 24],
       state: {
         text,
@@ -346,7 +346,7 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
         yield {
           stepIndex: stepIndex++,
           title: `Mismatch at j = 0: Advance i`,
-          description: `Nothing of the pattern is matched, so there is nothing to reuse: move i to ${txtIdx}.`,
+          description: `Nothing of the pattern was matched yet, so there is nothing to reuse: just move on to the next text letter (i = ${txtIdx}).`,
           codeLine: [31, 32],
           state: {
             text,
@@ -370,7 +370,7 @@ export function* kmpSteps(inputs: { text: string; pattern: string }): Generator<
   yield {
     stepIndex: stepIndex++,
     title: 'KMP Search Complete',
-    description: `Search complete. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. Total character comparisons: ${comparisons}.`,
+    description: `Search complete. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. Total letter comparisons: ${comparisons}, and the text pointer i never moved backwards.`,
     codeLine: 33,
     state: {
       text,

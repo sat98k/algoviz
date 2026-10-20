@@ -39,27 +39,27 @@ export interface SubsetSumInputs {
 
 export const SUBSET_SUM_PSEUDOCODE_FIRST = [
   'function SubsetSum(index, currentSum, remaining, included):',
-  '  if currentSum == target: return SOLUTION(included)  // Base case: first valid subset matched',
-  '  if index >= n: return FAIL  // Base case: all elements evaluated without match',
-  '  // Option 1: Try including numbers[index]',
-  '  if currentSum + numbers[index] > target: PRUNE  // Overflow cutoff: exceeds target sum',
-  '  else if currentSum + numbers[index] + remaining < target: PRUNE  // Insufficient remaining sum',
+  '  if currentSum == target: return SOLUTION(included)  // the sum hits the target: found it',
+  '  if index >= n: return FAIL  // no numbers left to try',
+  '  // Choice 1: put numbers[index] in',
+  '  if currentSum + numbers[index] > target: PRUNE  // too big: the sum would pass the target',
+  '  else if currentSum + numbers[index] + remaining < target: PRUNE  // too small: even adding everything left falls short',
   '  else: if recurse(index+1, currentSum+numbers[index], remaining-numbers[index], included+[numbers[index]]) == true: return true',
-  '  // Option 2: Try excluding numbers[index]',
-  '  if currentSum + remaining - numbers[index] < target: PRUNE  // Insufficient remaining without element',
+  '  // Choice 2: leave numbers[index] out',
+  '  if currentSum + remaining - numbers[index] < target: PRUNE  // without it, everything left falls short',
   '  else: if recurse(index+1, currentSum, remaining-numbers[index], included) == true: return true',
 ];
 
 export const SUBSET_SUM_PSEUDOCODE_ALL = [
   'function SubsetSumAll(index, currentSum, remaining, included):',
-  '  if currentSum == target: recordSolution(included); return  // Match found: record & backtrack',
-  '  if index >= n: return  // Base case: element choices exhausted',
-  '  // Option 1: Try including numbers[index]',
-  '  if currentSum + numbers[index] > target: PRUNE  // Overflow cutoff: exceeds target sum',
-  '  else if currentSum + numbers[index] + remaining < target: PRUNE  // Insufficient remaining sum',
+  '  if currentSum == target: recordSolution(included); return  // the sum hits the target: save it, keep looking',
+  '  if index >= n: return  // no numbers left to try',
+  '  // Choice 1: put numbers[index] in',
+  '  if currentSum + numbers[index] > target: PRUNE  // too big: the sum would pass the target',
+  '  else if currentSum + numbers[index] + remaining < target: PRUNE  // too small: even adding everything left falls short',
   '  else: recurse(index+1, currentSum+numbers[index], remaining-numbers[index], included+[numbers[index]])',
-  '  // Option 2: Try excluding numbers[index]',
-  '  if currentSum + remaining - numbers[index] < target: PRUNE  // Insufficient remaining without element',
+  '  // Choice 2: leave numbers[index] out',
+  '  if currentSum + remaining - numbers[index] < target: PRUNE  // without it, everything left falls short',
   '  else: recurse(index+1, currentSum, remaining-numbers[index], included)',
 ];
 
@@ -165,7 +165,7 @@ export function* subsetSumSteps(inputs: SubsetSumInputs): Generator<AlgorithmSte
 
   yield makeSnapshot(
     'Initialize Subset Sum Decision Tree',
-    `Initialized backtrack search for target sum ${targetSum} with elements [${numbers.join(', ')}]. Total available sum = ${totalSum}.`,
+    `Target ${targetSum}, numbers [${numbers.join(', ')}] (sorted smallest first, ${totalSum} in total). Each number is either put in or left out, which makes a tree of choices. We walk down it keeping a running sum, and cut off (prune) any branch that can no longer hit the target exactly.`,
     1,
     treeRoot.id,
     0,
@@ -300,7 +300,7 @@ export function* subsetSumSteps(inputs: SubsetSumInputs): Generator<AlgorithmSte
     } else {
       yield makeSnapshot(
         `Include Element ${elem}`,
-        `Including element ${elem} gives current sum = ${includeSum}. Exploring deeper.`,
+        `Put ${elem} in: the running sum is now ${includeSum}. Go deeper to decide the next number.`,
         7,
         includeNode.id,
         includeSum,
@@ -382,7 +382,7 @@ export function* subsetSumSteps(inputs: SubsetSumInputs): Generator<AlgorithmSte
     } else {
       yield makeSnapshot(
         `Exclude Element ${elem}`,
-        `Excluding element ${elem}. Current sum remains ${currentSum}. Exploring alternative path.`,
+        `Leave ${elem} out: the running sum stays ${currentSum}. Go deeper to decide the next number.`,
         10,
         excludeNode.id,
         currentSum,

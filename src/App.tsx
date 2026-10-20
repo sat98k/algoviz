@@ -3,7 +3,7 @@ import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { Home } from './pages/Home';
 import { ModulePage } from './pages/ModulePage';
-import { AlgorithmPage } from './pages/AlgorithmPage';
+import { AlgorithmPage, AlgorithmView } from './pages/AlgorithmPage';
 import { ComparisonPage } from './pages/ComparisonPage';
 import { algorithmRegistry } from './config/algorithmRegistry';
 
@@ -12,14 +12,17 @@ export function App() {
   const [selectedModuleNumber, setSelectedModuleNumber] = useState<number>(1);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
   const [selectedAlgoId, setSelectedAlgoId] = useState<string>('randomized-quicksort');
+  // #/algorithm/<id> is the owl's explanation; #/algorithm/<id>/play is the player.
+  const [algoView, setAlgoView] = useState<AlgorithmView>('learn');
 
   // Handle URL hash for easy bookmarking and viva demo navigation
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace(/^#\/?/, '');
       if (hash.startsWith('algorithm/')) {
-        const id = hash.replace('algorithm/', '');
+        const [id, page] = hash.replace('algorithm/', '').split('/');
         setSelectedAlgoId(id);
+        setAlgoView(page === 'play' ? 'play' : 'learn');
         const algo = algorithmRegistry.find((a) => a.id === id);
         if (algo) {
           setSelectedModuleNumber(algo.module);
@@ -96,6 +99,7 @@ export function App() {
       }
     }
     window.location.hash = `#/algorithm/${id}`;
+    setAlgoView('learn');
     setView('algorithm');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -125,7 +129,15 @@ export function App() {
 
         {view === 'algorithm' && (
           <AlgorithmPage
+            // A fresh page per algorithm, so inputs and playback never carry over between algorithms.
+            key={selectedAlgoId}
             algorithmId={selectedAlgoId}
+            view={algoView}
+            onViewChange={(next) => {
+              setAlgoView(next);
+              window.location.hash = next === 'play' ? `#/algorithm/${selectedAlgoId}/play` : `#/algorithm/${selectedAlgoId}`;
+              window.scrollTo({ top: 0 });
+            }}
             onBack={() => {
               if (selectedModuleNumber === 2 && selectedSubCategory) {
                 selectModule(2, selectedSubCategory);
@@ -141,7 +153,7 @@ export function App() {
         {view === 'compare' && <ComparisonPage />}
       </main>
 
-      <Footer />
+      {view !== 'algorithm' && <Footer />}
     </div>
   );
 }

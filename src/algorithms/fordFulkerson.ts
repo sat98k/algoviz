@@ -76,7 +76,7 @@ export function* fordFulkersonSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Flow Network',
-    description: `Initialized network with Source ${nodes[s].label} and Sink ${nodes[t].label}. All flows set to 0.`,
+    description: `Flow starts at the source ${nodes[s].label} and must reach the sink ${nodes[t].label}. Each pipe (edge) carries at most its capacity, and every flow starts at 0. Plan: keep finding a path from ${nodes[s].label} to ${nodes[t].label} that still has room, and push as much as it can carry.`,
     codeLine: 2,
     state: {
       nodes,
@@ -150,7 +150,7 @@ export function* fordFulkersonSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Augmenting Path Found: ${pathLabelStr}`,
-      description: `Discovered augmenting path with bottleneck capacity Δf = ${bottleneck}.`,
+      description: `Found a path from ${nodes[s].label} to ${nodes[t].label} where every pipe still has room (an augmenting path). A path can only carry as much as its narrowest pipe, so its bottleneck is ${bottleneck}.`,
       codeLine: [3, 4],
       state: {
         nodes,
@@ -187,7 +187,7 @@ export function* fordFulkersonSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Augmented Flow by +${bottleneck} (Total Flow: ${totalFlow})`,
-      description: `Updated flow and residual capacities along path ${pathLabelStr}.`,
+      description: `Push ${bottleneck} more along ${pathLabelStr}: each pipe on it now has ${bottleneck} less room. We also note that this flow could be sent back later (a backward edge), so a later path may undo it if that helps. Total flow: ${totalFlow}.`,
       codeLine: [5, 6, 7, 8],
       state: {
         nodes,
@@ -213,7 +213,7 @@ export function* fordFulkersonSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Ford-Fulkerson Complete',
-    description: `No more augmenting paths exist in the residual network. Maximum flow value is ${totalFlow}.`,
+    description: `No path from ${nodes[s].label} to ${nodes[t].label} has room left: every route is blocked by at least one full pipe. The flow cannot grow any more, so the maximum flow is ${totalFlow}.`,
     codeLine: 9,
     state: {
       nodes,

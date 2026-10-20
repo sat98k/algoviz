@@ -205,7 +205,169 @@
   100% { transform: translateY(-40px) rotate(-20deg); opacity: 0; }
 }
 
+/* Story scenes: a ring spreading out like a ripple on water (SVG-safe). */
+@keyframes storyRipple {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+.animate-story-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: storyRipple 1.4s ease-out infinite;
+}
+
+/* Story scenes: a soft halo pulsing around the current node of a search tree. */
+@keyframes storyHalo {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+.animate-story-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: storyHalo 1.6s ease-out infinite;
+}
+
+/* Story scenes: gentle bob for something waiting or overflowing. */
+@keyframes storyBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-story-bob {
+  transform-box: fill-box;
+  animation: storyBob 1.2s ease-in-out infinite;
+}
+
+/* Story scenes: a mismatch shake. */
+@keyframes storyShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+.animate-story-shake {
+  animation: storyShake 0.5s ease-in-out;
+}
+
+/* Story scenes: something popping into place. */
+@keyframes storyPop {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-story-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: storyPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Story scenes: a piece lowered onto a board, and one lifted off it. */
+@keyframes storyDrop {
+  0% { transform: translateY(-46px); opacity: 0; }
+  60% { transform: translateY(3px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-story-drop {
+  animation: storyDrop 0.7s cubic-bezier(0.34, 1.3, 0.64, 1) both;
+}
+
+@keyframes storyLift {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-50px); opacity: 0; }
+}
+
+.animate-story-lift {
+  animation: storyLift 1.1s ease-in both;
+}
+
 .animate-knife-chop {
   animation: knifeChop 1.2s ease-in-out forwards;
 }
 
+
+/* ── Owl briefing (learn view): the owl talks while the explanation flows in ─────────── */
+.owl-reveal {
+  display: inline;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(0.35em);
+  transition: opacity var(--owl-fade, 1.1s) cubic-bezier(0.22, 1, 0.36, 1), filter var(--owl-fade, 1.1s) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--owl-fade, 1.1s) cubic-bezier(0.22, 1, 0.36, 1);
+}
+.owl-reveal[data-on='true'] {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+}
+/* Words stay inline so lines wrap normally: they fade and un-blur in place. */
+.owl-reveal-word {
+  transform: none;
+}
+.owl-reveal-card {
+  opacity: 0;
+  transform: translateY(16px) scale(0.97) rotate(-0.6deg);
+  transition: opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1), transform 1.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s;
+}
+.owl-reveal-card[data-on='true'] {
+  opacity: 1;
+  transform: none;
+}
+.owl-reveal-card[data-on='true']:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px -10px rgb(var(--amber-primary) / 0.55);
+}
+@keyframes owlTalk {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  20% { transform: translateY(-5px) rotate(-8deg) scale(1.06); }
+  40% { transform: translateY(0) rotate(5deg) scale(1); }
+  60% { transform: translateY(-3px) rotate(-4deg) scale(1.04); }
+  80% { transform: translateY(0) rotate(3deg) scale(1); }
+}
+.owl-talking {
+  animation: owlTalk 1.6s ease-in-out infinite;
+  transform-origin: 50% 85%;
+}
+@keyframes owlIdle {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.88); }
+}
+.owl-idle {
+  animation: owlIdle 4s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+@keyframes owlHop {
+  0% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-16px) rotate(-12deg) scale(1.12); }
+  55% { transform: translateY(0) rotate(8deg); }
+  75% { transform: translateY(-5px) rotate(-4deg); }
+  100% { transform: translateY(0) rotate(0); }
+}
+.owl-hop {
+  animation: owlHop 0.7s ease-out;
+  transform-origin: 50% 85%;
+}
+@keyframes owlNote {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6) rotate(0deg); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--note-dx, 14px), -46px) scale(1.15) rotate(18deg); }
+}
+@keyframes owlFlap {
+  0%, 100% { transform: scaleY(1) rotate(0deg); }
+  50% { transform: scaleY(0.8) scaleX(1.12) rotate(5deg); }
+}
+.owl-flap {
+  animation: owlFlap 0.2s ease-in-out infinite;
+}
+.owl-note {
+  position: absolute;
+  left: 60%;
+  top: 0;
+  pointer-events: none;
+  animation: owlNote 2.2s ease-out forwards;
+}
