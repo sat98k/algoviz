@@ -119,7 +119,7 @@ export function* karatsubaSteps(inputs: {
     // Initial recursive call frame
     yield makeSnapshot(
       `Recursive Call: ${xText} × ${yText}`,
-      `Starting Karatsuba multiplication for X = ${xText} and Y = ${yText}.`,
+      `New job: multiply X = ${xText} by Y = ${yText}, using the Karatsuba recipe.`,
       1,
       nodeId,
       `Evaluating subproblem ${label} (${edgeLabel || 'Root'}).`,
@@ -184,7 +184,7 @@ export function* karatsubaSteps(inputs: {
 
     yield makeSnapshot(
       `Step 1: Split Numbers X and Y (m=${m})`,
-      `For X = ${xText}: Higher part a = ${a}, Lower part b = ${b} (X = ${a}·10^${m} + ${b}). For Y = ${yText}: Higher part c = ${c}, Lower part d = ${d} (Y = ${c}·10^${m} + ${d}).`,
+      `Cut each number ${m} digit${m === 1 ? '' : 's'} from the right. X = ${xText} gives a high part a = ${a} and a low part b = ${b} (X = ${a}·10^${m} + ${b}). Y = ${yText} gives c = ${c} and d = ${d} (Y = ${c}·10^${m} + ${d}).`,
       [3, 4],
       nodeId,
       `Step 1 (Split): X = (${a}·10^${m} + ${b}), Y = (${c}·10^${m} + ${d})`,
@@ -196,7 +196,7 @@ export function* karatsubaSteps(inputs: {
     // --- 2A: Branch P1 = a * c ---
     yield makeSnapshot(
       `Step 2A: Compute P1 = a · c = ${a} × ${c}`,
-      `Recursive call for P1 = a·c = ${a} × ${c}.`,
+      `First smaller multiplication: P1 = a × c = ${a} × ${c} (the two high parts). It is worked out with the same recipe.`,
       5,
       nodeId,
       `Step 2A: P1 = a · c = ${a} × ${c}`,
@@ -209,7 +209,7 @@ export function* karatsubaSteps(inputs: {
     // --- 2B: Branch P2 = b * d ---
     yield makeSnapshot(
       `Step 2B: Compute P2 = b · d = ${b} × ${d}`,
-      `Recursive call for P2 = b·d = ${b} × ${d}.`,
+      `Second smaller multiplication: P2 = b × d = ${b} × ${d} (the two low parts).`,
       6,
       nodeId,
       `Step 2B: P2 = b · d = ${b} × ${d}`,
@@ -222,7 +222,7 @@ export function* karatsubaSteps(inputs: {
     // --- 2C: Branch P3 = (a + b) * (c + d) ---
     yield makeSnapshot(
       `Step 2C: Compute P3 = (a + b) · (c + d) = ${aPlusB} × ${cPlusD}`,
-      `Recursive call for P3 = (a + b)(c + d) = (${a} + ${b}) × (${c} + ${d}) = ${aPlusB} × ${cPlusD}.`,
+      `Third and last: add first, then multiply once. P3 = (a + b) × (c + d) = (${a} + ${b}) × (${c} + ${d}) = ${aPlusB} × ${cPlusD}. This single product contains both middle products.`,
       7,
       nodeId,
       `Step 2C: P3 = (a+b) · (c+d) = ${aPlusB} × ${cPlusD}`,
@@ -240,7 +240,7 @@ export function* karatsubaSteps(inputs: {
 
     yield makeSnapshot(
       `Step 3: Cross Term = P3 − P1 − P2 = ${crossTerm}`,
-      `P3 = ac + ad + bc + bd, so ad + bc = P3 − P1 − P2 = ${p3} − ${p1} − ${p2} = ${crossTerm}. No fourth multiplication.`,
+      `P3 = ac + ad + bc + bd. Taking away P1 (= ac) and P2 (= bd) leaves just the middle part: ad + bc = ${p3} − ${p1} − ${p2} = ${crossTerm}. That saved a fourth multiplication.`,
       8,
       nodeId,
       `Step 3 (cross term): ${p3} − ${p1} − ${p2} = ${crossTerm}`,
@@ -265,7 +265,7 @@ export function* karatsubaSteps(inputs: {
 
     yield makeSnapshot(
       `Step 4: Combine Results -> ${finalProduct}`,
-      `Combining via Karatsuba formula: X·Y = P1·10^${2 * m} + (P3 − P1 − P2)·10^${m} + P2 = (${p1}·10^${2 * m}) + (${crossTerm}·10^${m}) + (${p2}) = ${term1} + ${term2} + ${term3} = ${finalProduct}. Returning up call tree.`,
+      `Put the pieces back by place value: P1 shifted ${2 * m} places (${term1}) + the middle part shifted ${m} place${m === 1 ? '' : 's'} (${term2}) + P2 (${term3}) = ${finalProduct}. This answer is passed back up.`,
       9,
       nodeId,
       `Step 4 (Combine): Result = ${term1} + ${term2} + ${term3} = ${finalProduct}`,
@@ -287,7 +287,7 @@ export function* karatsubaSteps(inputs: {
 
   yield makeSnapshot(
     'Karatsuba Multiplication Complete: Final Product at Root',
-    `Karatsuba fast multiplication finished. Final product of ${xStr} × ${yStr} = ${rootProduct.toString()}. Total recursive calls: ${recursiveCalls}.`,
+    `Done: ${xStr} × ${yStr} = ${rootProduct.toString()}. Every split needed three smaller multiplications instead of four (${recursiveCalls} multiplication jobs in total), which is why Karatsuba is faster for long numbers.`,
     9,
     treeNodes[0]?.id || '',
     `Final solution successfully computed and verified: ${xStr} × ${yStr} = ${rootProduct.toString()}.`,

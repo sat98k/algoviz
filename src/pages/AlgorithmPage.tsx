@@ -15,7 +15,6 @@ import { PlaybackControls } from '../components/common/PlaybackControls';
 import { ComplexityAnalysisPanel } from '../components/common/ComplexityAnalysisPanel';
 import { MetricsPanel } from '../components/common/MetricsPanel';
 import { ColoringSolutionsPanel } from '../components/common/ColoringSolutionsPanel';
-import { InputControlPanel } from '../components/common/InputControlPanel';
 import { CodeExplanation } from '../components/common/CodeExplanation';
 import { CallFlowOverlay } from '../components/common/CallFlowOverlay';
 import { ProblemIntuitionPanel } from '../components/common/ProblemIntuitionPanel';
@@ -25,17 +24,36 @@ import { FinalAnswerCard } from '../components/common/FinalAnswerCard';
 import { NQueensSolutionsPanel, findSolutionSteps } from '../components/common/NQueensSolutionsPanel';
 import { RoadmapStrip } from '../components/common/RoadmapStrip';
 import { ROADMAPS, roadmapPhases, spanHas } from '../config/roadmaps';
+import { OWL_BRIEFINGS } from '../config/owlBriefings';
+import { InputDialog } from '../components/common/InputDialog';
 
-import { ArrowLeft, Columns, Maximize2, Play, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Columns, Maximize2, Play, RefreshCw, SlidersHorizontal } from 'lucide-react';
 
 interface AlgorithmPageProps {
   algorithmId: string;
   onBack: () => void;
   /** Starting layout; the reader can switch at any time. */
   initialLayoutMode?: 'split' | 'stacked';
+  /**
+   * Which page is shown: "learn" (the owl explains the problem and how it works) or "play"
+   * (the player, visualization and pseudocode). Controlled by the URL when `onViewChange` is given.
+   */
+  view?: AlgorithmView;
+  onViewChange?: (view: AlgorithmView) => void;
+  /** Starting page when the view is not controlled. */
+  initialView?: AlgorithmView;
 }
 
-export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBack, initialLayoutMode = 'split' }) => {
+export type AlgorithmView = 'learn' | 'play';
+
+export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
+  algorithmId,
+  onBack,
+  initialLayoutMode = 'split',
+  view: viewProp,
+  onViewChange,
+  initialView = 'learn',
+}) => {
   const config = useMemo(() => getAlgorithmById(algorithmId), [algorithmId]);
   const shouldReduceMotion = useReducedMotion();
 
@@ -73,6 +91,14 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
   const [speed, setSpeed] = useState<number>(0.25);
   const [huffmanTraversal, setHuffmanTraversal] = useState<TreeTraversalOverride | null>(null);
   const [huffmanPhase, setHuffmanPhase] = useState<'encode' | 'decode'>('encode');
+  const [localView, setLocalView] = useState<AlgorithmView>(initialView);
+  const view = viewProp ?? localView;
+  const setView = (v: AlgorithmView) => {
+    setIsPlaying(false);
+    if (onViewChange) onViewChange(v);
+    else setLocalView(v);
+  };
+  const [inputDialogOpen, setInputDialogOpen] = useState(false);
 
   // Generate all steps upfront
   const steps: AlgorithmStep[] = useMemo(() => {
@@ -410,7 +436,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
     const observer = new ResizeObserver(update);
     observer.observe(dock);
     return () => observer.disconnect();
-  }, []);
+  }, [view]);
 
   const stepExplanation = (
     <StepExplanation step={currentStep} stepNumber={stepNumber} totalSteps={totalSteps} glossaryTerms={config.glossaryTerms} />
@@ -467,60 +493,113 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
     />
   );
 
-  return (
-    <div className="flex flex-col gap-5 max-w-[1560px] mx-auto px-3 sm:px-4 lg:px-6 py-6 w-full">
-      {/* Top Header & Navigation */}
-      <motion.div
-        initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="flex flex-col gap-4 pb-4 border-b border-hairline"
+  const algorithmTitle = (
+    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
+      <button
+        onClick={onBack}
+        className="group flex items-center gap-1.5 px-2.5 py-1 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-400 hover:text-chalk-100 border border-hairline font-mono text-xs tracking-wider transition-colors"
+        title="Back to Catalog"
       >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Left horizontal cluster: Catalog trigger, module index, and compact algorithm title */}
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-            <button
-              onClick={onBack}
-              className="group flex items-center gap-1.5 px-3 py-1.5 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-400 hover:text-chalk-100 border border-hairline font-mono text-xs uppercase tracking-wider transition-colors"
-              title="Back to Catalog"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-              <span>CATALOG</span>
-            </button>
+        <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+        <span>CATALOG</span>
+      </button>
+      <span className="font-mono text-xs text-amber tracking-wider font-semibold">
+        {moduleNumStr} • {config.moduleName}
+      </span>
+      <span className="font-mono text-xs text-chalk-500">—</span>
+      <h1 className="font-display font-bold text-lg sm:text-xl tracking-tight text-chalk-100">{config.name}</h1>
+    </div>
+  );
 
-            <span className="font-mono text-xs text-chalk-500">•</span>
+  const startButton = (label: string) => (
+    <button
+      type="button"
+      data-start-animation
+      onClick={() => setView('play')}
+      className="flex items-center gap-2 px-4 py-2 bg-amber text-obsidian-950 font-sans text-sm font-bold hover:bg-amber-glow transition-colors shadow-sm"
+    >
+      <Play className="w-4 h-4 fill-current" aria-hidden />
+      {label}
+    </button>
+  );
 
-            <span className="font-mono text-xs text-amber uppercase tracking-wider font-semibold">
-              {moduleNumStr} • {config.moduleName}
-            </span>
+  // ── Learn view: the owl explains the problem and the whole procedure, then "Start the animation". ──
+  if (view === 'learn') {
+    return (
+      <div data-view="learn" className="flex flex-col gap-3 max-w-[1440px] mx-auto px-2 sm:px-3 lg:px-4 py-3 w-full">
+        <motion.div
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-wrap items-center justify-between gap-3"
+        >
+          {algorithmTitle}
+          {startButton('Start the animation')}
+        </motion.div>
 
-            <span className="font-mono text-xs text-chalk-500">—</span>
-
-            {/* Horizontal Algorithm Name with smaller font */}
-            <h1 className="font-display font-bold text-lg sm:text-xl md:text-2xl tracking-tight text-chalk-100">
-              {config.name}
-            </h1>
-          </div>
-
-          {/* Right: Layout Toggle */}
-          <div className="flex items-center gap-2">
-            {layoutToggle}
-          </div>
-        </div>
-
-        {/* Learning flow: problem → how it works → visualization (collapsible while stepping). */}
         <ProblemIntuitionPanel
           problemStatement={config.problemStatement}
           explanation={config.explanation}
           coreSteps={config.coreSteps}
           dpBrief={config.dpBrief}
           terms={config.glossaryTerms}
+          briefing={OWL_BRIEFINGS[config.id]}
         />
-      </motion.div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 bg-obsidian-950 border border-amber/40">
+          <p className="font-sans text-sm text-chalk-200">
+            <span aria-hidden>🦉 </span>Ready? The animation follows exactly these steps, one at a time, and you can change the input there.
+          </p>
+          {startButton('Start the animation')}
+        </div>
+
+        <section className="w-full">
+          <ComplexityAnalysisPanel analysis={config.analysis} paradigm={config.paradigm} />
+        </section>
+      </div>
+    );
+  }
+
+  // ── Player view: everything for watching the run, sized to the screen. ──
+  const fitToScreen = layoutMode === 'split';
+  return (
+    <div
+      data-view="play"
+      className={`flex flex-col gap-2 px-2 sm:px-3 py-2 w-full max-w-[1920px] mx-auto ${fitToScreen ? 'lg:h-[calc(100dvh-5rem)]' : ''}`}
+    >
+      {/* Compact header */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <button
+            type="button"
+            data-back-to-learn
+            onClick={() => setView('learn')}
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-300 hover:text-chalk-100 border border-hairline font-sans text-xs font-semibold transition-colors"
+            title="Back to the owl's explanation of the problem and how it works"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" aria-hidden />
+            <span aria-hidden>🦉</span> Problem &amp; how it works
+          </button>
+          <h1 className="font-display font-bold text-base sm:text-lg tracking-tight text-chalk-100">{config.name}</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            data-edit-input
+            onClick={() => setInputDialogOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-200 border border-amber/50 font-sans text-xs font-semibold transition-colors"
+            title="Change the input or pick a preset"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-amber" aria-hidden />
+            Edit input
+          </button>
+          {layoutToggle}
+        </div>
+      </div>
 
       {/* Visual learning stage. CallFlowOverlay draws between the visualizer and the
           pseudocode, so both must stay inside this container and render exactly once. */}
-      <div ref={stageContainerRef} className="relative w-full flex flex-col gap-3">
+      <div ref={stageContainerRef} className={`relative w-full flex flex-col gap-2 ${fitToScreen ? 'lg:flex-1 lg:min-h-0' : ''}`}>
         <CallFlowOverlay step={currentStep} containerRef={stageContainerRef} />
 
         {config.id === 'huffman' && huffmanStageSwitch}
@@ -530,37 +609,36 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
 
         {/* One playback toolbar across the whole learning stage, with the roadmap under it.
             On wider screens the dock stays visible under the navbar while scrolling. */}
-        <div
-          ref={dockRef}
-          data-playback-dock
-          className="sm:sticky sm:top-20 z-40 flex flex-col gap-1 bg-obsidian-900 shadow-sm"
-        >
+        <div ref={dockRef} data-playback-dock className="sm:sticky sm:top-20 z-40 flex flex-col gap-1 bg-obsidian-900 shadow-sm">
           {playbackControls}
           {roadmapStrip}
         </div>
 
         {layoutMode === 'split' ? (
-          /* Split: visualization and pseudocode side by side, tops aligned; explanation under the
-             visualization, DP rule and operation counts under the pseudocode. */
-          <section className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
-            <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-3 min-w-0">
+          /* Split: visualization and pseudocode side by side, tops aligned; explanation and the final
+             answer under the visualization, DP rule and operation counts under the pseudocode. On wide
+             screens the two columns fill the screen and scroll on their own, so the page does not. */
+          <section className="grid grid-cols-1 lg:grid-cols-12 gap-2 items-start lg:items-stretch lg:flex-1 lg:min-h-0">
+            <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-2 min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1 lg:[--owl-top:0px]">
               <div className="w-full relative">{renderVisualizer()}</div>
               {stepExplanation}
+              <section className="w-full">{finalAnswer}</section>
             </div>
-            <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-3 min-w-0">
-              {pseudocodeFor('max-h-[22rem] lg:max-h-[min(34rem,70vh)]')}
+            <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-2 min-w-0 lg:min-h-0 lg:overflow-y-auto">
+              {pseudocodeFor('max-h-[22rem] lg:max-h-[min(34rem,58vh)]')}
               {dpRulePanel}
               {operationCounts}
             </div>
           </section>
         ) : (
           /* Full width: the largest visualization; pseudocode beside the DP rule and counts below it. */
-          <section className="flex flex-col gap-3">
+          <section className="flex flex-col gap-2">
             <div className="w-full relative">{renderVisualizer()}</div>
             {stepExplanation}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+            <section className="w-full">{finalAnswer}</section>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
               {pseudocodeFor('max-h-[22rem]')}
-              <div className="flex flex-col gap-3 min-w-0">
+              <div className="flex flex-col gap-2 min-w-0">
                 {dpRulePanel}
                 {operationCounts}
               </div>
@@ -569,19 +647,17 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
         )}
       </div>
 
-      {/* Final answer, immediately after the visual stage */}
-      <section className="w-full">{finalAnswer}</section>
-
-      {/* Inputs */}
-      <section className="pt-4 border-t border-hairline w-full">
-        <InputControlPanel config={config} currentInputs={inputs} onApplyInputs={(newInputs) => setInputs(newInputs)} />
-      </section>
-
-      {/* Paradigm & complexity at the end of the page */}
-      <section className="pt-2 border-t border-hairline w-full">
-        <ComplexityAnalysisPanel analysis={config.analysis} paradigm={config.paradigm} />
-      </section>
+      {inputDialogOpen && (
+        <InputDialog
+          config={config}
+          currentInputs={inputs}
+          onApply={(newInputs) => {
+            setInputs(newInputs);
+            setInputDialogOpen(false);
+          }}
+          onClose={() => setInputDialogOpen(false)}
+        />
+      )}
     </div>
   );
 };
-

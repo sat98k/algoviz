@@ -152,7 +152,7 @@ export function* suffixTreeSteps(inputs: {
 
   yield snapshot(
     'Initialize — append terminal "$"',
-    `A suffix is the text from some position to the end; "${s}" has ${sLen} of them. The terminal "$" makes sure no suffix is the beginning of another, so each one ends at its own leaf. Build the tree that holds all of them with Ukkonen's online algorithm in O(n), then search by walking down from the root.`,
+    `A suffix is the text from some position to the end; "${s}" has ${sLen} of them. The "$" at the end makes sure no suffix is the beginning of another, so each one ends at its own leaf. We grow a tree holding all of them by adding the text one letter at a time (Ukkonen's method), then search by walking down from the root.`,
     2,
     { phase: 'build', activeIds: new Set(['root']), activePointLabel: apLabel() }
   );
@@ -166,7 +166,7 @@ export function* suffixTreeSteps(inputs: {
 
     yield snapshot(
       `Phase ${i + 1}: extend with '${s[i]}'`,
-      `Process s[${i}] = '${s[i]}'. remaining = ${remaining} suffix${remaining === 1 ? '' : 'es'} still to insert; existing leaves extended implicitly (Rule 1).`,
+      `Add the next letter, '${s[i]}' (position ${i}). Every branch ending in a leaf grows by this letter automatically (rule 1). ${remaining} suffix${remaining === 1 ? '' : 'es'} ending here still ${remaining === 1 ? 'needs' : 'need'} a place in the tree.`,
       4,
       { phase: 'build', activeIds: new Set([activeNode.id]), activePointLabel: apLabel() }
     );
@@ -185,7 +185,7 @@ export function* suffixTreeSteps(inputs: {
 
         yield snapshot(
           'Rule 2 — new leaf',
-          `No edge from ${activeNode.id} begins with '${ec}'. Attach a leaf for the suffix starting at index ${suffixStart}.`,
+          `No branch from ${activeNode.id} starts with '${ec}', so the suffix starting at position ${suffixStart} gets a new leaf of its own (rule 2).`,
           6,
           {
             phase: 'build',
@@ -219,7 +219,7 @@ export function* suffixTreeSteps(inputs: {
           activeLength++;
           yield snapshot(
             `Rule 3 — '${s[i]}' already present`,
-            `'${s[i]}' already continues the edge "${edgeStr(next)}" from ${activeNode.id}. Stop this phase (show-stopper); remaining stays ${remaining}.`,
+            `'${s[i]}' is already on the branch "${edgeStr(next)}" from ${activeNode.id}, so this suffix is already in the tree (rule 3). Stop for this letter. The ${remaining} waiting suffix${remaining === 1 ? '' : 'es'} will get their own place later, as soon as the text stops repeating.`,
             7,
             {
               phase: 'build',
@@ -245,7 +245,7 @@ export function* suffixTreeSteps(inputs: {
 
         yield snapshot(
           'Rule 2 — split edge',
-          `Split the edge from ${activeNode.id} after "${edgeStr(split)}": new internal node ${split.id}, then attach a leaf for the suffix starting at index ${suffixStart}.`,
+          `Two suffixes share "${edgeStr(split)}" but then differ, so the branch from ${activeNode.id} splits there: a new fork ${split.id}, plus a new leaf for the suffix starting at position ${suffixStart} (rule 2).`,
           6,
           {
             phase: 'build',
@@ -291,7 +291,7 @@ export function* suffixTreeSteps(inputs: {
 
   yield snapshot(
     'Suffix tree complete',
-    `Construction finished: ${nodeCount} nodes. Reading the edge labels from the root down to leaf k spells the suffix that starts at index k. Now search for "${pattern}": every substring of the text is the beginning of some suffix, so walk the pattern down from the root.`,
+    `The tree is built (${nodeCount} nodes). Reading the branches from the root down to leaf k spells the suffix starting at position k. Now search for "${pattern}": any piece of the text is the start of some suffix, so walk the pattern down from the root.`,
     8,
     { phase: 'search', activeIds: new Set(['root']) }
   );
@@ -312,7 +312,7 @@ export function* suffixTreeSteps(inputs: {
         comparisons++;
         yield snapshot(
           `Mismatch — no edge for '${pattern[k]}'`,
-          `${node.id} has no outgoing edge beginning with P[${k}] = '${pattern[k]}'. The pattern does not occur in the text.`,
+          `No branch from ${node.id} starts with '${pattern[k]}', so "${pattern}" does not appear in the text.`,
           11,
           {
             phase: 'search',
@@ -335,7 +335,7 @@ export function* suffixTreeSteps(inputs: {
       matched = false;
       yield snapshot(
         'Mismatch on edge',
-        `P[${k}] = '${pattern[k]}' vs '${tc}' at position ${edgePos} of edge "${edgeStr(child)}" → mismatch. The pattern does not occur in the text.`,
+        `The pattern needs '${pattern[k]}' but the branch "${edgeStr(child)}" has '${tc}' here, so "${pattern}" does not appear in the text.`,
         11,
         {
           phase: 'search',
@@ -352,7 +352,7 @@ export function* suffixTreeSteps(inputs: {
 
     yield snapshot(
       `Match P[${k - 1}] = '${pattern[k - 1]}'`,
-      `P[${k - 1}] = '${pattern[k - 1]}' matches position ${edgePos} of edge "${edgeStr(child)}" (${node.id} → ${child.id}). ${m - k} pattern character${m - k === 1 ? '' : 's'} remaining.`,
+      `'${pattern[k - 1]}' matches the next letter on the branch "${edgeStr(child)}" (${node.id} → ${child.id}). ${m - k} letter${m - k === 1 ? '' : 's'} of the pattern left.`,
       11,
       {
         phase: 'search',

@@ -116,9 +116,9 @@ describe('Algorithm wiring', () => {
     ]);
     expect(panelLinks('max-subarray')).toEqual([
       ['divide-and-conquer', 'divide and conquer'],
-      ['recursion', 'Recursively'],
+      ['recursion', 'recursively'],
     ]);
-    expect(panelLinks('karatsuba')).toEqual([['recursion', 'Recursively']]);
+    expect(panelLinks('karatsuba')).toEqual([['recursion', 'recursively']]);
     expect(panelLinks('n-queens')).toEqual([['backtracking', 'backtrack']]);
     expect(panelLinks('kmp')).toEqual([['lps', 'LPS']]);
   });

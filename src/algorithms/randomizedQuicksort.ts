@@ -22,7 +22,7 @@ export function* randomizedQuicksortSteps(inputs: { array: number[] }): Generato
   yield {
     stepIndex: stepIndex++,
     title: 'Initial Array',
-    description: `Starting Randomized Quicksort on array of size ${arr.length}.`,
+    description: `Sort these ${arr.length} numbers. Pick a pivot at random, put smaller-or-equal numbers to its left and larger ones to its right, then sort each side the same way.`,
     codeLine: 1,
     state: { array: [...arr], low: 0, high: arr.length - 1, sortedIndices: [...sortedIndices] },
     highlights: { type: 'active', indices: arr.map((_, idx) => idx) },
@@ -53,7 +53,7 @@ export function* randomizedQuicksortSteps(inputs: { array: number[] }): Generato
         yield {
           stepIndex: stepIndex++,
           title: `Single Element Subarray [${low}]`,
-          description: `Element at index ${low} (${arr[low]}) is in its final sorted position.`,
+          description: `A part with just one number (${arr[low]} at index ${low}) is already sorted: it stays where it is.`,
           codeLine: 3,
           state: { array: [...arr], low, high, sortedIndices: [...sortedIndices] },
           highlights: { sortedIndices: [...sortedIndices] },
@@ -70,7 +70,7 @@ export function* randomizedQuicksortSteps(inputs: { array: number[] }): Generato
     yield {
       stepIndex: stepIndex++,
       title: `Random Pivot Selection`,
-      description: `Randomly selected pivot at index ${randomPivotIdx} with value ${randomPivotVal} in range [${low}..${high}].`,
+      description: `Pick a pivot at random from positions ${low} to ${high}: ${randomPivotVal} (at index ${randomPivotIdx}). Choosing at random means no input order can make this slow every time.`,
       codeLine: 3,
       state: { array: [...arr], low, high, pivotIndex: randomPivotIdx, pivotValue: randomPivotVal, sortedIndices: [...sortedIndices] },
       highlights: { type: 'pivot', pivotIndex: randomPivotIdx, window: [low, high] },
@@ -87,7 +87,7 @@ export function* randomizedQuicksortSteps(inputs: { array: number[] }): Generato
       yield {
         stepIndex: stepIndex++,
         title: `Move Pivot to End`,
-        description: `Swapped pivot element ${temp} from index ${randomPivotIdx} with end element at index ${high}.`,
+        description: `Move the pivot ${temp} to the end (index ${high}) so it is out of the way while the others are compared with it.`,
         codeLine: 4,
         state: { array: [...arr], low, high, pivotIndex: high, pivotValue: arr[high], sortedIndices: [...sortedIndices] },
         highlights: { type: 'swap', swapIndices: [randomPivotIdx, high], pivotIndex: high, window: [low, high] },
@@ -102,7 +102,7 @@ export function* randomizedQuicksortSteps(inputs: { array: number[] }): Generato
     yield {
       stepIndex: stepIndex++,
       title: `Begin Lomuto Partition`,
-      description: `Partitioning subarray [${low}..${high}] around pivot ${pivot}. Target: elements <= ${pivot} to the left, > ${pivot} to the right.`,
+      description: `Now split positions ${low} to ${high} around ${pivot}: numbers ≤ ${pivot} go to a "small" zone on the left, larger numbers stay on the right. The small zone starts empty.`,
       codeLine: 5,
       state: { array: [...arr], low, high, pivotIndex: high, pivotValue: pivot, i, j: low, sortedIndices: [...sortedIndices] },
       highlights: { type: 'active', pivotIndex: high, window: [low, high], indices: [low] },
@@ -116,7 +116,7 @@ export function* randomizedQuicksortSteps(inputs: { array: number[] }): Generato
       yield {
         stepIndex: stepIndex++,
         title: `Compare arr[${j}] with Pivot`,
-        description: `Comparing arr[${j}] (${arr[j]}) with pivot (${pivot}). ${arr[j]} ${isSmallerOrEqual ? '<=' : '>'} ${pivot}.`,
+        description: `Compare ${arr[j]} (index ${j}) with the pivot ${pivot}: ${isSmallerOrEqual ? `${arr[j]} ≤ ${pivot}, so it belongs in the small zone on the left.` : `${arr[j]} > ${pivot}, so it stays on the right.`}`,
         codeLine: [6, 7],
         state: { array: [...arr], low, high, pivotIndex: high, pivotValue: pivot, i, j, sortedIndices: [...sortedIndices] },
         highlights: { type: 'compare', compareIndices: [j, high], pivotIndex: high, window: [low, high] },
@@ -134,7 +134,7 @@ export function* randomizedQuicksortSteps(inputs: { array: number[] }): Generato
           yield {
             stepIndex: stepIndex++,
             title: `Swap arr[${i}] and arr[${j}]`,
-            description: `Swapped smaller element ${arr[i]} into left partition at index ${i} with ${arr[j]} at index ${j}.`,
+            description: `Grow the small zone by one place (to index ${i}) and swap ${arr[i]} into it.`,
             codeLine: 8,
             state: { array: [...arr], low, high, pivotIndex: high, pivotValue: pivot, i, j, sortedIndices: [...sortedIndices] },
             highlights: { type: 'swap', swapIndices: [i, j], pivotIndex: high, window: [low, high] },
@@ -160,7 +160,7 @@ export function* randomizedQuicksortSteps(inputs: { array: number[] }): Generato
     yield {
       stepIndex: stepIndex++,
       title: `Pivot in Final Position`,
-      description: `Placed pivot ${pivot} into its correct sorted index ${finalPivotPos}.`,
+      description: `Put the pivot ${pivot} right after the small zone, at index ${finalPivotPos}. Everything left of it is smaller or equal and everything right is larger, so this is its final place.`,
       codeLine: [9, 10],
       state: { array: [...arr], low, high, pivotIndex: finalPivotPos, pivotValue: pivot, sortedIndices: [...sortedIndices] },
       highlights: { type: 'active', pivotIndex: finalPivotPos, sortedIndices: [...sortedIndices], window: [low, high] },
@@ -182,7 +182,7 @@ export function* randomizedQuicksortSteps(inputs: { array: number[] }): Generato
   yield {
     stepIndex: stepIndex++,
     title: 'Quicksort Complete',
-    description: `Array is fully sorted in ascending order with ${comparisons} comparisons and ${swaps} swaps.`,
+    description: `Done: the numbers are sorted from smallest to largest, using ${comparisons} comparisons and ${swaps} swaps.`,
     codeLine: 1,
     state: { array: [...arr], low: 0, high: arr.length - 1, sortedIndices: [...sortedIndices] },
     highlights: { sortedIndices: [...sortedIndices] },

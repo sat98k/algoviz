@@ -66,7 +66,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize MCM Tables & Base Cases (Length 1)',
-    description: `Initialized ${n}x${n} Dynamic Programming cost table m and split table s. For chain length L=1, m[i][i] = 0 (zero cost to multiply a single matrix).`,
+    description: `Trying every bracketing takes too long, so we answer small questions first: m[i, j] = the cheapest cost to multiply Ai through Aj into one matrix. A single matrix needs no work, so every m[i, i] = 0. Table s will remember where the best split was.`,
     codeLine: 2,
     state: {
       dimensions: [...p],
@@ -94,7 +94,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Compute Cell m[${i}, ${j}] (Chain Length L=${L})`,
-        description: `Evaluating optimal split point for subchain A${i} through A${j} (${matrices.slice(i - 1, j).map((mat) => `${mat.name}[${mat.rows}x${mat.cols}]`).join(' × ')}).`,
+        description: `How cheaply can A${i} through A${j} (${matrices.slice(i - 1, j).map((mat) => `${mat.name}[${mat.rows}x${mat.cols}]`).join(' × ')}) be multiplied into one? The last multiplication always joins a left group and a right group, so try every place to split them.`,
         codeLine: [4, 5],
         state: {
           dimensions: [...p],
@@ -136,7 +136,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Evaluate Split Point k=${k} for m[${i}, ${j}]`,
-          description: `Testing split (A${i}..A${k})(A${k + 1}..A${j}): Left cost m[${i},${k}]=${costLeft}, Right cost m[${k + 1},${j}]=${costRight}, Multiplications ${p[i - 1]}×${p[k]}×${p[j]}=${multCost}. Total = ${totalCost}.${isNewMin ? ' (New Minimum Cost!)' : ''}`,
+          description: `Split after A${k}: the left group A${i}..A${k} costs ${costLeft} and the right group A${k + 1}..A${j} costs ${costRight} (both already in the table), and joining the two results costs ${p[i - 1]}×${p[k]}×${p[j]} = ${multCost}. Total = ${totalCost}.${isNewMin ? ' Cheapest so far.' : ' Not cheaper than an earlier split.'}`,
           codeLine: [6, 7, 8, 9],
           state: {
             dimensions: [...p],
@@ -179,7 +179,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'DP Table Complete: Begin Optimal Parenthesization Backtrack',
-    description: `DP cost table is complete with minimum scalar multiplication cost m[1, ${n}] = ${m[1][n]}. Now backtracking through split table s[i, j] to reconstruct the optimal matrix grouping one step at a time.`,
+    description: `The table is full. m[1, ${n}] = ${m[1][n]} is the cheapest cost for the whole chain. Now read the split table s to put the brackets back, from the outside in.`,
     codeLine: 10,
     state: {
       dimensions: [...p],
@@ -213,7 +213,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Backtrack: Query Split Table s[${i}, ${j}] = ${k}`,
-      description: `For subchain A${i}..A${j}, stored split point in table s[${i}, ${j}] is k = ${k}. This divides the problem into Left subchain A${i}..A${k} and Right subchain A${k + 1}..A${j}.`,
+      description: `The best split for A${i}..A${j} was after A${k} (s[${i}, ${j}] = ${k}): bracket A${i}..A${k} and A${k + 1}..A${j} separately.`,
       codeLine: 10,
       state: {
         dimensions: [...p],
@@ -259,7 +259,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Merge Group: (${leftStr} × ${rightStr})`,
-      description: `Combined optimal parenthesization for subchain A${i}..A${j} at split k=${k}: "${mergedStr}".`,
+      description: `Put brackets around A${i}..A${j}, split after A${k}: "${mergedStr}".`,
       codeLine: 10,
       state: {
         dimensions: [...p],
@@ -304,7 +304,7 @@ export function* matrixChainMultiplicationSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Matrix Chain Multiplication Complete',
-    description: `Optimal chain multiplication fully evaluated and reconstructed. Minimum scalar multiplications: ${m[1][n]}. Optimal multiplication order: ${finalOptimalParens}.`,
+    description: `Done: the cheapest order is ${finalOptimalParens}, needing ${m[1][n]} multiplications of single numbers. Any other bracketing needs at least as many.`,
     codeLine: 11,
     state: {
       dimensions: [...p],

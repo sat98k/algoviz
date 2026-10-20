@@ -83,7 +83,7 @@ export function* rabinKarpSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Rabin-Karp Algorithm',
-    description: `Target text length n = ${n}, pattern length m = ${m}. Base radix d = ${D}, prime modulus q = ${Q}. Leading-digit weight h = d^(m-1) mod q = ${h}.`,
+    description: `The text has ${n} letters and the pattern has ${m}. Idea: turn the pattern and every ${m}-letter window of the text into a number (a hash, like a fingerprint). If the numbers differ, the window cannot match, so letters are only checked where the numbers are equal. The hash reads the letters like the digits of a base-${D} number and keeps only the remainder after dividing by ${Q}, so it stays small (h = ${h} is the weight of the leftmost letter).`,
     codeLine: [1, 2, 3, 4],
     state: {
       text,
@@ -112,7 +112,7 @@ export function* rabinKarpSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: 'Compute Initial Pattern & First Window Hashes',
-      description: `Pattern hash P = ${p}. First window hash T[0…${m - 1}] = ${t}. Both computed in O(m) time using Horner's polynomial rule.`,
+      description: `The pattern's hash is ${p} and the first window's hash is ${t}. Each is worked out once, letter by letter, the way you would read the digits of a number.`,
       codeLine: [5, 6],
       state: {
         text,
@@ -139,7 +139,7 @@ export function* rabinKarpSteps(inputs: {
         title: `Shift ${s}: Compare Window Hash (${t}) vs Pattern Hash (${p})`,
         description: hashMatch
           ? `Hashes match (${t} = ${p}), so shift ${s} is a candidate. Equal hashes do not prove equal strings: the hash is taken mod ${Q}, so it has only ${Q} possible values and different windows can share one. Check the characters one by one.`
-          : `Hashes differ (${t} != ${p}). No match possible at shift ${s}. Skipping character checks and rolling window right.`,
+          : `Hashes differ (${t} ≠ ${p}), so this window cannot be the pattern. No letters need checking: slide on.`,
         codeLine: [7, 8],
         state: {
           text,
@@ -234,7 +234,7 @@ export function* rabinKarpSteps(inputs: {
           yield {
             stepIndex: stepIndex++,
             title: `Spurious Hit (Hash Collision) at Shift ${s}`,
-            description: `Hashes matched (${t} == ${p}), but characters differed at pattern offset ${j} ('${text[s + j]}' != '${pattern[j]}'). False positive recorded.`,
+            description: `The hashes matched (${t} = ${p}), but the letters differ at position ${j} ('${text[s + j]}' ≠ '${pattern[j]}'). This is a spurious hit (a hash collision): two different windows happened to get the same number. That is why letters are always checked.`,
             codeLine: 12,
             state: {
               text,
@@ -289,7 +289,7 @@ export function* rabinKarpSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Roll Hash to Shift ${s + 1}`,
-          description: `Slide the window one place right: '${removed}' leaves on the left and '${added}' enters on the right. The new hash is computed from the old one in O(1), without rereading the other ${m - 1} characters: ${prevT} → ${t}.`,
+          description: `Slide the window one place right: '${removed}' leaves on the left and '${added}' enters on the right. The new hash comes straight from the old one (take out the leaving letter, shift, add the new letter) without rereading the other ${m - 1} letters: ${prevT} → ${t}.`,
           codeLine: [13, 14],
           state: {
             text,
@@ -329,7 +329,7 @@ export function* rabinKarpSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Rabin-Karp Search Complete',
-    description: `Search complete. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. Total hash checks: ${hashChecks}, spurious hits: ${spuriousHits}, verified comparisons: ${comparisons}.`,
+    description: `Search complete. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. ${hashChecks} hash comparisons were made, and letters were only checked where the hashes matched (${comparisons} letter checks, ${spuriousHits} spurious hit${spuriousHits === 1 ? '' : 's'}).`,
     codeLine: 15,
     state: {
       text,

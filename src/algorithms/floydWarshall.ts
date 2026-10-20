@@ -84,7 +84,7 @@ export function* floydWarshallSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Floyd-Warshall Distance Matrix',
-    description: `Initialized ${n}x${n} distance matrix D(0) from direct edge weights. Unconnected pairs set to ∞.`,
+    description: `Start with what we know: D[i][j] is the length of the direct road from Vi to Vj (0 from a vertex to itself, ∞ where there is no direct road). Then each vertex in turn is allowed as a stop in the middle of trips, to see whether that makes any trip shorter.`,
     codeLine: 2,
     state: {
       nodes,
@@ -104,7 +104,7 @@ export function* floydWarshallSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Starting Round ${k + 1} of ${n}: V${k + 1} as Intermediate Stop`,
-      description: `Testing if paths between all vertex pairs (i, j) can be shortened by routing through intermediate vertex V${k + 1}.`,
+      description: `Round ${k + 1}: allow V${k + 1} as a stop. For every pair of vertices, check whether going via V${k + 1} beats the best trip known so far. ${k === 0 ? 'So far only direct roads count.' : `Earlier rounds already allowed V1 to V${k} as stops.`}`,
       codeLine: 3,
       state: {
         nodes,
@@ -138,9 +138,9 @@ export function* floydWarshallSteps(inputs: {
           yield {
             stepIndex: stepIndex++,
             title: `Check D[V${i + 1}][V${j + 1}] via V${k + 1}: Unreachable Leg`,
-            description: `Cannot route from V${i + 1} to V${j + 1} through intermediate V${k + 1}: ${
-              dik === null ? `D[V${i + 1}][V${k + 1}] = ∞` : `D[V${k + 1}][V${j + 1}] = ∞`
-            }. Distance remains ${dij === null ? '∞' : dij}.`,
+            description: `V${k + 1} cannot help the trip V${i + 1} → V${j + 1}: there is no known way ${
+              dik === null ? `from V${i + 1} to V${k + 1}` : `from V${k + 1} to V${j + 1}`
+            } yet. The best trip stays ${dij === null ? '∞' : dij}.`,
             codeLine: 7,
             state: {
               nodes,
@@ -191,9 +191,9 @@ export function* floydWarshallSteps(inputs: {
             yield {
               stepIndex: stepIndex++,
               title: `Shorter Path: Update D[V${i + 1}][V${j + 1}] via V${k + 1}`,
-              description: `Shortened path found! D[V${i + 1}][V${j + 1}] updated from ${
+              description: `Going via V${k + 1}: ${dik} + ${dkj} = ${throughK}, shorter than the best known trip (${
                 oldDij === null ? '∞' : oldDij
-              } to ${throughK} (D[V${i + 1}][V${k + 1}] = ${dik} + D[V${k + 1}][V${j + 1}] = ${dkj}).`,
+              }). Update D[V${i + 1}][V${j + 1}] = ${throughK}.`,
               codeLine: [7, 8],
               state: {
                 nodes,
@@ -234,7 +234,7 @@ export function* floydWarshallSteps(inputs: {
             yield {
               stepIndex: stepIndex++,
               title: `Check D[V${i + 1}][V${j + 1}] via V${k + 1}: No Improvement`,
-              description: `Routing via intermediate V${k + 1} gives ${dik} + ${dkj} = ${throughK} ≥ current D[V${i + 1}][V${j + 1}] = ${dij}. Distance remains ${dij}.`,
+              description: `Going via V${k + 1}: ${dik} + ${dkj} = ${throughK}, not shorter than the best known trip (${dij}). Keep ${dij}.`,
               codeLine: 7,
               state: {
                 nodes,
@@ -304,7 +304,7 @@ export function* floydWarshallSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Floyd-Warshall Complete',
-    description: `All-pairs shortest paths computed in O(V³) time. ${relaxations} pair distance(s) were shortened by routing through an intermediate vertex.`,
+    description: `Done: every vertex has been allowed as a stop, so D now holds the shortest trip between every pair. ${relaxations} trip${relaxations === 1 ? '' : 's'} got shorter by passing through another vertex.`,
     codeLine: 9,
     state: {
       nodes,

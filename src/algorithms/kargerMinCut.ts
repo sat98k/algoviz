@@ -165,7 +165,7 @@ export function* kargerMinCutSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Karger’s Min-Cut Algorithm',
-    description: `Loaded graph with ${currentNodes.length} vertices and ${currentEdges.reduce((s, e) => s + e.weight, 0)} edges. Contraction loop will repeatedly pick a random edge and contract its endpoints until exactly 2 super-nodes remain.`,
+    description: `${currentNodes.length} vertices joined by ${currentEdges.reduce((s, e) => s + e.weight, 0)} edges. Goal: split them into two groups with as few edges between the groups as possible. Karger's trick: pick a random edge, merge its two ends into one group, and repeat until only two groups remain.`,
     codeLine: 1,
     state: {
       nodes: [...currentNodes],
@@ -201,7 +201,7 @@ export function* kargerMinCutSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Random Edge Selected for Contraction: (${uNode.label}, ${vNode.label})`,
-      description: `Randomly chose edge connecting super-nodes ${uNode.label} and ${vNode.label} from ${flatEdges.length} multigraph edges.`,
+      description: `Pick one of the ${flatEdges.length} edges at random: the one between ${uNode.label} and ${vNode.label}. Edges that appear many times are more likely to be picked.`,
       codeLine: [2, 3],
       state: {
         nodes: [...currentNodes],
@@ -259,7 +259,7 @@ export function* kargerMinCutSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Contract Edge: Merge into Super-Node {${mergedLabel}}`,
-      description: `Contracted edge (${uNode.label}, ${vNode.label}). Removed self-loops between them. Multi-edges to remaining nodes preserved. Remaining super-nodes: ${currentNodes.length}.`,
+      description: `Merge ${uNode.label} and ${vNode.label} into one group. Edges between them disappear; edges to other groups stay (two edges to the same group stay as two). ${currentNodes.length} groups left.`,
       codeLine: [4, 5, 6],
       state: {
         nodes: [...currentNodes],

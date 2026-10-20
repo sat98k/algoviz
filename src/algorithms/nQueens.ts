@@ -47,7 +47,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
   yield {
     stepIndex: stepIndex++,
     title: `Initialize ${n}-Queens Board`,
-    description: `Initialized empty ${n}×${n} chessboard. Objective: place ${n} queens so that no two share a row, column or diagonal. Rows and columns are numbered from 1.`,
+    description: `An empty ${n}×${n} board. Goal: place ${n} queens so that no two attack each other. Every row needs exactly one queen, so we fill the board one row at a time, trying columns from left to right. If a row has no safe square left, we go back and move an earlier queen (backtracking). Rows and columns are numbered from 1.`,
     codeLine: 1,
     state: {
       n,
@@ -84,7 +84,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
       yield {
         stepIndex: stepIndex++,
         title: `Valid ${n}-Queens Solution #${solutions.length} Found!`,
-        description: `Successfully placed all ${n} queens on the board without conflicts. Positions (row, column): [${board.map((c, r) => `(${r + 1}, ${c + 1})`).join(', ')}].`,
+        description: `All ${n} queens are on the board and none attacks another. Positions (row, column): [${board.map((c, r) => `(${r + 1}, ${c + 1})`).join(', ')}].`,
         codeLine: 2,
         callFlow: row > 0 ? { type: 'return', nodeId: `${row - 1}-${board[row - 1]}` } : undefined,
         state: {
@@ -145,7 +145,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
         yield {
           stepIndex: stepIndex++,
           title: `Backtrack from Row ${row + 1}, Column ${col + 1}`,
-          description: `No safe placement exists further down from here, so the queen at row ${row + 1}, column ${col + 1} is removed and the next column in row ${row + 1} is tried.`,
+          description: `Dead end: with the queen at row ${row + 1}, column ${col + 1}, some row further down has no safe square. So this queen must be in the wrong place: lift it off (backtrack) and try the next column in row ${row + 1}.`,
           codeLine: 7,
           callFlow: { type: 'return', nodeId: `${row}-${col}` },
           state: {
@@ -168,7 +168,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
         yield {
           stepIndex: stepIndex++,
           title: `Conflict at Row ${row + 1}, Column ${col + 1}`,
-          description: `Row ${row + 1}, column ${col + 1} is attacked along the ${board[confRow] === col ? 'column' : 'diagonal'} by the queen at row ${confRow + 1}, column ${board[confRow] + 1}.`,
+          description: `Row ${row + 1}, column ${col + 1} is not safe: the queen at row ${confRow + 1}, column ${board[confRow] + 1} attacks it along the ${board[confRow] === col ? 'column' : 'diagonal'}. Try the next column.`,
           codeLine: 4,
           state: {
             n,

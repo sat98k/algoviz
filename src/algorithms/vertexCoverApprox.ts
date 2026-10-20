@@ -55,7 +55,7 @@ export function* vertexCoverApproxSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize 2-Approximation for Vertex Cover',
-    description: `Loaded graph with ${nodes.length} vertices and ${allEdges.length} edges. Initialized empty cover C = {}.`,
+    description: `${nodes.length} vertices and ${allEdges.length} edges. Goal: choose vertices so that every edge touches a chosen one. No vertex is chosen yet.`,
     codeLine: 2,
     state: {
       nodes,
@@ -80,7 +80,7 @@ export function* vertexCoverApproxSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Pick Arbitrary Uncovered Edge (${uLabel}, ${vLabel})`,
-      description: `Selected edge (${uLabel}, ${vLabel}) from remaining uncovered set E'.`,
+      description: `Pick an edge that nothing covers yet: (${uLabel}, ${vLabel}).`,
       codeLine: [3, 4],
       state: {
         nodes,
@@ -103,7 +103,7 @@ export function* vertexCoverApproxSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Add Endpoints {${uLabel}, ${vLabel}} to Cover C`,
-      description: `Added both endpoints of edge (${uLabel}, ${vLabel}) into the vertex cover set C. Cover size is now ${coveredVertices.size}.`,
+      description: `Choose both ends, ${uLabel} and ${vLabel}. We do not know which one the best answer uses, but it must use at least one, so taking both at most doubles the count. Chosen so far: ${coveredVertices.size}.`,
       codeLine: 5,
       state: {
         nodes,
@@ -139,7 +139,7 @@ export function* vertexCoverApproxSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Remove ${removed.length} Incident Edges from E'`,
-      description: `Removed all edges touching ${uLabel} or ${vLabel} since they are now covered. Remaining uncovered edges: ${uncoveredEdges.length}.`,
+      description: `Every edge touching ${uLabel} or ${vLabel} is now covered. ${uncoveredEdges.length} edge${uncoveredEdges.length === 1 ? '' : 's'} still uncovered.`,
       codeLine: 6,
       state: {
         nodes,
@@ -164,7 +164,7 @@ export function* vertexCoverApproxSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Vertex Cover 2-Approximation Complete',
-    description: `Found valid vertex cover of size ${finalCoverList.length}: {${finalCoverLabels.join(', ')}}. Lower bound OPT >= ${pickedMatchingEdges.length} (size of maximal matching), proving |C| <= 2 * OPT.`,
+    description: `Done: {${finalCoverLabels.join(', ')}} covers every edge (${finalCoverList.length} vertices). We picked ${pickedMatchingEdges.length} edges that share no ends, and any answer needs a vertex for each of them, so the best possible uses at least ${pickedMatchingEdges.length}. Ours uses at most twice that: |C| ≤ 2 × OPT.`,
     codeLine: 7,
     state: {
       nodes,

@@ -232,7 +232,7 @@ export function computeLcsEngine(xInput: string, yInput: string): LcsEngineResul
   steps.push({
     stepIndex: stepIndex++,
     title: 'Initialize LCS DP Table',
-    description: `Created ${(m + 1)} x ${(n + 1)} DP table for string X ("${X}") and string Y ("${Y}"). Initialized base row 0 and column 0 with 0.`,
+    description: `Comparing every possible subsequence takes too long, so we answer small questions first and write the answers in a table. Cell dp[i][j] = the length of the longest common subsequence of the first i letters of "${X}" and the first j letters of "${Y}". Row 0 and column 0 are 0: an empty string shares nothing.`,
     codeLine: 2,
     state: {
       str1: X,

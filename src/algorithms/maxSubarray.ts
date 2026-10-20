@@ -171,7 +171,7 @@ export function* maxSubarraySteps(inputs: {
 
       yield makeSnapshot(
         `Base Case: arr[${low}] = ${arr[low]}`,
-        `Base case reached (length 1). Maximum subarray sum is the single element itself: ${arr[low]}. Returning up call tree.`,
+        `Only one number here, so the best stretch is just that number: ${arr[low]}. This answer is passed back up to the bigger problem.`,
         2,
         nodeId,
         [low, high],
@@ -191,7 +191,7 @@ export function* maxSubarraySteps(inputs: {
 
     yield makeSnapshot(
       `Split at Midpoint: mid = ${mid}`,
-      `Splitting array [${low}..${high}] into Left Half [${low}..${mid}] and Right Half [${mid + 1}..${high}]: the best stretch lies entirely in one half, or crosses the middle.`,
+      `Cut [${low}..${high}] at the middle (mid = ${mid}) into a left half [${low}..${mid}] and a right half [${mid + 1}..${high}]. The best stretch is either all in the left half, all in the right half, or crosses the middle.`,
       3,
       nodeId,
       [low, high],
@@ -227,7 +227,7 @@ export function* maxSubarraySteps(inputs: {
 
     yield makeSnapshot(
       `Crossing Case: Scan Out From mid = ${mid}`,
-      `A subarray crossing the middle contains arr[${mid}] and arr[${mid + 1}]: a left piece ending at ${mid} plus a right piece starting at ${mid + 1}.`,
+      `Now the third option: a stretch that crosses the middle must contain both arr[${mid}] and arr[${mid + 1}]. Grow it outward, first leftward from ${mid}, then rightward from ${mid + 1}, remembering the best total on each side.`,
       [6, 9],
       nodeId,
       [low, high],
@@ -253,7 +253,7 @@ export function* maxSubarraySteps(inputs: {
       scan.improved = improved;
       yield makeSnapshot(
         `Left Scan: sum(arr[${i}..${mid}]) = ${leftSum}`,
-        `${leftSum - arr[i]} + arr[${i}] (${arr[i]}) = ${leftSum}. ${improved ? `New best left piece: ${leftSum}.` : `Best left piece stays ${maxLeftSum}.`}`,
+        `Add arr[${i}] = ${arr[i]}: ${leftSum - arr[i]} + ${arr[i]} = ${leftSum}. ${improved ? `That is the best total so far on the left side.` : `Not better than the best so far on the left side (${maxLeftSum}).`}`,
         [11, 12, 13],
         nodeId,
         [i, mid],
@@ -280,7 +280,7 @@ export function* maxSubarraySteps(inputs: {
       scan.improved = improved;
       yield makeSnapshot(
         `Right Scan: sum(arr[${mid + 1}..${j}]) = ${rightSum}`,
-        `${rightSum - arr[j]} + arr[${j}] (${arr[j]}) = ${rightSum}. ${improved ? `New best right piece: ${rightSum}.` : `Best right piece stays ${maxRightSum}.`}`,
+        `Add arr[${j}] = ${arr[j]}: ${rightSum - arr[j]} + ${arr[j]} = ${rightSum}. ${improved ? `That is the best total so far on the right side.` : `Not better than the best so far on the right side (${maxRightSum}).`}`,
         j === mid + 1 ? [14, 15, 16, 17] : [15, 16, 17],
         nodeId,
         [mid + 1, j],
@@ -306,7 +306,7 @@ export function* maxSubarraySteps(inputs: {
     scan.improved = undefined;
     yield makeSnapshot(
       `CrossSum = ${maxLeftSum} + ${maxRightSum} = ${crossSumVal}`,
-      `The two pieces do not affect each other, so the best crossing subarray joins the best left piece arr[${maxLeftIdx}..${mid}] and the best right piece arr[${mid + 1}..${maxRightIdx}].`,
+      `Join the best left part arr[${maxLeftIdx}..${mid}] (${maxLeftSum}) with the best right part arr[${mid + 1}..${maxRightIdx}] (${maxRightSum}): ${maxLeftSum} + ${maxRightSum} = ${crossSumVal} is the best stretch that crosses the middle.`,
       [18, 6],
       nodeId,
       [maxLeftIdx, maxRightIdx],
@@ -345,7 +345,7 @@ export function* maxSubarraySteps(inputs: {
 
     yield makeSnapshot(
       `Combine: Winner is ${winnerName} -> Max Sum ${bestRes.maxSum}`,
-      `Comparing LSum (${leftRes.maxSum}), RSum (${rightRes.maxSum}), and CrossSum (${crossRes.maxSum}). Returning ${winnerName} (${bestRes.maxSum}) spanning [${bestRes.low}..${bestRes.high}] up to caller.`,
+      `Three candidates: all in the left half ${leftRes.maxSum}, all in the right half ${rightRes.maxSum}, crossing the middle ${crossRes.maxSum}. The largest is ${winnerName === 'LSum' ? 'the left half' : winnerName === 'RSum' ? 'the right half' : 'the crossing stretch'} (${bestRes.maxSum}, covering [${bestRes.low}..${bestRes.high}]), so that is the answer for this part, passed back up.`,
       7,
       nodeId,
       [bestRes.low, bestRes.high],
@@ -376,7 +376,7 @@ export function* maxSubarraySteps(inputs: {
 
   yield makeSnapshot(
     'Maximum Subarray Complete: Global Optimal Highlighted',
-    `Global maximum contiguous subarray is [${optimalSubarray.join(', ')}] with sum ${rootResult.maxSum} spanning indices [${rootResult.low}..${rootResult.high}].`,
+    `The best stretch is [${optimalSubarray.join(', ')}] with total ${rootResult.maxSum}, from index ${rootResult.low} to ${rootResult.high}. No other unbroken stretch adds up to more.`,
     7,
     treeNodes[0]?.id || '',
     [rootResult.low, rootResult.high],

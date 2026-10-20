@@ -90,7 +90,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
   yield {
     stepIndex: stepIndex++,
     title: 'Frequency Analysis & Initial Forest',
-    description: `Computed character frequencies for text of length ${text.length}. Created ${forest.length} initial leaf nodes.`,
+    description: `Counted each character in the ${text.length}-character text: ${forest.map((n) => `${n.char} × ${n.freq}`).join(', ')}. Each character becomes a small one-node tree with its count, and the trees wait in line from smallest count to largest.`,
     codeLine: [2, 3],
     state: {
       inputText: text,
@@ -121,7 +121,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
     yield {
       stepIndex: stepIndex++,
       title: `Select 2 Lowest Frequency Trees`,
-      description: `The two smallest frequencies in the queue are "${leafChars(left)}" (${left.freq}) and "${leafChars(right)}" (${right.freq}). Take both out to merge them.`,
+      description: `The two trees with the smallest counts are "${leafChars(left)}" (${left.freq}) and "${leafChars(right)}" (${right.freq}). Take both out to join them. Rare characters are joined first, so they end up deepest and get the longest codes.`,
       codeLine: [4, 5, 6],
       state: {
         inputText: text,
@@ -152,7 +152,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
     yield {
       stepIndex: stepIndex++,
       title: `Merged Nodes into Subtree`,
-      description: `New parent "${leafChars(parentNode)}" with frequency ${left.freq} + ${right.freq} = ${parentNode.freq} goes back into the queue in frequency order.`,
+      description: `Join them under a new parent "${leafChars(parentNode)}" with count ${left.freq} + ${right.freq} = ${parentNode.freq}. It goes back into the line at its place by count.`,
       codeLine: [7, 8],
       state: {
         inputText: text,
@@ -202,7 +202,7 @@ export function* huffmanSteps(inputs: { text: string }): Generator<AlgorithmStep
   yield {
     stepIndex: stepIndex++,
     title: 'Huffman Tree & Prefix Codes Complete',
-    description: `Optimal prefix tree constructed. Assigned binary codes to all ${Object.keys(codeTable).length} characters. Compression: ${originalBits} bits -> ${compressedBits} bits (${compressionRatio}% space saved).`,
+    description: `Only one tree is left, so it is finished. Read each code from the top, left = 0 and right = 1: ${Object.entries(codeTable).map(([c, code]) => `${c} = ${code}`).join(', ')}. Common characters got short codes, so the text needs ${compressedBits} bits instead of ${originalBits} at 8 bits per character (${compressionRatio}% smaller).`,
     codeLine: [9, 10],
     state: {
       inputText: text,

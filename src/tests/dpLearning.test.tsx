@@ -56,17 +56,21 @@ describe('DP briefs', () => {
 
   it('the recurrence cases sit inside "How it works" (no separate panel) and the live rule sits beside the table, only for DP', () => {
     for (const id of DP_IDS) {
+      // Learn view: the cases sit inside "How it works".
       const html = renderToStaticMarkup(<AlgorithmPage algorithmId={id} onBack={() => {}} />);
       const panel = html.indexOf('aria-label="Problem and how it works"');
       const cases = html.indexOf('aria-label="Recurrence cases"');
+      expect(panel, id).toBeGreaterThan(-1);
       expect(cases, id).toBeGreaterThan(panel);
-      expect(cases).toBeLessThan(html.indexOf('What happened and why?'));
       expect(html.split('aria-label="Recurrence cases"').length - 1).toBe(1);
       expect(html).not.toContain('Table rules');
       for (const c of getAlgorithmById(id)!.dpBrief!.cases) expect(decode(html)).toContain(c.formula);
-      expect(html).toContain('Rule for this cell');
+      // Player view: the live rule beside the table.
+      const play = renderToStaticMarkup(<AlgorithmPage algorithmId={id} onBack={() => {}} initialView="play" />);
+      expect(play).toContain('Rule for this cell');
+      expect(play).not.toContain('Table rules');
     }
-    const kmp = renderToStaticMarkup(<AlgorithmPage algorithmId="kmp" onBack={() => {}} />);
+    const kmp = renderToStaticMarkup(<AlgorithmPage algorithmId="kmp" onBack={() => {}} />) + renderToStaticMarkup(<AlgorithmPage algorithmId="kmp" onBack={() => {}} initialView="play" />);
     expect(kmp).not.toContain('Recurrence cases');
     expect(kmp).not.toContain('Rule for this cell');
   });

@@ -182,7 +182,7 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize TSP Held-Karp Solver',
-    description: `Initialized Travelling Salesman Problem for ${n} cities (${cities.map((c) => c.label).join(', ')}). Start vertex is ${cities[0].label}.`,
+    description: `${n} cities (${cities.map((c) => c.label).join(', ')}), starting from ${cities[0].label}. Trying every round trip gets far too slow as cities are added, so we fill a notebook of small answers: DP[S, j] = the cheapest way to start at ${cities[0].label}, visit exactly the cities in set S, and stop at city j.`,
     codeLine: 1,
     state: {
       numCities: n,
@@ -219,7 +219,7 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
   yield {
     stepIndex: stepIndex++,
     title: `Base Case: DP[{${cities[0].label}}, ${cities[0].label}] = 0`,
-    description: `Base Case: DP[{${cities[0].label}}, ${cities[0].label}] = 0. Cost to start at ${cities[0].label} with subset {${cities[0].label}} is 0.`,
+    description: `First notebook entry: standing at ${cities[0].label}, having visited only ${cities[0].label}, costs 0.`,
     codeLine: 2,
     state: {
       numCities: n,
@@ -433,7 +433,7 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
   yield {
     stepIndex: stepIndex++,
     title: `Close Tour: Return to ${cities[0].label}`,
-    description: `Tour Closing: Evaluating return edges from full subset ${fullSubsetLabel} to start city ${cities[0].label}. Minimum full tour cost = ${optimalCost} via last city ${cities[bestLastCity].label}.`,
+    description: `Every city is visited (${fullSubsetLabel}); now go home. For each possible last city, add the cost of going back to ${cities[0].label}. The cheapest round trip costs ${optimalCost}, with ${cities[bestLastCity].label} as the last city before home.`,
     codeLine: [8, 9],
     state: {
       numCities: n,
@@ -540,7 +540,7 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
   yield {
     stepIndex: stepIndex++,
     title: `Optimal Tour Complete: ${tourString} (Cost ${optimalCost})`,
-    description: `Execution Complete: Minimum Hamiltonian Cycle is ${tourString} with optimal cost ${optimalCost}.`,
+    description: `Done: the cheapest round trip is ${tourString}, costing ${optimalCost}. No other order of visiting the cities is cheaper.`,
     codeLine: 11,
     state: {
       numCities: n,

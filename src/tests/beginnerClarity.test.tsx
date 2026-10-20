@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { algorithmRegistry, getAlgorithmById } from '../config/algorithmRegistry';
 import { getDefaultInputs } from '../utils/comparison';
 import { ROADMAPS, roadmapPhases } from '../config/roadmaps';
+import { OWL_BRIEFINGS, OwlBriefing } from '../config/owlBriefings';
 import { AlgorithmPage } from '../pages/AlgorithmPage';
 import { RoadmapStrip } from '../components/common/RoadmapStrip';
 import { STORY_SCENES } from '../components/story/storyRegistry';
@@ -62,7 +63,7 @@ describe('Roadmap strip ("How it works" — you are here)', () => {
   });
 
   it('sits inside the playback dock on the algorithm page', () => {
-    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="knapsack-dp" onBack={() => {}} />);
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="knapsack-dp" onBack={() => {}} initialView="play" />);
     const dock = html.indexOf('data-playback-dock');
     expect(dock).toBeGreaterThan(-1);
     expect(html.indexOf('role="toolbar"')).toBeGreaterThan(dock);
@@ -71,7 +72,7 @@ describe('Roadmap strip ("How it works" — you are here)', () => {
   });
 
   it('is not shown for the sweep line page', () => {
-    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="line-segment-intersection" onBack={() => {}} />);
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="line-segment-intersection" onBack={() => {}} initialView="play" />);
     expect(html).not.toContain('data-roadmap');
   });
 });
@@ -191,5 +192,72 @@ describe('DP steps show their arithmetic', () => {
     const text = textOf(stepsOf('tsp'));
     expect(text).toContain('can only reach B from C: 15 + 35 = 50.');
     expect(text).toContain('Options: from C, 50 + 35 = 85; from D, 45 + 25 = 70. The cheapest way in is from D (70).');
+  });
+});
+
+describe('Owl briefing ("The owl explains: Problem & how it works")', () => {
+  const inScope = algorithmRegistry.filter((a) => a.id !== 'line-segment-intersection').map((a) => a.id);
+  const textOfBriefing = (b: OwlBriefing) =>
+    [b.story, b.goal, b.example ?? '', ...b.overview.flatMap((s) => [s.title, s.text]), b.insight, ...b.watch].join(' ');
+
+  it('every in-scope algorithm has a complete briefing; the sweep line keeps the classic pane', () => {
+    for (const id of inScope) {
+      const b = OWL_BRIEFINGS[id];
+      expect(b, id).toBeDefined();
+      expect(b.story.length, id).toBeGreaterThan(60);
+      expect(b.goal.length, id).toBeGreaterThan(20);
+      expect(b.insight.length, id).toBeGreaterThan(40);
+      expect(b.overview.length, id).toBeGreaterThanOrEqual(3);
+      expect(b.overview.length, id).toBeLessThanOrEqual(6);
+      for (const s of b.overview) {
+        expect(s.title.length, id).toBeGreaterThan(2);
+        expect(s.text.length, `${id}: ${s.title}`).toBeGreaterThan(20);
+      }
+      expect(b.watch.length, id).toBeGreaterThanOrEqual(2);
+      expect(b.watch.length, id).toBeLessThanOrEqual(4);
+      const text = textOfBriefing(b);
+      expect((text.match(/`/g) ?? []).length % 2, id).toBe(0);
+      expect((text.match(/\*\*/g) ?? []).length % 2, id).toBe(0);
+      expect(text, id).not.toMatch(/undefined|NaN/);
+    }
+    expect(Object.keys(OWL_BRIEFINGS).sort()).toEqual([...inScope].sort());
+  });
+
+  it('never states the default answer before playback', () => {
+    const answers: [string, (r: any) => string][] = [
+      ['fractional-knapsack', (r) => String(r.maxValue)],
+      ['lcs', (r) => String(r.lcsString ?? r.lcs ?? '')],
+      ['karatsuba', (r) => String(r.product)],
+    ];
+    for (const [id, pick] of answers) {
+      const a = getAlgorithmById(id)!;
+      const answer = pick([...a.stepGenerator(getDefaultInputs(a))].pop()!.result);
+      expect(answer.length, id).toBeGreaterThan(1);
+      expect(textOfBriefing(OWL_BRIEFINGS[id]), id).not.toContain(answer);
+    }
+  });
+
+  it('the owl explains the problem and the whole procedure first, then the short steps', () => {
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="knapsack-dp" onBack={() => {}} />);
+    const b = OWL_BRIEFINGS['knapsack-dp'];
+    const pane = html.indexOf('aria-label="Problem and how it works"');
+    expect(pane).toBeGreaterThan(-1);
+    expect(html).toContain('data-owl-briefing');
+    expect(html).toContain('The owl explains: Problem &amp; how it works');
+    const bigPicture = html.indexOf('How it works: the big picture');
+    const shortSteps = html.indexOf('The steps in short');
+    expect(bigPicture).toBeGreaterThan(pane);
+    expect(shortSteps).toBeGreaterThan(bigPicture);
+    expect(html.split('data-owl-stage').length - 1).toBe(b.overview.length);
+    for (const s of b.overview) expect(html).toContain(s.title);
+    expect(html).toContain('While you watch');
+    expect(html).toContain('Why it works');
+    expect(html.indexOf('aria-label="Recurrence cases"')).toBeGreaterThan(shortSteps);
+  });
+
+  it('the sweep line page keeps the classic pane', () => {
+    const html = renderToStaticMarkup(<AlgorithmPage algorithmId="line-segment-intersection" onBack={() => {}} />);
+    expect(html).toContain('aria-label="Problem and how it works"');
+    expect(html).not.toContain('data-owl-briefing');
   });
 });

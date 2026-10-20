@@ -42,7 +42,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Graham’s Scan',
-    description: `Loaded ${points.length} 2D points. Phase 1: Find the bottom-most point; it becomes the anchor.`,
+    description: `${points.length} points on a board. We want the tightest fence (polygon) around all of them. First, find the bottom-most point: nothing can be below it, so it is surely on the fence. It becomes the anchor.`,
     codeLine: 1,
     state: {
       points: [...points],
@@ -68,7 +68,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
   yield {
     stepIndex: stepIndex++,
     title: `Pivot Selected: ${pivot.label} (${pivot.x}, ${pivot.y})`,
-    description: `Found lowest y-coordinate point ${pivot.label}. All other points will be sorted by polar angle relative to this anchor.`,
+    description: `${pivot.label} is the lowest point, so it is the anchor. Next, the other points are ordered by angle around it.`,
     codeLine: 2,
     state: {
       points: [...points],
@@ -116,7 +116,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
   yield {
     stepIndex: stepIndex++,
     title: 'Points Sorted by Polar Angle',
-    description: `Sorted remaining ${otherPoints.length} points counter-clockwise by polar angle around pivot ${pivot.label}.`,
+    description: `Ordered the other ${otherPoints.length} points by angle around ${pivot.label}, counter-clockwise, as if a beam swept round from the right. Walking through them in this order traces the outline.`,
     codeLine: 3,
     state: {
       points: [...points],
@@ -138,7 +138,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Hull Stack with First 3 Points',
-    description: `Pushed [${stack.map((p) => p.label).join(', ')}] onto hull stack.`,
+    description: `Start the fence with the first points in that order: [${stack.map((p) => p.label).join(', ')}]. Each new point is checked: does the fence still turn left there?`,
     codeLine: 4,
     state: {
       points: [...points],
@@ -168,7 +168,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
       yield {
         stepIndex: stepIndex++,
         title: `Check Orientation: ${nextToTop.label} -> ${top.label} -> ${pt.label}`,
-        description: `Evaluating turn from (${nextToTop.label} to ${top.label} to ${pt.label}). Cross product = ${o}. Turn is ${turnType.toUpperCase()} (${o > 0 ? 'Valid CCW Left Turn' : 'Invalid Non-Left Turn'}).`,
+        description: `Walking ${nextToTop.label} → ${top.label} → ${pt.label}: ${o > 0 ? `the path turns left (cross product ${o} > 0), so ${top.label} can stay on the fence.` : `the path ${o < 0 ? 'turns right' : 'goes straight'} (cross product ${o} ≤ 0), so ${top.label} would make a dent: it must be inside the fence.`}`,
         codeLine: [5, 6],
         state: {
           points: [...points],
@@ -192,7 +192,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
         yield {
           stepIndex: stepIndex++,
           title: `Pop ${popped.label} from Hull Stack`,
-          description: `Popped ${popped.label} because it creates a clockwise/collinear dent in the convex hull.`,
+          description: `Remove ${popped.label}: it made a dent, so it lies inside the fence. Check the turn again with the point before it.`,
           codeLine: 7,
           state: {
             points: [...points],
@@ -217,7 +217,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
     yield {
       stepIndex: stepIndex++,
       title: `Push ${pt.label} onto Hull Stack`,
-      description: `Added point ${pt.label} (${pt.x}, ${pt.y}) to current convex hull stack.`,
+      description: `Add ${pt.label} (${pt.x}, ${pt.y}) to the fence and move on to the next point.`,
       codeLine: 8,
       state: {
         points: [...points],
@@ -237,7 +237,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
   yield {
     stepIndex: stepIndex++,
     title: 'Graham’s Scan Complete',
-    description: `Convex Hull successfully computed! Enclosing polygon contains ${stack.length} vertices: [${stack.map((p) => p.label).join(' → ')}].`,
+    description: `Done: the fence turns left at every corner, so it is the convex hull. It has ${stack.length} corners: [${stack.map((p) => p.label).join(' → ')}]. Every other point is inside.`,
     codeLine: 9,
     state: {
       points: [...points],

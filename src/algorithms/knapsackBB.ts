@@ -100,7 +100,7 @@ export function* knapsackBBSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Branch & Bound Tree',
-    description: `Sorted items by value/weight ratio. Root node bound calculated as ${rootNode.bound} (theoretical upper bound).`,
+    description: `Sorted the items by value per kg, best first. Each node of the tree decides one item: take it or skip it. Every node gets an optimistic estimate (upper bound) of the most value it could still reach: its value plus what the space left could hold if items could be cut. For the root (nothing decided yet) that is ${rootNode.bound}.`,
     codeLine: [2, 3, 4],
     state: {
       items,
@@ -130,7 +130,7 @@ export function* knapsackBBSteps(inputs: {
     yield {
       stepIndex: stepIndex++,
       title: `Explore Node at Level ${curr.level} (W ${curr.weight}, V ${curr.value})`,
-      description: `Exploring node at level ${curr.level} (Weight: ${curr.weight}, Value: ${curr.value}, Bound: ${curr.bound}). Current best value = ${bestValue}.`,
+      description: `Explore the most promising waiting node: ${bbNodeName(curr)}, with ${curr.weight} kg and value ${curr.value} so far. Its upper bound is ${curr.bound}: the most this branch could ever reach. Best value found so far: ${bestValue}.`,
       codeLine: 6,
       callFlow: { type: 'call', nodeId: curr.id },
       state: {
@@ -161,7 +161,7 @@ export function* knapsackBBSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Prune Node at Level ${curr.level} by Bound`,
-        description: `Pruning the branch at ${bbNodeName(curr)} because its bound ${curr.bound} cannot beat the best known value ${bestValue}.`,
+        description: `${bbNodeName(curr).replace(/^t/, 'T')} could reach at most ${curr.bound}, which cannot beat the best value already found (${bestValue}). Exploring it is pointless, so it is pruned.`,
         codeLine: 7,
         callFlow: { type: 'return', nodeId: curr.id },
         state: {
@@ -219,7 +219,7 @@ export function* knapsackBBSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `New Best Solution Found!`,
-          description: `Including Item ${nextItem.id} yields a feasible solution with value ${bestValue} (weight ${bestWeight}/${capacity}). Updated best value!`,
+          description: `Taking Item ${nextItem.id} gives a set that fits (${bestWeight}/${capacity} kg) with value ${bestValue}: the best so far. From now on, any branch that cannot beat ${bestValue} is pruned.`,
           codeLine: 9,
           callFlow: { type: 'call', nodeId: leftNode.id },
           state: {
@@ -259,7 +259,7 @@ export function* knapsackBBSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Prune Infeasible Left Branch`,
-        description: `Including Item ${nextItem.id} causes weight (${inclWeight}) to exceed capacity (${capacity}). Node pruned.`,
+        description: `Taking Item ${nextItem.id} would make the weight ${inclWeight} kg, more than the knapsack's ${capacity} kg. That is impossible, so the branch is pruned.`,
         codeLine: 10,
         callFlow: { type: 'return', nodeId: leftNode.id },
         state: {
@@ -310,7 +310,7 @@ export function* knapsackBBSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Prune Right Branch by Bound`,
-        description: `Excluding Item ${nextItem.id} gives bound ${exclBound} <= best value ${bestValue}. Node pruned.`,
+        description: `Skipping Item ${nextItem.id}: that branch could reach at most ${exclBound}, which is not more than the best value ${bestValue}. It is pruned.`,
         codeLine: 12,
         callFlow: { type: 'return', nodeId: rightNode.id },
         state: {
@@ -336,7 +336,7 @@ export function* knapsackBBSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Branch & Bound Complete',
-    description: `Optimal solution verified! Max Value = ${bestValue}, Total Weight = ${bestWeight}/${capacity}. Selected Items: [${bestItems.sort().join(', ')}]. Explored ${nodesExplored} nodes and pruned ${prunedNodes} branches.`,
+    description: `Done: no waiting branch can beat ${bestValue}, so it is the best possible. Take items [${bestItems.sort().join(', ')}] (${bestWeight}/${capacity} kg). Only ${nodesExplored} nodes were explored; ${prunedNodes} branches were skipped by pruning.`,
     codeLine: 13,
     callFlow: { type: 'return', nodeId: rootNode.id },
     state: {

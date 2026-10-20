@@ -19,8 +19,11 @@ const sourceFiles = (dir: string): string[] =>
     if (statSync(p).isDirectory()) return f === 'tests' ? [] : sourceFiles(p);
     return /\.(tsx?|jsx?)$/.test(f) ? [p] : [];
   });
+/** The player view (playback, visualization, pseudocode). */
 const renderPage = (id: string, mode: 'split' | 'stacked' = 'split') =>
-  renderToStaticMarkup(<AlgorithmPage algorithmId={id} onBack={() => {}} initialLayoutMode={mode} />);
+  renderToStaticMarkup(<AlgorithmPage algorithmId={id} onBack={() => {}} initialLayoutMode={mode} initialView="play" />);
+/** The learn view (the owl's problem & how it works). */
+const renderLearn = (id: string) => renderToStaticMarkup(<AlgorithmPage algorithmId={id} onBack={() => {}} />);
 
 // ─── Pseudocode scrolling: container only, never the page ──────────────────
 describe('Pseudocode auto-scroll (pure calculation)', () => {
@@ -126,8 +129,8 @@ describe('Learning stage layout', () => {
     (id) => {
       const html = renderPage(id, 'split');
       const toolbar = html.indexOf('role="toolbar"');
-      const left = html.indexOf('lg:col-span-7');
-      const right = html.indexOf('lg:col-span-5');
+      const left = html.indexOf('lg:col-span-8');
+      const right = html.indexOf('lg:col-span-4');
       expect(toolbar).toBeGreaterThan(-1);
       expect(toolbar).toBeLessThan(left);
       expect(left).toBeLessThan(right);
@@ -225,7 +228,7 @@ describe('Problem & how it works', () => {
   });
 
   it('the panel renders numbered steps with condition chips and bold actions', () => {
-    const html = renderPage('fractional-knapsack');
+    const html = renderLearn('fractional-knapsack');
     expect(html).toContain('Problem &amp; how it works');
     expect(html).toContain('How it works');
     expect(html).toMatch(/<code class="[^"]*sem-formula[^"]*">value ÷ weight<\/code>/);

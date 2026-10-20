@@ -34,7 +34,7 @@ export function* naiveStringMatchSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Naive String Matching',
-    description: `Target text length n = ${n}, pattern length m = ${m}. Slide pattern across all window alignments shift = 0 … ${Math.max(n - m, 0)} and compare character by character.`,
+    description: `The text has ${n} letters and the pattern has ${m}. The simplest idea: try every starting position (shift 0 to ${Math.max(n - m, 0)}), and at each one compare the letters one by one.`,
     codeLine: [1, 2, 3],
     state: {
       text,
@@ -86,7 +86,7 @@ export function* naiveStringMatchSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Compare Character: text[${s + j}] vs pattern[${j}]`,
-          description: `Comparing text[${s + j}] ('${text[s + j]}') with pattern[${j}] ('${pattern[j]}'). Result: ${isMatch ? 'MATCH' : 'MISMATCH'}.`,
+          description: `Compare text[${s + j}] ('${text[s + j]}') with pattern[${j}] ('${pattern[j]}'): ${isMatch ? 'they match, so check the next letter.' : 'they differ.'}`,
           codeLine: [6, 7],
           state: {
             text,
@@ -178,7 +178,7 @@ export function* naiveStringMatchSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Naive Search Complete',
-    description: `Search complete. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. Total character comparisons: ${comparisons}.`,
+    description: `Search complete. Found ${matchIndices.length} occurrence(s) at index positions: [${matchIndices.join(', ')}]. That took ${comparisons} letter comparisons, and some text letters were compared more than once: that repeated work is what KMP avoids.`,
     codeLine: 12,
     state: {
       text,

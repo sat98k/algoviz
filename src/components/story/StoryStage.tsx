@@ -51,7 +51,7 @@ export const OwlBubble: React.FC<{ narration: string; className?: string }> = ({
   <div
     data-story-owl
     className={`flex items-start gap-3 sm:sticky z-30 -mx-2 px-2 py-1.5 bg-[#faf7f2]/95 rounded-xl ${className}`}
-    style={{ top: 'calc(5rem + var(--dock-h, 0px) + 0.5rem)' }}
+    style={{ top: 'var(--owl-top, calc(5rem + var(--dock-h, 0px) + 0.5rem))' }}
     aria-live="polite"
   >
     <span className="text-2xl shrink-0" aria-hidden>

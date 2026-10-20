@@ -114,7 +114,7 @@ export function* pushRelabelSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Push-Relabel Algorithm',
-    description: `Initialized flow network with Source ${nodes[s].label} (h = ${n}) and Sink ${nodes[t].label} (h = 0). All other vertex heights set to 0. All initial flows set to 0.`,
+    description: `Every vertex gets a height, like a tank on stilts: water may only flow to a neighbour exactly one step lower. The source ${nodes[s].label} starts at height ${n} (the number of vertices); the sink ${nodes[t].label} and everything else start at 0. All flows start at 0.`,
     codeLine: 1,
     state: {
       isPushRelabel: true,
@@ -151,7 +151,7 @@ export function* pushRelabelSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Preflow: Saturate All Outgoing Edges from Source',
-    description: `Saturated all edges out of Source ${nodes[s].label}. Neighboring vertices received excess flow. Overflowing vertices: [${getOverflowingNodes().map((id) => nodes[parseInt(id)].label).join(', ')}].`,
+    description: `Open every pipe out of ${nodes[s].label} completely (this is the preflow). Its neighbours now receive more than they pass on, so they hold extra water (excess): [${getOverflowingNodes().map((id) => nodes[parseInt(id)].label).join(', ')}]. From here on, each step works on one vertex with excess until none is left.`,
     codeLine: [2, 3],
     state: {
       isPushRelabel: true,
@@ -208,7 +208,7 @@ export function* pushRelabelSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `PUSH: ${nodes[u].label} ➔ ${nodes[v].label} (Amount Δ = ${delta})`,
-        description: `Pushed Δ = min(e(${nodes[u].label})=${excess[u] + delta}, c_f(${nodes[u].label},${nodes[v].label})=${resMatrix[u][v]}) = ${delta} units from ${nodes[u].label} (h=${heights[u]}) down to ${nodes[v].label} (h=${heights[v]}).`,
+        description: `${nodes[u].label} holds ${excess[u] + delta} extra and ${nodes[v].label} is exactly one step lower (height ${heights[u]} → ${heights[v]}), so water flows down the pipe. It can send the smaller of its excess and the pipe's room, min(${excess[u] + delta}, ${resMatrix[u][v]}) = ${delta}.`,
         codeLine: [4, 5],
         state: {
           isPushRelabel: true,
@@ -251,7 +251,7 @@ export function* pushRelabelSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `RELABEL: Increase Height of ${nodes[u].label} from ${oldH} to ${heights[u]}`,
-        description: `No downward residual edge exists from overflowing vertex ${nodes[u].label} (e = ${excess[u]}). Relabeled h(${nodes[u].label}) = 1 + min{h(v) | c_f(${nodes[u].label},v) > 0} = 1 + ${minResidualNeighborHeight} = ${heights[u]}.`,
+        description: `${nodes[u].label} still holds ${excess[u]} extra, but no pipe with room leads to a lower neighbour. So lift it (relabel) to one step above its lowest neighbour it can still send to: 1 + ${minResidualNeighborHeight} = ${heights[u]}. Now the water can flow out again. If a vertex rises above ${nodes[s].label}, its extra water flows back to the source: that flow could never reach the sink.`,
         codeLine: [6, 7],
         state: {
           isPushRelabel: true,
@@ -283,7 +283,7 @@ export function* pushRelabelSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: `Push-Relabel Complete: Maximum Flow = ${finalMaxFlow}`,
-    description: `No overflowing internal vertices remain (e(v) = 0 for all v not in {S, T}). Preflow has successfully converted to maximum feasible flow. Total flow arriving at Sink ${nodes[t].label} is ${finalMaxFlow}.`,
+    description: `No vertex except ${nodes[s].label} and ${nodes[t].label} holds extra water, so the flow has settled. The flow arriving at the sink ${nodes[t].label} is ${finalMaxFlow}: the maximum flow.`,
     codeLine: 8,
     state: {
       isPushRelabel: true,
