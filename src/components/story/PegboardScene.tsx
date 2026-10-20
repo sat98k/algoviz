@@ -119,7 +119,7 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
         return 'Pegs are stuck in a cork board. We want the tightest fence around all of them, as if we stretched a rubber band around the outside.';
       case 'pivot':
         return isJarvis
-          ? `Start at the leftmost peg, ${lbl(pivot)}. It is surely on the fence. We’ll wrap a ribbon around the pegs like wrapping a gift.`
+          ? `Start at the lowest peg, ${lbl(pivot)}. It is surely on the fence. We’ll wrap a ribbon around the pegs like wrapping a gift.`
           : `Start at the lowest peg, ${lbl(pivot)}. It is surely on the fence.`;
       case 'sort':
         return 'A lighthouse beam sweeps around from the start peg and numbers the pegs in the order it reaches them.';

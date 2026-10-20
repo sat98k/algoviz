@@ -2,12 +2,45 @@ import React, { useState, useEffect } from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
 import { FractionalKnapsackItem } from '../../algorithms/fractionalKnapsack';
 import { RotateCcw } from 'lucide-react';
+import { OwlBubble } from '../story/StoryStage';
 
 interface FractionalKnapsackAnimatedViewProps {
   step: AlgorithmStep;
 }
 
 const fmt = (n: number) => String(parseFloat(n.toFixed(2)));
+
+/** The owl's sentence for a Fractional Knapsack step, in cheese-and-backpack words. */
+export const cheeseNarration = (step: AlgorithmStep): string => {
+  const state = step.state || {};
+  const items: FractionalKnapsackItem[] = state.items || [];
+  const capacity: number = state.capacity || 0;
+  const room = Math.max(0, capacity - (state.currentWeight || 0));
+  const item: FractionalKnapsackItem | undefined = items[state.currentItemIndex ?? -1];
+  const name = (it: FractionalKnapsackItem) => `cheese ${it.id}`;
+
+  if (step.isFinal) {
+    return `The backpack is full: $${fmt(state.currentValue || 0)} of cheese in ${fmt(state.currentWeight || 0)} kg. Packing the best value per kg first is the best anyone can do here, because cheese can be cut.`;
+  }
+  if (!state.isSorted) {
+    return `${items.length} cheese wheels sit on the board and the backpack holds ${capacity} kg. Bigger wheels weigh more. Cheese can be cut, so we may take just part of a wheel. First question: how many dollars is one kg of each cheese worth (value ÷ weight)?`;
+  }
+  if (!item) {
+    return `Line the wheels up by dollars per kg, best first: ${items.map((it) => `${name(it)} ($${fmt(it.ratio)}/kg)`).join(', ')}. We always pack the best-value cheese first: that is the greedy choice.`;
+  }
+  switch (item.status) {
+    case 'examining':
+      return `Next in line: ${name(item)}, ${item.weight} kg worth $${item.value} ($${fmt(item.ratio)} per kg). The backpack has ${fmt(room)} kg of room left. Does the whole wheel fit?`;
+    case 'taken_full':
+      return `It fits! The whole ${item.weight} kg wheel goes into the backpack: +$${fmt(item.valueTaken)}. Room left: ${fmt(room)} kg.`;
+    case 'taken_fraction':
+      return `Too big: only ${fmt(item.weightTaken)} kg of room is left. The knife cuts exactly that much (${fmt(item.fractionTaken * 100)}% of the wheel) and only the slice goes in: +$${fmt(item.valueTaken)}. The rest stays on the board.`;
+    case 'skipped':
+      return `The backpack is already full, so ${name(item)} stays on the board.`;
+    default:
+      return `Look at ${name(item)}.`;
+  }
+};
 
 // Classic appetizing normal yellow cheese theme for all cheese wheels
 const NORMAL_CHEESE_THEME = {
@@ -196,6 +229,8 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
           )}
         </div>
       </div>
+
+      <OwlBubble narration={cheeseNarration(step)} className="mt-4" />
 
       {/* ─── UNCLIPPED FULL-STAGE ARENA (TABLE TOP & BAG BOTTOM) ─── */}
       <div className="relative w-full min-h-[500px] mt-4 flex flex-col justify-between">

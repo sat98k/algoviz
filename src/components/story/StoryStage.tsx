@@ -37,20 +37,32 @@ export const StoryStage: React.FC<StoryStageProps> = ({ emoji, title, subtitle, 
       )}
     </div>
 
-    {/* Narrator bubble */}
-    <div className="flex items-start gap-3" aria-live="polite">
-      <span className="text-2xl shrink-0" aria-hidden>
-        🦉
-      </span>
-      <p
-        data-story-narration
-        className="relative font-sans text-sm sm:text-base text-stone-800 bg-white border border-amber-200 rounded-2xl rounded-tl-sm px-4 py-2.5 shadow-sm leading-relaxed"
-      >
-        {narration}
-      </p>
-    </div>
+    <OwlBubble narration={narration} />
 
     <div className="relative w-full overflow-visible">{children}</div>
+  </div>
+);
+
+/**
+ * The owl narrator's speech bubble. On wider screens it sticks just below the playback
+ * dock (AlgorithmPage sets --dock-h), so the owl stays in view while the scene scrolls.
+ */
+export const OwlBubble: React.FC<{ narration: string; className?: string }> = ({ narration, className = '' }) => (
+  <div
+    data-story-owl
+    className={`flex items-start gap-3 sm:sticky z-30 -mx-2 px-2 py-1.5 bg-[#faf7f2]/95 rounded-xl ${className}`}
+    style={{ top: 'calc(5rem + var(--dock-h, 0px) + 0.5rem)' }}
+    aria-live="polite"
+  >
+    <span className="text-2xl shrink-0" aria-hidden>
+      🦉
+    </span>
+    <p
+      data-story-narration
+      className="relative font-sans text-sm sm:text-base text-stone-800 bg-white border border-amber-200 rounded-2xl rounded-tl-sm px-4 py-2.5 shadow-sm leading-relaxed"
+    >
+      {narration}
+    </p>
   </div>
 );
 

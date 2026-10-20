@@ -78,7 +78,7 @@ export const TownMapScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
       if (/Unreachable Leg/.test(title)) return 'fw-noleg';
       if (/^Shorter Path/.test(title)) return 'fw-better';
       if (/No Improvement/.test(title)) return 'fw-same';
-      if (/^Starting Iteration/.test(title)) return 'fw-hub';
+      if (/^Starting (Iteration|Round)/.test(title)) return 'fw-hub';
       return 'intro';
     }
     if (/^Relax/.test(title)) return 'bf-relax';

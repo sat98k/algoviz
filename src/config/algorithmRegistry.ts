@@ -1274,7 +1274,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
   {
     id: 'floyd-warshall',
     module: 4,
-    moduleName: 'Module 4: Graph Algorithms',
+    moduleName: 'Module 4: Shortest Paths',
     name: 'Floyd-Warshall (All-Pairs Shortest Path)',
     paradigm: 'Graph',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['floyd-warshall']),
@@ -1342,7 +1342,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
   {
     id: 'bellman-ford',
     module: 4,
-    moduleName: 'Module 4: Graph Algorithms',
+    moduleName: 'Module 4: Shortest Paths',
     name: 'Bellman-Ford (Single-Source Shortest Path)',
     paradigm: 'Graph',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['bellman-ford']),
@@ -1445,20 +1445,20 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     id: 'ford-fulkerson',
     module: 4,
     moduleName: 'Module 4: Network Flow',
-    name: 'Ford-Fulkerson (Edmonds-Karp Max Flow)',
+    name: 'Ford-Fulkerson (Augmenting Paths)',
     paradigm: 'Max Flow',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['ford-fulkerson']),
     analysis: COMPLEXITY_ANALYSIS['ford-fulkerson'],
     problemStatement:
       'Find the maximum flow from a source s to a sink t through a flow network, where every edge has a capacity.',
     explanation:
-      'Uses BFS to find augmenting paths from s to t in the residual network (Edmonds-Karp). Finds the bottleneck capacity along each path, pushes flow, and updates forward/backward residual capacities until no augmenting path remains.',
+      'Ford-Fulkerson is the general augmenting-path method: any s-t path with spare capacity may be used. This page finds each path with BFS (the Edmonds-Karp choice) and shows one step per path; the Edmonds-Karp page shows the BFS search itself. Finds the bottleneck capacity along each path, pushes flow, and updates forward/backward residual capacities until no augmenting path remains.',
     coreSteps: CORE_STEPS['ford-fulkerson'],
     glossaryTerms: ['maximum-flow', 'flow-network', 'bfs', 'augmenting-path', 'residual-graph'],
     pseudocode: [
-      'function EdmondsKarp(s, t, capacities):',
+      'function FordFulkerson(s, t, capacities):',
       '  flow = 0; residual = copy(capacities)  // Initialize zero flow and residual capacities',
-      '  while (path = BFS_AugmentingPath(s, t, residual)) exists:  // Find shortest path in residual graph',
+      '  while (path = findAugmentingPath(s, t, residual)) exists:  // Any path with spare capacity (found here with BFS)',
       '    bottleneck = minResidualCapacityAlong(path)  // Find maximum pushable flow delta',
       '    for each edge (u, v) in path:  // Push flow along augmenting path',
       '      residual[u][v] -= bottleneck  // Reduce forward residual capacity',
@@ -1549,7 +1549,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
   {
     id: 'edmonds-karp',
     module: 4,
-    moduleName: 'Module 4: Graph Algorithms & Network Flow',
+    moduleName: 'Module 4: Network Flow',
     name: 'Edmonds-Karp (BFS Maximum Flow)',
     paradigm: 'Max Flow',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['edmonds-karp']),
@@ -1629,7 +1629,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
   {
     id: 'push-relabel',
     module: 4,
-    moduleName: 'Module 4: Graph Algorithms & Network Flow',
+    moduleName: 'Module 4: Network Flow',
     name: 'Push-Relabel (Goldberg-Tarjan Max Flow)',
     paradigm: 'Max Flow',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['push-relabel']),
@@ -1719,13 +1719,13 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     problemStatement:
       'Find the convex hull of a set of points: the smallest convex polygon that encloses all of them.',
     explanation:
-      'Finds the lowest y-coordinate anchor point P0 (leftmost if tied) and sorts all remaining points counter-clockwise by polar angle around P0. It then scans the sorted points with a hull stack: for each candidate point p3 and the top two stack vertices p1 -> p2, it evaluates the 2D cross-product orientation (p2.x - p1.x)(p3.y - p1.y) - (p2.y - p1.y)(p3.x - p1.x). Positive values indicate a counter-clockwise (CCW) left turn relative to the dotted straight-ahead extension of p1 -> p2, whereas zero or negative values indicate a collinear or clockwise (CW) right turn and trigger popping p2 before pushing p3.',
+      'Finds the lowest y-coordinate anchor point (leftmost if tied) and sorts all remaining points counter-clockwise by polar angle around that anchor. It then scans the sorted points with a hull stack: for each candidate point p3 and the top two stack vertices p1 -> p2, it evaluates the 2D cross-product orientation (p2.x - p1.x)(p3.y - p1.y) - (p2.y - p1.y)(p3.x - p1.x). Positive values indicate a counter-clockwise (CCW) left turn relative to the dotted straight-ahead extension of p1 -> p2, whereas zero or negative values indicate a collinear or clockwise (CW) right turn and trigger popping p2 before pushing p3.',
     coreSteps: CORE_STEPS['graham-scan'],
     glossaryTerms: ['convex-hull'],
     pseudocode: [
       'function GrahamsScan(points):',
-      '  P0 = findLowestPoint(points)  // Anchor pivot: lowest y-coordinate (tiebreaker: lowest x)',
-      '  sorted = sortRemainingByPolarAngle(points, P0)  // Sort CCW by polar angle around P0',
+      '  anchor = findLowestPoint(points)  // Anchor pivot: lowest y-coordinate (tiebreaker: lowest x)',
+      '  sorted = sortRemainingByPolarAngle(points, anchor)  // Sort CCW by polar angle around the anchor',
       '  stack = [sorted[0], sorted[1], sorted[2]]  // Initialize hull stack with first 3 points',
       '  for i = 3 to length(sorted) - 1:  // Process remaining points sequentially',
       '    while length(stack) >= 2 and orientation(stack[-2], stack[-1], sorted[i]) <= 0:',

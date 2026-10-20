@@ -42,7 +42,7 @@ export function* grahamScanSteps(inputs: { points: { x: number; y: number }[] })
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Graham’s Scan',
-    description: `Loaded ${points.length} 2D points. Phase 1: Find the bottom-most anchor pivot point P0.`,
+    description: `Loaded ${points.length} 2D points. Phase 1: Find the bottom-most point; it becomes the anchor.`,
     codeLine: 1,
     state: {
       points: [...points],

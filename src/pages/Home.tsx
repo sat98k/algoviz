@@ -95,9 +95,23 @@ export const Home: React.FC<HomeProps> = ({
             </h1>
 
             <p className="text-sm sm:text-base text-chalk-400 font-sans leading-relaxed mt-1">
-              Select any of the <strong>7 course modules</strong> below to explore deterministic step-by-step visualizers,
-              live code execution, recurrence metrics, and invariant proofs.
+              Every algorithm in the course, explained one small step at a time. No prior knowledge needed: pick one of the{' '}
+              <strong>7 course modules</strong> below and start with its first algorithm.
             </p>
+            <ol
+              aria-label="How to use this site"
+              className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 font-sans text-xs sm:text-sm text-chalk-300"
+            >
+              <li className="px-3 py-2 bg-obsidian-950 border border-hairline">
+                <strong className="text-chalk-100">1. Read the problem.</strong> Each page starts with what the algorithm solves and its steps in plain words.
+              </li>
+              <li className="px-3 py-2 bg-obsidian-950 border border-hairline">
+                <strong className="text-chalk-100">2. Switch on 🎬 Animation Mode.</strong> The 🦉 owl tells the story of every step with real objects.
+              </li>
+              <li className="px-3 py-2 bg-obsidian-950 border border-hairline">
+                <strong className="text-chalk-100">3. Step through it.</strong> Press Step (or →) at your own pace; the roadmap shows where you are.
+              </li>
+            </ol>
           </motion.div>
         </div>
 

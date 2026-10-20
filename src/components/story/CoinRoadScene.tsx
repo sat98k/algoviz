@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
+import { MaxSubarrayTreeView } from './MaxSubarrayTreeView';
 
 /**
  * 🪙 Maximum Subarray as a road of coins and thieves.
@@ -10,7 +11,19 @@ import { StoryStage, StorySceneProps } from './StoryStage';
  * cut. For the crossing case two lanterns walk outward from the cut filling a basket,
  * and a flag marks where each side was richest. The three candidates then stand on a
  * podium and the richest wins.
+ *
+ * An optional 🌳 split & merge tree view (toggle above the road) shows the same steps as the
+ * recursion tree: pieces splitting on the way down and answers merging on the way up.
  */
+
+const VIEW_KEY = 'algoviz.maxSubarray.storyView';
+const readView = (): 'road' | 'tree' => {
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === 'tree' ? 'tree' : 'road';
+  } catch {
+    return 'road';
+  }
+};
 
 const TILE = 64;
 const GAP = 8;
@@ -18,6 +31,15 @@ const PAD = 24;
 const ROAD_Y = 96;
 
 export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
+  const [view, setView] = useState<'road' | 'tree'>(() => (typeof window === 'undefined' ? 'road' : readView()));
+  const choose = (v: 'road' | 'tree') => {
+    setView(v);
+    try {
+      window.localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      // Remembering the view is only a convenience.
+    }
+  };
   const st: any = step.state || {};
   const arr: number[] = st.array || [];
   const n = arr.length;
@@ -108,79 +130,106 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
       narration={narration}
       status={kind === 'final' ? `Richest stretch • ${finalSum}` : range ? `Looking at • ${rangeText(range)}` : 'Ready'}
     >
-      <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.3 }} role="img" aria-label="Coin road">
-        <rect x={PAD - 12} y={ROAD_Y - 12} width={width - 2 * PAD + 24} height={TILE + 24} rx="14" fill="#d6c3a5" />
+      <div className="flex justify-center mb-3">
+        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5 font-sans text-xs font-semibold" role="radiogroup" aria-label="Picture">
+          {(
+            [
+              ['road', '🛣️ Coin road'],
+              ['tree', '🌳 Split & merge tree'],
+            ] as const
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={view === v}
+              data-road-view={v}
+              onClick={() => choose(v)}
+              className={`px-3 py-1 rounded-full transition-colors ${view === v ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        {/* final / combine highlights */}
-        {optimal && (kind === 'final' || kind === 'combine') && (
-          <rect x={x(optimal[0]) - 6} y={ROAD_Y - 8} width={x(optimal[1]) - x(optimal[0]) + TILE + 12} height={TILE + 16} rx="12" fill="#fde047" opacity="0.8" className="animate-story-pop" />
-        )}
-        {kind === 'cross-sum' && st.crossLeftRange && st.crossRightRange && (
-          <rect
-            x={x(st.crossLeftRange[0]) - 6}
-            y={ROAD_Y - 8}
-            width={x(st.crossRightRange[1]) - x(st.crossLeftRange[0]) + TILE + 12}
-            height={TILE + 16}
-            rx="12"
-            fill="#bae6fd"
-            className="animate-story-pop"
-          />
-        )}
+      {view === 'tree' ? (
+        <MaxSubarrayTreeView arr={arr} nodes={st.treeNodes || []} activeId={st.activeNodeId} scan={scan as any} isFinal={!!step.isFinal} stepKey={step.stepIndex} narration={narration} stepLabel={`Step ${step.stepIndex + 1}`} />
+      ) : (
+        <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.3 }} role="img" aria-label="Coin road">
+          <rect x={PAD - 12} y={ROAD_Y - 12} width={width - 2 * PAD + 24} height={TILE + 24} rx="14" fill="#d6c3a5" />
 
-        {arr.map((v, i) => {
-          const active = inRange(i);
-          const lit = lanternAt === i;
-          return (
-            <g key={i} opacity={active ? 1 : 0.3} style={{ transition: 'opacity 0.5s' }}>
-              <rect x={x(i)} y={ROAD_Y} width={TILE} height={TILE} rx="10" fill={v >= 0 ? '#fef9c3' : '#fee2e2'} stroke={lit ? '#f59e0b' : v >= 0 ? '#ca8a04' : '#dc2626'} strokeWidth={lit ? 4 : 2} />
-              <text x={x(i) + TILE / 2} y={ROAD_Y + 28} textAnchor="middle" fontSize="22">
-                {v >= 0 ? '🪙' : '🦹'}
-              </text>
-              <text x={x(i) + TILE / 2} y={ROAD_Y + 54} textAnchor="middle" fontSize="15" fontWeight="900" fill={v >= 0 ? '#713f12' : '#991b1b'}>
-                {v > 0 ? `+${v}` : v}
-              </text>
-              <text x={x(i) + TILE / 2} y={ROAD_Y + TILE + 18} textAnchor="middle" fontSize="10" fill="#78716c">
-                {i + 1}
+          {/* final / combine highlights */}
+          {optimal && (kind === 'final' || kind === 'combine') && (
+            <rect x={x(optimal[0]) - 6} y={ROAD_Y - 8} width={x(optimal[1]) - x(optimal[0]) + TILE + 12} height={TILE + 16} rx="12" fill="#fde047" opacity="0.8" className="animate-story-pop" />
+          )}
+          {kind === 'cross-sum' && st.crossLeftRange && st.crossRightRange && (
+            <rect
+              x={x(st.crossLeftRange[0]) - 6}
+              y={ROAD_Y - 8}
+              width={x(st.crossRightRange[1]) - x(st.crossLeftRange[0]) + TILE + 12}
+              height={TILE + 16}
+              rx="12"
+              fill="#bae6fd"
+              className="animate-story-pop"
+            />
+          )}
+
+          {arr.map((v, i) => {
+            const active = inRange(i);
+            const lit = lanternAt === i;
+            return (
+              <g key={i} opacity={active ? 1 : 0.3} style={{ transition: 'opacity 0.5s' }}>
+                <rect x={x(i)} y={ROAD_Y} width={TILE} height={TILE} rx="10" fill={v >= 0 ? '#fef9c3' : '#fee2e2'} stroke={lit ? '#f59e0b' : v >= 0 ? '#ca8a04' : '#dc2626'} strokeWidth={lit ? 4 : 2} />
+                <text x={x(i) + TILE / 2} y={ROAD_Y + 28} textAnchor="middle" fontSize="22">
+                  {v >= 0 ? '🪙' : '🦹'}
+                </text>
+                <text x={x(i) + TILE / 2} y={ROAD_Y + 54} textAnchor="middle" fontSize="15" fontWeight="900" fill={v >= 0 ? '#713f12' : '#991b1b'}>
+                  {v > 0 ? `+${v}` : v}
+                </text>
+                <text x={x(i) + TILE / 2} y={ROAD_Y + TILE + 18} textAnchor="middle" fontSize="10" fill="#78716c">
+                  {i + 1}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* the cut ribbon */}
+          {mid !== undefined && kind !== 'final' && kind !== 'base' && kind !== 'intro' && (
+            <g>
+              <line x1={x(mid) + TILE + GAP / 2} y1={ROAD_Y - 30} x2={x(mid) + TILE + GAP / 2} y2={ROAD_Y + TILE + 26} stroke="#dc2626" strokeWidth="4" strokeDasharray="8 5" />
+              <text x={x(mid) + TILE + GAP / 2} y={ROAD_Y - 36} textAnchor="middle" fontSize="18">
+                ✂️
               </text>
             </g>
-          );
-        })}
+          )}
 
-        {/* the cut ribbon */}
-        {mid !== undefined && kind !== 'final' && kind !== 'base' && kind !== 'intro' && (
-          <g>
-            <line x1={x(mid) + TILE + GAP / 2} y1={ROAD_Y - 30} x2={x(mid) + TILE + GAP / 2} y2={ROAD_Y + TILE + 26} stroke="#dc2626" strokeWidth="4" strokeDasharray="8 5" />
-            <text x={x(mid) + TILE + GAP / 2} y={ROAD_Y - 36} textAnchor="middle" fontSize="18">
-              ✂️
+          {/* flags at the best left / right reach */}
+          {scan?.bestLeft && kind !== 'final' && (
+            <text x={x(scan.bestLeft.index) + 6} y={ROAD_Y - 8} fontSize="20">
+              🚩
             </text>
-          </g>
-        )}
+          )}
+          {scan?.bestRight && kind !== 'final' && (
+            <text x={x(scan.bestRight.index) + TILE - 26} y={ROAD_Y - 8} fontSize="20">
+              🚩
+            </text>
+          )}
 
-        {/* flags at the best left / right reach */}
-        {scan?.bestLeft && kind !== 'final' && (
-          <text x={x(scan.bestLeft.index) + 6} y={ROAD_Y - 8} fontSize="20">
-            🚩
-          </text>
-        )}
-        {scan?.bestRight && kind !== 'final' && (
-          <text x={x(scan.bestRight.index) + TILE - 26} y={ROAD_Y - 8} fontSize="20">
-            🚩
-          </text>
-        )}
-
-        {/* lantern + basket */}
-        {lanternAt !== undefined && (
-          <g style={{ transform: `translate(${x(lanternAt) + TILE / 2}px, ${ROAD_Y + TILE + 44}px)`, transition: 'transform 0.6s ease-in-out' }}>
-            <text textAnchor="middle" fontSize="24" y="0">
-              🏮
-            </text>
-            <rect x="-30" y="8" width="60" height="22" rx="8" fill="#fffbeb" stroke="#d97706" />
-            <text textAnchor="middle" y="24" fontSize="12" fontWeight="800" fill="#78350f">
-              🧺 {basket}
-            </text>
-          </g>
-        )}
-      </svg>
+          {/* lantern + basket */}
+          {lanternAt !== undefined && (
+            <g style={{ transform: `translate(${x(lanternAt) + TILE / 2}px, ${ROAD_Y + TILE + 44}px)`, transition: 'transform 0.6s ease-in-out' }}>
+              <text textAnchor="middle" fontSize="24" y="0">
+                🏮
+              </text>
+              <rect x="-30" y="8" width="60" height="22" rx="8" fill="#fffbeb" stroke="#d97706" />
+              <text textAnchor="middle" y="24" fontSize="12" fontWeight="800" fill="#78350f">
+                🧺 {basket}
+              </text>
+            </g>
+          )}
+        </svg>
+      )}
 
       {podium && (
         <div className="mt-2 flex items-end justify-center gap-3 font-sans">

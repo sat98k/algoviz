@@ -103,7 +103,7 @@ export function* floydWarshallSteps(inputs: {
   for (let k = 0; k < n; k++) {
     yield {
       stepIndex: stepIndex++,
-      title: `Starting Iteration k = ${k} (Intermediate Node V${k + 1})`,
+      title: `Starting Round ${k + 1} of ${n}: V${k + 1} as Intermediate Stop`,
       description: `Testing if paths between all vertex pairs (i, j) can be shortened by routing through intermediate vertex V${k + 1}.`,
       codeLine: 3,
       state: {

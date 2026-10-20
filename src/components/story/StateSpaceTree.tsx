@@ -106,7 +106,7 @@ function useTweenedLayout(target: Record<string, Pt>, parentOf: (id: string) => 
 }
 
 /** Width of the element in CSS pixels, kept up to date on resize. */
-function useWidth(fallback: number) {
+export function useWidth(fallback: number) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(fallback);
   useEffect(() => {

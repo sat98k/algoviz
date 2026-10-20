@@ -128,10 +128,10 @@ export const CORE_STEPS: Record<string, string[]> = {
   ],
   'ford-fulkerson': [
     'Start with zero flow on every edge.',
-    'Find an augmenting path from s to t: a path with spare capacity in the residual graph, found with BFS.',
+    'Find an augmenting path: any path from s to t with spare capacity in the residual graph. Any search works; this page uses BFS.',
     'Its **bottleneck** is the smallest spare capacity on that path.',
     'Push that much flow along the path and update the residual capacities, including the backward edges.',
-    'Repeat until no such path exists. The total flow is then the maximum.',
+    'Repeat until no such path exists. The total flow is then the maximum. (The Edmonds-Karp page shows the BFS search step by step.)',
   ],
   'edmonds-karp': [
     'Run **BFS** from S to find the augmenting path with the fewest edges that still has spare capacity.',
@@ -147,8 +147,8 @@ export const CORE_STEPS: Record<string, string[]> = {
     'When only S and T can hold excess, the flow into T is maximum.',
   ],
   'graham-scan': [
-    'Pick the lowest point (leftmost if tied) as the anchor P0.',
-    'Sort the other points by angle around P0.',
+    'Pick the lowest point (leftmost if tied) as the anchor.',
+    'Sort the other points by angle around the anchor.',
     'Go through them in order, pushing each onto a stack.',
     'While the last three points do not make a left turn (`cross ≤ 0`) ✗, pop the middle one.',
     'The points left on the stack form the hull.',

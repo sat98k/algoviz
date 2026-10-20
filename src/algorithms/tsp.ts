@@ -336,8 +336,10 @@ export function* tspSteps(inputs: TspInputs = {}): Generator<AlgorithmStep<TspSt
           title: `DP(${subsetLabel}, ${cities[j].label}) = ${minCost}`,
           description:
             candidates.length > 1
-              ? `The path through ${subsetLabel} must reach ${cities[j].label} from another city in the set; the cheapest way in is from ${bestPredLabel}.`
-              : `The path through ${subsetLabel} can only reach ${cities[j].label} from ${bestPredLabel}.`,
+              ? `The path through ${subsetLabel} must reach ${cities[j].label} from another city in the set. Options: ${candidates
+                  .map((c) => `from ${cities[c.u].label}, ${c.subCost} + ${c.edgeCost} = ${c.totalCost}`)
+                  .join('; ')}. The cheapest way in is from ${bestPredLabel} (${minCost}).`
+              : `The path through ${subsetLabel} can only reach ${cities[j].label} from ${bestPredLabel}: ${dpTable[`${prevMask},${bestPredecessor!}`]} + ${costMatrix[bestPredecessor!][j]} = ${minCost}.`,
           codeLine: [6, 7],
           state: {
             numCities: n,

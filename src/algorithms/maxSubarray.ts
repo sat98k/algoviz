@@ -145,7 +145,7 @@ export function* maxSubarraySteps(inputs: {
         ? `Recursive Call: ${isLeftChild ? 'Left' : 'Right'} Half [${low}..${high}]`
         : `Divide: Subarray [${low}..${high}]`,
       isRecursiveCall
-        ? `Invoking MaxSubarrayDC on ${isLeftChild ? 'left' : 'right'} half [${low}..${high}]: [${arr.slice(low, high + 1).join(', ')}]. Spawning child call tree branch.`
+        ? `Invoking MaxSubarrayDC on ${isLeftChild ? 'left' : 'right'} half [${low}..${high}]: [${arr.slice(low, high + 1).join(', ')}]. Solve this smaller piece on its own first.`
         : `Examining subarray range from index ${low} to ${high}: [${arr.slice(low, high + 1).join(', ')}].`,
       initialCodeLine,
       nodeId,
@@ -191,7 +191,7 @@ export function* maxSubarraySteps(inputs: {
 
     yield makeSnapshot(
       `Split at Midpoint: mid = ${mid}`,
-      `Splitting array [${low}..${high}] into Left Half [${low}..${mid}] and Right Half [${mid + 1}..${high}] with physical gap.`,
+      `Splitting array [${low}..${high}] into Left Half [${low}..${mid}] and Right Half [${mid + 1}..${high}]: the best stretch lies entirely in one half, or crosses the middle.`,
       3,
       nodeId,
       [low, high],

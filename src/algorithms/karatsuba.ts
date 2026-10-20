@@ -140,7 +140,7 @@ export function* karatsubaSteps(inputs: {
 
       yield makeSnapshot(
         `Base Case: ${xText} × ${yText} = ${prod}`,
-        `A single-digit number: multiply directly, ${xText} × ${yText} = ${prod}, and return it.`,
+        `One of the numbers is a single digit, so multiply directly: ${xText} × ${yText} = ${prod}, and return it.`,
         2,
         nodeId,
         `Base case multiplication: ${xText} × ${yText} = ${prod}.`,

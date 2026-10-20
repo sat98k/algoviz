@@ -79,7 +79,7 @@ export function* knapsackDPSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Item ${i} Exceeds Weight ${w}`,
-          description: `Item ${i} (weight ${item.weight}) does not fit in capacity ${w}, so the best value is the same as without it.`,
+          description: `Item ${i} (weight ${item.weight}) does not fit in capacity ${w}, so the best value is the same as without it: copy the cell above, dp[${i - 1}][${w}] = ${dp[i][w]}.`,
           codeLine: [6, 7],
           state: {
             items,
@@ -115,7 +115,7 @@ export function* knapsackDPSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Evaluate Item ${i} at Weight ${w}`,
-          description: `Item ${i} fits in capacity ${w}, so compare leaving it out with taking it. ${includeVal > excludeVal ? 'Taking it gives more value.' : includeVal === excludeVal ? 'Both give the same value, so it is left out.' : 'Leaving it out gives more value.'}`,
+          description: `Item ${i} fits in capacity ${w}, so compare leaving it out with taking it. Leave it out: dp[${i - 1}][${w}] = ${excludeVal}. Take it: its value ${item.value} + dp[${i - 1}][${w - item.weight}] = ${item.value} + ${dp[i - 1][w - item.weight]} = ${includeVal}. ${includeVal > excludeVal ? 'Taking it gives more value.' : includeVal === excludeVal ? 'Both give the same value, so it is left out.' : 'Leaving it out gives more value.'}`,
           codeLine: [8, 9, 10, 11],
           state: {
             items,

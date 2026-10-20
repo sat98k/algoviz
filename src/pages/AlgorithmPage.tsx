@@ -23,6 +23,8 @@ import { StepExplanation } from '../components/common/StepExplanation';
 import { DpCurrentRule } from '../components/common/DpCurrentRule';
 import { FinalAnswerCard } from '../components/common/FinalAnswerCard';
 import { NQueensSolutionsPanel, findSolutionSteps } from '../components/common/NQueensSolutionsPanel';
+import { RoadmapStrip } from '../components/common/RoadmapStrip';
+import { ROADMAPS, roadmapPhases, spanHas } from '../config/roadmaps';
 
 import { ArrowLeft, Columns, Maximize2, Play, RefreshCw } from 'lucide-react';
 
@@ -370,6 +372,46 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
     />
   );
 
+  // "You are here" roadmap over the How-it-works steps (the Huffman decoding stage has none).
+  const roadmap = config.id === 'huffman' && huffmanPhase === 'decode' ? undefined : ROADMAPS[config.id];
+  const phases = useMemo(() => (roadmap ? roadmapPhases(config.id, activeSteps) : []), [roadmap, config.id, activeSteps]);
+  const reachedPhases = useMemo(() => {
+    const seen = new Set<number>();
+    for (let i = 0; i <= currentStepIndex && i < phases.length; i++) {
+      const p = phases[i];
+      if (p) for (let chip = p[0]; chip <= p[1]; chip++) seen.add(chip);
+    }
+    return seen;
+  }, [phases, currentStepIndex]);
+  const roadmapStrip = roadmap ? (
+    <RoadmapStrip
+      labels={roadmap.labels}
+      active={phases[currentStepIndex] ?? null}
+      reached={reachedPhases}
+      onJump={(chip) => {
+        const idx = phases.findIndex((p) => spanHas(p, chip));
+        if (idx < 0) return;
+        setIsPlaying(false);
+        setHuffmanTraversal(null);
+        setCurrentStepIndex(idx);
+      }}
+    />
+  ) : null;
+
+  // The playback dock stays under the navbar while the stage scrolls; its height is shared
+  // with the story owl (StoryStage) through --dock-h so the owl can stick just below it.
+  const dockRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const dock = dockRef.current;
+    const stage = stageContainerRef.current;
+    if (!dock || !stage || typeof ResizeObserver === 'undefined') return;
+    const update = () => stage.style.setProperty('--dock-h', `${dock.offsetHeight}px`);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(dock);
+    return () => observer.disconnect();
+  }, []);
+
   const stepExplanation = (
     <StepExplanation step={currentStep} stepNumber={stepNumber} totalSteps={totalSteps} glossaryTerms={config.glossaryTerms} />
   );
@@ -486,8 +528,16 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({ algorithmId, onBac
         {graphColoringModeSwitch}
         {nQueensModeSwitch}
 
-        {/* One playback toolbar across the whole learning stage. */}
-        {playbackControls}
+        {/* One playback toolbar across the whole learning stage, with the roadmap under it.
+            On wider screens the dock stays visible under the navbar while scrolling. */}
+        <div
+          ref={dockRef}
+          data-playback-dock
+          className="sm:sticky sm:top-20 z-40 flex flex-col gap-1 bg-obsidian-900 shadow-sm"
+        >
+          {playbackControls}
+          {roadmapStrip}
+        </div>
 
         {layoutMode === 'split' ? (
           /* Split: visualization and pseudocode side by side, tops aligned; explanation under the

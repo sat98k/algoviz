@@ -396,7 +396,7 @@ export const summarizeHiringProblem: ResultSummarizer = (r) => {
   if (!isNum(r.totalHires) || !isNum(r.totalCandidates)) return null;
   const best = r.bestCandidate;
   return {
-    headline: `Hired ${r.totalHires} of ${r.totalCandidates} candidates${best ? `; the final hire (index ${best.index}, score ${best.score}) is the best candidate` : ''}.`,
+    headline: `Hired ${r.totalHires} of ${r.totalCandidates} candidates${best ? `; the final hire (candidate ${best.index + 1}, score ${best.score}) is the best candidate` : ''}.`,
     details: detailsOf(
       isNum(r.interviewExpense) && { label: 'Interview cost', value: r.interviewExpense },
       isNum(r.hiringExpense) && { label: 'Hiring cost', value: r.hiringExpense },
@@ -406,8 +406,8 @@ export const summarizeHiringProblem: ResultSummarizer = (r) => {
     table: isArr(r.hiredCandidates)
       ? {
           caption: 'Candidates hired, in order',
-          columns: ['Candidate index', 'Score'],
-          rows: r.hiredCandidates.map((c: any) => [c.index, c.score]),
+          columns: ['Candidate', 'Score'],
+          rows: r.hiredCandidates.map((c: any) => [c.index + 1, c.score]),
         }
       : undefined,
   };

@@ -55,7 +55,7 @@ export function* naiveStringMatchSteps(inputs: {
       yield {
         stepIndex: stepIndex++,
         title: `Align Pattern at Shift ${s}`,
-        description: `Position pattern P[0…${m - 1}] directly under text window T[${s}…${s + m - 1}]. Assume matchFound = true and verify characters sequentially.`,
+        description: `Position pattern P[0…${m - 1}] directly under text window T[${s}…${s + m - 1}]. Check its characters one by one, left to right.`,
         codeLine: [4, 5],
         state: {
           text,
@@ -116,7 +116,7 @@ export function* naiveStringMatchSteps(inputs: {
           yield {
             stepIndex: stepIndex++,
             title: `Mismatch Detected at Offset ${j} — Slide Window`,
-            description: `Characters differ ('${text[s + j]}' != '${pattern[j]}'). Set matchFound = false, break out of loop, and advance to shift ${s + 1}.`,
+            description: `Characters differ ('${text[s + j]}' != '${pattern[j]}'). No need to check the rest of this window: slide the pattern to shift ${s + 1}.`,
             codeLine: [8, 9],
             state: {
               text,
@@ -152,7 +152,7 @@ export function* naiveStringMatchSteps(inputs: {
         yield {
           stepIndex: stepIndex++,
           title: `Pattern Match Confirmed at Shift ${s}!`,
-          description: `matchFound is true! All ${m} pattern characters matched text window T[${s}…${s + m - 1}]. Recording occurrence index ${s}.`,
+          description: `Every letter fits! All ${m} pattern characters matched text window T[${s}…${s + m - 1}]. Recording occurrence index ${s}.`,
           codeLine: [10, 11],
           state: {
             text,

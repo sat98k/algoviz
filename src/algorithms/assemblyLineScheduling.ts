@@ -137,7 +137,7 @@ export function* assemblyLineSchedulingSteps(
     yield {
       stepIndex: stepIndex++,
       title: `Compute Station ${j + 1} on Line 1`,
-      description: `To finish station ${j + 1} on line 1, either stay on line 1 or switch from line 2 and pay the transfer time. ${l1[j] === 1 ? 'Staying' : 'Switching'} is faster (${stayLine1} vs ${transferFrom2}).`,
+      description: `To finish station ${j + 1} on line 1, either stay on line 1 or switch from line 2 and pay the transfer time. ${l1[j] === 1 ? 'Staying' : 'Switching'} is faster (stay ${stayLine1} vs switch ${transferFrom2}).`,
       codeLine: 4,
       state: {
         numStations: n,
@@ -195,7 +195,7 @@ export function* assemblyLineSchedulingSteps(
     yield {
       stepIndex: stepIndex++,
       title: `Compute Station ${j + 1} on Line 2`,
-      description: `To finish station ${j + 1} on line 2, either stay on line 2 or switch from line 1 and pay the transfer time. ${l2[j] === 2 ? 'Staying' : 'Switching'} is faster (${stayLine2} vs ${transferFrom1}).`,
+      description: `To finish station ${j + 1} on line 2, either stay on line 2 or switch from line 1 and pay the transfer time. ${l2[j] === 2 ? 'Staying' : 'Switching'} is faster (stay ${stayLine2} vs switch ${transferFrom1}).`,
       codeLine: 5,
       state: {
         numStations: n,

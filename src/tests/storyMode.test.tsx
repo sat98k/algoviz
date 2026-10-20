@@ -10,6 +10,7 @@ import { nQueensSteps } from '../algorithms/nQueens';
 import { subsetSumSteps } from '../algorithms/subsetSum';
 import { graphColoringSteps } from '../algorithms/graphColoring';
 import { buildNQueensStateSpaceTree } from '../algorithms/nQueensTree';
+import { MaxSubarrayTreeView } from '../components/story/MaxSubarrayTreeView';
 
 const stepsOf = (id: string) => {
   const a = getAlgorithmById(id)!;
@@ -151,6 +152,41 @@ describe('Story (Animation) Mode', () => {
     expect(final).toMatch(/can’t beat 🏆|too heavy|misses a deadline/);
     // The camera ends on the trophy cave.
     expect(kinds.filter((k) => k === 'solution').length).toBe(1);
+  });
+
+  it('Maximum Subarray keeps the coin road by default and offers the split & merge tree', () => {
+    const { steps } = stepsOf('max-subarray');
+    const html = renderScene('max-subarray', steps[1]);
+    expect(html).toContain('aria-label="Coin road"');
+    expect(html).toMatch(/data-road-view="tree"[^>]*>🌳 Split &amp; merge tree/);
+    expect(html).not.toContain('data-max-subarray-tree');
+  });
+
+  it('Maximum Subarray tree: pieces split on the way down and report their best on the way up', () => {
+    const { steps } = stepsOf('max-subarray');
+    const n = steps[0].state.array.length;
+    const piecesOf = (html: string) => [...html.matchAll(/data-piece="([^"]+)" data-state="([a-z_]+)"/g)].map((m) => ({ key: m[1], state: m[2] }));
+    for (const s of steps) {
+      const html = renderToStaticMarkup(
+        <MaxSubarrayTreeView arr={s.state.array} nodes={s.state.treeNodes} activeId={s.state.activeNodeId} scan={s.state.crossScan} isFinal={!!s.isFinal} stepKey={s.stepIndex} />
+      );
+      const pieces = piecesOf(html);
+      // The whole plan is drawn from the start: 2n - 1 pieces, unvisited ones marked "later".
+      expect(pieces.length, s.title).toBe(2 * n - 1);
+      expect(pieces.filter((p) => p.state !== 'later').length, s.title).toBe(s.state.treeNodes.length);
+      expect(html, s.title).not.toMatch(/undefined|NaN/);
+    }
+    const last = steps[steps.length - 1];
+    const end = renderToStaticMarkup(
+      <MaxSubarrayTreeView arr={last.state.array} nodes={last.state.treeNodes} activeId={last.state.activeNodeId} isFinal stepKey={last.stepIndex} narration="The richest stretch is found." stepLabel="Step 88" />
+    );
+    // The owl's sentence sits right above the tree, with zoom and follow controls.
+    expect(end).toMatch(/data-tree-narration[^>]*>.*The richest stretch is found\./s);
+    expect(end).toContain('aria-label="Zoom in"');
+    expect(end).toContain('🎯 Follow');
+    expect(piecesOf(end).every((p) => p.state !== 'later')).toBe(true);
+    expect(end).toMatch(/↑-?\d+/);
+    expect(end).toContain(`answer for the whole road: ${last.result.maxSum} coins`);
   });
 
   it.each(['knapsack-bb', 'job-selection-bb'])('%s: the cave tree follows best-first search and shows caves waiting in line', (id) => {

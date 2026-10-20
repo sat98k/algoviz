@@ -114,7 +114,7 @@ export function* nQueensSteps(inputs: { n: number; findAll?: boolean }): Generat
         yield {
           stepIndex: stepIndex++,
           title: `Place Queen at Row ${row + 1}, Column ${col + 1}`,
-          description: `Row ${row + 1}, column ${col + 1} is not attacked by any queen placed so far, so a queen goes here. Proceeding to row ${row + 2}.`,
+          description: `Row ${row + 1}, column ${col + 1} is not attacked by any queen placed so far, so a queen goes here. ${row + 1 === n ? 'That was the last row.' : `Proceeding to row ${row + 2}.`}`,
           codeLine: [4, 5, 6],
           callFlow: { type: 'call', nodeId: `${row}-${col}` },
           state: {

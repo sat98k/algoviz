@@ -275,7 +275,7 @@ export function computeLcsEngine(xInput: string, yInput: string): LcsEngineResul
         steps.push({
           stepIndex: stepIndex++,
           title: `Match: '${char1}' == '${char2}'`,
-          description: `'${char1}' matches '${char2}', so this character extends the longest common subsequence of the two shorter prefixes by one.`,
+          description: `'${char1}' matches '${char2}', so this character extends the longest common subsequence of the two shorter prefixes by one: dp[${i}][${j}] = dp[${i - 1}][${j - 1}] + 1 = ${runningTable[i - 1][j - 1] ?? 0} + 1 = ${runningTable[i][j]}.`,
           codeLine: [5, 6],
           state: {
             str1: X,
@@ -324,7 +324,7 @@ export function computeLcsEngine(xInput: string, yInput: string): LcsEngineResul
         steps.push({
           stepIndex: stepIndex++,
           title: `Mismatch: '${char1}' != '${char2}'`,
-          description: `'${char1}' and '${char2}' differ, so they cannot both end the subsequence: keep the better result of dropping one of them.`,
+          description: `'${char1}' and '${char2}' differ, so they cannot both end the subsequence: keep the better result of dropping one of them, max(above ${topVal}, left ${leftVal}) = ${maxVal}.`,
           codeLine: [7, 8],
           state: {
             str1: X,

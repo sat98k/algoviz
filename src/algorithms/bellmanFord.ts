@@ -57,6 +57,8 @@ export function* bellmanFordSteps(inputs: {
   const totalPasses = Math.max(n - 1, 0);
   const lbl = (id: string) => labels[+id];
   const fmt = (v: number | null | undefined) => (v === null || v === undefined ? '∞' : `${v}`);
+  /** A weight as it reads after a plus sign: 5 or (−4). */
+  const plusW = (w: number) => (w < 0 ? `(−${-w})` : `${w}`);
 
   let stepIndex = 0;
   let comparisons = 0;
@@ -144,7 +146,7 @@ export function* bellmanFordSteps(inputs: {
         updatedThisPass = true;
         yield snapshot(
           `Relax ${lbl(e.u)} → ${lbl(e.v)}  (w = ${e.weight})`,
-          `dist[${lbl(e.u)}] + ${e.weight} = ${newDv} < ${fmt(oldDv)} → update dist[${lbl(e.v)}] = ${newDv}, pred[${lbl(e.v)}] = ${lbl(e.u)}.`,
+          `dist[${lbl(e.u)}] + w = ${du} + ${plusW(e.weight)} = ${newDv} < ${fmt(oldDv)} → update dist[${lbl(e.v)}] = ${newDv}, pred[${lbl(e.v)}] = ${lbl(e.u)}.`,
           [5, 6],
           {
             pass,
@@ -161,7 +163,7 @@ export function* bellmanFordSteps(inputs: {
           `Check ${lbl(e.u)} → ${lbl(e.v)}  (w = ${e.weight})`,
           du === null
             ? `${lbl(e.u)} is still unreachable (∞), so this edge cannot relax ${lbl(e.v)} yet.`
-            : `dist[${lbl(e.u)}] + ${e.weight} = ${(du as number) + e.weight} ≥ dist[${lbl(e.v)}] = ${fmt(dv)} → no improvement.`,
+            : `dist[${lbl(e.u)}] + w = ${du} + ${plusW(e.weight)} = ${(du as number) + e.weight} ≥ dist[${lbl(e.v)}] = ${fmt(dv)} → no improvement.`,
           [4, 5],
           {
             pass,
@@ -201,7 +203,7 @@ export function* bellmanFordSteps(inputs: {
       negEdge = { u: e.u, v: e.v };
       yield snapshot(
         `Negative cycle via ${lbl(e.u)} → ${lbl(e.v)}`,
-        `Edge ${lbl(e.u)} → ${lbl(e.v)} still relaxes (${du} + ${e.weight} < ${fmt(dv)}). A negative-weight cycle is reachable — no shortest path exists.`,
+        `Edge ${lbl(e.u)} → ${lbl(e.v)} still relaxes (${du} + ${plusW(e.weight)} < ${fmt(dv)}). A negative-weight cycle is reachable — no shortest path exists.`,
         8,
         {
           pass: totalPasses + 1,
