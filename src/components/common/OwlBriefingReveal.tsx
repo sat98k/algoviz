@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Eye, FastForward, Lightbulb, RotateCcw } from 'lucide-react';
-import { cardDuration, endsSentence, fadeFor, playChirp, prefersReducedMotion, useOwlPrefs, wordDuration } from './owlVoice';
+import { cardDuration, endsSentence, fadeFor, playChirp, prefersReducedMotion, tickMs, useOwlPrefs, wordDuration } from './owlVoice';
 import { OwlSoundToggle, OwlSpeedControl } from './OwlControls';
 
 // The shared voice settings, re-exported for existing callers.
@@ -152,7 +152,7 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
     let last = 0;
     let chirpIndex = 0;
     const tick = (now: number) => {
-      elapsed += (now - previous) * speedRef.current;
+      elapsed += tickMs(previous, now) * speedRef.current;
       previous = now;
       let n = last;
       while (n < total && times[n] <= elapsed) n++;

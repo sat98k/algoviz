@@ -60,6 +60,14 @@ export const FitToBox: React.FC<FitToBoxProps> = ({ minScale = 0.85, maxScale = 
     return () => mq.removeEventListener?.('change', onChange);
   }, []);
 
+  // The fit last set, read right away: measuring compares against it (not a queued state update),
+  // and sets nothing when nothing changed, so a measure never triggers a render of its own.
+  const fitRef = useRef(fit);
+  fitRef.current = fit;
+  // A safety net: a layout that keeps feeding back (the box's own height moving its free space)
+  // gets a few re-measures per frame, then waits for the next frame instead of looping.
+  const burst = useRef({ count: 0, at: 0, frame: 0 });
+
   const measure = () => {
     const area = areaRef.current;
     const content = contentRef.current;
@@ -69,16 +77,37 @@ export const FitToBox: React.FC<FitToBoxProps> = ({ minScale = 0.85, maxScale = 
     // for a moment (a wheel on its way into the bag) do not count: they would shrink it for good.
     const natural = content.offsetHeight;
     if (!available || !natural) return;
-    setFit((prev) => {
-      let scale = Math.max(minScale, Math.min(zoomIn, available / natural));
-      // Same run, same space: only zoom further out, never back in (no pulsing).
-      const sameRun = !!prev && prev.key === resetKey && Math.abs(prev.available - available) < 2;
-      if (sameRun) scale = Math.min(scale, prev!.scale);
-      const scroll = (sameRun && prev!.scroll) || natural * scale > available + 1;
-      // A few pixels of jitter is not a change: re-measuring must settle, never loop.
-      if (sameRun && Math.abs(prev!.scale - scale) < 0.004 && Math.abs(prev!.height - natural) < 4 && prev!.scroll === scroll) return prev;
-      return { scale, height: natural, available, key: resetKey, scroll };
-    });
+    const prev = fitRef.current;
+    let scale = Math.max(minScale, Math.min(zoomIn, available / natural));
+    // Same run, same space: only zoom further out, never back in (no pulsing).
+    const sameRun = !!prev && prev.key === resetKey && Math.abs(prev.available - available) < 2;
+    if (sameRun) scale = Math.min(scale, prev!.scale);
+    const scroll = (sameRun && prev!.scroll) || natural * scale > available + 1;
+    // A few pixels of jitter is not a change: re-measuring must settle, never loop.
+    if (sameRun && Math.abs(prev!.scale - scale) < 0.004 && Math.abs(prev!.height - natural) < 4 && prev!.scroll === scroll) return;
+    // Only the free space moved (the zoom, height and scrollbar stay): remember it, no render.
+    if (prev && prev.key === resetKey && Math.abs(prev.scale - scale) < 0.004 && Math.abs(prev.height - natural) < 4 && prev.scroll === scroll) {
+      fitRef.current = { ...prev, available };
+      return;
+    }
+    const b = burst.current;
+    const now = performance.now();
+    if (now - b.at > 16) {
+      b.count = 0;
+      b.at = now;
+    }
+    if (++b.count > 4) {
+      if (!b.frame && typeof window.requestAnimationFrame === 'function') {
+        b.frame = window.requestAnimationFrame(() => {
+          b.frame = 0;
+          measureRef.current();
+        });
+      }
+      return;
+    }
+    const next = { scale, height: natural, available, key: resetKey, scroll };
+    fitRef.current = next;
+    setFit(next);
   };
   const measureRef = useRef(measure);
   measureRef.current = measure;

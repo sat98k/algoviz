@@ -42,6 +42,10 @@ interface VisualizerStageProps {
   narrate?: boolean;
   onStepSettled?: (stepIndex: number) => void;
   onNarratedChange?: (narrated: boolean) => void;
+  /** The reader pressed the owl's ⏩ Skip. */
+  onOwlSkip?: () => void;
+  /** Player only: paused, so the owl and the animation stand still (Play / Pause controls both). */
+  paused?: boolean;
 }
 
 /** View mode chosen per algorithm, so it survives the stage remounting (e.g. a layout switch). */
@@ -52,10 +56,11 @@ const chosenMode: Record<string, StoryViewMode> = {};
  * (see storyRegistry) get a 📊 / 🎬 toggle; the technical view stays the default.
  */
 export const VisualizerStage: React.FC<VisualizerStageProps> = (props) => {
-  const { narrate, step, speed, onStepSettled, onNarratedChange } = props;
-  // A new key on every step change (even back to a step seen before), so the owl reads again.
-  const visit = useRef({ index: step.stepIndex, n: 0 });
-  if (visit.current.index !== step.stepIndex) visit.current = { index: step.stepIndex, n: visit.current.n + 1 };
+  const { narrate, step, speed, onStepSettled, onNarratedChange, onOwlSkip, paused } = props;
+  // A new key on every step change (even back to a step seen before, or to the same index of a
+  // new run after the inputs or Huffman's phase change), so the owl reads again.
+  const visit = useRef({ step, n: 0 });
+  if (visit.current.step !== step) visit.current = { step, n: visit.current.n + 1 };
   if (!narrate) return <StageBody {...props} />;
   return (
     <NarrationGateProvider
@@ -64,6 +69,8 @@ export const VisualizerStage: React.FC<VisualizerStageProps> = (props) => {
       stepMs={stepDurationMs(speed)}
       onSettled={onStepSettled}
       onNarrated={onNarratedChange}
+      onSkip={onOwlSkip}
+      paused={paused}
     >
       <StageBody {...props} />
     </NarrationGateProvider>

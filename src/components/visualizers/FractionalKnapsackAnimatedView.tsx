@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { useNarrationHold } from '../story/narrationGate';
+import { useAnimatingReport, useNarrationHold } from '../story/narrationGate';
 import { FitToBox, FitToScreenContext } from '../common/FitToBox';
 import { AlgorithmStep } from '../../types/algorithm';
 import { FractionalKnapsackItem } from '../../algorithms/fractionalKnapsack';
@@ -220,6 +220,8 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
 
   // In the player the owl tells the step first; the knife waits for it.
   const hold = useNarrationHold();
+  // Playback waits until the slice has landed and the lid has closed.
+  useAnimatingReport(isFractionStep && !step.isFinal && !hold && animPhase !== 'closed');
   // Player, fit-to-screen: the frame fills its pane at a fixed size; only the table and bag zoom.
   const { enabled: fit } = useContext(FitToScreenContext);
 

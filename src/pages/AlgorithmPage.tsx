@@ -50,6 +50,19 @@ interface AlgorithmPageProps {
 
 export type AlgorithmView = 'learn' | 'play';
 
+/** How long the player waits after opening before it starts playing by itself. */
+export const AUTOPLAY_DELAY_MS = 2500;
+
+/** Shown when there are no steps. One shared object, so the owl does not restart on every render. */
+const READY_STEP: AlgorithmStep = {
+  stepIndex: 0,
+  title: 'Ready',
+  description: 'Press Play or Step Forward to start execution.',
+  state: {},
+  highlights: {},
+  metrics: {},
+};
+
 export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
   algorithmId,
   onBack,
@@ -188,6 +201,14 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
   const [narrated, setNarrated] = useState(false);
   const [settledIndex, setSettledIndex] = useState(-1);
   useEffect(() => setSettledIndex(-1), [currentStepIndex, activeSteps]);
+  // The player plays on its own: a moment after it opens (and after every new run), Play starts,
+  // so each step moves on by itself once the owl has finished (or been skipped). Play / Pause is
+  // the one control for the owl and the animation alike.
+  useEffect(() => {
+    if (view !== 'play') return;
+    const t = window.setTimeout(() => setIsPlaying(true), AUTOPLAY_DELAY_MS);
+    return () => window.clearTimeout(t);
+  }, [view, inputs, algorithmId]);
   useEffect(() => {
     if (isPlaying && narrated && settledIndex === currentStepIndex) stepForward();
   }, [isPlaying, narrated, settledIndex, currentStepIndex, stepForward]);
@@ -210,14 +231,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
     };
   }, [isPlaying, narrated, speed, stepForward]);
 
-  const currentStep = activeSteps[currentStepIndex] || {
-    stepIndex: 0,
-    title: 'Ready',
-    description: 'Press Play or Step Forward to start execution.',
-    state: {},
-    highlights: {},
-    metrics: {},
-  };
+  const currentStep = activeSteps[currentStepIndex] || READY_STEP;
 
   const finalStep = steps[steps.length - 1];
 
@@ -235,6 +249,9 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
       narrate
       onStepSettled={setSettledIndex}
       onNarratedChange={setNarrated}
+      // ⏩ Skip means "go on": the step's animation plays and playback carries on from there.
+      onOwlSkip={() => setIsPlaying(true)}
+      paused={!isPlaying}
     />
     </VisualizerErrorBoundary>
   );

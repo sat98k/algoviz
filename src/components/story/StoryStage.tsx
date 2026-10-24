@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { FastForward } from 'lucide-react';
 import { FitToBox, FitToScreenContext } from '../common/FitToBox';
 import { OwlSoundToggle, OwlSpeedControl } from '../common/OwlControls';
-import { endsSentence, fadeFor, playChirp, plainWords, prefersReducedMotion, useOwlPrefs, wordDuration } from '../common/owlVoice';
+import { READING, endsSentence, fadeFor, playChirp, plainWords, prefersReducedMotion, tickMs, useOwlPrefs, wordDuration } from '../common/owlVoice';
 import { useOwlFlying } from '../common/owlFlight';
 import { NarrationGate, NarrationGateContext } from './narrationGate';
 
@@ -107,7 +107,10 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
   const flying = useOwlFlying();
   const words = useMemo(() => plainWords(narration), [narration]);
   const revealKey = `${gate.stepKey}|${narration}`;
-  const [shown, setShown] = useState(0);
+  // Words shown, for the sentence they belong to: a new sentence starts hidden on its very first
+  // frame, instead of showing in full and then fading out to be read again.
+  const [reveal, setReveal] = useState({ key: revealKey, n: 0 });
+  const shown = reveal.key === revealKey ? reveal.n : 0;
   const [skippedKey, setSkippedKey] = useState<string | null>(null);
   const [notes, setNotes] = useState<{ id: number; ch: string; dx: number }[]>([]);
   const noteId = useRef(0);
@@ -115,6 +118,9 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
   speedRef.current = speed;
   const gateRef = useRef(gate);
   gateRef.current = gate;
+  // Paused: the owl stops mid-sentence and carries on from the same word on Play.
+  const frozenRef = useRef(gate.frozen);
+  frozenRef.current = gate.frozen;
 
   const { register } = gate;
   useEffect(() => register(), [register]);
@@ -127,6 +133,7 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
   };
 
   useEffect(() => {
+    const setShown = (n: number) => setReveal({ key: revealKey, n });
     const finish = () => {
       const g = gateRef.current;
       g.setBusy(false);
@@ -136,7 +143,8 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
       setShown(0);
       return;
     }
-    if (skippedKey === revealKey || prefersReducedMotion() || words.length === 0) {
+    // Skipped, or a step reached by hand while paused: the whole sentence at once.
+    if (skippedKey === revealKey || gateRef.current.instant || prefersReducedMotion() || words.length === 0) {
       setShown(words.length);
       finish();
       return;
@@ -152,6 +160,8 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
       if (i === 0 || endsSentence(words[i - 1])) chirpAt.push(t);
       t += wordDuration(w);
     });
+    // The last word stays on its own for a moment before the owl is done (and the scene moves on).
+    const end = times[times.length - 1] + READING.wordMs;
     // The owl's own clock (real time × speed), so changing speed never restarts or jumps.
     let previous = performance.now();
     let elapsed = 0;
@@ -159,7 +169,7 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
     let chirpIndex = 0;
     const timer = window.setInterval(() => {
       const now = performance.now();
-      elapsed += (now - previous) * speedRef.current;
+      if (!frozenRef.current) elapsed += tickMs(previous, now) * speedRef.current;
       previous = now;
       let n = last;
       while (n < words.length && times[n] <= elapsed) n++;
@@ -171,7 +181,7 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
         chirp();
         chirpIndex++;
       }
-      if (n >= words.length) {
+      if (n >= words.length && elapsed >= end) {
         window.clearInterval(timer);
         finish();
       }
@@ -180,7 +190,8 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealKey, flying, skippedKey]);
 
-  const talking = shown < words.length && !flying;
+  const reading = shown < words.length && !flying;
+  const talking = reading && !gate.frozen;
   return (
     <div
       data-story-owl
@@ -193,7 +204,7 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
         <span
           aria-hidden
           data-owl-avatar
-          data-owl-state={flying ? 'away' : talking ? 'talking' : 'idle'}
+          data-owl-state={flying ? 'away' : talking ? 'talking' : reading ? 'paused' : 'idle'}
           className={`inline-block text-2xl ${talking ? 'owl-talking' : 'owl-idle'}`}
           style={flying ? { opacity: 0 } : undefined}
         >
@@ -207,7 +218,7 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
       </span>
       <p data-story-narration className={`${bubbleClass(steady)} flex-1 min-w-0`}>
         {words.map((w, i) => (
-          <span key={i} className="owl-reveal owl-reveal-word" data-on={i < shown}>
+          <span key={`${revealKey}:${i}`} className="owl-reveal owl-reveal-word" data-on={i < shown}>
             {w}
           </span>
         ))}
@@ -220,9 +231,12 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
         <button
           type="button"
           data-owl-skip
-          onClick={() => setSkippedKey(revealKey)}
-          disabled={!talking}
-          title="Show the owl's whole sentence now and start the animation"
+          onClick={() => {
+            setSkippedKey(revealKey);
+            gate.skip();
+          }}
+          disabled={!reading}
+          title="Show the owl's whole sentence now, play the animation and carry on"
           className="flex items-center gap-1 px-2.5 py-1 font-sans text-xs font-semibold border border-amber bg-amber text-obsidian-950 hover:bg-amber-glow disabled:opacity-40 disabled:bg-transparent disabled:text-chalk-400 disabled:border-hairline"
         >
           <FastForward className="w-3.5 h-3.5" aria-hidden />

@@ -71,6 +71,7 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
     if (/^Left Scan|^Right Scan/.test(title)) return 'scan';
     if (/^CrossSum/.test(title)) return 'cross-sum';
     if (/^Combine/.test(title)) return 'combine';
+    if (/^Recursive Call/.test(title)) return 'call';
     return 'intro';
   })();
 
@@ -94,6 +95,10 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
     switch (kind) {
       case 'intro':
         return 'Coins (+) and thieves (−) line the road. Which unbroken stretch of road leaves a walker richest? Divide and conquer: cut the road in half again and again.';
+      case 'call': {
+        const half = /Left Half/.test(title) ? 'left' : 'right';
+        return `Now solve the ${half} piece, ${rangeText(range)}, on its own first, as if it were the whole road.`;
+      }
       case 'base':
         return `A road of just one tile: its best stretch is the tile itself (${arr[range?.[0] ?? 0]}).`;
       case 'split':

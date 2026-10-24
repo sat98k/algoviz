@@ -35,6 +35,14 @@ export const wordDuration = (text: string) => {
 /** How long a card (a stage, the insight) stays alone before the next one appears (at 1×). */
 export const cardDuration = (words: number) => Math.max(READING.cardMinMs, words * READING.cardWordMs);
 
+/**
+ * The most one tick of the owl's clock may count. When the page stalls (a heavy redraw) or the
+ * tab is in the background (timers slowed, animation frames paused), the owl waits instead of
+ * catching up by showing a burst of words at once.
+ */
+export const MAX_TICK_MS = 100;
+export const tickMs = (previous: number, now: number) => Math.min(MAX_TICK_MS, Math.max(0, now - previous));
+
 /** Splits plain text into word units, each keeping its trailing space. */
 export const plainWords = (text: string) => text.match(/\S+\s*/g) ?? [];
 
