@@ -34,7 +34,7 @@ export const InputDialog: React.FC<InputDialogProps> = ({ config, currentInputs,
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-obsidian-900 border border-hairline shadow-2xl"
+        className="relative w-full max-w-4xl max-h-[calc(92vh/var(--app-zoom,1))] flex flex-col bg-obsidian-900 border border-hairline shadow-2xl"
       >
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-hairline">
           <h2 id={titleId} className="flex items-center gap-2 font-sans text-sm font-semibold text-chalk-100">

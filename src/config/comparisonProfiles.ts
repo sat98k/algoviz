@@ -173,7 +173,7 @@ export const COMPARISON_PROFILES = defineProfiles({
   },
   'jarvis-march': {
     group: 'convex-hull',
-    keyIdea: 'Start at the lowest point and repeatedly wrap around to the most counter-clockwise point, like wrapping a gift.',
+    keyIdea: 'Start at the lowest point and wrap counter-clockwise, like wrapping a gift: from each corner, the next corner is the point with every other point on its left.',
     strengths: [
       'Output-sensitive O(n·h): very fast when the hull has few vertices.',
       'No sorting; only simple orientation tests.',

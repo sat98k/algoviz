@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useId, useLayoutEffect, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { GlossaryKey, getGlossaryEntry } from '../../config/glossary';
+import { pageZoom } from '../../utils/pageZoom';
 
 // ─── Open/close state (pure, unit-tested) ───────────────────────────────────
 // Three independent reasons keep the definition open: mouse hover (over the term
@@ -98,15 +99,18 @@ export const Term: React.FC<TermProps> = ({ termKey, children, className = '' })
     const trigger = triggerRef.current;
     const pop = popoverRef.current;
     if (!trigger || !pop) return;
-    const t = trigger.getBoundingClientRect();
-    const p = pop.getBoundingClientRect();
+    // In the page's CSS pixels: rects are in screen pixels and the page is zoomed on wide screens.
+    const z = pageZoom();
+    const scaled = (r: DOMRect) => ({ top: r.top / z, bottom: r.bottom / z, left: r.left / z, width: r.width / z, height: r.height / z });
+    const t = scaled(trigger.getBoundingClientRect());
+    const p = scaled(pop.getBoundingClientRect());
     const below = t.bottom + 6;
-    const top = below + p.height > window.innerHeight - VIEWPORT_MARGIN && t.top - 6 - p.height > VIEWPORT_MARGIN
+    const top = below + p.height > window.innerHeight / z - VIEWPORT_MARGIN && t.top - 6 - p.height > VIEWPORT_MARGIN
       ? t.top - 6 - p.height
       : below;
     const left = Math.min(
       Math.max(VIEWPORT_MARGIN, t.left + t.width / 2 - p.width / 2),
-      window.innerWidth - p.width - VIEWPORT_MARGIN
+      window.innerWidth / z - p.width - VIEWPORT_MARGIN
     );
     setPosition({ top, left });
   }, []);

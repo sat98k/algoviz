@@ -154,9 +154,9 @@ export const CORE_STEPS: Record<string, string[]> = {
     'The points left on the stack form the hull.',
   ],
   'jarvis-march': [
-    'Start at the lowest point; it is always on the hull.',
-    'From the current hull point, find the point furthest out: the one with every other point on its left.',
-    'That point is the next hull point. Move to it.',
+    'Start at the lowest point (leftmost if tied); it is always on the hull.',
+    'From the current point, aim at any candidate. A point **right** of current → candidate (or collinear and further) replaces it. The current point stays fixed.',
+    'After all points, every point is on the left of current → candidate: it is the next hull point, counter-clockwise. Move to it.',
     'Repeat until you return to the starting point.',
   ],
   'line-segment-intersection': [

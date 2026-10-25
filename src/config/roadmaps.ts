@@ -269,7 +269,7 @@ export const ROADMAPS: Record<string, Roadmap> = {
     ],
   },
   'jarvis-march': {
-    labels: ['Lowest point', 'Find the outermost', 'Move to it', 'Back at the start'],
+    labels: ['Lowest point', 'Find the next corner', 'Move to it', 'Back at the start'],
     rules: [
       [/^(Initialize|Anchor)/, 0],
       [/^(Wrap from|Orientation Check|Update Candidate)/, 1],

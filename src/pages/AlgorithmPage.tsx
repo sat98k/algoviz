@@ -606,7 +606,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
   return (
     <div
       data-view="play"
-      className={`flex flex-col gap-2 px-2 sm:px-3 py-2 w-full max-w-[1920px] mx-auto ${fitToScreen ? 'lg:h-[calc(100dvh-2.75rem-1px)]' : ''}`}
+      className={`flex flex-col gap-2 px-2 sm:px-3 py-2 w-full max-w-[1920px] mx-auto ${fitToScreen ? 'lg:h-[calc(100dvh/var(--app-zoom,1)-2.75rem-1px)]' : ''}`}
     >
       <OwlFlightLayer />
 

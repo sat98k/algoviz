@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { AlgorithmStep } from '../../types/algorithm';
+import { pageZoom } from '../../utils/pageZoom';
 
 interface CallFlowOverlayProps {
   step: AlgorithmStep;
@@ -71,6 +72,13 @@ export const CallFlowOverlay: React.FC<CallFlowOverlayProps> = ({ step, containe
         nodeX = nodeRect.left - containerRect.left;
         codeX = codeRect.right - containerRect.left;
       }
+
+      // Screen pixels to the container's CSS pixels (the page is zoomed on wide screens).
+      const z = pageZoom();
+      nodeX /= z;
+      nodeY /= z;
+      codeX /= z;
+      codeY /= z;
 
       const isCall = step.callFlow.type === 'call';
 

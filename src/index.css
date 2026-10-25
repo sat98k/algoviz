@@ -66,6 +66,17 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    --app-zoom: 1;
+  }
+
+  /* Wide screens: the whole app at 75%, so the player fits a laptop/desktop screen at the
+     browser's 100%. Viewport heights divide by --app-zoom; screen coordinates (rects, pointer
+     events) go through pageZoom() in src/utils/pageZoom.ts. */
+  @media (min-width: 1024px) {
+    html {
+      --app-zoom: 0.75;
+      zoom: var(--app-zoom);
+    }
   }
 
   body {

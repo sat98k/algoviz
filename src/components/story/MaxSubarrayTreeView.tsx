@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useWidth } from './StateSpaceTree';
 import { useTweened } from './useAnimPhases';
+import { pageZoom } from '../../utils/pageZoom';
 import type { TreeNodeData } from '../visualizers/RecursionTreeVisualizer';
 import type { CrossScan } from '../../algorithms/maxSubarray';
 
@@ -134,7 +135,8 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
     const dy = e.clientY - d.y;
     if (!d.moved && Math.hypot(dx, dy) < 5) return;
     d.moved = true;
-    const k = camW / Math.max(1, widthPx);
+    // Pointer moves are in screen pixels; widthPx is in the page's (zoomed) CSS pixels.
+    const k = camW / Math.max(1, widthPx) / pageZoom();
     setMode('free');
     setFreeCenter({ x: d.cx - dx * k, y: d.cy - dy * k });
   };

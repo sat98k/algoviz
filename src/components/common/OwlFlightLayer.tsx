@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { clearOwlFlight, peekOwlFlight, setOwlFlying } from './owlFlight';
 import { playChirp, prefersReducedMotion } from './owlVoice';
+import { pageZoom } from '../../utils/pageZoom';
 
 type Point = { x: number; y: number; size: number };
 
@@ -27,7 +28,12 @@ export const OwlFlightLayer: React.FC = () => {
       const target = document.querySelector('[data-view="play"] [data-owl-avatar]');
       if (target) {
         const r = target.getBoundingClientRect();
-        setFlight({ from, to: { x: r.left + r.width / 2, y: r.top + r.height / 2, size: r.height } });
+        // Screen pixels to the page's CSS pixels (the page is zoomed on wide screens).
+        const z = pageZoom();
+        setFlight({
+          from: { x: from.x / z, y: from.y / z, size: from.size / z },
+          to: { x: (r.left + r.width / 2) / z, y: (r.top + r.height / 2) / z, size: r.height / z },
+        });
       } else if (tries++ < 30) window.setTimeout(find, 50);
       else {
         // Technical View: nowhere to land, just a hello chirp.

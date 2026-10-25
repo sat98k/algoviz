@@ -76,14 +76,14 @@ describe('Player view fits the screen', () => {
   it('split layout fills the screen height on wide screens and scrolls its two columns, not the page', () => {
     const html = renderPage('knapsack-dp', 'split');
     expect(html).toContain('data-view="play"');
-    expect(html).toContain('lg:h-[calc(100dvh-2.75rem-1px)]');
+    expect(html).toContain('lg:h-[calc(100dvh/var(--app-zoom,1)-2.75rem-1px)]');
     expect(count(html, 'lg:overflow-y-auto')).toBe(2);
     // Narrow side padding.
     expect(html).toMatch(/data-view="play" class="[^"]*\bpx-2\b/);
   });
 
   it('full-width layout keeps normal page scrolling', () => {
-    expect(renderPage('knapsack-dp', 'stacked')).not.toContain('lg:h-[calc(100dvh-2.75rem-1px)]');
+    expect(renderPage('knapsack-dp', 'stacked')).not.toContain('lg:h-[calc(100dvh/var(--app-zoom,1)-2.75rem-1px)]');
   });
 
   it('the input popup holds the full input form', async () => {

@@ -8,6 +8,12 @@ export interface JarvisMarchState {
   currentPoint?: Point2D;
   checkTriplet?: [Point2D, Point2D, Point2D];
   turnOrientation?: 'ccw' | 'cw' | 'collinear';
+  /** Jarvis: the hull point the ribbon is wrapped from; it stays fixed while candidates are tested. */
+  wrapFrom?: Point2D;
+  /** Jarvis: cross product of the check, (candidate − wrapFrom) × (point − wrapFrom). */
+  cross?: number;
+  /** Jarvis: whether the checked point replaces the candidate. */
+  replaces?: boolean;
   phase: 'find_pivot' | 'wrapping' | 'complete';
 }
 
@@ -75,7 +81,7 @@ export function* jarvisMarchSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: `Anchor Pivot Found: ${pivot.label} (${pivot.x}, ${pivot.y})`,
-    description: `${pivot.label} is the lowest point, so nothing is below it and it is surely on the fence. The ribbon starts here and wraps counter-clockwise.`,
+    description: `${pivot.label} is the lowest point, so nothing is below it and it is surely on the fence. The ribbon starts here and wraps counter-clockwise, heading right along the bottom first.`,
     codeLine: 2,
     state: {
       points: [...points],
@@ -90,90 +96,105 @@ export function* jarvisMarchSteps(inputs: {
     metrics: { comparisons, iterations },
   };
 
-  // Step 2: Gift wrapping loop
+  // Step 2: Gift wrapping loop (counter-clockwise: every hull edge has all other points on its left)
   const hull: Point2D[] = [];
   let currentHullPoint = pivot;
 
   do {
     hull.push(currentHullPoint);
     iterations++;
+    const from = currentHullPoint;
 
     // Pick an initial candidate next point (different from current point)
-    let candidateNext = points[0].id === currentHullPoint.id ? points[1] : points[0];
+    let candidateNext = points[0].id === from.id ? points[1] : points[0];
 
     yield {
       stepIndex: stepIndex++,
-      title: `Wrap from ${currentHullPoint.label}: Initial Candidate ${candidateNext.label}`,
-      description: `From ${currentHullPoint.label}, find the next corner: the point with every other point on its left. Aim the ribbon at ${candidateNext.label} first, then test every other point.`,
-      codeLine: 3,
+      title: `Wrap from ${from.label}: Initial Candidate ${candidateNext.label}`,
+      description: `From ${from.label}, find the next corner going counter-clockwise: the point that has every other point on its left. ${from.label} stays fixed while we search. Aim the ribbon ${from.label} → ${candidateNext.label} for now, then test every other point against it.`,
+      codeLine: [5, 6],
       state: {
         points: [...points],
         pivot,
         hullStack: [...hull],
+        wrapFrom: from,
         currentPoint: candidateNext,
         phase: 'wrapping',
       },
       highlights: {
-        activePoint: currentHullPoint.id,
+        activePoint: from.id,
         hullPoints: hull.map((p) => p.id),
         checkPoint: candidateNext.id,
       },
       metrics: { comparisons, iterations },
     };
 
-    // Iterate through all points to find the most counter-clockwise point
+    // Test every other point against the ribbon from → candidateNext
     for (let i = 0; i < points.length; i++) {
       const checkPoint = points[i];
-      if (checkPoint.id === currentHullPoint.id) continue;
+      if (checkPoint.id === from.id || checkPoint.id === candidateNext.id) continue;
 
       comparisons++;
-      const o = orientation(currentHullPoint, candidateNext, checkPoint);
+      const o = orientation(from, candidateNext, checkPoint);
       const turnType = o > 0 ? 'ccw' : o < 0 ? 'cw' : 'collinear';
+      // Right of the ribbon: the candidate would leave it outside, so it cannot be the next corner.
+      // On the ribbon's line: only a point further away replaces it (the nearer one lies on the edge).
+      const further = o === 0 && distSq(from, checkPoint) > distSq(from, candidateNext);
+      const replaces = o < 0 || further;
+      const ribbon = `${from.label} → ${candidateNext.label}`;
+      const verdict =
+        o < 0
+          ? `Cross product ${o} < 0: ${checkPoint.label} lies to the RIGHT of the ribbon ${ribbon}. ${candidateNext.label} would leave ${checkPoint.label} outside, so ${checkPoint.label} becomes the new candidate.`
+          : o > 0
+          ? `Cross product ${o} > 0: ${checkPoint.label} lies to the LEFT of the ribbon ${ribbon}, on the inside. Keep ${candidateNext.label}.`
+          : further
+          ? `Cross product 0: ${checkPoint.label} lies on the same line as the ribbon ${ribbon}, but further from ${from.label}. The corner is the far end, so ${checkPoint.label} becomes the new candidate.`
+          : `Cross product 0: ${checkPoint.label} lies on the same line as the ribbon ${ribbon}, but no further than ${candidateNext.label}. It sits on the edge, not at a corner. Keep ${candidateNext.label}.`;
 
       yield {
         stepIndex: stepIndex++,
-        title: `Orientation Check: ${currentHullPoint.label} → ${candidateNext.label} vs ${checkPoint.label}`,
-        description: `Is ${checkPoint.label} further out than ${candidateNext.label}? ${o < 0 ? `Yes: it lies to the right of the ribbon ${currentHullPoint.label} → ${candidateNext.label} (cross product ${o} < 0).` : o > 0 ? `No: it lies to the left of the ribbon (cross product ${o} > 0).` : `It lies on the same line (cross product 0).`}`,
-        codeLine: [4, 5],
+        title: `Orientation Check: ${from.label} → ${candidateNext.label} vs ${checkPoint.label}`,
+        description: `Which side of the ribbon ${ribbon} is ${checkPoint.label} on? ${verdict}`,
+        codeLine: [7, 8, 9],
         state: {
           points: [...points],
           pivot,
           hullStack: [...hull],
+          wrapFrom: from,
           currentPoint: candidateNext,
-          checkTriplet: [currentHullPoint, candidateNext, checkPoint],
+          checkTriplet: [from, candidateNext, checkPoint],
           turnOrientation: turnType,
+          cross: o,
+          replaces,
           phase: 'wrapping',
         },
         highlights: {
-          activePoint: currentHullPoint.id,
+          activePoint: from.id,
           hullPoints: hull.map((p) => p.id),
           checkPoint: checkPoint.id,
         },
         metrics: { comparisons, iterations },
       };
 
-      // If checkPoint is more counter-clockwise than candidateNext, or collinear and farther away
-      if (
-        o > 0 ||
-        (o === 0 &&
-          distSq(currentHullPoint, checkPoint) > distSq(currentHullPoint, candidateNext))
-      ) {
+      if (replaces) {
+        const previous = candidateNext;
         candidateNext = checkPoint;
 
         yield {
           stepIndex: stepIndex++,
-          title: `Update Candidate: ${candidateNext.label} is More Counter-Clockwise`,
-          description: `So the ribbon swings out to ${candidateNext.label}: it is the furthest-out point found so far.`,
-          codeLine: 6,
+          title: `Update Candidate: ${previous.label} → ${candidateNext.label}`,
+          description: `Replace ${previous.label} with ${candidateNext.label}. The ribbon swings to ${from.label} → ${candidateNext.label}; ${from.label} stays where it is. Keep testing the remaining points against the new ribbon.`,
+          codeLine: 10,
           state: {
             points: [...points],
             pivot,
             hullStack: [...hull],
+            wrapFrom: from,
             currentPoint: candidateNext,
             phase: 'wrapping',
           },
           highlights: {
-            activePoint: currentHullPoint.id,
+            activePoint: from.id,
             hullPoints: hull.map((p) => p.id),
             checkPoint: candidateNext.id,
           },
@@ -184,21 +205,24 @@ export function* jarvisMarchSteps(inputs: {
 
     // Step 3: Add confirmed point to hull
     currentHullPoint = candidateNext;
+    const closed = currentHullPoint.id === pivot.id;
 
     yield {
       stepIndex: stepIndex++,
       title: `Confirmed Hull Vertex: ${currentHullPoint.label}`,
-      description: `Every point has been tested and none is further out, so ${currentHullPoint.label} is the next corner of the fence. Move the ribbon there.`,
-      codeLine: 7,
+      description: closed
+        ? `Every other point is on the left of ${from.label} → ${pivot.label}, so the ribbon goes back to the start, ${pivot.label}. The wrap is closed.`
+        : `Every other point is on the left of ${from.label} → ${currentHullPoint.label} (or on that edge), so ${currentHullPoint.label} is the next corner, counter-clockwise. Tie the ribbon there and wrap from ${currentHullPoint.label} next.`,
+      codeLine: 11,
       state: {
         points: [...points],
         pivot,
-        hullStack: currentHullPoint.id === pivot.id ? [...hull] : [...hull, currentHullPoint],
+        hullStack: closed ? [...hull] : [...hull, currentHullPoint],
         currentPoint: currentHullPoint,
         phase: 'wrapping',
       },
       highlights: {
-        hullPoints: hull.map((p) => p.id).concat(currentHullPoint.id === pivot.id ? [] : [currentHullPoint.id]),
+        hullPoints: hull.map((p) => p.id).concat(closed ? [] : [currentHullPoint.id]),
         activePoint: currentHullPoint.id,
       },
       metrics: { comparisons, iterations },
@@ -209,8 +233,8 @@ export function* jarvisMarchSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Jarvis’ March Complete',
-    description: `Done: the ribbon is back at ${pivot.label}. The fence has ${hull.length} corners: [${hull.map((p) => p.label).join(' → ')}]. Every other point is inside.`,
-    codeLine: 8,
+    description: `Done: the ribbon is back at ${pivot.label}. The fence has ${hull.length} corners, counter-clockwise from the lowest point: ${[...hull.map((p) => p.label), pivot.label].join(' → ')}. Every other point is inside.`,
+    codeLine: [12, 13],
     state: {
       points: [...points],
       pivot,

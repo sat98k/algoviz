@@ -105,7 +105,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-obsidian-900 text-chalk-100 font-sans selection:bg-amber selection:text-obsidian-950">
+    <div className="min-h-[calc(100vh/var(--app-zoom,1))] flex flex-col bg-obsidian-900 text-chalk-100 font-sans selection:bg-amber selection:text-obsidian-950">
       <Navbar currentView={view} onNavigate={navigateTo} />
 
       <main className="flex-1">

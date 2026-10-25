@@ -14,6 +14,10 @@ export const PointCanvasVisualizer: React.FC<PointCanvasVisualizerProps> = ({ st
   const checkTriplet = state.checkTriplet;
   const turnOrientation = state.turnOrientation;
   const isComplete = state.phase === 'complete';
+  // Jarvis' March: the hull point the ribbon is held at (fixed while candidates are tested).
+  const wrapFrom: Point2D | undefined = state.wrapFrom;
+  const candidate: Point2D | undefined = wrapFrom ? state.currentPoint : undefined;
+  const replaces: boolean = !!state.replaces;
 
   const svgWidth = 720;
   const svgHeight = 460;
@@ -40,7 +44,30 @@ export const PointCanvasVisualizer: React.FC<PointCanvasVisualizerProps> = ({ st
   return (
     <div className="flex flex-col items-center w-full min-h-[420px] p-6 bg-obsidian-900 border border-hairline transition-all">
       {/* Turn Orientation status banner */}
-      {checkTriplet && turnOrientation && (
+      {wrapFrom && checkTriplet && turnOrientation && (
+        <div
+          className={`mb-4 px-4 py-1.5 text-xs font-mono border flex flex-wrap items-center gap-3 ${
+            replaces ? 'bg-obsidian-950 border-rose-500/50 text-rose-300' : 'bg-obsidian-950 border-acid-500/50 text-acid-500'
+          }`}
+        >
+          <span>
+            RIBBON: {checkTriplet[0].label} → {checkTriplet[1].label} | TEST: {checkTriplet[2].label}
+          </span>
+          <span>|</span>
+          <span>CROSS = {state.cross}</span>
+          <span>|</span>
+          <strong>
+            {turnOrientation === 'cw'
+              ? `RIGHT of ribbon ✖ → replace candidate with ${checkTriplet[2].label}`
+              : turnOrientation === 'ccw'
+              ? `LEFT of ribbon ✔ → keep ${checkTriplet[1].label}`
+              : replaces
+              ? `COLLINEAR, further → replace candidate with ${checkTriplet[2].label}`
+              : `COLLINEAR, not further → keep ${checkTriplet[1].label}`}
+          </strong>
+        </div>
+      )}
+      {!wrapFrom && checkTriplet && turnOrientation && (
         <div
           className={`mb-4 px-4 py-1.5 text-xs font-mono border flex items-center gap-3 ${
             turnOrientation === 'ccw'
@@ -75,7 +102,30 @@ export const PointCanvasVisualizer: React.FC<PointCanvasVisualizerProps> = ({ st
           )}
 
           {/* Check Triplet Orientation Vectors */}
-          {checkTriplet && checkTriplet.length === 3 && (
+          {/* Jarvis: the candidate ribbon from the fixed hull point, and the ray to the tested point */}
+          {wrapFrom && candidate && (
+            <line
+              x1={scaleX(wrapFrom.x)}
+              y1={scaleY(wrapFrom.y)}
+              x2={scaleX(candidate.x)}
+              y2={scaleY(candidate.y)}
+              stroke="#f59e0b"
+              strokeWidth="2.5"
+            />
+          )}
+          {wrapFrom && checkTriplet && checkTriplet.length === 3 && (
+            <line
+              x1={scaleX(checkTriplet[0].x)}
+              y1={scaleY(checkTriplet[0].y)}
+              x2={scaleX(checkTriplet[2].x)}
+              y2={scaleY(checkTriplet[2].y)}
+              stroke={replaces ? '#f43f5e' : '#d4ff32'}
+              strokeWidth="2"
+              strokeDasharray="5 4"
+            />
+          )}
+
+          {!wrapFrom && checkTriplet && checkTriplet.length === 3 && (
             <g>
               <line
                 x1={scaleX(checkTriplet[0].x)}

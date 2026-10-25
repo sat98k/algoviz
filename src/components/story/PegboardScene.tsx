@@ -7,8 +7,10 @@ import { useAnimPhases, useHeldValue, useProgress, useTweened } from './useAnimP
  *
  * - Graham's Scan: a lighthouse beam numbers the pegs by angle, then a rubber band is
  *   hooked peg to peg; whenever it would turn right (a dent), it snaps off that peg.
- * - Jarvis' March: a ribbon swings like a clock hand from the last tied peg until it
- *   points at the outermost peg, then gets tied there, wrapping the pegs like a gift.
+ * - Jarvis' March: the ribbon is held at the last tied peg (which never moves during the
+ *   search) and must keep every peg on its left. Whenever a peg turns up on its right side
+ *   (shaded: outside), the ribbon swings to that peg. When no peg is on the right, it is tied
+ *   there: the next corner, counter-clockwise.
  */
 
 type P = { id: number; x: number; y: number; label?: string };
@@ -79,12 +81,31 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
   const triplet: P[] | undefined = st.checkTriplet;
   const turn: string | undefined = st.turnOrientation;
   const current: P | undefined = st.currentPoint;
+  // Jarvis: whether the checked peg takes over as the candidate (right of the ribbon, or on its line further away).
+  const replaces: boolean = !!st.replaces;
 
-  // Jarvis: the ribbon hand from the last tied peg toward the candidate, swinging smoothly.
-  const anchorId: number | undefined = step.highlights?.activePoint;
+  // Jarvis: the ribbon hand from the tied peg (fixed during the search) toward the candidate, swinging smoothly.
+  const anchorId: number | undefined = st.wrapFrom?.id ?? step.highlights?.activePoint;
   const anchor = points.find((p) => p.id === anchorId);
   const handTarget = current ? at(current) : anchor ? at(anchor) : { x: 0, y: 0 };
   const [handX, handY] = useTweened([handTarget.x, handTarget.y], 600);
+  const searching = isJarvis && !!anchor && !!current && (kind === 'candidate' || kind === 'check' || kind === 'update');
+  // The ribbon's right side (outside): a half-plane through the tied peg, following the swinging hand.
+  const outside = (() => {
+    if (!searching || !anchor) return null;
+    const a = at(anchor);
+    const dx = handX - a.x;
+    const dy = handY - a.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 1) return null;
+    const far = Math.hypot(W, H) * 2;
+    const ux = (dx / len) * far;
+    const uy = (dy / len) * far;
+    // Screen y points down, so the right-hand side of the direction (dx, dy) is (-dy, dx).
+    const nx = -uy;
+    const ny = ux;
+    return `M ${a.x - ux} ${a.y - uy} L ${a.x + ux} ${a.y + uy} L ${a.x + ux + nx} ${a.y + uy + ny} L ${a.x - ux + nx} ${a.y - uy + ny} Z`;
+  })();
 
   // Graham: angle order for the lighthouse sweep.
   const angleOf = (p: P) => (pivot ? Math.atan2(p.y - pivot.y, p.x - pivot.x) : 0);
@@ -119,7 +140,7 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
         return 'Pegs are stuck in a cork board. We want the tightest fence around all of them, as if we stretched a rubber band around the outside.';
       case 'pivot':
         return isJarvis
-          ? `Start at the lowest peg, ${lbl(pivot)}. It is surely on the fence. We’ll wrap a ribbon around the pegs like wrapping a gift.`
+          ? `Start at the lowest peg, ${lbl(pivot)}. It is surely on the fence. We’ll wrap a ribbon around the pegs like a gift, counter-clockwise: heading right along the bottom first.`
           : `Start at the lowest peg, ${lbl(pivot)}. It is surely on the fence.`;
       case 'sort':
         return 'A lighthouse beam sweeps around from the start peg and numbers the pegs in the order it reaches them.';
@@ -129,11 +150,14 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
         if (!triplet) return step.title;
         const [a, b, c] = triplet;
         if (isJarvis) {
-          return phase === 'feel'
-            ? `Is peg ${lbl(c)} further out than ${lbl(b)}?`
-            : turn === 'ccw'
-            ? `Yes, ${lbl(c)} is further out, so the ribbon must swing to it.`
-            : `No, ${lbl(b)} is still the outermost so far.`;
+          if (phase === 'feel') return `Which side of the ribbon ${lbl(a)} → ${lbl(b)} is peg ${lbl(c)} on?`;
+          if (turn === 'collinear')
+            return replaces
+              ? `${lbl(c)} is on the same straight line, just further along. Stretch the ribbon out to ${lbl(c)}.`
+              : `${lbl(c)} is on the same straight line but closer: it lies along the ribbon, not at a corner. ${lbl(b)} stays.`;
+          return replaces
+            ? `${lbl(c)} is on the right side, outside the ribbon. Swing the ribbon over to ${lbl(c)}.`
+            : `${lbl(c)} is on the left side, inside the ribbon. ${lbl(b)} stays.`;
         }
         return phase === 'feel'
           ? `Going ${lbl(a)} → ${lbl(b)} → ${lbl(c)}: which way does the band bend at ${lbl(b)}?`
@@ -148,14 +172,16 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
       case 'push':
         return `Stretch the band out to peg ${lbl(current)}.`;
       case 'candidate':
-        return `From ${lbl(anchor)}, point the ribbon at peg ${lbl(current)} for now.`;
+        return `Hold the ribbon at ${lbl(anchor)} and point it at peg ${lbl(current)} for now. It must keep every peg on its left side; the shaded side is outside.`;
       case 'update':
-        return `The ribbon swings out to ${lbl(current)}.`;
+        return `The ribbon swings from ${lbl(anchor)} to ${lbl(current)}. ${lbl(anchor)} stays tied where it is.`;
       case 'confirm':
-        return `No peg is further out than ${lbl(current)}. Tie the ribbon there: it’s on the fence.`;
+        return current?.id === pivot?.id
+          ? `No peg is on the right side: the ribbon is back at the start, ${lbl(pivot)}.`
+          : `No peg is on the right side of the ribbon. Tie it to ${lbl(current)}: the next corner of the fence.`;
       case 'final':
         return isJarvis
-          ? `The ribbon is back at the start. The gift is wrapped with ${stack.length} pegs on the outside.`
+          ? `The ribbon is back at the start. The gift is wrapped counter-clockwise with ${stack.length} pegs on the outside.`
           : `The band is tight all the way around. ${stack.length} pegs hold the fence; every other peg is inside.`;
       default:
         return step.title;
@@ -171,7 +197,7 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
     <StoryStage
       emoji={isJarvis ? '🎁' : '📌'}
       title={isJarvis ? 'Gift-Wrapping the Pegs' : 'Rubber Band on a Pegboard'}
-      subtitle={isJarvis ? 'Swing the ribbon to the outermost peg, tie it, repeat.' : 'Hook the band peg by peg; snap it off any peg that makes a dent.'}
+      subtitle={isJarvis ? 'Keep every peg on the ribbon’s left; tie the next corner, repeat.' : 'Hook the band peg by peg; snap it off any peg that makes a dent.'}
       narration={narration}
       status={status}
     >
@@ -192,6 +218,16 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
         <rect x="0" y="0" width={W} height={H} rx="18" fill="#a16207" />
         <rect x="10" y="10" width={W - 20} height={H - 20} rx="12" fill="url(#storyCork)" />
 
+        {/* Jarvis: the ribbon's right side, outside the fence */}
+        {outside && (
+          <>
+            <clipPath id="storyBoardClip">
+              <rect x="10" y="10" width={W - 20} height={H - 20} rx="12" />
+            </clipPath>
+            <path d={outside} fill={BAD} fillOpacity="0.12" clipPath="url(#storyBoardClip)" />
+          </>
+        )}
+
         {/* Lighthouse beam */}
         {pv && kind === 'sort' && (
           <g>
@@ -210,7 +246,7 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
         {triplet && kind === 'check' && (
           <g>
             {isJarvis ? (
-              <line x1={at(triplet[0]).x} y1={at(triplet[0]).y} x2={at(triplet[2]).x} y2={at(triplet[2]).y} stroke="#78716c" strokeWidth="2" strokeDasharray="5 5" />
+              <line x1={at(triplet[0]).x} y1={at(triplet[0]).y} x2={at(triplet[2]).x} y2={at(triplet[2]).y} stroke={phase === 'verdict' ? (replaces ? BAD : OK) : '#78716c'} strokeWidth="2" strokeDasharray="5 5" />
             ) : (
               <polyline
                 points={triplet.map((p) => `${at(p).x},${at(p).y}`).join(' ')}
@@ -220,12 +256,22 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
                 strokeDasharray="7 5"
               />
             )}
-            {phase === 'verdict' && (
+            {phase === 'verdict' && !isJarvis && (
               <g transform={`translate(${at(triplet[1]).x}, ${at(triplet[1]).y - 30})`}>
                 <g className="animate-story-pop">
                   <rect x="-46" y="-13" width="92" height="24" rx="12" fill="#ffffff" stroke={turn === 'ccw' ? OK : BAD} strokeWidth="2" />
                   <text textAnchor="middle" y="4" fontSize="12" fontWeight="800" fill={turn === 'ccw' ? OK : BAD}>
-                    {isJarvis ? (turn === 'ccw' ? 'further out!' : 'not further') : turn === 'ccw' ? '↺ bends left' : '↻ dent!'}
+                    {turn === 'ccw' ? '↺ bends left' : '↻ dent!'}
+                  </text>
+                </g>
+              </g>
+            )}
+            {phase === 'verdict' && isJarvis && (
+              <g transform={`translate(${at(triplet[2]).x}, ${at(triplet[2]).y - 32})`}>
+                <g className="animate-story-pop">
+                  <rect x="-62" y="-13" width="124" height="24" rx="12" fill="#ffffff" stroke={replaces ? BAD : OK} strokeWidth="2" />
+                  <text textAnchor="middle" y="4" fontSize="12" fontWeight="800" fill={replaces ? BAD : OK}>
+                    {turn === 'collinear' ? (replaces ? 'same line, further' : 'same line, closer') : replaces ? 'right side: swing!' : 'left side ✓'}
                   </text>
                 </g>
               </g>
@@ -242,7 +288,7 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
         )}
 
         {/* Jarvis: the swinging ribbon hand */}
-        {isJarvis && anchor && current && !isFinal && kind !== 'confirm' && (
+        {searching && anchor && (
           <g>
             <line x1={at(anchor).x} y1={at(anchor).y} x2={handX} y2={handY} stroke={RIBBON} strokeWidth="4" strokeDasharray="10 6" strokeLinecap="round" />
             <circle cx={handX} cy={handY} r="15" fill="none" stroke={RIBBON} strokeWidth="2.5" />
@@ -283,6 +329,9 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
                     {ord}
                   </text>
                 </g>
+              )}
+              {isJarvis && kind === 'check' && triplet?.[2]?.id === p.id && (
+                <circle cx={c.x} cy={c.y} r="16" fill="none" stroke="#78716c" strokeWidth="2.5" strokeDasharray="4 3" />
               )}
               {current?.id === p.id && !isFinal && (kind === 'push' || kind === 'check' || kind === 'pop') && !isJarvis && (
                 <circle cx={c.x} cy={c.y} r="16" fill="none" stroke="#f59e0b" strokeWidth="3" className="animate-story-ripple" />

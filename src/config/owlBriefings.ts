@@ -559,16 +559,16 @@ export const OWL_BRIEFINGS: Record<string, OwlBriefing> = {
     goal: 'Find which pegs the ribbon touches, in order around the outside.',
     example: 'For a triangle of pegs with one peg inside, the ribbon visits the three corners and never touches the inside peg.',
     overview: [
-      { title: 'Lowest peg', text: 'Start at the lowest peg. It is surely on the fence.' },
-      { title: 'Aim the ribbon', text: 'Point the ribbon at any other peg for now.' },
-      { title: 'Find the outermost', text: 'Test every other peg: if one lies further out (to the right of the ribbon), swing the ribbon to it. After checking all pegs, the ribbon points at the outermost one.' },
-      { title: 'Tie and move', text: 'Tie the ribbon to that peg: it is the next corner. Move there and repeat, until the ribbon is back at the start.' },
+      { title: 'Lowest peg', text: 'Start at the lowest peg. It is surely on the fence. We wrap **counter-clockwise**: heading right along the bottom first.' },
+      { title: 'Aim the ribbon', text: 'Hold the ribbon at the last tied peg and point it at any other peg for now.' },
+      { title: 'Check each peg', text: 'The ribbon must keep every peg on its **left** side. If a peg is on its **right** side, the ribbon would leave it outside, so swing the ribbon to that peg. The tied peg never moves while we check.' },
+      { title: 'Tie and move', text: 'When no peg is on the right, tie the ribbon to the peg it points at: that is the next corner. Move there and repeat, until the ribbon is back at the start.' },
     ],
     insight:
-      'Each corner of the fence is the peg with every other peg on its left. Testing all pegs from each corner finds that next corner exactly.',
+      'Each next corner is the peg with every other peg on its left. It is not simply the farthest peg: distance only breaks a tie when pegs sit on the same straight line.',
     watch: [
-      'The ribbon swinging outward when a peg further out is found.',
-      'Each corner being tied, and the ribbon returning to the start.',
+      'The ribbon swinging from the tied peg whenever a peg turns up on its right side.',
+      'The tied peg staying put while the ribbon swings, then each new corner being tied.',
     ],
   },
 
