@@ -14,12 +14,29 @@ import { useAnimPhases, useHeldValue, useProgress, useTweened } from './useAnimP
  */
 
 type Pt = { x: number; y: number };
-type Pipe = { u: number; v: number; cap: number; p0: Pt; c: Pt; p2: Pt };
+type Curve = { p0: Pt; c: Pt; p2: Pt };
+type Box = { x0: number; x1: number; y0: number; y1: number };
+type Pipe = Curve & {
+  u: number;
+  v: number;
+  cap: number;
+  /** Push-Relabel: casing size (largest capacity of the pair), so a pipe never swells when its water turns round. */
+  size?: number;
+  /** Push-Relabel: water may run either way through this pipe. */
+  twoWay?: boolean;
+  /** Push-Relabel: where the pipe settles once the tanks stop moving (tags are placed against this). */
+  rest?: Curve;
+};
 
 const W = 760;
 const BASE_H = 380;
 /** Push-Relabel needs vertical room: tanks climb on stilts as they are relabelled. */
 const PR_H = 500;
+/** ...and horizontal room for the level ruler on the left. */
+const PR_W = 860;
+const RULER_X = 34;
+/** Room a tank takes below its centre: its body plus the level plaque hung under it. */
+const TANK_BOTTOM = 58;
 
 const WATER = '#38bdf8';
 const WATER_DEEP = '#0284c7';
@@ -55,7 +72,8 @@ function columnsOf(cap: number[][], s: number, t: number): number[] {
   return col;
 }
 
-function buildPipes(cap: number[][], pos: Pt[], arch: (u: number, v: number) => number = () => 0): Pipe[] {
+/** One pipe per direction. `bow` lifts (negative) or drops a single pipe's middle so it clears the tanks it passes. */
+function buildPipes(cap: number[][], pos: Pt[], bow: (u: number, v: number) => number): Pipe[] {
   const pipes: Pipe[] = [];
   const n = cap.length;
   for (let u = 0; u < n; u++) {
@@ -68,8 +86,7 @@ function buildPipes(cap: number[][], pos: Pt[], arch: (u: number, v: number) => 
       const len = Math.hypot(dx, dy) || 1;
       // Two pipes between the same tanks bow apart so both stay visible.
       const bend = cap[v][u] > 0 ? 26 : 0;
-      // A pipe that skips over other tanks arches above them instead of running through them.
-      const c = { x: (p0.x + p2.x) / 2 + (-dy / len) * bend, y: (p0.y + p2.y) / 2 + (dx / len) * bend - arch(u, v) };
+      const c = { x: (p0.x + p2.x) / 2 + (-dy / len) * bend, y: (p0.y + p2.y) / 2 + (bend ? (dx / len) * bend : bow(u, v)) };
       pipes.push({ u, v, cap: cap[u][v], p0, c, p2 });
     }
   }
@@ -138,41 +155,91 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
   const colX = (c: number) => 80 + (c * (W - 160)) / cols;
   const members = (c: number) => col.map((cc, i) => (cc === c ? i : -1)).filter((i) => i >= 0);
   const H = isPR ? PR_H : BASE_H;
+  const SW = isPR ? PR_W : W;
   const GROUND = H - 24;
   // Push-Relabel: the height scale only ever grows, so tanks never jump when another one climbs.
   const heightList = nodes.map((_, i) => heightRec[`${i}`] ?? 0);
   const topRef = useRef(0);
   topRef.current = Math.max(topRef.current, n + 1, ...heightList);
   const maxH = isPR ? topRef.current : Math.max(2 * n - 1, 1);
-  const PR_FLOOR = GROUND - 72; // a tank at height 0 still stands on visible stilts
-  const unit = Math.min(42, (PR_FLOOR - 76) / Math.max(1, maxH));
+  const PR_FLOOR = GROUND - 80; // a tank at level 0 still stands on visible stilts, with its plaque above the ground
+  const unit = Math.min(42, (PR_FLOOR - 80) / Math.max(1, maxH));
+  const levelY = (h: number) => PR_FLOOR - h * unit;
   const tweenedHeights = useTweened(heightList, 700);
   // Every tank gets its own slot, left to right in pipe order (source first, sink last).
   const rank = nodes.map((_, i) => i).sort((a, b) => col[a] - col[b] || a - b);
   const slotOf: number[] = [];
   rank.forEach((node, k) => (slotOf[node] = k));
+  // Push-Relabel tanks never move sideways: only up and down, so the eye can follow each one.
+  const prX = (i: number) => 112 + (slotOf[i] * (SW - 172)) / Math.max(1, n - 1);
 
   const pos: Pt[] = nodes.map((_, i) => {
-    if (isPR) {
-      return {
-        x: 70 + (slotOf[i] * (W - 140)) / Math.max(1, n - 1),
-        y: PR_FLOOR - tweenedHeights[i] * unit,
-      };
-    }
+    if (isPR) return { x: prX(i), y: levelY(tweenedHeights[i]) };
     const group = members(col[i]);
     const k = group.indexOf(i);
     const gap = Math.min(130, (H - 90) / Math.max(1, group.length));
     return { x: colX(col[i]), y: H / 2 + (k - (group.length - 1) / 2) * gap };
   });
-  // Pipes skipping over tanks take turns arching above and dipping below them, so they never tangle.
-  const skipArch = (u: number, v: number) => {
-    const span = Math.abs(slotOf[u] - slotOf[v]);
-    if (span <= 1) return 0;
-    const depth = 64 + (span - 2) * 34;
-    return Math.min(slotOf[u], slotOf[v]) % 2 === 0 ? depth : -depth;
+  const restPos: Pt[] = isPR ? nodes.map((_, i) => ({ x: prX(i), y: levelY(heightList[i]) })) : pos;
+
+  /** Room a tank or junction takes above its centre: the source's roof and the city's skyline need more. */
+  const tankTop = (i: number) => (isPR ? (i === s || i === t ? 64 : 54) : i === t ? 64 : i === s ? 52 : 38);
+  /** ...and below it: Push-Relabel tanks carry a level plaque, the water tower stands on legs. */
+  const tankBottom = (i: number) => (isPR ? TANK_BOTTOM : i === s ? 60 : 36);
+  /**
+   * How far a pipe's middle bows (negative = up) so it passes cleanly over or under the tanks
+   * standing between its ends. Pipes with nothing in the way stay straight.
+   */
+  const bowFor = (a: number, b: number, at: Pt[], side?: -1 | 1): { bow: number; side: -1 | 1 } => {
+    const p0 = at[a];
+    const p2 = at[b];
+    let up = 0;
+    let down = 0;
+    for (let k = 0; k < n; k++) {
+      if (k === a || k === b) continue;
+      const tk = (at[k].x - p0.x) / (p2.x - p0.x || 1);
+      if (!(tk > 0.02 && tk < 0.98)) continue;
+      const lineY = p0.y + tk * (p2.y - p0.y);
+      const w = 2 * tk * (1 - tk);
+      up = Math.max(up, (lineY - (at[k].y - tankTop(k))) / w);
+      down = Math.max(down, (at[k].y + tankBottom(k) - lineY) / w);
+    }
+    const chosen = side ?? (up <= down + 20 ? -1 : 1);
+    const midY = (p0.y + p2.y) / 2;
+    const bow = chosen === -1 ? -up : down;
+    return { bow: Math.max(2 * (24 - midY), Math.min(2 * (GROUND - 16 - midY), bow)), side: chosen };
   };
-  const pipes = n ? buildPipes(cap, pos, isPR ? skipArch : undefined) : [];
-  const maxCap = Math.max(1, ...pipes.map((p) => p.cap));
+  /** Push-Relabel: one pipe per pair of tanks. Water only ever runs one way at a time, so it points the way water flows. */
+  const buildTankPipes = (): Pipe[] => {
+    const out: Pipe[] = [];
+    for (let a = 0; a < n; a++) {
+      for (let b = a + 1; b < n; b++) {
+        if (!(cap[a][b] > 0) && !(cap[b][a] > 0)) continue;
+        const [u, v] = (flow[b]?.[a] ?? 0) > 0 || !(cap[a][b] > 0) ? [b, a] : [a, b];
+        // The side (over or under) is chosen where the tanks are heading, so a pipe never flips mid-lift.
+        const restBow = bowFor(a, b, restPos);
+        const { bow } = bowFor(a, b, pos, restBow.side);
+        const curve = (at: Pt[], bw: number): Curve => ({
+          p0: at[u],
+          c: { x: (at[u].x + at[v].x) / 2, y: (at[u].y + at[v].y) / 2 + bw },
+          p2: at[v],
+        });
+        out.push({
+          u,
+          v,
+          cap: cap[u][v],
+          size: Math.max(cap[a][b], cap[b][a]),
+          twoWay: cap[a][b] > 0 && cap[b][a] > 0,
+          ...curve(pos, bow),
+          rest: curve(restPos, restBow.bow),
+        });
+      }
+    }
+    return out;
+  };
+  const pipes = n ? (isPR ? buildTankPipes() : buildPipes(cap, pos, (u, v) => bowFor(u, v, pos).bow)) : [];
+  const maxCap = Math.max(1, ...pipes.map((p) => p.size ?? p.cap));
+  const casingOf = (p: Pipe) => 8 + (14 * (p.size ?? p.cap)) / maxCap;
 
   // ── Highlights ──
   const onRoute = (u: number, v: number) =>
@@ -229,10 +296,11 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
         return `Each tank stands on stilts. Water can only roll downhill, one step at a time. The water tower ${label(s)} is lifted high so water can start flowing.`;
       if (phaseName === 'init')
         return `The tower ${label(s)} opens every valve at once and floods its neighbours. They now hold more water than they can pass on: they are overflowing.`;
+      const levelOf = (i: number) => (st.heights || {})[`${i}`] ?? 0;
       if (phaseName === 'push')
-        return `${label(prFrom)} has extra water and ${label(prTo)} stands one step lower, so water pours down the pipe from ${label(prFrom)} into ${label(prTo)}.`;
+        return `${label(prFrom)} (level ${levelOf(prFrom)}) has extra water and ${label(prTo)} stands one step lower (level ${levelOf(prTo)}), so water pours down the pipe from ${label(prFrom)} into ${label(prTo)}.`;
       if (phaseName === 'relabel')
-        return `${label(prFrom)} is overflowing, but no pipe with room goes downhill from it. A jack lifts ${label(prFrom)} higher so the water can roll down again.`;
+        return `${label(prFrom)} is overflowing, but no pipe with room goes downhill from it. A jack lifts ${label(prFrom)} up to level ${levelOf(prFrom)} so the water can roll down again.`;
       return step.title;
     }
     if (phaseName === 'bfs_explore') {
@@ -264,37 +332,40 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
   type TagTone = 'plain' | 'full' | 'room' | 'surge' | 'undo';
   const tagQueue: {
     id: string;
-    at: Pt;
-    out: Pt;
+    pipe: Pipe;
     w: number;
     tag: { text: string; tone: TagTone };
     style: { fill: string; stroke: string; ink: string };
+    /** The big gold "bottleneck" badge rather than a flow tag. */
+    badge?: boolean;
   }[] = [];
+  const isPouring = (p: Pipe) => isPR && phaseName === 'push' && ((p.u === prFrom && p.v === prTo) || (p.u === prTo && p.v === prFrom));
+  const isLit = (p: Pipe) => onRoute(p.u, p.v) && (phase === 'scout' || phase === 'bottleneck' || phase === 'surge');
+  /** Empty pipes are drawn first, then pipes with water, and the pipe in action on top. */
+  const pipeLayer = (p: Pipe) => (isPouring(p) || isBottleneckPipe(p) || isLit(p) ? 2 : (flow[p.u]?.[p.v] ?? 0) > 0 ? 1 : 0);
 
   const renderPipe = (p: Pipe) => {
-    const casing = 8 + (14 * p.cap) / maxCap;
+    const casing = casingOf(p);
     const f = Math.max(0, Math.min(p.cap, flow[p.u]?.[p.v] ?? 0));
     const water = f > 0 ? Math.max(2.5, (casing - 4) * (f / p.cap)) : 0;
     const full = f >= p.cap && p.cap > 0;
     const glow = isBottleneckPipe(p);
-    const lit = onRoute(p.u, p.v) && (phase === 'scout' || phase === 'bottleneck' || phase === 'surge');
-    const mid = quad(p.p0, p.c, p.p2, 0.5);
-    const ahead = quad(p.p0, p.c, p.p2, 0.56);
-    const ang = (Math.atan2(ahead.y - mid.y, ahead.x - mid.x) * 180) / Math.PI;
-
-    // Tag beside the pipe: on the side it bows to, otherwise underneath.
-    const dx = p.p2.x - p.p0.x;
-    const dy = p.p2.y - p.p0.y;
-    const len = Math.hypot(dx, dy) || 1;
-    let out = { x: -dy / len, y: dx / len };
-    if (cap[p.v]?.[p.u] <= 0 && out.y < 0) out = { x: -out.x, y: -out.y };
-    const tagAt = { x: mid.x + out.x * (casing / 2 + 16), y: mid.y + out.y * (casing / 2 + 16) };
-    const badgeAt = { x: mid.x - out.x * (casing / 2 + 24), y: mid.y - out.y * (casing / 2 + 24) };
+    const lit = isLit(p);
+    // The bottleneck badge is placed before every tag, so it gets the clearest spot beside its pipe.
+    if (glow)
+      tagQueue.unshift({
+        id: `badge-${p.u}-${p.v}`,
+        pipe: p,
+        w: 184,
+        tag: { text: `bottleneck: only +${bottleneck} fits`, tone: 'room' },
+        style: { fill: GOLD, stroke: '#b45309', ink: '#451a03' },
+        badge: true,
+      });
     const hop = hopOf(p);
     const tag: { text: string; tone: 'plain' | 'full' | 'room' | 'surge' | 'undo' } | null = (() => {
       if (isPR) {
         // Only pipes holding water, or the one being poured into right now, get a tag: the rest stay quiet.
-        const pouring = phaseName === 'push' && ((p.u === prFrom && p.v === prTo) || (p.u === prTo && p.v === prFrom));
+        const pouring = isPouring(p);
         if (f <= 0 && !pouring) return null;
         return { text: full ? `full ${f}/${p.cap}` : `${f} / ${p.cap}`, tone: full ? 'full' : pouring ? 'surge' : 'plain' };
       }
@@ -310,14 +381,26 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       surge: { fill: '#e0f2fe', stroke: WATER_DEEP, ink: '#075985' },
       undo: { fill: '#f5f3ff', stroke: '#8b5cf6', ink: '#5b21b6' },
     }[tag?.tone ?? 'plain'];
-    const tagW = (tag?.text.length ?? 0) * 7.6 + 16;
+    // Tags carry the pipe's direction arrow inside them, so they are a little wider than their text.
+    const tagW = (tag?.text.length ?? 0) * 7.6 + 30;
     // The tag is drawn later, above the tanks, by renderTags.
-    if (tag) tagQueue.push({ id: `${p.u}-${p.v}`, at: tagAt, out, w: tagW, tag, style: tagStyle });
+    if (tag) tagQueue.push({ id: `${p.u}-${p.v}`, pipe: p, w: tagW, tag, style: tagStyle });
+    const chevron = (tt: number, flip = false) => {
+      const a = quad(p.p0, p.c, p.p2, tt);
+      const b = quad(p.p0, p.c, p.p2, tt + 0.04);
+      const deg = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI + (flip ? 180 : 0);
+      return (
+        <g transform={`translate(${a.x}, ${a.y}) rotate(${deg})`}>
+          <path d="M -5 -5 L 3 0 L -5 5" fill="none" stroke={STEEL_DARK} strokeWidth="2.2" strokeLinecap="round" />
+        </g>
+      );
+    };
     return (
       <g key={`pipe-${p.u}-${p.v}`} data-pipe={`${p.u}-${p.v}`}>
         {(glow || lit) && (
           <path d={pipePath(p)} fill="none" stroke={glow ? GOLD : '#fde68a'} strokeWidth={casing + (glow ? 12 : 7)} strokeLinecap="round" opacity={glow ? 0.9 : 0.7} />
         )}
+        {isPouring(p) && <path d={pipePath(p)} fill="none" stroke="#bae6fd" strokeWidth={casing + 10} strokeLinecap="round" opacity="0.9" />}
         <path d={pipePath(p)} fill="none" stroke={STEEL_DARK} strokeWidth={casing + 3} strokeLinecap="round" />
         <path d={pipePath(p)} fill="none" stroke={STEEL} strokeWidth={casing} strokeLinecap="round" />
         <path
@@ -339,46 +422,164 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
             className="animate-flow-dash"
           />
         )}
-        <g transform={`translate(${mid.x}, ${mid.y}) rotate(${ang})`}>
-          <path d="M -5 -5 L 3 0 L -5 5" fill="none" stroke={STEEL_DARK} strokeWidth="2.2" strokeLinecap="round" />
-        </g>
-        {/* flow / capacity tag (room or surge while a route is being used) */}
-        {glow && (
-          // Position on the outer group: the pop animation's CSS transform would override it.
-          <g transform={`translate(${badgeAt.x}, ${badgeAt.y})`}>
-            <g className="animate-story-pop">
-              <rect x="-92" y="-14" width="184" height="28" rx="14" fill={GOLD} stroke="#b45309" strokeWidth="1.5" />
-              <text textAnchor="middle" y="5" fontSize="14" fontWeight="800" fill="#451a03">
-                bottleneck: only +{bottleneck} fits
-              </text>
-            </g>
-          </g>
-        )}
+        {/* A tagged pipe shows its arrow inside the tag; an untagged two-way pipe shows both ways. */}
+        {!tag && chevron(p.twoWay ? 0.4 : 0.48)}
+        {!tag && p.twoWay && chevron(0.56, true)}
       </g>
     );
   };
 
-  /** Draws the pipe tags on top of everything, nudging each one clear of tanks and earlier tags. */
+  /** Draws the pipe tags on top of everything, each one just beside its own pipe and clear of everything else. */
   const renderTags = () => {
-    const placed: { x0: number; x1: number; y0: number; y1: number }[] = pos.map((q) => ({ x0: q.x - 30, x1: q.x + 30, y0: q.y - 28, y1: q.y + 26 }));
-    const hits = (b: { x0: number; x1: number; y0: number; y1: number }) => placed.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+    const placed: Box[] = [
+      // Keep clear of each tank or junction (with its roof / skyline / stilts, plaque and "extra!" drop)...
+      ...restPos.map((q, i) =>
+        isPR
+          ? { x0: q.x - 32, x1: q.x + 44, y0: q.y - tankTop(i), y1: q.y + tankBottom(i) - 4 }
+          : { x0: q.x - 32, x1: q.x + 32, y0: q.y - tankTop(i) + 6, y1: q.y + tankBottom(i) - 6 },
+      ),
+      // ...and of the level ruler.
+      ...(isPR ? [{ x0: 0, x1: RULER_X + 22, y0: 0, y1: H }] : []),
+    ];
+    const overlaps = (b: Box, o: Box) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0;
+    const hits = (b: Box) => placed.some((o) => overlaps(b, o));
+    // Every pipe traced as a row of small boxes, so a tag can be kept off all of them.
+    const pipeTrace: (Box & { pipe: Pipe })[] = pipes.flatMap((p) => {
+      const r = p.rest ?? p;
+      const half = casingOf(p) / 2 + 2;
+      return Array.from({ length: 25 }, (_, k) => {
+        const a = quad(r.p0, r.c, r.p2, 0.02 + k * 0.04);
+        return { pipe: p, x0: a.x - half, x1: a.x + half, y0: a.y - half, y1: a.y + half };
+      });
+    });
+    /** Where a tag sits beside its pipe: the point on the pipe, and the tag's centre just off to one side. */
+    const besidePipe = (c: Curve, casing: number, w: number, hh: number, tt: number, side: number, extra: number) => {
+      const on = quad(c.p0, c.c, c.p2, tt);
+      const ahead = quad(c.p0, c.c, c.p2, tt + 0.02);
+      const len = Math.hypot(ahead.x - on.x, ahead.y - on.y) || 1;
+      const nx = -(ahead.y - on.y) / len;
+      const ny = (ahead.x - on.x) / len;
+      // Far enough that the pill's corner clears the pipe, whatever the pipe's slope.
+      const d = casing / 2 + 5 + Math.abs(nx) * (w / 2) + Math.abs(ny) * hh + extra;
+      return { on, at: { x: on.x + nx * side * d, y: on.y + ny * side * d }, ang: (Math.atan2(ahead.y - on.y, ahead.x - on.x) * 180) / Math.PI };
+    };
     return tagQueue.map((q) => {
-      let at = q.at;
-      const box = (a: Pt) => ({ x0: a.x - q.w / 2 - 3, x1: a.x + q.w / 2 + 3, y0: a.y - 13, y1: a.y + 13 });
-      for (let k = 0; k < 8 && hits(box(at)); k++) at = { x: at.x + q.out.x * 12, y: at.y + q.out.y * 12 };
-      placed.push(box(at));
+      const hh = q.badge ? 14 : 11;
+      const box = (a: Pt) => ({ x0: a.x - q.w / 2 - 3, x1: a.x + q.w / 2 + 3, y0: a.y - hh - 2, y1: a.y + hh + 2 });
+      // The tag sits just beside its own pipe, never on top of a pipe, a tank or another tag. In Push-Relabel
+      // the spot is chosen where the tanks are heading, so it stays put while a tank is lifted.
+      const r = q.pipe.rest ?? q.pipe;
+      const casing = casingOf(q.pipe);
+      const spot = (tt: number, side: number, extra: number, c: Curve = r) => besidePipe(c, casing, q.w, hh, tt, side, extra);
+      const score = (b: Box) =>
+        (hits(b) ? 100 : 0) +
+        // Its own pipe is already kept at arm's length by besidePipe.
+        pipeTrace.filter((o) => o.pipe !== q.pipe && overlaps(b, o)).length +
+        (b.x0 < 0 || b.x1 > SW || b.y0 < 0 || b.y1 > GROUND ? 100 : 0);
+      let best = { tt: 0.5, side: 1, extra: 0, score: Infinity };
+      search: for (const extra of q.badge ? [0, 16, 32, 48] : [0, 16, 32]) {
+        for (const tt of [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74]) {
+          for (const side of [1, -1]) {
+            const sc = score(box(spot(tt, side, extra).at));
+            if (sc < best.score) best = { tt, side, extra, score: sc };
+            if (sc === 0) break search;
+          }
+        }
+      }
+      const now = spot(best.tt, best.side, best.extra, q.pipe);
+      let at = now.at;
+      const { ang } = now;
+      // A badge with no clear spot beside its pipe floats in the open sky above (or below) the network instead,
+      // tethered to the pipe's middle, rather than covering other pipes.
+      let open: Pt | null = null;
+      if (q.badge && best.score > 0) {
+        const mid = quad(r.p0, r.c, r.p2, 0.5);
+        const x = Math.max(q.w / 2 + 8, Math.min(SW - q.w / 2 - 8, mid.x));
+        open = [24, 48, 72, GROUND - 24, GROUND - 48].map((y) => ({ x, y })).find((c) => score(box(c)) === 0) ?? null;
+      }
+      if (open) {
+        placed.push(box(open));
+        at = open;
+      } else placed.push(box(spot(best.tt, best.side, best.extra).at));
+      const on = open ? quad(q.pipe.p0, q.pipe.c, q.pipe.p2, 0.5) : now.on;
+      const leader = { x: on.x - at.x, y: on.y - at.y };
       const { tag, style } = q;
+      if (q.badge)
+        return (
+          // Position on the outer group: the pop animation's CSS transform would override it.
+          <g key={`tag-${q.id}`} transform={`translate(${at.x}, ${at.y})`} data-bottleneck-badge>
+            <line x1="0" y1="0" x2={leader.x} y2={leader.y} stroke={style.stroke} strokeWidth="2" strokeDasharray="3 2" />
+            <g className="animate-story-pop">
+              <rect x={-q.w / 2} y="-14" width={q.w} height="28" rx="14" fill={style.fill} stroke={style.stroke} strokeWidth="1.5" />
+              <text textAnchor="middle" y="5" fontSize="14" fontWeight="800" fill={style.ink}>
+                {tag.text}
+              </text>
+            </g>
+          </g>
+        );
       return (
         <g key={`tag-${q.id}`} transform={`translate(${at.x}, ${at.y})`} data-pipe-tag={q.id}>
+          {/* a short tether from the tag to its pipe, so it is clear which pipe it describes */}
+          <line x1="0" y1="0" x2={leader.x} y2={leader.y} stroke={style.stroke} strokeWidth="1.5" strokeDasharray="2 2" />
           <g key={`${tag.tone}-${phase}`} className={tag.tone === 'room' || tag.tone === 'surge' || tag.tone === 'undo' ? 'animate-story-pop' : undefined}>
             <rect x={-q.w / 2} y="-11" width={q.w} height="22" rx="11" fill={style.fill} stroke={style.stroke} strokeWidth="1.3" />
-            <text textAnchor="middle" y="4.5" fontSize="13" fontWeight="800" fill={style.ink}>
+            {/* the pipe's direction (an "undo" runs against it, so its arrow turns round) */}
+            <g transform={`translate(${-q.w / 2 + 12}, 0) rotate(${ang + (tag.tone === 'undo' ? 180 : 0)})`}>
+              <path d="M -4 -4.5 L 3 0 L -4 4.5" fill="none" stroke={style.ink} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </g>
+            <text x={7} textAnchor="middle" y="4.5" fontSize="13" fontWeight="800" fill={style.ink}>
               {tag.text}
             </text>
           </g>
         </g>
       );
     });
+  };
+
+  /** Push-Relabel: a measuring post on the left with one dashed line per level, so every tank's level reads at a glance. */
+  const renderRuler = () => {
+    const top = levelY(maxH);
+    // Levels that matter right now: the tank working (gold) and, when pouring, the one it pours into (blue).
+    const hot = new Map<number, string>();
+    if ((phaseName === 'push' || phaseName === 'relabel') && prFrom >= 0) {
+      if (phaseName === 'push' && prTo >= 0) hot.set(heightRec[`${prTo}`] ?? 0, WATER_DEEP);
+      hot.set(heightRec[`${prFrom}`] ?? 0, GOLD);
+    }
+    return (
+      <g data-level-ruler>
+        {Array.from({ length: maxH + 1 }, (_, h) => {
+          const color = hot.get(h);
+          return (
+            <line
+              key={`level-line-${h}`}
+              x1={RULER_X + 12}
+              y1={levelY(h)}
+              x2={SW - 12}
+              y2={levelY(h)}
+              stroke={color ?? '#dccbb2'}
+              strokeWidth={color ? 2 : 1.2}
+              strokeDasharray={color ? '7 5' : '3 7'}
+              opacity={color ? 0.75 : 1}
+            />
+          );
+        })}
+        <text x={RULER_X} y={top - 22} textAnchor="middle" fontSize="11" fontWeight="800" fill="#78350f" letterSpacing="1">
+          LEVEL
+        </text>
+        <rect x={RULER_X - 12} y={top - 14} width="24" height={GROUND - top + 14} rx="5" fill="#f3e2c4" stroke="#a16207" strokeWidth="1.5" />
+        {Array.from({ length: maxH + 1 }, (_, h) => {
+          const color = hot.get(h);
+          return (
+            <g key={`level-mark-${h}`} transform={`translate(${RULER_X}, ${levelY(h)})`}>
+              {color && <circle r="10" fill={color} />}
+              <text textAnchor="middle" y="4" fontSize="11.5" fontWeight="800" fill={color ? '#ffffff' : '#78350f'}>
+                {h}
+              </text>
+            </g>
+          );
+        })}
+      </g>
+    );
   };
 
   const renderJunction = (i: number) => {
@@ -438,21 +639,15 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
     );
   };
 
-  const renderTank = (i: number) => {
+  /** Stilts (and the jack while lifting) are drawn behind the pipes, so they never cut across the water. */
+  const renderStilts = (i: number) => {
     const p = pos[i];
-    const id = `${i}`;
-    const ex = excessRec[id] ?? 0;
-    const overflowing = (st.overflowingNodes || []).includes(id) && i !== s && i !== t;
-    const isActive = i === prFrom && phaseName !== 'complete';
-    const level =
-      i === s ? 1 : i === t ? Math.min(1, Math.max(0, ex) / intoSink) : Math.min(1, Math.max(0, ex) / outOfSource) ;
-    const showJack = isActive && phaseName === 'relabel';
+    const showJack = i === prFrom && phaseName === 'relabel';
     const stiltTop = p.y + 22;
     return (
-      <g key={`tank-${i}`}>
-        {/* stilts down to the ground */}
-        <line x1={p.x - 15} y1={stiltTop} x2={p.x - 19} y2={GROUND} stroke="#a16207" strokeWidth="3.5" />
-        <line x1={p.x + 15} y1={stiltTop} x2={p.x + 19} y2={GROUND} stroke="#a16207" strokeWidth="3.5" />
+      <g key={`stilts-${i}`}>
+        <line x1={p.x - 15} y1={stiltTop} x2={p.x - 18} y2={GROUND} stroke="#c49a6c" strokeWidth="3" />
+        <line x1={p.x + 15} y1={stiltTop} x2={p.x + 18} y2={GROUND} stroke="#c49a6c" strokeWidth="3" />
         {showJack && (
           <g className="animate-story-pop">
             <polyline
@@ -465,14 +660,46 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
             <rect x={p.x - 16} y={GROUND - 6} width="32" height="6" rx="2" fill="#a16207" />
           </g>
         )}
+      </g>
+    );
+  };
+
+  const renderTank = (i: number) => {
+    const p = pos[i];
+    const id = `${i}`;
+    const ex = excessRec[id] ?? 0;
+    const overflowing = (st.overflowingNodes || []).includes(id) && i !== s && i !== t;
+    const isActive = i === prFrom && phaseName !== 'complete';
+    const isTarget = i === prTo && phaseName === 'push';
+    const level =
+      i === s ? 1 : i === t ? Math.min(1, Math.max(0, ex) / intoSink) : Math.min(1, Math.max(0, ex) / outOfSource) ;
+    const h = heightRec[id] ?? 0;
+    return (
+      <g key={`tank-${i}`} data-tank={id}>
         <g transform={`translate(${p.x}, ${p.y})`}>
+          {/* level plaque hung under the tank */}
+          <g data-tank-level={h}>
+            <rect
+              x="-25"
+              y="26"
+              width="50"
+              height="18"
+              rx="5"
+              fill={isActive ? '#fde68a' : isTarget ? '#e0f2fe' : '#f3e2c4'}
+              stroke={isActive ? '#b45309' : isTarget ? WATER_DEEP : '#a16207'}
+              strokeWidth="1.3"
+            />
+            <text textAnchor="middle" y="39" fontSize="11" fontWeight="800" fill={isTarget ? '#075985' : '#78350f'}>
+              level {h}
+            </text>
+          </g>
           {i === t && (
             <text textAnchor="middle" y="-32" fontSize="26">
               🏙️
             </text>
           )}
           {i === s && <path d="M -30 -24 L 0 -42 L 30 -24 Z" fill="#b45309" stroke="#78350f" strokeWidth="2" />}
-          <rect x="-26" y="-24" width="52" height="46" rx="8" fill="#f5f5f4" stroke={isActive ? GOLD : STEEL_DARK} strokeWidth={isActive ? 4 : 2.5} />
+          <rect x="-26" y="-24" width="52" height="46" rx="8" fill="#f5f5f4" stroke={isActive ? GOLD : isTarget ? WATER_DEEP : STEEL_DARK} strokeWidth={isActive || isTarget ? 4 : 2.5} />
           <rect
             x="-23"
             y={19 - 40 * level}
@@ -528,25 +755,21 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       narration={narration}
       status={status}
     >
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto overflow-visible" role="img" aria-label="Water pipe network">
+      <svg viewBox={`0 0 ${SW} ${H}`} className="w-full h-auto overflow-visible" role="img" aria-label="Water pipe network">
         <defs>
           <linearGradient id="storySky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#fdfaf5" />
             <stop offset="100%" stopColor="#f3eadc" />
           </linearGradient>
         </defs>
-        <rect x="0" y="0" width={W} height={H} rx="18" fill="url(#storySky)" />
-        <rect x="0" y={GROUND} width={W} height={H - GROUND} rx="0" fill="#e4d2bc" />
-        <line x1="0" y1={GROUND} x2={W} y2={GROUND} stroke="#c8b090" strokeWidth="2" />
+        <rect x="0" y="0" width={SW} height={H} rx="18" fill="url(#storySky)" />
+        <rect x="0" y={GROUND} width={SW} height={H - GROUND} rx="0" fill="#e4d2bc" />
+        <line x1="0" y1={GROUND} x2={SW} y2={GROUND} stroke="#c8b090" strokeWidth="2" />
 
-        {isPR &&
-          Array.from({ length: maxH + 1 }, (_, h) => (
-            <g key={`tick-${h}`} opacity="0.55">
-              <line x1="10" y1={PR_FLOOR - h * unit} x2={W - 10} y2={PR_FLOOR - h * unit} stroke="#e7dccb" strokeDasharray="2 8" />
-            </g>
-          ))}
-
-        {pipes.map(renderPipe)}
+        {isPR && renderRuler()}
+        {isPR && nodes.map((_, i) => renderStilts(i))}
+        {/* Empty pipes first, then pipes with water, and the pipe in action on top. */}
+        {[...pipes].sort((a, b) => pipeLayer(a) - pipeLayer(b)).map(renderPipe)}
         {nodes.map((_, i) => (isPR ? renderTank(i) : renderJunction(i)))}
         {renderTags()}
         {travellers}
