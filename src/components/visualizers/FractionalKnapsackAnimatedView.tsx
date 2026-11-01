@@ -527,7 +527,7 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
         <div className="relative w-full flex flex-col items-center justify-center pt-8 z-20">
           
           {/* Header above Bag: Shows Capacity & Total Profit */}
-          <div className="flex items-center justify-between w-80 px-1 text-xs font-sans text-stone-600 pb-2 font-medium">
+          <div className="flex items-center justify-between w-80 max-w-full px-1 text-xs font-sans text-stone-600 pb-2 font-medium">
             <span className="font-bold tracking-wider uppercase text-amber-950 flex items-center gap-1.5">
               🎒 The Leather Knapsack
             </span>
@@ -545,16 +545,16 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
           </div>
 
           {/* Consistent Fixed-Width Backpack Shell (320px / w-80) */}
-          <div className="relative w-80 flex flex-col items-center">
+          <div className="relative w-80 max-w-full flex flex-col items-center">
             
             {/* Top Leather Handle */}
             <div className="w-16 h-5 border-4 border-amber-900/80 rounded-t-lg bg-transparent -mb-1" />
 
             {/* ─── CONSISTENT LID FLAP (EXACT W-80) ─── */}
-            <div className="relative z-20 w-80">
+            <div className="relative z-20 w-80 max-w-full">
               {isLidActive ? (
                 /* Snapped Closed Leather Lid Animation */
-                <div className="animate-lid-close w-80 h-14 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-950 rounded-t-2xl shadow-lg flex items-center justify-between px-6">
+                <div className="animate-lid-close w-80 max-w-full h-14 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-950 rounded-t-2xl shadow-lg flex items-center justify-between px-6">
                   {/* Left leather strap & brass buckle */}
                   <div className="flex flex-col items-center">
                     <div className="w-4 h-9 bg-amber-950 border border-amber-700 rounded-sm shadow flex items-center justify-center">
@@ -578,7 +578,7 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
               ) : (
                 /* Open Mouth (Tilted Upwards, Consistent Dimensions) */
                 <div
-                  className="w-80 h-11 bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 border-2 border-dashed border-amber-600 rounded-t-xl flex items-center justify-center gap-2 shadow-md transition-all duration-700"
+                  className="w-80 max-w-full h-11 bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 border-2 border-dashed border-amber-600 rounded-t-xl flex items-center justify-center gap-2 shadow-md transition-all duration-700"
                   style={{
                     transform: 'perspective(600px) rotateX(45deg)',
                     transformOrigin: 'top center',
@@ -592,7 +592,7 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
             </div>
 
             {/* ─── MAIN BACKPACK STORAGE CHAMBER (EXACT W-80, NO JUMP) ─── */}
-            <div className="relative w-80 min-h-[175px] bg-gradient-to-b from-[#854d0e] via-[#713f12] to-[#451a03] border-4 border-[#3f1d0b] rounded-b-3xl p-4 flex flex-col justify-end shadow-2xl overflow-hidden z-10">
+            <div className="relative w-80 max-w-full min-h-[175px] bg-gradient-to-b from-[#854d0e] via-[#713f12] to-[#451a03] border-4 border-[#3f1d0b] rounded-b-3xl p-4 flex flex-col justify-end shadow-2xl overflow-hidden z-10">
               
               {/* Backpack Leather Straps Accents */}
               <div className="absolute top-0 left-6 w-3 h-full bg-[#3f1d0b]/40 rounded-full" />
@@ -639,7 +639,7 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
             {/* Consistent Floor Shadow */}
             <div
               className={`h-4 bg-stone-900/30 rounded-full filter blur-md mt-1 transition-all duration-700 ${
-                isLidActive ? 'w-80 opacity-70' : 'w-76 opacity-40'
+                isLidActive ? 'w-80 max-w-full opacity-70' : 'w-76 opacity-40'
               }`}
             />
           </div>
