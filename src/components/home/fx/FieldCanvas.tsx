@@ -40,7 +40,7 @@ interface Particle {
 const DENSITY = 2.2;
 const MAX_PARTICLES = 90;
 
-export const FieldCanvas: React.FC<{ palette: FieldPalette; hostRef: React.RefObject<HTMLElement> }> = ({
+export const FieldCanvas: React.FC<{ palette: FieldPalette; hostRef: React.RefObject<HTMLElement | null> }> = ({
   palette,
   hostRef,
 }) => {

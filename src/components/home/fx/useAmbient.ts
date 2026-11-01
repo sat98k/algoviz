@@ -9,7 +9,7 @@ import { useReducedMotion } from 'framer-motion';
 export const useAmbient = (ms = 6000) => {
   const reduce = useReducedMotion();
   const [active, setActive] = useState(!reduce);
-  const timer = useRef<number>();
+  const timer = useRef<number | undefined>(undefined);
 
   const wake = useCallback(() => {
     if (reduce) return;

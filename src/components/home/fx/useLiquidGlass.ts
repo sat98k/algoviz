@@ -6,7 +6,7 @@ import { useReducedMotion } from 'framer-motion';
  * refracting whatever is drawn behind them. It starts after `delayMs`, once the lazy WebGL
  * background under it has drawn. Does nothing with reduced motion or without WebGL.
  */
-export const useLiquidGlass = (root: React.RefObject<HTMLElement>, delayMs = 1500) => {
+export const useLiquidGlass = (root: React.RefObject<HTMLElement | null>, delayMs = 1500) => {
   const reduce = useReducedMotion();
   const instance = useRef<{ destroy: () => void } | null>(null);
   useEffect(() => {

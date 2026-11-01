@@ -23,7 +23,7 @@ const prefersReducedMotion = () =>
  * current playback speed. A new step reverts the old timeline and builds the next one.
  */
 export function useStepTimeline(
-  scope: RefObject<Element>,
+  scope: RefObject<Element | null>,
   stepKey: string | number,
   stepMs: number,
   build: (tl: gsap.core.Timeline, q: Q) => void
