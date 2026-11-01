@@ -1,42 +1,82 @@
-import React from 'react';
-import { BookOpen } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 interface NavbarProps {
   currentView: 'home' | 'module' | 'algorithm' | 'compare';
   onNavigate: (view: 'home' | 'compare') => void;
 }
 
+/** Bar colours for each chapter colour a page section can declare with data-chapter. */
+const CHAPTER_BAR: Record<string, { bg: string; ink: string }> = {
+  bone: { bg: '#e6e0d2', ink: '#1a1a1a' },
+  coral: { bg: '#ed4b44', ink: '#0f0f0f' },
+  ink: { bg: '#1a1a1a', ink: '#e6e0d2' },
+  green: { bg: '#18bc42', ink: '#1a1a1a' },
+  yellow: { bg: '#f2c21a', ink: '#1a1a1a' },
+};
+
 /**
  * A thin top bar (h-11 = 2.75rem; the player view and sticky panels are sized from it):
- * the logo and the catalog. The site uses the light theme only.
+ * the wordmark and the catalog. On the home page it takes the colour of the chapter under it.
+ * The site uses the light theme only.
  */
-export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => (
-  <header className="sticky top-0 z-50 w-full bg-obsidian-950/90 backdrop-blur-xl border-b border-hairline">
-    <div className="px-3 sm:px-4 h-11 flex items-center justify-between">
-      <div onClick={() => onNavigate('home')} className="flex items-baseline gap-2.5 cursor-pointer group select-none">
-        <span className="font-display font-bold text-lg tracking-tighter text-chalk-100 group-hover:text-amber transition-colors">
-          ALGO<span className="font-serif italic font-normal text-amber-glow">VIZ</span>
-        </span>
-        <span className="hidden sm:inline-block font-mono text-[11px] tracking-wider text-chalk-400 border-l border-hairline pl-2.5">
-          ALGORITHM VISUALIZER
-        </span>
-      </div>
+export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
+  const [chapter, setChapter] = useState('bone');
+  const inCatalog = currentView === 'home' || currentView === 'module';
 
-      <nav className="flex items-center">
+  const barRef = React.useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    let frame = 0;
+    // The chapter whose box spans the bar's bottom edge. Rects share one coordinate space,
+    // so this holds under the page zoom too.
+    const update = () => {
+      frame = 0;
+      const edge = barRef.current?.getBoundingClientRect().bottom ?? 0;
+      const under = [...document.querySelectorAll('[data-chapter]')].find((el) => {
+        const r = el.getBoundingClientRect();
+        return r.top <= edge && r.bottom > edge;
+      });
+      setChapter(under?.getAttribute('data-chapter') ?? 'bone');
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, [currentView]);
+
+  const bar = CHAPTER_BAR[chapter] ?? CHAPTER_BAR.bone;
+
+  return (
+    <header
+      ref={barRef}
+      className="chrome-c sticky top-0 z-50 w-full transition-colors duration-300"
+      style={{ background: bar.bg, color: bar.ink }}
+    >
+      <div className="hc-frame h-11 flex items-center justify-between">
         <button
+          type="button"
           onClick={() => onNavigate('home')}
-          className={`px-3 py-1 text-xs font-mono tracking-wider transition-colors ${
-            currentView === 'home' || currentView === 'module'
-              ? 'text-chalk-100 bg-obsidian-800 border border-hairline font-bold'
-              : 'text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-850 border border-transparent'
-          }`}
+          className="hc-display text-[22px] leading-none min-h-[44px] transition-transform hover:-rotate-3 active:scale-[0.96]"
         >
-          <span className="flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>CATALOG</span>
-          </span>
+          algoviz
         </button>
-      </nav>
-    </div>
-  </header>
-);
+        <nav aria-label="Main">
+          <button
+            type="button"
+            onClick={() => onNavigate('home')}
+            aria-current={inCatalog ? 'page' : undefined}
+            className="px-4 py-1.5 rounded-full text-[14px] font-bold transition-transform hover:scale-105 active:scale-[0.96]"
+            style={{ background: bar.ink, color: bar.bg }}
+          >
+            CATALOG
+          </button>
+        </nav>
+      </div>
+    </header>
+  );
+};

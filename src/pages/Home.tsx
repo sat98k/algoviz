@@ -1,28 +1,80 @@
 import React, { useState, useMemo } from 'react';
 import { algorithmRegistry } from '../config/algorithmRegistry';
-import { motion, useReducedMotion } from 'framer-motion';
-import {
-  Search,
-  ArrowRight,
-  ArrowUpRight,
-  Terminal,
-  BookOpen,
-} from 'lucide-react';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { Search, ArrowRight } from 'lucide-react';
 import { MODULE_DESCRIPTIONS } from './ModulePage';
+import { STORY_SCENES } from '../components/story/storyRegistry';
+import { VIGNETTES } from '../components/home/StoryVignettes';
+import { OwlMascot } from '../components/home/OwlMascot';
+import { FloatingStory3D, GradientField } from '../components/home/fx/lazy';
+import { useLiquidGlass } from '../components/home/fx/useLiquidGlass';
+import '../styles/home-c.css';
 
 interface HomeProps {
   onSelectModule: (moduleNumber: number) => void;
   onSelectAlgorithm: (id: string) => void;
 }
 
-export const Home: React.FC<HomeProps> = ({
-  onSelectModule,
-  onSelectAlgorithm,
-}) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const shouldReduceMotion = useReducedMotion();
+/** Field colours, ink to match. Each module is a chapter in one of them. */
+const FIELDS = {
+  coral: { bg: '#ed4b44', ink: '#0f0f0f', soft: '#2e0a08' },
+  ink: { bg: '#1a1a1a', ink: '#e6e0d2', soft: '#c9c2b2' },
+  green: { bg: '#18bc42', ink: '#1a1a1a', soft: '#0b3d17' },
+  yellow: { bg: '#f2c21a', ink: '#1a1a1a', soft: '#4d3c00' },
+  bone: { bg: '#dcd5c5', ink: '#1a1a1a', soft: '#4a463e' },
+} as const;
+type FieldName = keyof typeof FIELDS;
 
-  // Instant global search filter (if user types in search bar)
+const MODULE_FIELDS: FieldName[] = ['coral', 'ink', 'green', 'yellow', 'bone', 'coral', 'green'];
+
+/** The stories a visitor can pick: each plays the algorithm's default example. */
+const STORIES: { id: string; label: string; fact: string; field: FieldName }[] = [
+  { id: 'fractional-knapsack', label: 'Cheese', fact: 'Fractional Knapsack packs the best value per kilo first and slices the last wheel to fit.', field: 'green' },
+  { id: 'ford-fulkerson', label: 'Pipes', fact: 'Ford-Fulkerson keeps finding a pipe path with room to spare and pushes more water through.', field: 'yellow' },
+  { id: 'n-queens', label: 'Queens', fact: 'N-Queens puts one queen in each row and backs up the moment two can attack.', field: 'coral' },
+  { id: 'graham-scan', label: 'Pegs', fact: 'Graham’s Scan walks the pegs in angle order and drops every dent in the rubber band.', field: 'yellow' },
+  { id: 'randomized-quicksort', label: 'Kids', fact: 'Quicksort picks a random kid and splits everyone into shorter and taller.', field: 'ink' },
+];
+
+/** Algorithm names by id, for links that name where they go. */
+const ALGO_NAMES: Record<string, string> = Object.fromEntries(algorithmRegistry.map((a) => [a.id, a.name]));
+
+const STAGES = [
+  { name: 'Read', text: 'Every algorithm opens with the problem it solves and its steps in plain words. No code, no symbols yet.' },
+  { name: 'Watch', text: 'Switch on Animation Mode and the data turns into things: cheese wheels, water tanks, pegs and coins.' },
+  { name: 'Listen', text: 'The owl says what each step does and why, one sentence at a time, while the scene acts it out.' },
+  { name: 'Step', text: 'Go at your own pace with Step or the arrow keys. Change the input and watch a different run.' },
+];
+const STAGE_TINTS = ['#0b5e21', '#11883a', '#18bc42', '#7fd897'];
+const STAGE_INKS = ['#e6e0d2', '#e6e0d2', '#1a1a1a', '#1a1a1a'];
+
+const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const SPRING = { type: 'spring' as const, stiffness: 380, damping: 22 };
+
+const rise = (reduce: boolean | null, i = 0) =>
+  reduce
+    ? {}
+    : {
+        initial: { opacity: 0, y: 28 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, margin: '-10% 0px' },
+        transition: { duration: 0.55, ease: EASE_OUT, delay: i * 0.07 },
+      };
+
+/** One plain line about what an algorithm's story looks like, or its problem when it has none. */
+const storyLine = (id: string, problem: string) =>
+  id === 'fractional-knapsack'
+    ? 'Cheese wheels sliced to fit a leather backpack'
+    : STORY_SCENES[id]?.hint ?? problem.split(/(?<=\.)\s/)[0];
+
+export const Home: React.FC<HomeProps> = ({ onSelectModule, onSelectAlgorithm }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [storyId, setStoryId] = useState(STORIES[0].id);
+  const [stage, setStage] = useState(0);
+  const reduce = useReducedMotion();
+  const glassRoot = React.useRef<HTMLDivElement>(null);
+  useLiquidGlass(glassRoot);
+
   const searchResults = useMemo(() => {
     if (!searchTerm.trim()) return [];
     const term = searchTerm.toLowerCase();
@@ -37,256 +89,273 @@ export const Home: React.FC<HomeProps> = ({
 
   const totalAlgorithms = algorithmRegistry.length;
 
-  // 7 Modules metadata array
-  const modulesList = useMemo(() => {
-    return [1, 2, 3, 4, 5, 6, 7].map((num) => {
-      const algos = algorithmRegistry.filter((a) => a.module === num);
-      const meta = MODULE_DESCRIPTIONS[num] || {
-        title: `Module ${num}`,
-        subtitle: '',
-        description: '',
-        paradigms: [],
-      };
-      return {
+  const modulesList = useMemo(
+    () =>
+      [1, 2, 3, 4, 5, 6, 7].map((num) => ({
         number: num,
-        ...meta,
-        algorithms: algos,
-      };
-    });
-  }, []);
+        ...(MODULE_DESCRIPTIONS[num] || { title: `Module ${num}`, subtitle: '', description: '', paradigms: [] }),
+        algorithms: algorithmRegistry.filter((a) => a.module === num),
+      })),
+    []
+  );
+
+  const story = STORIES.find((s) => s.id === storyId) ?? STORIES[0];
+  const StoryVignette = VIGNETTES[story.id];
+  const headline = (
+    <>
+      Algorithms
+      <br />
+      at play
+    </>
+  );
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-obsidian-900 text-chalk-100">
-      {/* HERO SECTION: Concise & Typographic */}
-      <section className="relative pt-10 pb-8 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto w-full border-b border-hairline">
-        <div className="flex flex-wrap items-center justify-between font-mono text-xs text-chalk-400 tracking-wider pb-6 gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-acid-500 rounded-full animate-pulse"></span>
-            <span className="text-chalk-300 uppercase font-semibold">
-              BCSE204L • Design and Analysis of Algorithms
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 bg-obsidian-950 border border-hairline text-amber-glow font-bold">
-              7 COURSE MODULES
-            </span>
-            <span className="px-2.5 py-1 bg-obsidian-950 border border-acid-500/40 text-acid-400 font-bold">
-              {totalAlgorithms} ALGORITHMS
-            </span>
-          </div>
+    <div className="home-c flex flex-col w-full">
+      {/* HERO: two fields meeting halfway; the headline changes ink as it crosses the seam. */}
+      <section data-chapter="bone" className="hc-hero relative overflow-hidden">
+        {/* Paper above, with the story objects floating in 3D; a moving shader-gradient field below. */}
+        <div className="hc-hero-top">
+          <FloatingStory3D className="absolute inset-0" queenColor="#1a1a1a" />
         </div>
-
-        {/* Hero Title & Subtext */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 py-4">
-          <motion.div
-            initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="flex flex-col gap-2 max-w-2xl"
-          >
-            <div className="flex items-center gap-2 font-mono text-xs tracking-wider text-amber font-semibold uppercase">
-              <Terminal className="w-3.5 h-3.5 text-amber" />
-              <span>Interactive Step-by-Step Curriculum</span>
-            </div>
-
-            <h1 className="font-display font-black text-4xl sm:text-6xl tracking-tight text-chalk-100 leading-tight">
-              ALGORITHM <span className="font-serif italic font-normal text-chalk-300">CATALOG.</span>
-            </h1>
-
-            <p className="text-sm sm:text-base text-chalk-400 font-sans leading-relaxed mt-1">
-              Every algorithm in the course, explained one small step at a time. No prior knowledge needed: pick one of the{' '}
-              <strong>7 course modules</strong> below and start with its first algorithm.
-            </p>
-            <ol
-              aria-label="How to use this site"
-              className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 font-sans text-xs sm:text-sm text-chalk-300"
+        <div className="hc-hero-bottom" ref={glassRoot}>
+          <GradientField className="absolute inset-0" colors={['#f2c21a', '#f59e0b', '#ed4b44']} speed={0.2} />
+          <p className="hc-lead hc-hero-lead">
+            All {totalAlgorithms} algorithms of Design and Analysis of Algorithms, acted out with cheese, pipes and
+            chessboards while an owl explains every step.
+          </p>
+          {/* The first step sits on a liquid-glass pill that refracts the field under it. */}
+          <div data-glass className="hc-glass-cta">
+            <motion.button
+              type="button"
+              onClick={() => onSelectModule(1)}
+              whileHover={reduce ? undefined : { scale: 1.05, rotate: -1.5 }}
+              whileTap={reduce ? undefined : { scale: 0.96 }}
+              transition={SPRING}
             >
-              <li className="px-3 py-2 bg-obsidian-950 border border-hairline">
-                <strong className="text-chalk-100">1. Read the problem.</strong> Each page starts with what the algorithm solves and its steps in plain words.
-              </li>
-              <li className="px-3 py-2 bg-obsidian-950 border border-hairline">
-                <strong className="text-chalk-100">2. Switch on 🎬 Animation Mode.</strong> The 🦉 owl tells the story of every step with real objects.
-              </li>
-              <li className="px-3 py-2 bg-obsidian-950 border border-hairline">
-                <strong className="text-chalk-100">3. Step through it.</strong> Press Step (or →) at your own pace; the roadmap shows where you are.
-              </li>
-            </ol>
-          </motion.div>
+              Start with module 1 <ArrowRight className="w-5 h-5" aria-hidden />
+            </motion.button>
+          </div>
         </div>
 
-        {/* Global Quick Search Bar */}
-        <div className="mt-6 pt-5 border-t border-hairline relative">
-          <div className="relative flex items-center w-full group">
-            <Search className="w-4 h-4 text-chalk-400 absolute left-4 pointer-events-none transition-colors group-focus-within:text-amber" />
-            <input
-              type="text"
-              placeholder="Quick search any algorithm across all modules (e.g., 'Rabin-Karp', 'Held-Karp', 'Push-Relabel', 'KMP')..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-20 py-3.5 bg-obsidian-950 text-xs sm:text-sm font-mono text-chalk-100 placeholder:text-chalk-400 border border-hairline hover:border-chalk-400/40 focus:border-amber focus:ring-1 focus:ring-amber/40 focus:outline-none transition-all shadow-sm"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-4 px-2.5 py-1 font-mono text-[11px] text-chalk-400 hover:text-amber hover:bg-obsidian-850 border border-hairline rounded transition-all"
+        <motion.div
+          className="hc-headline-wrap"
+          initial={reduce ? false : { opacity: 0, y: 40, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={reduce ? undefined : { type: 'spring', stiffness: 120, damping: 16 }}
+        >
+          <h1 className="hc-display hc-headline hc-headline-top">{headline}</h1>
+          <p className="hc-display hc-headline hc-headline-bottom" aria-hidden>
+            {headline}
+          </p>
+          {/* The owl lands on the headline, perched on its last letters. */}
+          <motion.div
+            className="hc-owl-perch"
+            initial={reduce ? false : { y: -320, rotate: -25 }}
+            animate={{ y: 0, rotate: 0 }}
+            transition={reduce ? undefined : { type: 'spring', stiffness: 170, damping: 10, delay: 0.6 }}
+          >
+            <OwlMascot look="left" />
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* SHOWCASE: pick an object and its story plays on a coloured disc. The picker comes first so its
+          heading leads in reading order; on wide screens the grid puts the disc on the right. */}
+      <section data-chapter="bone" className="hc-frame hc-showcase" aria-labelledby="hc-stories">
+        <div className="hc-picker">
+          <h2 id="hc-stories" className="hc-display hc-picker-title">
+            Pick a story
+          </h2>
+          <ul role="list" className="hc-picker-list">
+            {STORIES.map((s) => (
+              <li key={s.id}>
+                <motion.button
+                  type="button"
+                  aria-pressed={s.id === storyId}
+                  onClick={() => setStoryId(s.id)}
+                  className={`hc-display hc-pick ${s.id === storyId ? 'is-on' : ''}`}
+                  whileHover={reduce ? undefined : { x: 6 }}
+                  whileTap={reduce ? undefined : { scale: 0.96 }}
+                  transition={SPRING}
+                >
+                  {s.label}
+                </motion.button>
+              </li>
+            ))}
+          </ul>
+          <p className="hc-body max-w-[34ch]">{story.fact}</p>
+          <button type="button" onClick={() => onSelectAlgorithm(story.id)} className="hc-text-link">
+            Open {ALGO_NAMES[story.id]}
+          </button>
+        </div>
+
+        <div className="hc-disc-wrap">
+          <motion.div
+            className="hc-disc"
+            animate={{ backgroundColor: FIELDS[story.field].bg }}
+            transition={{ duration: 0.4 }}
+          />
+          <div className="hc-scene-card" style={{ color: FIELDS[story.field].ink }}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={storyId}
+                initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.9, rotate: -2 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.92, rotate: 2 }}
+                transition={reduce ? { duration: 0.2 } : SPRING}
               >
-                CLEAR
-              </button>
-            )}
+                <StoryVignette controls />
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </section>
 
-      {/* SEARCH RESULTS OVERLAY (When user actively searches) */}
-      {searchTerm.trim() ? (
-        <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 py-10 flex-1">
-          <div className="flex items-center justify-between font-mono text-xs text-chalk-400 uppercase tracking-wider pb-6 border-b border-hairline">
-            <span className="font-bold text-chalk-200">Search Results</span>
-            <span>{searchResults.length} algorithm(s) matched</span>
-          </div>
+      {/* HOW IT WORKS: an accordion of green panels, dark to light. */}
+      <section data-chapter="bone" className="hc-frame hc-section" aria-labelledby="hc-how">
+        <div className="grid gap-8 lg:grid-cols-12 items-end">
+          <motion.h2 id="hc-how" className="hc-display hc-h2 lg:col-span-5" {...rise(reduce)}>
+            How a lesson goes
+          </motion.h2>
+          <motion.p className="hc-body lg:col-start-7 lg:col-span-5" {...rise(reduce, 1)}>
+            Four moves, the same on every one of the {totalAlgorithms} algorithms. Open a stage to see what happens
+            in it.
+          </motion.p>
+        </div>
+        <div className="hc-accordion">
+          {STAGES.map((s, i) => {
+            const open = i === stage;
+            return (
+              <button
+                key={s.name}
+                type="button"
 
-          {searchResults.length === 0 ? (
-            <div className="p-16 text-center text-chalk-400 font-mono text-xs border border-hairline bg-obsidian-950 mt-6">
-              No algorithms match "{searchTerm}". Try another keyword or browse by module.
+                aria-expanded={open}
+                onClick={() => setStage(i)}
+                className={`hc-panel ${open ? 'is-open' : ''}`}
+                style={{ background: STAGE_TINTS[i], color: STAGE_INKS[i] }}
+              >
+                <span className="hc-display hc-panel-name">{s.name}</span>
+                <span className="hc-panel-text hc-body">{s.text}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* THE CATALOGUE: search, then every module as its own colour chapter. */}
+      <section id="find" data-chapter="bone" className="hc-frame hc-section scroll-mt-16" aria-labelledby="hc-find">
+        <div className="grid gap-8 lg:grid-cols-12 items-end">
+          <motion.h2 id="hc-find" className="hc-display hc-h2 lg:col-span-6" {...rise(reduce)}>
+            Find an algorithm
+          </motion.h2>
+          <motion.div className="lg:col-start-7 lg:col-span-6 relative" {...rise(reduce, 1)}>
+            <label htmlFor="hc-search" className="sr-only">
+              Search all algorithms
+            </label>
+            <Search className="w-6 h-6 absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden />
+            <input
+              id="hc-search"
+              type="search"
+              placeholder="Rabin-Karp, Held-Karp, KMP…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="hc-input"
+            />
+          </motion.div>
+        </div>
+        {/* Rendered empty first, so screen readers announce the count as it changes. */}
+        <p role="status" className="sr-only">
+          {searchTerm.trim() ? `${searchResults.length} found` : ''}
+        </p>
+        {searchTerm.trim() && (
+          <div className="mt-14">
+            {searchResults.length === 0 ? (
+              <p className="hc-body">Nothing matches &ldquo;{searchTerm}&rdquo;. Try another word, or browse the chapters below.</p>
+            ) : (
+              <ul role="list" className="hc-items">
+                {searchResults.map((algo) => (
+                  <li key={algo.id}>
+                    <AlgoItem
+                      name={algo.name}
+                      meta={algo.paradigm}
+                      line={storyLine(algo.id, algo.problemStatement)}
+                      onClick={() => onSelectAlgorithm(algo.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </section>
+
+      {modulesList.map((mod, mi) => {
+        const f = FIELDS[MODULE_FIELDS[mi]];
+        return (
+          <section
+            key={mod.number}
+            data-chapter={MODULE_FIELDS[mi]}
+            className="hc-chapter"
+            style={{ background: f.bg, color: f.ink, ['--soft' as string]: f.soft }}
+            aria-labelledby={`hc-mod-${mod.number}`}
+          >
+            <div className="hc-frame">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3">
+                <motion.h2 id={`hc-mod-${mod.number}`} className="hc-display hc-chapter-title" {...rise(reduce)}>
+                  {mod.title}
+                </motion.h2>
+                <span className="hc-body font-bold whitespace-nowrap">
+                  Module {mod.number} · {mod.algorithms.length} algorithms
+                </span>
+              </div>
+              <motion.p className="hc-body mt-5 max-w-[60ch] hc-soft" {...rise(reduce, 1)}>
+                {mod.subtitle}.
+              </motion.p>
+              <ul role="list" className="hc-items mt-12">
+                {mod.algorithms.map((algo, i) => (
+                  <motion.li key={algo.id} {...rise(reduce, Math.min(i, 6) * 0.6)}>
+                    <AlgoItem
+                      name={algo.name}
+                      meta={algo.paradigm}
+                      line={storyLine(algo.id, algo.problemStatement)}
+                      onClick={() => onSelectAlgorithm(algo.id)}
+                    />
+                  </motion.li>
+                ))}
+              </ul>
+              <motion.button
+                type="button"
+                onClick={() => onSelectModule(mod.number)}
+                className="hc-chapter-link"
+                style={{ background: f.ink, color: f.bg }}
+                whileHover={reduce ? undefined : { scale: 1.04, rotate: -1 }}
+                whileTap={reduce ? undefined : { scale: 0.96 }}
+                transition={SPRING}
+              >
+                Open module {mod.number} <ArrowRight className="w-5 h-5" aria-hidden />
+              </motion.button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-              {searchResults.map((algo) => (
-                <div
-                  key={algo.id}
-                  onClick={() => onSelectAlgorithm(algo.id)}
-                  className="group flex flex-col justify-between p-6 bg-obsidian-950 border border-hairline hover:border-amber transition-all cursor-pointer shadow-md"
-                >
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between font-mono text-[11px]">
-                      <span className="text-amber font-semibold">{algo.moduleName}</span>
-                      <span className="px-2 py-0.5 bg-obsidian-900 border border-hairline text-chalk-400 text-[10px] uppercase">
-                        {algo.paradigm}
-                      </span>
-                    </div>
-                    <h3 className="font-display font-bold text-lg text-chalk-100 group-hover:text-amber-glow transition-colors">
-                      {algo.name}
-                    </h3>
-                    <p className="text-xs text-chalk-400 font-sans line-clamp-2 leading-relaxed">
-                      {algo.problemStatement}
-                    </p>
-                  </div>
-
-                  <div className="pt-4 mt-4 border-t border-hairline flex items-center justify-between font-mono text-xs text-chalk-400 group-hover:text-amber transition-colors">
-                    <span>Launch Visualizer</span>
-                    <ArrowUpRight className="w-4 h-4" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      ) : (
-        /* MAIN 7 MODULES GRID (Simple, No endless scrolling!) */
-        <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 py-10 flex-1">
-          <div className="flex items-center justify-between font-mono text-xs text-chalk-400 uppercase tracking-wider pb-6 border-b border-hairline">
-            <span className="font-bold text-chalk-200">Syllabus Modules (Click to Open)</span>
-            <span>7 Core Modules</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            {modulesList.map((mod, idx) => {
-              const formattedNum = String(mod.number).padStart(2, '0');
-
-              return (
-                <motion.div
-                  key={mod.number}
-                  initial={shouldReduceMotion ? false : { opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: idx * 0.05 }}
-                  onClick={() => onSelectModule(mod.number)}
-                  className="group relative flex flex-col justify-between p-7 bg-obsidian-950 border border-hairline hover:border-amber hover:bg-obsidian-900/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-lg shadow-black/20"
-                >
-                  {/* Huge Numeral Watermark */}
-                  <span className="absolute -right-3 -bottom-5 font-display font-black text-8xl text-obsidian-850 select-none pointer-events-none group-hover:text-amber/5 transition-colors">
-                    {formattedNum}
-                  </span>
-
-                  <div className="relative z-10 flex flex-col gap-4">
-                    {/* Top Row: Module # and Paradigm Tags */}
-                    <div className="flex items-center justify-between font-mono text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 bg-amber/10 border border-amber/30 text-amber font-bold">
-                          MODULE {formattedNum}
-                        </span>
-                      </div>
-                      <span className="px-2 py-0.5 bg-obsidian-900 border border-acid-500/30 text-acid-400 text-[11px] font-bold">
-                        {mod.algorithms.length} ALGORITHMS
-                      </span>
-                    </div>
-
-                    {/* Module Title */}
-                    <h2 className="font-display font-bold text-xl sm:text-2xl text-chalk-100 group-hover:text-amber-glow transition-colors leading-snug">
-                      {mod.title}
-                    </h2>
-
-                    {/* Paradigm Badges */}
-                    <div className="flex flex-wrap gap-1.5 pt-0.5">
-                      {mod.paradigms.map((p) => (
-                        <span
-                          key={p}
-                          className="px-2 py-0.5 bg-obsidian-900 border border-hairline text-chalk-400 font-mono text-[10px] uppercase font-semibold"
-                        >
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Description */}
-                    <p className="text-xs text-chalk-400 font-sans leading-relaxed line-clamp-3">
-                      {mod.description}
-                    </p>
-
-                    {/* Algorithm Preview Chips */}
-                    <div className="pt-3 border-t border-hairline/60">
-                      <span className="text-[10px] font-mono text-chalk-500 uppercase tracking-wider block mb-1.5">
-                        Algorithms included:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {mod.algorithms.slice(0, 4).map((a) => (
-                          <span
-                            key={a.id}
-                            className="px-2 py-0.5 bg-obsidian-900/90 text-chalk-300 font-mono text-[10px] border border-hairline/50 truncate max-w-[200px]"
-                          >
-                            {a.name}
-                          </span>
-                        ))}
-                        {mod.algorithms.length > 4 && (
-                          <span className="px-1.5 py-0.5 text-amber text-[10px] font-mono font-bold">
-                            +{mod.algorithms.length - 4} more
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom Action Footer */}
-                  <div className="relative z-10 pt-5 mt-5 border-t border-hairline flex items-center justify-between font-mono text-xs text-chalk-400 group-hover:text-amber-glow transition-colors">
-                    <span className="font-bold uppercase tracking-wider flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-amber" />
-                      View {mod.algorithms.length} Algorithms
-                    </span>
-                    <div className="w-8 h-8 flex items-center justify-center bg-obsidian-900 group-hover:bg-amber group-hover:text-obsidian-950 text-chalk-300 border border-hairline transition-all">
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Bottom Information Footer Strip */}
-      <div className="border-t border-hairline py-6 bg-obsidian-950 text-center font-mono text-xs text-chalk-500">
-        BCSE204L DAA Algorithm Visualizer • 32 Implemented Step-Generator Algorithms Across 7 Modules
-      </div>
+          </section>
+        );
+      })}
     </div>
   );
 };
+
+const AlgoItem: React.FC<{ name: string; meta: string; line: string; onClick: () => void }> = ({
+  name,
+  meta,
+  line,
+  onClick,
+}) => (
+  <button type="button" onClick={onClick} className="hc-item">
+    <span className="flex flex-col gap-1 min-w-0">
+      <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <span className="hc-item-name">{name}</span>
+        <span className="hc-item-meta">{meta}</span>
+      </span>
+      <span className="hc-item-line">{line}</span>
+    </span>
+  </button>
+);

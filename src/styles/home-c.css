@@ -1,0 +1,305 @@
+/* ── Home, playful colour chapters (redesign C) ───────────────────────────────────────
+   Flat poster fields (coral, ink, green, yellow, bone), each module its own chapter.
+   Red Hat Display Black for display, Red Hat Text for reading. Pill buttons, springy motion. */
+.home-c,
+.chrome-c {
+  font-family: 'Red Hat Text', system-ui, sans-serif;
+}
+.home-c {
+  background: #e6e0d2;
+  color: #1a1a1a;
+}
+
+.hc-frame {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3vw, 40px);
+}
+.hc-section { padding-block: clamp(96px, 14vh, 180px) 0; }
+.hc-section#find { padding-bottom: clamp(96px, 14vh, 180px); }
+
+.hc-display {
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+}
+.hc-h2 { font-size: clamp(44px, 5.4vw, 92px); text-wrap: balance; }
+.hc-lead { font-size: clamp(1.1875rem, 1.05rem + 0.6vw, 1.5rem); line-height: 1.4; font-weight: 500; }
+.hc-body { font-size: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem); line-height: 1.5; }
+.hc-soft { color: var(--soft, #4a463e); }
+
+.home-c :focus-visible,
+.chrome-c :focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+/* Hero: paper above, yellow below, the seam at exactly half height. Two equal grid rows keep the
+   seam in the middle while the lower field grows to fit its text, so nothing is cut off. */
+.hc-hero {
+  --hc-head: clamp(36px, 13.5vw, 190px);
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  min-height: max(calc(100svh / var(--app-zoom, 1) - 2.75rem), 560px);
+}
+.hc-hero-top { position: relative; background: #e6e0d2; }
+/* The lower field: flat yellow until the shader gradient draws over it. Its direct children are
+   what liquid glass refracts, so the sentence and the button live in here. The top padding keeps
+   them clear of the headline's second line. */
+.hc-hero-bottom {
+  position: relative;
+  background: #f2c21a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: calc(var(--hc-head) * 0.95) 16px clamp(32px, 6vh, 64px);
+}
+.hc-hero-lead { position: relative; max-width: 34ch; text-align: center; }
+.hc-glass-cta { position: relative; border-radius: 999px; }
+.hc-glass-cta button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.75rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.28);
+  color: #1a1a1a;
+  font-weight: 700;
+  font-size: 1.0625rem;
+}
+.hc-headline-wrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* The seam crosses the second line a third of the way down, so that line changes ink. */
+  translate: -50% -74%;
+  display: grid;
+  width: max-content;
+  max-width: 94vw;
+}
+.hc-headline {
+  grid-area: 1 / 1;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: var(--hc-head);
+  line-height: 0.86;
+}
+/* Below the seam the ink turns a deep brown: dark enough for 3:1 on every colour of the gradient. */
+.hc-headline-top { color: #1a1a1a; clip-path: inset(0 0 26% 0); }
+.hc-headline-bottom { color: #2a1a00; clip-path: inset(74% 0 0 0); }
+.hc-owl-perch {
+  position: absolute;
+  right: 1%;
+  bottom: calc(100% - 0.14em);
+  width: clamp(64px, 12vw, 210px);
+  font-size: var(--hc-head);
+}
+.hc-owl-perch svg { width: 100%; height: auto; display: block; }
+
+/* The owl: a slow bob and a blink every few seconds. */
+.hc-owl-body { animation: hcBob 3.2s ease-in-out infinite; transform-origin: 50% 90%; transform-box: fill-box; }
+.hc-owl-eyes { animation: hcBlink 4.6s infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes hcBob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(-3deg); }
+}
+@keyframes hcBlink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.1); }
+}
+
+.hc-chapter-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.75rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1.0625rem;
+}
+.hc-chapter-link { margin-top: 3.5rem; }
+
+.hc-text-link {
+  font-weight: 700;
+  font-size: 1.0625rem;
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 6px;
+  transition: text-underline-offset 160ms;
+}
+@media (hover: hover) {
+  .hc-text-link:hover { text-underline-offset: 10px; }
+}
+
+/* Showcase: the story is drawn straight onto a big disc whose colour follows the chosen story. */
+.hc-showcase {
+  display: grid;
+  gap: 3rem;
+  padding-block: clamp(96px, 14vh, 180px) 0;
+  align-items: end;
+}
+@media (min-width: 1024px) {
+  .hc-showcase { grid-template-columns: 4fr 8fr; }
+  .hc-showcase .hc-picker { grid-column: 1; grid-row: 1; }
+  .hc-showcase .hc-disc-wrap { grid-column: 2; grid-row: 1; }
+}
+.hc-disc-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(calc(76vh / var(--app-zoom, 1)), 100%);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+.hc-disc { position: absolute; inset: 0; border-radius: 50%; }
+.hc-scene-card { position: relative; width: 84%; }
+.hc-scene-card .sv-controls { justify-content: center; }
+.hc-scene-card .sv-btn-text { margin-left: 0; }
+.hc-picker { display: flex; flex-direction: column; gap: 1.25rem; align-items: flex-start; min-width: 0; }
+.hc-picker-title { font-size: clamp(32px, 3.2vw, 52px); color: #4a463e; }
+.hc-picker-list { display: flex; flex-direction: column; gap: 0.2rem; }
+.hc-pick {
+  font-size: clamp(32px, 3.2vw, 52px);
+  color: #6f6a5f;
+  transition: color 200ms;
+}
+.hc-pick.is-on { color: #1a1a1a; }
+@media (hover: hover) {
+  .hc-pick:hover { color: #1a1a1a; }
+}
+.hc-pick.is-on { text-decoration: underline; text-decoration-thickness: 6px; text-underline-offset: 8px; text-decoration-color: #ed4b44; }
+@media (max-width: 1023px) {
+  .hc-picker-list { flex-direction: row; overflow-x: auto; gap: 1.5rem; max-width: 100%; padding-bottom: 0.5rem; }
+}
+
+/* How it works: a row of panels, dark to light; the open one takes most of the width. */
+.hc-accordion { display: flex; margin-top: 4rem; height: 460px; border-radius: 28px; overflow: hidden; }
+.hc-panel {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: left;
+  transition: flex-grow 450ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  overflow: hidden;
+}
+.hc-panel.is-open { flex-grow: 5; cursor: default; }
+.hc-panel-name {
+  position: absolute;
+  left: 1.5rem;
+  bottom: 1.5rem;
+  font-size: 1.5rem;
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+}
+.hc-panel.is-open .hc-panel-name {
+  writing-mode: horizontal-tb;
+  rotate: none;
+  top: 1.75rem;
+  bottom: auto;
+  font-size: clamp(40px, 4vw, 64px);
+}
+.hc-panel-text {
+  position: absolute;
+  left: 1.75rem;
+  bottom: 1.75rem;
+  width: min(36ch, calc(100% - 3.5rem));
+  opacity: 0;
+  translate: 0 12px;
+  transition: opacity 250ms, translate 350ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hc-panel.is-open .hc-panel-text { opacity: 1; translate: 0 0; transition-delay: 200ms; }
+@media (hover: hover) {
+  .hc-panel:not(.is-open):hover { flex-grow: 1.4; }
+}
+@media (max-width: 767px) {
+  .hc-accordion { flex-direction: column; height: auto; }
+  .hc-panel { flex: none; min-height: 64px; }
+  .hc-panel-name,
+  .hc-panel.is-open .hc-panel-name {
+    position: static;
+    display: block;
+    writing-mode: horizontal-tb;
+    rotate: none;
+    padding: 1.1rem 1.25rem;
+    font-size: 1.25rem;
+  }
+  .hc-panel.is-open .hc-panel-name { font-size: 2rem; padding-bottom: 0.5rem; }
+  .hc-panel-text { position: static; display: none; padding: 0 1.25rem 1.5rem; width: auto; }
+  .hc-panel.is-open .hc-panel-text { display: block; }
+}
+
+.hc-input {
+  width: 100%;
+  padding: 1.15rem 1.5rem 1.15rem 3.75rem;
+  border-radius: 999px;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 1.125rem;
+  font-weight: 500;
+  outline: none;
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.hc-input:focus { transform: scale(1.02); }
+.hc-input::placeholder { color: #6f6a5f; }
+
+/* Chapters: one field per module. */
+.hc-chapter { padding-block: clamp(96px, 14vh, 180px); }
+.hc-chapter-title { font-size: clamp(40px, 4.6vw, 80px); max-width: 18ch; text-wrap: balance; }
+.hc-items { display: grid; gap: 0.75rem 4rem; }
+@media (min-width: 900px) {
+  .hc-items { grid-template-columns: 1fr 1fr; }
+}
+.hc-item {
+  display: block;
+  width: calc(100% + 2rem);
+  padding: 1rem;
+  margin-inline: -1rem;
+  border-radius: 20px;
+  text-align: left;
+  transition: background-color 180ms, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@media (hover: hover) {
+  .hc-item:hover { background: rgb(255 255 255 / 0.22); transform: translateX(6px); }
+}
+.hc-item:active { transform: scale(0.96); }
+.hc-item-name { font-weight: 700; font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem); line-height: 1.3; }
+.hc-item-meta { font-size: 0.875rem; font-weight: 500; color: var(--soft, #4a463e); }
+.hc-item-line { font-size: 0.9375rem; line-height: 1.45; color: var(--soft, #4a463e); max-width: 44ch; }
+@media (hover: hover) {
+  .home-c #find .hc-item:hover { background: #fff; }
+}
+
+/* Home-page story vignettes (src/components/home/StoryVignettes.tsx). */
+.sv { display: block; width: 100%; height: 100%; }
+.sv-wrap { display: flex; flex-direction: column; gap: 1rem; width: 100%; height: 100%; }
+.sv-wrap > .sv { flex: 1 1 auto; min-height: 0; }
+.sv-clickable { cursor: pointer; }
+.sv-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.sv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  transition: background-color 160ms, transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@media (hover: hover) {
+  .sv-btn:hover { background: color-mix(in srgb, currentColor 16%, transparent); }
+}
+.sv-btn:active { transform: scale(0.96); }
+.sv-btn:disabled { opacity: 0.4; pointer-events: none; }
+.sv-btn-text { padding-inline: 1rem; margin-left: auto; }
+.sv-count { font-size: 0.9375rem; font-variant-numeric: tabular-nums; padding-inline: 0.5rem; }
+.sv-reset * { transition: none !important; }
+.sv-flow { animation: svFlow 0.7s linear infinite; }
+@keyframes svFlow { to { stroke-dashoffset: -24; } }
