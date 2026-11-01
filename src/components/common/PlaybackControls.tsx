@@ -37,7 +37,11 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+      // Leave the browser its own shortcuts (Ctrl+R reloads), and leave a focused control its keys:
+      // Space presses the focused button, arrows move a focused slider, typing goes into fields.
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, button, a[href], [role="button"], [role="radio"], [role="tab"], [role="slider"], [contenteditable="true"]')) {
         return;
       }
       if (e.code === 'Space') {
@@ -63,7 +67,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   const progressPercent = totalSteps > 1 ? (currentStep / (totalSteps - 1)) * 100 : 0;
   const shownStep = totalSteps > 0 ? currentStep + 1 : 0;
   const iconButton =
-    'p-2 text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-800 disabled:opacity-30 disabled:hover:bg-transparent border border-hairline transition-colors';
+    'min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-800 disabled:opacity-30 disabled:hover:bg-transparent border border-hairline transition-[color,background-color,transform] duration-150 ease-out enabled:active:scale-[0.96]';
 
   return (
     <div
@@ -83,7 +87,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           onClick={isPlaying ? onPause : onPlay}
           disabled={totalSteps <= 1 || (currentStep >= totalSteps - 1 && !isPlaying)}
           title={isPlaying ? 'Pause (Key: Space)' : 'Play (Key: Space)'}
-          className={`flex items-center gap-1.5 px-4 py-2 font-sans text-sm font-semibold transition-colors ${
+          className={`flex items-center gap-1.5 min-h-[44px] px-4 py-2 font-sans text-sm font-semibold transition-[color,background-color,transform] duration-150 ease-out enabled:active:scale-[0.96] ${
             isPlaying ? 'bg-amber text-obsidian-950' : 'bg-chalk-100 text-obsidian-950 hover:bg-chalk-300 disabled:opacity-40'
           }`}
         >
@@ -126,7 +130,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           value={speed}
           onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
           aria-label="Playback speed slider"
-          className="w-20 sm:w-24 h-1.5 bg-obsidian-800 rounded-lg appearance-none cursor-pointer accent-amber focus:outline-none"
+          className="w-20 sm:w-24 h-1.5 bg-obsidian-800 rounded-lg appearance-none cursor-pointer accent-amber"
         />
         <span className="font-mono text-xs font-semibold text-amber-glow min-w-[3rem] text-center tabular-nums">
           {speed.toFixed(speed % 1 === 0 ? 1 : 2)}x
@@ -136,7 +140,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             <button
               key={s}
               onClick={() => onSpeedChange(s)}
-              className={`px-1.5 py-0.5 font-mono text-xs transition-colors ${speed === s ? 'text-amber font-bold' : 'text-chalk-500 hover:text-chalk-200'}`}
+              className={`min-w-[32px] min-h-[32px] px-1.5 font-mono text-xs transition-[color,transform] duration-150 ease-out active:scale-[0.96] ${speed === s ? 'text-amber font-bold' : 'text-chalk-500 hover:text-chalk-200'}`}
               title={`Set speed to ${s}x`}
             >
               {s}x

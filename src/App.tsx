@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { Home } from './pages/Home';
@@ -14,6 +14,34 @@ export function App() {
   const [selectedAlgoId, setSelectedAlgoId] = useState<string>('randomized-quicksort');
   // #/algorithm/<id> is the owl's explanation; #/algorithm/<id>/play is the player.
   const [algoView, setAlgoView] = useState<AlgorithmView>('learn');
+  const mainRef = useRef<HTMLElement>(null);
+
+  // A hash route changes nothing a screen reader notices on its own: name the page in the tab
+  // title and move focus to its heading (not on the very first load, which starts at the top).
+  const firstRoute = useRef(true);
+  useEffect(() => {
+    const algo = algorithmRegistry.find((a) => a.id === selectedAlgoId);
+    document.title =
+      view === 'algorithm' && algo
+        ? `${algo.name}${algoView === 'play' ? ' (player)' : ''} · AlgoViz`
+        : view === 'module'
+          ? `Module ${selectedModuleNumber} · AlgoViz`
+          : view === 'compare'
+            ? 'Compare algorithms · AlgoViz'
+            : 'AlgoViz: algorithms, acted out';
+    if (firstRoute.current) {
+      firstRoute.current = false;
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      const heading = mainRef.current?.querySelector<HTMLElement>('h1');
+      const target = heading ?? mainRef.current;
+      if (!target) return;
+      if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [view, selectedModuleNumber, selectedSubCategory, selectedAlgoId, algoView]);
 
   // Handle URL hash for easy bookmarking and viva demo navigation
   useEffect(() => {
@@ -106,9 +134,22 @@ export function App() {
 
   return (
     <div className="min-h-[calc(100vh/var(--app-zoom,1))] flex flex-col bg-obsidian-900 text-chalk-100 font-sans selection:bg-amber selection:text-obsidian-950">
+      {/* First stop for keyboard users. A button, not an #anchor: the hash is the router. */}
+      <button
+        type="button"
+        className="skip-link"
+        onClick={() => {
+          const target = mainRef.current?.querySelector<HTMLElement>('h1') ?? mainRef.current;
+          if (!target) return;
+          if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+          target.focus();
+        }}
+      >
+        Skip to content
+      </button>
       <Navbar currentView={view} onNavigate={navigateTo} />
 
-      <main className="flex-1">
+      <main ref={mainRef} id="main" className="flex-1 focus:outline-none">
         {view === 'home' && (
           <Home
             onSelectModule={selectModule}

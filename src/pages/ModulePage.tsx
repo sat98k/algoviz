@@ -1,22 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { algorithmRegistry } from '../config/algorithmRegistry';
 import { motion, useReducedMotion } from 'framer-motion';
-import {
-  ArrowLeft,
-  ArrowRight,
-  ArrowUpRight,
-  Search,
-  Clock,
-  Cpu,
-  Grid,
-  Layers,
-  GitFork,
-  SlidersHorizontal,
-  Sparkles,
-  CheckCircle2,
-  ChevronRight,
-  BookOpen,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Search } from 'lucide-react';
+import { FIELDS, FieldName, moduleField, storyLine } from '../styles/chapters';
+import '../styles/home-c.css';
 
 export type Module2SubCategory = 'dp' | 'backtracking' | 'branch-and-bound';
 
@@ -170,6 +157,183 @@ interface ModulePageProps {
   onBack: () => void;
 }
 
+/** Each Module 2 track keeps one chapter colour wherever it appears. */
+const TRACK_FIELDS: Record<Module2SubCategory, FieldName> = {
+  dp: 'yellow',
+  backtracking: 'coral',
+  'branch-and-bound': 'green',
+};
+const TRACK_ORDER: Module2SubCategory[] = ['dp', 'backtracking', 'branch-and-bound'];
+
+const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const SPRING = { type: 'spring' as const, stiffness: 380, damping: 22 };
+
+const rise = (reduce: boolean | null, i = 0) =>
+  reduce
+    ? {}
+    : {
+        initial: { opacity: 0, y: 24 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.5, ease: EASE_OUT, delay: i * 0.06 },
+      };
+
+type Algo = (typeof algorithmRegistry)[number];
+
+/**
+ * One algorithm as a full row: everything a student needs to choose it, nothing cut off.
+ * The whole row is one button; the story line says what its Animation Mode shows.
+ */
+const AlgorithmRow: React.FC<{ algo: Algo; onOpen: () => void }> = ({ algo, onOpen }) => (
+  <button type="button" onClick={onOpen} className="mp-row">
+    <span className="mp-row-head">
+      <span className="mp-row-name">{algo.name}</span>
+      <span className="mp-row-paradigm">{algo.paradigm}</span>
+    </span>
+    <span className="mp-row-story">{storyLine(algo.id, algo.problemStatement)}</span>
+    <span className="mp-row-problem">{algo.problemStatement}</span>
+    <span className="mp-row-foot">
+      <span>
+        Time <span className="mp-num">{algo.complexity.timeAverage || algo.complexity.timeWorst}</span>
+        {'  ·  '}
+        Space <span className="mp-num">{algo.complexity.spaceWorst}</span>
+      </span>
+      <span className="mp-row-open">
+        Open <ArrowRight className="w-4 h-4" aria-hidden />
+      </span>
+    </span>
+  </button>
+);
+
+/** The page header as a chapter field in its own colour. */
+const ChapterHeader: React.FC<{
+  field: (typeof FIELDS)[FieldName];
+  back: { label: string; onClick: () => void };
+  kicker: string;
+  title: string;
+  lead: string;
+  body?: string;
+  children?: React.ReactNode;
+}> = ({ field, back, kicker, title, lead, body, children }) => {
+  const reduce = useReducedMotion();
+  return (
+    <section className="mp-header" style={{ background: field.bg, color: field.ink, ['--soft' as string]: field.soft }}>
+      <div className="hc-frame">
+        <button type="button" onClick={back.onClick} className="mp-back">
+          <ArrowLeft className="w-4 h-4" aria-hidden /> {back.label}
+        </button>
+        <motion.p className="mp-kicker" {...rise(reduce)}>
+          {kicker}
+        </motion.p>
+        <motion.h1 className="hc-display mp-title" {...rise(reduce, 1)}>
+          {title}
+        </motion.h1>
+        <motion.p className="hc-lead mp-lead" {...rise(reduce, 2)}>
+          {lead}
+        </motion.p>
+        {body && (
+          <motion.p className="hc-body mp-body" {...rise(reduce, 3)}>
+            {body}
+          </motion.p>
+        )}
+        {children}
+      </div>
+    </section>
+  );
+};
+
+/** Search within the page, with its count announced to screen readers. */
+const ModuleSearch: React.FC<{ id: string; label: string; value: string; onChange: (v: string) => void; count: number; total: number }> = ({
+  id,
+  label,
+  value,
+  onChange,
+  count,
+  total,
+}) => (
+  <div className="mp-search">
+    <label htmlFor={id} className="mp-search-label">
+      {label}
+    </label>
+    <div className="relative">
+      <Search className="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden />
+      <input
+        id={id}
+        type="search"
+        placeholder="Knapsack, Floyd, KMP…"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="hc-input mp-search-input"
+      />
+    </div>
+    <p role="status" className="mp-search-count">
+      {value.trim() ? `${count} of ${total} shown` : ''}
+    </p>
+  </div>
+);
+
+const RowList: React.FC<{ algos: Algo[]; query: string; onSelect: (id: string) => void; emptyHint: string }> = ({
+  algos,
+  query,
+  onSelect,
+  emptyHint,
+}) => {
+  const reduce = useReducedMotion();
+  if (algos.length === 0)
+    return (
+      <p className="hc-body mp-empty">
+        Nothing here matches &ldquo;{query}&rdquo;. {emptyHint}
+      </p>
+    );
+  return (
+    <ul role="list" className="mp-rows">
+      {algos.map((algo, i) => (
+        <motion.li
+          key={algo.id}
+          initial={reduce ? false : { opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: EASE_OUT, delay: Math.min(i, 8) * 0.05 }}
+        >
+          <AlgorithmRow algo={algo} onOpen={() => onSelect(algo.id)} />
+        </motion.li>
+      ))}
+    </ul>
+  );
+};
+
+/** Previous and next at the foot of a page, named for where they go. */
+const PageTurn: React.FC<{
+  prev?: { label: string; onClick: () => void };
+  next?: { label: string; onClick: () => void };
+}> = ({ prev, next }) => (
+  <nav aria-label="More modules" className="hc-frame mp-turn">
+    {prev ? (
+      <button type="button" onClick={prev.onClick} className="mp-turn-btn">
+        <ArrowLeft className="w-5 h-5" aria-hidden />
+        <span>{prev.label}</span>
+      </button>
+    ) : (
+      <span />
+    )}
+    {next && (
+      <button type="button" onClick={next.onClick} className="mp-turn-btn mp-turn-next">
+        <span>{next.label}</span>
+        <ArrowRight className="w-5 h-5" aria-hidden />
+      </button>
+    )}
+  </nav>
+);
+
+const filterAlgos = (algos: Algo[], query: string) => {
+  const term = query.trim().toLowerCase();
+  if (!term) return algos;
+  return algos.filter(
+    (a) =>
+      a.name.toLowerCase().includes(term) ||
+      a.paradigm.toLowerCase().includes(term) ||
+      a.problemStatement.toLowerCase().includes(term)
+  );
+};
+
 export const ModulePage: React.FC<ModulePageProps> = ({
   moduleNumber,
   subCategory,
@@ -179,731 +343,209 @@ export const ModulePage: React.FC<ModulePageProps> = ({
   onBack,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewAllGrid, setViewAllGrid] = useState(false);
-  const shouldReduceMotion = useReducedMotion();
+  const [viewAll, setViewAll] = useState(false);
+  const reduce = useReducedMotion();
 
   const moduleMeta = MODULE_DESCRIPTIONS[moduleNumber] || {
     title: `Module ${moduleNumber}`,
-    subtitle: 'Course Algorithms',
+    subtitle: 'Course algorithms',
     description: 'Explore the algorithms in this module.',
     paradigms: [],
   };
+  const field = moduleField(moduleNumber);
 
-  const moduleAlgorithms = useMemo(() => {
-    return algorithmRegistry.filter((algo) => algo.module === moduleNumber);
-  }, [moduleNumber]);
+  const moduleAlgorithms = useMemo(() => algorithmRegistry.filter((a) => a.module === moduleNumber), [moduleNumber]);
 
-  // Active track if in module 2 and a valid subcategory is provided
   const activeTrack: ParadigmTrackInfo | null = useMemo(() => {
     if (moduleNumber !== 2 || !subCategory) return null;
-    const cat = subCategory.toLowerCase() as Module2SubCategory;
-    return MODULE_2_PARADIGM_TRACKS[cat] || null;
+    return MODULE_2_PARADIGM_TRACKS[subCategory.toLowerCase() as Module2SubCategory] || null;
   }, [moduleNumber, subCategory]);
 
-  // Algorithms filtered by active subcategory (if active), otherwise all module algorithms
-  const targetAlgorithms = useMemo(() => {
-    if (moduleNumber === 2 && activeTrack) {
-      return moduleAlgorithms.filter(
-        (algo) => getModule2SubCategory(algo.paradigm) === activeTrack.id
-      );
-    }
-    return moduleAlgorithms;
-  }, [moduleNumber, activeTrack, moduleAlgorithms]);
-
-  // Search filtered algorithms
-  const filteredAlgorithms = useMemo(() => {
-    if (!searchTerm.trim()) return targetAlgorithms;
-    const term = searchTerm.toLowerCase();
-    return targetAlgorithms.filter(
-      (algo) =>
-        algo.name.toLowerCase().includes(term) ||
-        algo.paradigm.toLowerCase().includes(term) ||
-        algo.problemStatement.toLowerCase().includes(term)
-    );
-  }, [targetAlgorithms, searchTerm]);
-
-  const formattedModuleNum = String(moduleNumber).padStart(2, '0');
-
-  // Handle switching subcategory
-  const handleSelectSubCategory = (cat: Module2SubCategory | null) => {
-    if (onSelectSubCategory) {
-      onSelectSubCategory(cat);
-    } else {
-      onSelectModule(2, cat);
-    }
+  const selectTrack = (cat: Module2SubCategory | null) => {
+    setSearchTerm('');
+    if (onSelectSubCategory) onSelectSubCategory(cat);
+    else onSelectModule(2, cat);
   };
 
-  // Group module 2 algorithms by category for the 3-split overview cards
-  const module2Grouped = useMemo(() => {
-    return {
-      dp: moduleAlgorithms.filter((a) => getModule2SubCategory(a.paradigm) === 'dp'),
-      backtracking: moduleAlgorithms.filter((a) => getModule2SubCategory(a.paradigm) === 'backtracking'),
-      'branch-and-bound': moduleAlgorithms.filter(
-        (a) => getModule2SubCategory(a.paradigm) === 'branch-and-bound'
-      ),
-    };
-  }, [moduleAlgorithms]);
+  const prevModule = moduleNumber > 1 ? moduleNumber - 1 : null;
+  const nextModule = moduleNumber < 7 ? moduleNumber + 1 : null;
+  const moduleTurn = {
+    prev: prevModule ? { label: `Module ${prevModule}: ${MODULE_DESCRIPTIONS[prevModule]?.title}`, onClick: () => onSelectModule(prevModule) } : undefined,
+    next: nextModule ? { label: `Module ${nextModule}: ${MODULE_DESCRIPTIONS[nextModule]?.title}`, onClick: () => onSelectModule(nextModule) } : undefined,
+  };
 
-  // RENDER: Module 2 Dedicated Sub-Category Page (e.g. #/module/2/dp)
+  // ── Module 2, one track (#/module/2/dp and so on) ──────────────────────────────────────────
   if (moduleNumber === 2 && activeTrack) {
-    const trackOrder: Module2SubCategory[] = ['dp', 'backtracking', 'branch-and-bound'];
-    const currentIndex = trackOrder.indexOf(activeTrack.id);
-    const prevTrackId = currentIndex > 0 ? trackOrder[currentIndex - 1] : null;
-    const nextTrackId = currentIndex < trackOrder.length - 1 ? trackOrder[currentIndex + 1] : null;
-
+    const trackAlgos = moduleAlgorithms.filter((a) => getModule2SubCategory(a.paradigm) === activeTrack.id);
+    const shown = filterAlgos(trackAlgos, searchTerm);
+    const i = TRACK_ORDER.indexOf(activeTrack.id);
+    const prevTrack = i > 0 ? MODULE_2_PARADIGM_TRACKS[TRACK_ORDER[i - 1]] : null;
+    const nextTrack = i < TRACK_ORDER.length - 1 ? MODULE_2_PARADIGM_TRACKS[TRACK_ORDER[i + 1]] : null;
     return (
-      <div className="flex flex-col w-full min-h-screen bg-obsidian-900 text-chalk-100">
-        {/* Top Header & Breadcrumb */}
-        <section className="border-b border-hairline bg-obsidian-950/70 pt-7 pb-8 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto w-full">
-          {/* Navigation Breadcrumb */}
-          <div className="flex flex-wrap items-center justify-between font-mono text-xs text-chalk-400 mb-6 gap-3">
-            <div className="flex items-center gap-2">
+      <div className="home-c mp-page">
+        <ChapterHeader
+          field={FIELDS[TRACK_FIELDS[activeTrack.id]]}
+          back={{ label: 'Module 2 overview', onClick: () => selectTrack(null) }}
+          kicker={`Module 2 · ${trackAlgos.length} algorithms`}
+          title={activeTrack.name}
+          lead={activeTrack.tagline}
+          body={activeTrack.description}
+        >
+          <ul role="list" className="mp-concepts">
+            {activeTrack.coreConcepts.map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+          <nav aria-label="Module 2 tracks" className="mp-tracktabs">
+            {TRACK_ORDER.map((id) => (
               <button
-                onClick={() => handleSelectSubCategory(null)}
-                className="group flex items-center gap-1.5 px-3 py-1.5 bg-obsidian-900 hover:bg-obsidian-850 text-chalk-300 hover:text-amber border border-hairline transition-all duration-200"
+                key={id}
+                type="button"
+                aria-current={id === activeTrack.id ? 'page' : undefined}
+                onClick={() => selectTrack(id)}
+                className="mp-tracktab"
               >
-                <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-                <span>← MODULE 02 OVERVIEW</span>
+                {MODULE_2_PARADIGM_TRACKS[id].name}
               </button>
-
-              <button
-                onClick={onBack}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-obsidian-900 hover:bg-obsidian-850 text-chalk-400 hover:text-chalk-200 border border-hairline transition-colors"
-              >
-                <span>ALL MODULES</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber animate-pulse"></span>
-              <span className="uppercase text-chalk-400 font-semibold">
-                MODULE 02 / {activeTrack.name.toUpperCase()}
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Sub-Category Switcher Tab Bar */}
-          <div className="flex flex-wrap items-center gap-2 pb-6 border-b border-hairline/60">
-            <button
-              onClick={() => handleSelectSubCategory(null)}
-              className="px-3 py-1.5 bg-obsidian-900/80 hover:bg-obsidian-850 text-chalk-400 hover:text-chalk-200 border border-hairline font-mono text-[11px] tracking-wider uppercase transition-all"
-            >
-              ← HUB
-            </button>
-
-            {trackOrder.map((trackKey) => {
-              const track = MODULE_2_PARADIGM_TRACKS[trackKey];
-              const isActive = track.id === activeTrack.id;
-
-              return (
-                <button
-                  key={track.id}
-                  onClick={() => handleSelectSubCategory(track.id)}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 font-mono text-xs font-bold uppercase tracking-wider transition-all border ${
-                    isActive
-                      ? 'bg-amber/15 border-amber text-amber shadow-sm shadow-amber/10'
-                      : 'bg-obsidian-950 hover:bg-obsidian-850 border-hairline text-chalk-400 hover:text-chalk-200'
-                  }`}
-                >
-                  <span className={isActive ? 'text-amber' : 'text-chalk-400'}>{track.numeral}</span>
-                  <span>{track.name}</span>
-                  <span
-                    className={`px-1.5 py-0.5 rounded-sm text-[10px] ${
-                      isActive ? 'bg-amber text-obsidian-950' : 'bg-obsidian-900 text-chalk-400'
-                    }`}
-                  >
-                    {track.algorithmsCount}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Track Title Block */}
-          <div className="flex flex-col gap-3 mt-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-display font-black text-3xl sm:text-4xl text-amber">
-                {activeTrack.badge}
-              </span>
-              <span className="px-2.5 py-0.5 bg-obsidian-900 border border-acid-500/30 text-acid-400 font-mono text-[11px] uppercase tracking-wider font-semibold">
-                {activeTrack.algorithmsCount} ALGORITHMS
-              </span>
-              <span className="px-2.5 py-0.5 bg-obsidian-900 border border-hairline text-amber-glow font-mono text-[11px] uppercase tracking-wider">
-                COMPLEXITY: {activeTrack.complexity}
-              </span>
-            </div>
-
-            <h1 className="font-display font-black text-2xl sm:text-4xl md:text-5xl text-chalk-100 tracking-tight">
-              {activeTrack.name}
-            </h1>
-
-            <p className="font-mono text-xs text-amber-glow/90 italic tracking-wide">
-              {activeTrack.tagline}
-            </p>
-
-            <p className="text-sm sm:text-base text-chalk-300 font-sans max-w-4xl leading-relaxed mt-1">
-              {activeTrack.description}
-            </p>
-
-            {/* Core Concepts Banner */}
-            <div className="mt-3 p-4 bg-obsidian-950 border border-hairline/80 flex flex-col gap-2 max-w-4xl">
-              <span className="font-mono text-[11px] text-chalk-400 uppercase tracking-wider font-semibold flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber" />
-                <span>Foundational Principles & Theory Invariants</span>
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-sans text-xs text-chalk-300">
-                {activeTrack.coreConcepts.map((concept, idx) => (
-                  <div key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber flex-shrink-0 mt-0.5" />
-                    <span>{concept}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* In-Track Search Filter */}
-          <div className="mt-8 pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="relative w-full sm:w-96 flex items-center group">
-              <Search className="w-4 h-4 text-chalk-400 absolute left-3.5 pointer-events-none transition-colors group-focus-within:text-amber" />
-              <input
-                type="text"
-                placeholder={`Search ${activeTrack.algorithmsCount} ${activeTrack.shortName} algorithms...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-obsidian-950 text-xs font-mono text-chalk-100 placeholder:text-chalk-400 border border-hairline hover:border-chalk-400/40 focus:border-amber focus:ring-1 focus:ring-amber/40 focus:outline-none transition-all shadow-sm"
-              />
-            </div>
-
-            <span className="font-mono text-xs text-chalk-400 self-end sm:self-center">
-              Showing {filteredAlgorithms.length} of {activeTrack.algorithmsCount} algorithms
-            </span>
-          </div>
-        </section>
-
-        {/* Algorithms Grid */}
-        <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 py-10 flex-1">
-          {filteredAlgorithms.length === 0 ? (
-            <div className="p-16 text-center text-chalk-400 font-mono text-xs border border-hairline bg-obsidian-950">
-              No algorithms in {activeTrack.name} match your search query "{searchTerm}".
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAlgorithms.map((algo, idx) => {
-                const algoNum = `02.${activeTrack.numeral}.${String(idx + 1).padStart(2, '0')}`;
-
-                return (
-                  <motion.div
-                    key={algo.id}
-                    initial={shouldReduceMotion ? false : { opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: idx * 0.04 }}
-                    onClick={() => onSelectAlgorithm(algo.id)}
-                    className="group relative flex flex-col justify-between p-6 bg-obsidian-950 border border-hairline hover:border-amber/70 hover:bg-obsidian-900/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-lg shadow-black/30"
-                  >
-                    {/* Numeral Watermark */}
-                    <span className="absolute -right-2 -bottom-4 font-display font-black text-8xl text-obsidian-850 select-none pointer-events-none group-hover:text-amber/5 transition-colors">
-                      {String(idx + 1).padStart(2, '0')}
-                    </span>
-
-                    <div className="relative z-10 flex flex-col gap-3">
-                      {/* Top Row: Algorithm index & Paradigm badge */}
-                      <div className="flex items-center justify-between font-mono text-[11px]">
-                        <span className="text-amber font-bold tracking-wider">{algoNum}</span>
-                        <span className="px-2 py-0.5 bg-obsidian-900 border border-hairline text-chalk-400 text-[10px] uppercase font-medium">
-                          {algo.paradigm}
-                        </span>
-                      </div>
-
-                      {/* Algorithm Name */}
-                      <h3 className="font-display font-bold text-xl text-chalk-100 group-hover:text-amber-glow transition-colors">
-                        {algo.name}
-                      </h3>
-
-                      {/* Problem Statement */}
-                      <p className="text-xs text-chalk-400 font-sans leading-relaxed line-clamp-3">
-                        {algo.problemStatement}
-                      </p>
-                    </div>
-
-                    {/* Bottom Complexity Ledger & Action Button */}
-                    <div className="relative z-10 pt-5 mt-5 border-t border-hairline flex items-center justify-between font-mono text-[11px]">
-                      <div className="flex flex-col gap-1 text-chalk-400">
-                        <span className="flex items-center gap-1.5 text-amber-glow font-medium text-[11px]">
-                          <Clock className="w-3 h-3 text-amber" />
-                          <span>{algo.complexity.timeAverage || algo.complexity.timeWorst}</span>
-                        </span>
-                        <span className="flex items-center gap-1.5 text-acid-400 font-medium text-[11px]">
-                          <Cpu className="w-3 h-3 text-acid-500" />
-                          <span>{algo.complexity.spaceWorst}</span>
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1 text-xs font-mono text-chalk-400 group-hover:text-amber-glow transition-colors">
-                        <span className="hidden sm:inline text-[11px] font-bold uppercase">Launch</span>
-                        <div className="w-7 h-7 flex items-center justify-center bg-obsidian-900 group-hover:bg-amber group-hover:text-obsidian-950 text-chalk-300 border border-hairline transition-all">
-                          <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Bottom Navigation Between Tracks */}
-          <div className="mt-12 pt-8 border-t border-hairline flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
-            {prevTrackId ? (
-              <button
-                onClick={() => handleSelectSubCategory(prevTrackId)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-obsidian-950 hover:bg-obsidian-850 border border-hairline text-chalk-300 hover:text-amber transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>PREVIOUS: {MODULE_2_PARADIGM_TRACKS[prevTrackId].name.toUpperCase()}</span>
-              </button>
-            ) : (
-              <div></div>
-            )}
-
-            <button
-              onClick={() => handleSelectSubCategory(null)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-obsidian-900 hover:bg-obsidian-850 border border-hairline text-chalk-300 hover:text-chalk-100 transition-colors"
-            >
-              <Grid className="w-4 h-4 text-amber" />
-              <span>MODULE 02 OVERVIEW</span>
-            </button>
-
-            {nextTrackId ? (
-              <button
-                onClick={() => handleSelectSubCategory(nextTrackId)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-obsidian-950 hover:bg-obsidian-850 border border-hairline text-chalk-300 hover:text-amber transition-colors"
-              >
-                <span>NEXT: {MODULE_2_PARADIGM_TRACKS[nextTrackId].name.toUpperCase()}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <div></div>
-            )}
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  // RENDER: Module 2 Hub / Split Portal View (#/module/2)
-  if (moduleNumber === 2 && !viewAllGrid && !searchTerm.trim()) {
-    const tracks: ParadigmTrackInfo[] = [
-      MODULE_2_PARADIGM_TRACKS.dp,
-      MODULE_2_PARADIGM_TRACKS.backtracking,
-      MODULE_2_PARADIGM_TRACKS['branch-and-bound'],
-    ];
-
-    return (
-      <div className="flex flex-col w-full min-h-screen bg-obsidian-900 text-chalk-100">
-        {/* Top Breadcrumbs & Module Header */}
-        <section className="border-b border-hairline bg-obsidian-950/60 pt-8 pb-10 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto w-full">
-          <div className="flex items-center justify-between font-mono text-xs text-chalk-400 mb-6">
-            <button
-              onClick={onBack}
-              className="group flex items-center gap-2 px-3 py-1.5 bg-obsidian-900 hover:bg-obsidian-850 text-chalk-300 hover:text-amber border border-hairline transition-all duration-200"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
-              <span>← ALL MODULES</span>
-            </button>
-
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber animate-pulse"></span>
-              <span className="uppercase text-chalk-400 font-semibold">MODULE 02 OF 07</span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-display font-black text-4xl sm:text-5xl text-amber">02</span>
-              <div className="h-8 w-px bg-hairline hidden sm:block"></div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-0.5 bg-obsidian-900 border border-hairline text-amber-glow font-mono text-[11px] uppercase tracking-wider font-semibold">
-                  3 PARADIGM TRACKS
-                </span>
-                <span className="px-2.5 py-0.5 bg-obsidian-900 border border-acid-500/30 text-acid-400 font-mono text-[11px] uppercase tracking-wider font-semibold">
-                  10 ALGORITHMS TOTAL
-                </span>
-              </div>
-            </div>
-
-            <h1 className="font-display font-black text-2xl sm:text-4xl md:text-5xl text-chalk-100 tracking-tight">
-              {moduleMeta.title}
-            </h1>
-
-            <p className="text-sm sm:text-base text-chalk-300 font-sans max-w-3xl leading-relaxed mt-1">
-              {moduleMeta.description}
-            </p>
-          </div>
-
-          {/* Quick Search & View Switcher */}
-          <div className="mt-8 pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="relative w-full sm:w-96 flex items-center group">
-              <Search className="w-4 h-4 text-chalk-400 absolute left-3.5 pointer-events-none transition-colors group-focus-within:text-amber" />
-              <input
-                type="text"
-                placeholder="Search all 10 Module 2 algorithms..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-obsidian-950 text-xs font-mono text-chalk-100 placeholder:text-chalk-400 border border-hairline hover:border-chalk-400/40 focus:border-amber focus:ring-1 focus:ring-amber/40 focus:outline-none transition-all shadow-sm"
-              />
-            </div>
-
-            <button
-              onClick={() => setViewAllGrid(true)}
-              className="font-mono text-xs text-chalk-400 hover:text-amber border border-hairline px-3 py-2 bg-obsidian-950 hover:bg-obsidian-900 transition-colors flex items-center gap-2"
-            >
-              <Grid className="w-3.5 h-3.5" />
-              <span>VIEW ALL 10 IN SINGLE GRID</span>
-            </button>
-          </div>
-        </section>
-
-        {/* 3 PARADIGM TRACK HERO CARDS */}
-        <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 py-10 flex-1">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-amber font-semibold">
-              <BookOpen className="w-4 h-4" />
-              <span>CHOOSE A PARADIGM TRACK TO ENTER DEDICATED CONTENTS</span>
-            </div>
-            <span className="font-mono text-xs text-chalk-400">3 Structured Methodologies</span>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {tracks.map((track, idx) => {
-              const algosInTrack = module2Grouped[track.id];
-              const IconComponent =
-                track.id === 'dp' ? Layers : track.id === 'backtracking' ? GitFork : SlidersHorizontal;
-
-              return (
-                <motion.div
-                  key={track.id}
-                  initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: idx * 0.08 }}
-                  onClick={() => handleSelectSubCategory(track.id)}
-                  className="group relative flex flex-col justify-between p-7 bg-obsidian-950 border border-hairline hover:border-amber hover:bg-obsidian-900/70 transition-all duration-300 cursor-pointer overflow-hidden shadow-xl shadow-black/40"
-                >
-                  {/* Large Numeral Watermark */}
-                  <span className="absolute -right-3 -bottom-5 font-display font-black text-8xl text-obsidian-850 select-none pointer-events-none group-hover:text-amber/5 transition-colors">
-                    {track.numeral}
-                  </span>
-
-                  <div className="relative z-10 flex flex-col gap-4">
-                    {/* Header: Track Pill & Algorithm Count */}
-                    <div className="flex items-center justify-between font-mono text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 bg-amber/10 border border-amber/30 text-amber font-bold">
-                          TRACK {track.numeral}
-                        </span>
-                        <div className="p-1.5 bg-obsidian-900 text-amber border border-hairline">
-                          <IconComponent className="w-4 h-4" />
-                        </div>
-                      </div>
-                      <span className="px-2.5 py-1 bg-obsidian-900 border border-acid-500/30 text-acid-400 font-mono text-[11px] font-bold">
-                        {track.algorithmsCount} ALGORITHMS
-                      </span>
-                    </div>
-
-                    {/* Paradigm Title */}
-                    <div>
-                      <h2 className="font-display font-bold text-2xl text-chalk-100 group-hover:text-amber-glow transition-colors leading-snug">
-                        {track.name}
-                      </h2>
-                      <p className="font-mono text-xs text-amber-glow/85 italic mt-1">
-                        {track.tagline}
-                      </p>
-                    </div>
-
-                    {/* Description */}
-                    <p className="text-xs text-chalk-400 font-sans leading-relaxed line-clamp-3">
-                      {track.description}
-                    </p>
-
-                    {/* Algorithms List Preview */}
-                    <div className="pt-3 border-t border-hairline/70 flex flex-col gap-1.5">
-                      <span className="font-mono text-[10px] text-chalk-400 uppercase tracking-wider font-semibold">
-                        Included Algorithms:
-                      </span>
-                      <div className="flex flex-col gap-1">
-                        {algosInTrack.map((algo, aIdx) => (
-                          <div
-                            key={algo.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectAlgorithm(algo.id);
-                            }}
-                            className="group/item flex items-center justify-between px-2.5 py-1.5 bg-obsidian-900 hover:bg-amber hover:text-obsidian-950 border border-hairline/60 transition-colors text-chalk-300 font-mono text-xs cursor-pointer"
-                          >
-                            <span className="truncate pr-2">
-                              {aIdx + 1}. {algo.name}
-                            </span>
-                            <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover/item:opacity-100 flex-shrink-0" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Big CTA Action Button */}
-                  <div className="relative z-10 pt-5 mt-5 border-t border-hairline flex items-center justify-between">
-                    <span className="font-mono text-[11px] text-chalk-400">
-                      {track.complexity}
-                    </span>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectSubCategory(track.id);
-                      }}
-                      className="flex items-center gap-2 px-3.5 py-2 bg-obsidian-900 group-hover:bg-amber group-hover:text-obsidian-950 text-amber font-mono font-bold text-xs border border-amber/40 transition-all shadow-sm"
-                    >
-                      <span>EXPLORE {track.shortName.toUpperCase()}</span>
-                      <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* Module Switcher Pagination */}
-          <div className="mt-12 pt-8 border-t border-hairline flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
-            <button
-              onClick={() => onSelectModule(1)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-obsidian-950 hover:bg-obsidian-850 border border-hairline text-chalk-300 hover:text-amber transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>PREVIOUS: MODULE 01</span>
-            </button>
-
-            <button
-              onClick={onBack}
-              className="flex items-center gap-2 px-4 py-2.5 bg-obsidian-900 hover:bg-obsidian-850 border border-hairline text-chalk-300 hover:text-chalk-100 transition-colors"
-            >
-              <Grid className="w-4 h-4 text-amber" />
-              <span>VIEW ALL 7 MODULES</span>
-            </button>
-
-            <button
-              onClick={() => onSelectModule(3)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-obsidian-950 hover:bg-obsidian-850 border border-hairline text-chalk-300 hover:text-amber transition-colors"
-            >
-              <span>NEXT: MODULE 03</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  // RENDER: Default Standard Algorithms Grid (For Modules 1, 3, 4, 5, 6, 7 OR Module 2 with search/view-all)
-  return (
-    <div className="flex flex-col w-full min-h-screen bg-obsidian-900 text-chalk-100">
-      {/* Top Breadcrumbs & Module Header */}
-      <section className="border-b border-hairline bg-obsidian-950/60 pt-8 pb-10 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto w-full">
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center justify-between font-mono text-xs text-chalk-400 mb-6">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onBack}
-              className="group flex items-center gap-2 px-3 py-1.5 bg-obsidian-900 hover:bg-obsidian-850 text-chalk-300 hover:text-amber border border-hairline transition-all duration-200"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
-              <span>← ALL MODULES</span>
-            </button>
-
-            {moduleNumber === 2 && viewAllGrid && (
-              <button
-                onClick={() => setViewAllGrid(false)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-obsidian-900 hover:bg-obsidian-850 text-amber border border-amber/30 transition-colors"
-              >
-                <span>← 3 TRACKS SPLIT</span>
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber animate-pulse"></span>
-            <span className="uppercase text-chalk-400 font-semibold">
-              MODULE {formattedModuleNum} OF 07
-            </span>
-          </div>
-        </div>
-
-        {/* Module Title Block */}
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="font-display font-black text-4xl sm:text-5xl text-amber">
-              {formattedModuleNum}
-            </span>
-            <div className="h-8 w-px bg-hairline hidden sm:block"></div>
-            <div className="flex flex-wrap items-center gap-2">
-              {moduleMeta.paradigms.map((p) => (
-                <span
-                  key={p}
-                  className="px-2.5 py-0.5 bg-obsidian-900 border border-hairline text-amber-glow font-mono text-[11px] uppercase tracking-wider font-semibold"
-                >
-                  {p}
-                </span>
-              ))}
-              <span className="px-2.5 py-0.5 bg-obsidian-900 border border-acid-500/30 text-acid-400 font-mono text-[11px] uppercase tracking-wider font-semibold">
-                {moduleAlgorithms.length} ALGORITHMS
-              </span>
-            </div>
-          </div>
-
-          <h1 className="font-display font-black text-2xl sm:text-4xl md:text-5xl text-chalk-100 tracking-tight">
-            {moduleMeta.title}
-          </h1>
-
-          <p className="text-sm sm:text-base text-chalk-300 font-sans max-w-3xl leading-relaxed mt-1">
-            {moduleMeta.description}
-          </p>
-        </div>
-
-        {/* In-Module Search Filter */}
-        <div className="mt-8 pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-96 flex items-center group">
-            <Search className="w-4 h-4 text-chalk-400 absolute left-3.5 pointer-events-none transition-colors group-focus-within:text-amber" />
-            <input
-              type="text"
-              placeholder={`Search ${moduleAlgorithms.length} algorithms in Module ${moduleNumber}...`}
+            ))}
+          </nav>
+        </ChapterHeader>
+        <section className="hc-frame mp-body-section" aria-labelledby="mp-list">
+          <div className="mp-list-head">
+            <h2 id="mp-list" className="hc-display hc-h2">
+              The algorithms
+            </h2>
+            <ModuleSearch
+              id="mp-search"
+              label={`Search ${activeTrack.name}`}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-obsidian-950 text-xs font-mono text-chalk-100 placeholder:text-chalk-400 border border-hairline hover:border-chalk-400/40 focus:border-amber focus:ring-1 focus:ring-amber/40 focus:outline-none transition-all shadow-sm"
+              onChange={setSearchTerm}
+              count={shown.length}
+              total={trackAlgos.length}
             />
           </div>
+          <RowList algos={shown} query={searchTerm} onSelect={onSelectAlgorithm} emptyHint="Try another word." />
+        </section>
+        <PageTurn
+          prev={prevTrack ? { label: prevTrack.name, onClick: () => selectTrack(prevTrack.id) } : { label: 'Module 2 overview', onClick: () => selectTrack(null) }}
+          next={nextTrack ? { label: nextTrack.name, onClick: () => selectTrack(nextTrack.id) } : moduleTurn.next}
+        />
+      </div>
+    );
+  }
 
-          <div className="flex items-center gap-3 self-end sm:self-center">
-            {moduleNumber === 2 && (
-              <button
-                onClick={() => setViewAllGrid(false)}
-                className="font-mono text-xs text-amber hover:underline"
+  const shown = filterAlgos(moduleAlgorithms, searchTerm);
+
+  // ── Module 2 hub: the three tracks first ────────────────────────────────────────────────────
+  if (moduleNumber === 2 && !viewAll && !searchTerm.trim()) {
+    return (
+      <div className="home-c mp-page">
+        <ChapterHeader
+          field={field}
+          back={{ label: 'All modules', onClick: onBack }}
+          kicker={`Module 2 · ${moduleAlgorithms.length} algorithms in 3 tracks`}
+          title={moduleMeta.title}
+          lead={moduleMeta.subtitle + '.'}
+          body={moduleMeta.description}
+        >
+          <ModuleSearch
+            id="mp-search"
+            label="Search Module 2"
+            value={searchTerm}
+            onChange={setSearchTerm}
+            count={shown.length}
+            total={moduleAlgorithms.length}
+          />
+        </ChapterHeader>
+        <section className="mp-tracks" aria-label="Module 2 tracks">
+          {TRACK_ORDER.map((id, k) => {
+            const track = MODULE_2_PARADIGM_TRACKS[id];
+            const f = FIELDS[TRACK_FIELDS[id]];
+            const algos = moduleAlgorithms.filter((a) => getModule2SubCategory(a.paradigm) === id);
+            return (
+              <motion.article
+                key={id}
+                className="mp-track"
+                style={{ background: f.bg, color: f.ink, ['--soft' as string]: f.soft }}
+                {...rise(reduce, k)}
+                aria-labelledby={`mp-track-${id}`}
               >
-                Switch to 3 Paradigm Tracks
-              </button>
-            )}
-            <span className="font-mono text-xs text-chalk-400">
-              Showing {filteredAlgorithms.length} of {moduleAlgorithms.length} algorithms
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* Algorithms Grid */}
-      <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 py-10 flex-1">
-        {filteredAlgorithms.length === 0 ? (
-          <div className="p-16 text-center text-chalk-400 font-mono text-xs border border-hairline bg-obsidian-950">
-            No algorithms in this module match your search query "{searchTerm}".
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAlgorithms.map((algo, idx) => {
-              const algoNum = `${formattedModuleNum}.${String(idx + 1).padStart(2, '0')}`;
-
-              return (
-                <motion.div
-                  key={algo.id}
-                  initial={shouldReduceMotion ? false : { opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: idx * 0.04 }}
-                  onClick={() => onSelectAlgorithm(algo.id)}
-                  className="group relative flex flex-col justify-between p-6 bg-obsidian-950 border border-hairline hover:border-amber/70 hover:bg-obsidian-900/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-lg shadow-black/30"
+                <h2 id={`mp-track-${id}`} className="hc-display mp-track-title">
+                  {track.name}
+                </h2>
+                <p className="hc-lead mp-track-tagline">{track.tagline}</p>
+                <p className="hc-body mp-soft">{track.description}</p>
+                <ul role="list" className="mp-track-algos">
+                  {algos.map((a) => (
+                    <li key={a.id}>
+                      <button type="button" onClick={() => onSelectAlgorithm(a.id)} className="mp-track-algo">
+                        {a.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <motion.button
+                  type="button"
+                  onClick={() => selectTrack(id)}
+                  className="hc-chapter-link"
+                  style={{ background: f.ink, color: f.bg }}
+                  whileHover={reduce ? undefined : { scale: 1.04, rotate: -1 }}
+                  whileTap={reduce ? undefined : { scale: 0.96 }}
+                  transition={SPRING}
                 >
-                  {/* Numeral Watermark */}
-                  <span className="absolute -right-2 -bottom-4 font-display font-black text-8xl text-obsidian-850 select-none pointer-events-none group-hover:text-amber/5 transition-colors">
-                    {String(idx + 1).padStart(2, '0')}
-                  </span>
-
-                  <div className="relative z-10 flex flex-col gap-3">
-                    {/* Top Row: Algorithm index & Paradigm badge */}
-                    <div className="flex items-center justify-between font-mono text-[11px]">
-                      <span className="text-amber font-bold tracking-wider">{algoNum}</span>
-                      <span className="px-2 py-0.5 bg-obsidian-900 border border-hairline text-chalk-400 text-[10px] uppercase font-medium">
-                        {algo.paradigm}
-                      </span>
-                    </div>
-
-                    {/* Algorithm Name */}
-                    <h3 className="font-display font-bold text-xl text-chalk-100 group-hover:text-amber-glow transition-colors">
-                      {algo.name}
-                    </h3>
-
-                    {/* Problem Statement */}
-                    <p className="text-xs text-chalk-400 font-sans leading-relaxed line-clamp-3">
-                      {algo.problemStatement}
-                    </p>
-                  </div>
-
-                  {/* Bottom Complexity Ledger & Action Button */}
-                  <div className="relative z-10 pt-5 mt-5 border-t border-hairline flex items-center justify-between font-mono text-[11px]">
-                    <div className="flex flex-col gap-1 text-chalk-400">
-                      <span className="flex items-center gap-1.5 text-amber-glow font-medium text-[11px]">
-                        <Clock className="w-3 h-3 text-amber" />
-                        <span>{algo.complexity.timeAverage || algo.complexity.timeWorst}</span>
-                      </span>
-                      <span className="flex items-center gap-1.5 text-acid-400 font-medium text-[11px]">
-                        <Cpu className="w-3 h-3 text-acid-500" />
-                        <span>{algo.complexity.spaceWorst}</span>
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-xs font-mono text-chalk-400 group-hover:text-amber-glow transition-colors">
-                      <span className="hidden sm:inline text-[11px] font-bold uppercase">Launch</span>
-                      <div className="w-7 h-7 flex items-center justify-center bg-obsidian-900 group-hover:bg-amber group-hover:text-obsidian-950 text-chalk-300 border border-hairline transition-all">
-                        <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Module Switcher Pagination at Bottom */}
-        <div className="mt-12 pt-8 border-t border-hairline flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
-          {moduleNumber > 1 ? (
-            <button
-              onClick={() => onSelectModule(moduleNumber - 1)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-obsidian-950 hover:bg-obsidian-850 border border-hairline text-chalk-300 hover:text-amber transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>PREVIOUS: MODULE 0{moduleNumber - 1}</span>
-            </button>
-          ) : (
-            <div></div>
-          )}
-
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-4 py-2.5 bg-obsidian-900 hover:bg-obsidian-850 border border-hairline text-chalk-300 hover:text-chalk-100 transition-colors"
-          >
-            <Grid className="w-4 h-4 text-amber" />
-            <span>VIEW ALL 7 MODULES</span>
+                  Open {track.name} <ArrowRight className="w-5 h-5" aria-hidden />
+                </motion.button>
+              </motion.article>
+            );
+          })}
+        </section>
+        <div className="hc-frame mp-viewall">
+          <button type="button" onClick={() => setViewAll(true)} className="hc-text-link">
+            Show all {moduleAlgorithms.length} Module 2 algorithms in one list
           </button>
-
-          {moduleNumber < 7 ? (
-            <button
-              onClick={() => onSelectModule(moduleNumber + 1)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-obsidian-950 hover:bg-obsidian-850 border border-hairline text-chalk-300 hover:text-amber transition-colors"
-            >
-              <span>NEXT: MODULE 0{moduleNumber + 1}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <div></div>
-          )}
         </div>
+        <PageTurn {...moduleTurn} />
+      </div>
+    );
+  }
+
+  // ── Any module as one list (and Module 2's "show all") ─────────────────────────────────────
+  return (
+    <div className="home-c mp-page">
+      <ChapterHeader
+        field={field}
+        back={
+          moduleNumber === 2 && viewAll
+            ? { label: 'Module 2 tracks', onClick: () => setViewAll(false) }
+            : { label: 'All modules', onClick: onBack }
+        }
+        kicker={`Module ${moduleNumber} · ${moduleAlgorithms.length} algorithms`}
+        title={moduleMeta.title}
+        lead={moduleMeta.subtitle + '.'}
+        body={moduleMeta.description}
+      />
+      <section className="hc-frame mp-body-section" aria-labelledby="mp-list">
+        <div className="mp-list-head">
+          <h2 id="mp-list" className="hc-display hc-h2">
+            The algorithms
+          </h2>
+          <ModuleSearch
+            id="mp-search"
+            label={`Search Module ${moduleNumber}`}
+            value={searchTerm}
+            onChange={setSearchTerm}
+            count={shown.length}
+            total={moduleAlgorithms.length}
+          />
+        </div>
+        <RowList
+          algos={shown}
+          query={searchTerm}
+          onSelect={onSelectAlgorithm}
+          emptyHint="Try another word, or search every module from the home page."
+        />
       </section>
+      <PageTurn {...moduleTurn} />
     </div>
   );
 };
-

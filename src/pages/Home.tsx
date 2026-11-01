@@ -3,29 +3,17 @@ import { algorithmRegistry } from '../config/algorithmRegistry';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { Search, ArrowRight } from 'lucide-react';
 import { MODULE_DESCRIPTIONS } from './ModulePage';
-import { STORY_SCENES } from '../components/story/storyRegistry';
 import { VIGNETTES } from '../components/home/StoryVignettes';
 import { OwlMascot } from '../components/home/OwlMascot';
 import { FloatingStory3D, GradientField } from '../components/home/fx/lazy';
 import { useLiquidGlass } from '../components/home/fx/useLiquidGlass';
+import { FIELDS, FieldName, MODULE_FIELDS, ALGO_NAMES, storyLine } from '../styles/chapters';
 import '../styles/home-c.css';
 
 interface HomeProps {
   onSelectModule: (moduleNumber: number) => void;
   onSelectAlgorithm: (id: string) => void;
 }
-
-/** Field colours, ink to match. Each module is a chapter in one of them. */
-const FIELDS = {
-  coral: { bg: '#ed4b44', ink: '#0f0f0f', soft: '#2e0a08' },
-  ink: { bg: '#1a1a1a', ink: '#e6e0d2', soft: '#c9c2b2' },
-  green: { bg: '#18bc42', ink: '#1a1a1a', soft: '#0b3d17' },
-  yellow: { bg: '#f2c21a', ink: '#1a1a1a', soft: '#4d3c00' },
-  bone: { bg: '#dcd5c5', ink: '#1a1a1a', soft: '#4a463e' },
-} as const;
-type FieldName = keyof typeof FIELDS;
-
-const MODULE_FIELDS: FieldName[] = ['coral', 'ink', 'green', 'yellow', 'bone', 'coral', 'green'];
 
 /** The stories a visitor can pick: each plays the algorithm's default example. */
 const STORIES: { id: string; label: string; fact: string; field: FieldName }[] = [
@@ -35,9 +23,6 @@ const STORIES: { id: string; label: string; fact: string; field: FieldName }[] =
   { id: 'graham-scan', label: 'Pegs', fact: 'Graham’s Scan walks the pegs in angle order and drops every dent in the rubber band.', field: 'yellow' },
   { id: 'randomized-quicksort', label: 'Kids', fact: 'Quicksort picks a random kid and splits everyone into shorter and taller.', field: 'ink' },
 ];
-
-/** Algorithm names by id, for links that name where they go. */
-const ALGO_NAMES: Record<string, string> = Object.fromEntries(algorithmRegistry.map((a) => [a.id, a.name]));
 
 const STAGES = [
   { name: 'Read', text: 'Every algorithm opens with the problem it solves and its steps in plain words. No code, no symbols yet.' },
@@ -60,12 +45,6 @@ const rise = (reduce: boolean | null, i = 0) =>
         viewport: { once: true, margin: '-10% 0px' },
         transition: { duration: 0.55, ease: EASE_OUT, delay: i * 0.07 },
       };
-
-/** One plain line about what an algorithm's story looks like, or its problem when it has none. */
-const storyLine = (id: string, problem: string) =>
-  id === 'fractional-knapsack'
-    ? 'Cheese wheels sliced to fit a leather backpack'
-    : STORY_SCENES[id]?.hint ?? problem.split(/(?<=\.)\s/)[0];
 
 export const Home: React.FC<HomeProps> = ({ onSelectModule, onSelectAlgorithm }) => {
   const [searchTerm, setSearchTerm] = useState('');

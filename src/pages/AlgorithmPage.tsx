@@ -32,6 +32,7 @@ import { prepareOwlFlight } from '../components/common/owlFlight';
 import { OwlFlightLayer } from '../components/common/OwlFlightLayer';
 
 import { ArrowLeft, Columns, Maximize2, Play, RefreshCw, SlidersHorizontal } from 'lucide-react';
+import { moduleField, storyLine } from '../styles/chapters';
 
 interface AlgorithmPageProps {
   algorithmId: string;
@@ -258,7 +259,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
 
   const [layoutMode, setLayoutMode] = useState<'split' | 'stacked'>(initialLayoutMode);
 
-  const moduleNumStr = String(config.module).padStart(2, '0');
+  const learnField = moduleField(config.module);
 
   const huffmanStageSwitch = (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-obsidian-950 border border-amber/40 shadow-sm">
@@ -530,23 +531,6 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
     />
   );
 
-  const algorithmTitle = (
-    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
-      <button
-        onClick={onBack}
-        className="group flex items-center gap-1.5 px-2.5 py-1 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-400 hover:text-chalk-100 border border-hairline font-mono text-xs tracking-wider transition-colors"
-        title="Back to Catalog"
-      >
-        <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-        <span>CATALOG</span>
-      </button>
-      <span className="font-mono text-xs text-amber tracking-wider font-semibold">
-        {moduleNumStr} • {config.moduleName}
-      </span>
-      <span className="font-mono text-xs text-chalk-500">—</span>
-      <h1 className="font-display font-bold text-lg sm:text-xl tracking-tight text-chalk-100">{config.name}</h1>
-    </div>
-  );
 
   const startButton = (label: string) => (
     <button
@@ -557,7 +541,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
         prepareOwlFlight(document.querySelector('[data-owl-button]'));
         setView('play');
       }}
-      className="flex items-center gap-2 px-4 py-2 bg-amber text-obsidian-950 font-sans text-sm font-bold hover:bg-amber-glow transition-colors shadow-sm"
+      className="al-start"
     >
       <Play className="w-4 h-4 fill-current" aria-hidden />
       {label}
@@ -567,16 +551,24 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
   // ── Learn view: the owl explains the problem and the whole procedure, then "Start the animation". ──
   if (view === 'learn') {
     return (
-      <div data-view="learn" className="flex flex-col gap-3 max-w-[1440px] mx-auto px-2 sm:px-3 lg:px-4 py-3 w-full">
-        <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
+      <div data-view="learn" className="flex flex-col gap-6 max-w-[1440px] mx-auto px-2 sm:px-3 lg:px-4 py-3 w-full">
+        {/* The algorithm's chapter: its module's colour, its name, the story it tells, and the way in. */}
+        <motion.header
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex flex-wrap items-center justify-between gap-3"
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="al-hero"
+          data-dark={learnField.bg === '#1a1a1a'}
+          style={{ background: learnField.bg, color: learnField.ink, ['--soft' as string]: learnField.soft }}
         >
-          {algorithmTitle}
+          <button type="button" onClick={onBack} className="mp-back">
+            <ArrowLeft className="w-4 h-4" aria-hidden /> {config.moduleName}
+          </button>
+          <p className="al-kicker">{config.paradigm}</p>
+          <h1 className="hc-display al-title">{config.name}</h1>
+          <p className="hc-lead al-lead">{storyLine(config.id, config.problemStatement)}</p>
           {startButton('Start the animation')}
-        </motion.div>
+        </motion.header>
 
         <ProblemIntuitionPanel
           problemStatement={config.problemStatement}
@@ -587,9 +579,9 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
           briefing={OWL_BRIEFINGS[config.id]}
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 bg-obsidian-950 border border-amber/40">
-          <p className="font-sans text-sm text-chalk-200">
-            <span aria-hidden>🦉 </span>Ready? The animation follows exactly these steps, one at a time, and you can change the input there.
+        <div className="al-ready">
+          <p className="hc-lead">
+            Ready? The animation follows exactly these steps, one at a time, and you can change the input there.
           </p>
           {startButton('Start the animation')}
         </div>
@@ -607,6 +599,8 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
     <div
       data-view="play"
       className={`flex flex-col gap-2 px-2 sm:px-3 py-2 w-full max-w-[1920px] mx-auto ${fitToScreen ? 'lg:h-[calc(100dvh/var(--app-zoom,1)-2.75rem-1px)]' : ''}`}
+      // While paused, every looping scene animation holds still too (see index.css).
+      data-playing={isPlaying ? 'true' : 'false'}
     >
       <OwlFlightLayer />
 

@@ -302,7 +302,7 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
           </p>
           {!done && (
             <div className="h-1 w-full bg-obsidian-800 rounded-full overflow-hidden" aria-hidden>
-              <div className="h-full bg-amber transition-[width] duration-700 ease-out" style={{ width: `${Math.round(((shown > 0 ? times[shown - 1] : 0) / end) * 100)}%` }} />
+              <div className="h-full w-full origin-left bg-amber transition-transform duration-700 ease-out" style={{ transform: `scaleX(${((shown > 0 ? times[shown - 1] : 0) / end).toFixed(3)})` }} />
             </div>
           )}
         </div>

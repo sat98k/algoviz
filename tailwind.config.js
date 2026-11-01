@@ -5,6 +5,8 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   darkMode: 'class',
+  // hover: utilities apply only where the pointer can hover, so a tap never leaves one stuck on.
+  future: { hoverOnlyWhenSupported: true },
   theme: {
     extend: {
       colors: {
@@ -63,10 +65,22 @@ export default {
         },
       },
       fontFamily: {
-        display: ['"Space Grotesk"', 'sans-serif'],
+        display: ['"Red Hat Display"', 'system-ui', 'sans-serif'],
         serif: ['"Instrument Serif"', 'Georgia', 'serif'],
-        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['"Red Hat Text"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'Fira Code', 'monospace'],
+      },
+      // Strong custom curves (Emil Kowalski's set) in place of the weak built-in ones: ease-out for
+      // things entering or answering a press, ease-in-out for objects moving across a scene.
+      transitionTimingFunction: {
+        DEFAULT: 'cubic-bezier(0.23, 1, 0.32, 1)',
+        out: 'cubic-bezier(0.23, 1, 0.32, 1)',
+        'in-out': 'cubic-bezier(0.77, 0, 0.175, 1)',
+      },
+      // transition-all names what may move. Positions and sizes stay on the list because the story
+      // scenes glide items between slots (docs/animation-preferences.md); nothing else animates by accident.
+      transitionProperty: {
+        all: 'transform, translate, scale, rotate, opacity, color, background-color, border-color, fill, stroke, stroke-dashoffset, box-shadow, filter, left, top, right, bottom, width, height',
       },
       animation: {
         'marquee': 'marquee 30s linear infinite',
