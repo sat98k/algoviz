@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { GlowSection } from '../components/home/fx/GlowSection';
+import { SplitText } from '../components/home/SplitText';
 import { ArrowLeftRight, CheckCircle2, GitCompare, Info } from 'lucide-react';
 import { AlgorithmConfig, AlgorithmStep, MetricData } from '../types/algorithm';
 import { DEFAULT_COMPARISON_GROUP, ComparisonGroupId } from '../config/comparisonGroups';
@@ -227,16 +229,17 @@ export const ComparisonPage: React.FC = () => {
         transition={{ duration: 0.6 }}
         className="flex flex-col gap-8"
       >
-        <header className="cmp-hero">
+        <GlowSection as="header" field="yellow" className="cmp-hero">
           <h1 className="hc-display cmp-title">
             <GitCompare className="cmp-title-icon" aria-hidden />
-            {group.title}, side by side
+            {/* Keyed by problem so choosing another one plays the reveal again. */}
+            <SplitText key={group.title} lines={[`${group.title}, side by side`]} by="word" play="mount" delay={0.1} />
           </h1>
           <p className="hc-lead cmp-lead">
             <span className="font-bold">The problem: </span>
             {group.problem}
           </p>
-        </header>
+        </GlowSection>
 
         {/* 1. Pick a problem */}
         <div className="flex flex-col gap-2">

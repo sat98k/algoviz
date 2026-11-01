@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { algorithmRegistry } from '../config/algorithmRegistry';
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { motion, useReducedMotion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Search, ArrowRight } from 'lucide-react';
 import { MODULE_DESCRIPTIONS } from './ModulePage';
 import { VIGNETTES } from '../components/home/StoryVignettes';
 import { OwlMascot } from '../components/home/OwlMascot';
+import { SplitText } from '../components/home/SplitText';
+import { GlowSection } from '../components/home/fx/GlowSection';
 import { FloatingStory3D, GradientField } from '../components/home/fx/lazy';
 import { useLiquidGlass } from '../components/home/fx/useLiquidGlass';
 import { FIELDS, FieldName, MODULE_FIELDS, ALGO_NAMES, storyLine } from '../styles/chapters';
@@ -53,6 +55,10 @@ export const Home: React.FC<HomeProps> = ({ onSelectModule, onSelectAlgorithm })
   const reduce = useReducedMotion();
   const glassRoot = React.useRef<HTMLDivElement>(null);
   useLiquidGlass(glassRoot);
+  // The floating story objects drift up faster than the page as the hero scrolls away (depth).
+  const heroRef = React.useRef<HTMLElement>(null);
+  const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
+  const floatY = useTransform(heroProgress, [0, 1], [0, -220]);
 
   const searchResults = useMemo(() => {
     if (!searchTerm.trim()) return [];
@@ -80,21 +86,19 @@ export const Home: React.FC<HomeProps> = ({ onSelectModule, onSelectAlgorithm })
 
   const story = STORIES.find((s) => s.id === storyId) ?? STORIES[0];
   const StoryVignette = VIGNETTES[story.id];
-  const headline = (
-    <>
-      Algorithms
-      <br />
-      at play
-    </>
-  );
+  // Both headline layers (the ink above the seam and the brown below it) play the same reveal, so
+  // they stay in register letter for letter.
+  const headline = <SplitText lines={['Algorithms', 'at play']} by="char" play="mount" delay={0.1} />;
 
   return (
     <div className="home-c flex flex-col w-full">
       {/* HERO: two fields meeting halfway; the headline changes ink as it crosses the seam. */}
-      <section data-chapter="bone" className="hc-hero relative overflow-hidden">
+      <section ref={heroRef} data-chapter="bone" className="hc-hero relative overflow-hidden">
         {/* Paper above, with the story objects floating in 3D; a moving shader-gradient field below. */}
         <div className="hc-hero-top">
-          <FloatingStory3D className="absolute inset-0" queenColor="#1a1a1a" />
+          <motion.div className="absolute inset-0" style={reduce ? undefined : { y: floatY }}>
+            <FloatingStory3D className="absolute inset-0" queenColor="#1a1a1a" />
+          </motion.div>
         </div>
         <div className="hc-hero-bottom" ref={glassRoot}>
           <GradientField className="absolute inset-0" colors={['#f2c21a', '#f59e0b', '#ed4b44']} speed={0.2} />
@@ -116,28 +120,25 @@ export const Home: React.FC<HomeProps> = ({ onSelectModule, onSelectAlgorithm })
           </div>
         </div>
 
-        <motion.div
-          className="hc-headline-wrap"
-          initial={reduce ? false : { opacity: 0, y: 40, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={reduce ? undefined : { type: 'spring', stiffness: 120, damping: 16 }}
-        >
+        <div className="hc-headline-wrap">
           <h1 className="hc-display hc-headline hc-headline-top">{headline}</h1>
           <p className="hc-display hc-headline hc-headline-bottom" aria-hidden>
             {headline}
           </p>
-          {/* The owl lands on the headline, perched on its last letters. */}
+          {/* The owl lands on the headline once its letters have risen, perched on the last ones. */}
           <motion.div
             className="hc-owl-perch"
             initial={reduce ? false : { y: -320, rotate: -25 }}
             animate={{ y: 0, rotate: 0 }}
-            transition={reduce ? undefined : { type: 'spring', stiffness: 170, damping: 10, delay: 0.6 }}
+            transition={reduce ? undefined : { type: 'spring', stiffness: 170, damping: 10, delay: 0.95 }}
           >
             <OwlMascot look="left" />
           </motion.div>
-        </motion.div>
+        </div>
       </section>
 
+      {/* The paper sections share one field: warm paper blobs and gold dust that drift as you scroll. */}
+      <GlowSection as="div" field="paper" className="flex flex-col">
       {/* SHOWCASE: pick an object and its story plays on a coloured disc. The picker comes first so its
           heading leads in reading order; on wide screens the grid puts the disc on the right. */}
       <section data-chapter="bone" className="hc-frame hc-showcase" aria-labelledby="hc-stories">
@@ -158,6 +159,15 @@ export const Home: React.FC<HomeProps> = ({ onSelectModule, onSelectAlgorithm })
                   transition={SPRING}
                 >
                   {s.label}
+                  {/* One coral marker that slides to whichever story is chosen. */}
+                  {s.id === storyId && (
+                    <motion.span
+                      layoutId="hc-pick-mark"
+                      className="hc-pick-mark"
+                      aria-hidden
+                      transition={reduce ? { duration: 0 } : SPRING}
+                    />
+                  )}
                 </motion.button>
               </li>
             ))}
@@ -268,12 +278,14 @@ export const Home: React.FC<HomeProps> = ({ onSelectModule, onSelectAlgorithm })
           </div>
         )}
       </section>
+      </GlowSection>
 
       {modulesList.map((mod, mi) => {
         const f = FIELDS[MODULE_FIELDS[mi]];
         return (
-          <section
+          <GlowSection
             key={mod.number}
+            field={MODULE_FIELDS[mi]}
             data-chapter={MODULE_FIELDS[mi]}
             className="hc-chapter"
             style={{ background: f.bg, color: f.ink, ['--soft' as string]: f.soft }}
@@ -281,9 +293,9 @@ export const Home: React.FC<HomeProps> = ({ onSelectModule, onSelectAlgorithm })
           >
             <div className="hc-frame">
               <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3">
-                <motion.h2 id={`hc-mod-${mod.number}`} className="hc-display hc-chapter-title" {...rise(reduce)}>
-                  {mod.title}
-                </motion.h2>
+                <h2 id={`hc-mod-${mod.number}`} className="hc-display hc-chapter-title">
+                  <SplitText lines={[mod.title]} by="word" play="view" />
+                </h2>
                 <span className="hc-body font-bold whitespace-nowrap">
                   Module {mod.number} · {mod.algorithms.length} algorithms
                 </span>
@@ -315,7 +327,7 @@ export const Home: React.FC<HomeProps> = ({ onSelectModule, onSelectAlgorithm })
                 Open module {mod.number} <ArrowRight className="w-5 h-5" aria-hidden />
               </motion.button>
             </div>
-          </section>
+          </GlowSection>
         );
       })}
     </div>
@@ -331,7 +343,10 @@ const AlgoItem: React.FC<{ name: string; meta: string; line: string; onClick: ()
   <button type="button" onClick={onClick} className="hc-item">
     <span className="flex flex-col gap-1 min-w-0">
       <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <span className="hc-item-name">{name}</span>
+        <span className="hc-item-name">
+          <span className="hc-item-name-text">{name}</span>
+          <ArrowRight className="hc-item-arrow" aria-hidden />
+        </span>
         <span className="hc-item-meta">{meta}</span>
       </span>
       <span className="hc-item-line">{line}</span>

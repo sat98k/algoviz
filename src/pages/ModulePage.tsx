@@ -3,6 +3,8 @@ import { algorithmRegistry } from '../config/algorithmRegistry';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Search } from 'lucide-react';
 import { FIELDS, FieldName, moduleField, storyLine } from '../styles/chapters';
+import { GlowSection } from '../components/home/fx/GlowSection';
+import { SplitText } from '../components/home/SplitText';
 import '../styles/home-c.css';
 
 export type Module2SubCategory = 'dp' | 'backtracking' | 'branch-and-bound';
@@ -216,7 +218,11 @@ const ChapterHeader: React.FC<{
 }> = ({ field, back, kicker, title, lead, body, children }) => {
   const reduce = useReducedMotion();
   return (
-    <section className="mp-header" style={{ background: field.bg, color: field.ink, ['--soft' as string]: field.soft }}>
+    <GlowSection
+      field={field.bg}
+      className="mp-header"
+      style={{ background: field.bg, color: field.ink, ['--soft' as string]: field.soft }}
+    >
       <div className="hc-frame">
         <button type="button" onClick={back.onClick} className="mp-back">
           <ArrowLeft className="w-4 h-4" aria-hidden /> {back.label}
@@ -224,9 +230,10 @@ const ChapterHeader: React.FC<{
         <motion.p className="mp-kicker" {...rise(reduce)}>
           {kicker}
         </motion.p>
-        <motion.h1 className="hc-display mp-title" {...rise(reduce, 1)}>
-          {title}
-        </motion.h1>
+        {/* Keyed by title so moving to another module plays the reveal again. */}
+        <h1 className="hc-display mp-title">
+          <SplitText key={title} lines={[title]} by="word" play="mount" delay={0.06} />
+        </h1>
         <motion.p className="hc-lead mp-lead" {...rise(reduce, 2)}>
           {lead}
         </motion.p>
@@ -237,7 +244,7 @@ const ChapterHeader: React.FC<{
         )}
         {children}
       </div>
-    </section>
+    </GlowSection>
   );
 };
 
@@ -463,7 +470,9 @@ export const ModulePage: React.FC<ModulePageProps> = ({
             const f = FIELDS[TRACK_FIELDS[id]];
             const algos = moduleAlgorithms.filter((a) => getModule2SubCategory(a.paradigm) === id);
             return (
-              <motion.article
+              <GlowSection
+                as={motion.article}
+                field={f.bg}
                 key={id}
                 className="mp-track"
                 style={{ background: f.bg, color: f.ink, ['--soft' as string]: f.soft }}
@@ -471,7 +480,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({
                 aria-labelledby={`mp-track-${id}`}
               >
                 <h2 id={`mp-track-${id}`} className="hc-display mp-track-title">
-                  {track.name}
+                  <SplitText lines={[track.name]} by="word" play="view" delay={k * 0.08} />
                 </h2>
                 <p className="hc-lead mp-track-tagline">{track.tagline}</p>
                 <p className="hc-body mp-soft">{track.description}</p>
@@ -495,7 +504,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({
                 >
                   Open {track.name} <ArrowRight className="w-5 h-5" aria-hidden />
                 </motion.button>
-              </motion.article>
+              </GlowSection>
             );
           })}
         </section>

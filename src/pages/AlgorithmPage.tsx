@@ -3,6 +3,8 @@ import { OwlGlyph } from '../components/home/OwlMascot';
 import { AlgorithmStep } from '../types/algorithm';
 import { getAlgorithmById } from '../config/algorithmRegistry';
 import { motion, useReducedMotion } from 'framer-motion';
+import { GlowSection } from '../components/home/fx/GlowSection';
+import { SplitText } from '../components/home/SplitText';
 
 // Visualizer Components
 import { VisualizerStage } from '../components/visualizers/VisualizerStage';
@@ -550,7 +552,10 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
     return (
       <div data-view="learn" className="flex flex-col gap-6 max-w-[1440px] mx-auto px-2 sm:px-3 lg:px-4 py-3 w-full">
         {/* The algorithm's chapter: its module's colour, its name, the story it tells, and the way in. */}
-        <motion.header
+        {/* Its colour field drifts like the home chapters; the learning panels below stay still. */}
+        <GlowSection
+          as={motion.header}
+          field={learnField.bg}
           initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -561,10 +566,12 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
           <button type="button" onClick={onBack} className="mp-back">
             <ArrowLeft className="w-4 h-4" aria-hidden /> {config.moduleName}
           </button>
-          <h1 className="hc-display al-title">{config.name}</h1>
+          <h1 className="hc-display al-title">
+            <SplitText key={config.id} lines={[config.name]} by="word" play="mount" delay={0.12} />
+          </h1>
           <p className="hc-lead al-lead">{storyLine(config.id, config.problemStatement)}</p>
           {startButton('Start the animation')}
-        </motion.header>
+        </GlowSection>
 
         <ProblemIntuitionPanel
           problemStatement={config.problemStatement}

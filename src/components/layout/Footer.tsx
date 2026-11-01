@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useInView } from 'framer-motion';
 import { LiquidOwl } from '../home/fx/lazy';
+import { useAmbient } from '../home/fx/useAmbient';
+import { GlowSection } from '../home/fx/GlowSection';
 
 /** The last chapter: the name first, at full width, on the ink field. */
 export const Footer: React.FC = () => {
+  // The wordmark is filled with the hero's yellow-orange-red field. It flows for a few seconds
+  // when it comes into view, then holds, and flows again under the pointer.
+  const markRef = useRef<HTMLParagraphElement>(null);
+  const { active, wake } = useAmbient(8000);
+  const inView = useInView(markRef, { margin: '-10% 0px' });
+  useEffect(() => {
+    if (inView) wake();
+  }, [inView, wake]);
+
   return (
-    <footer data-chapter="ink" className="chrome-c w-full overflow-hidden bg-[#1a1a1a] text-[#e6e0d2]">
+    <GlowSection as="footer" field="ink" data-chapter="ink" className="chrome-c w-full bg-[#1a1a1a] text-[#e6e0d2]">
       <div className="hc-frame pt-[clamp(48px,8vh,96px)] pb-8 flex flex-col gap-[clamp(48px,9vh,112px)]">
-        <p className="hc-display text-[clamp(72px,19vw,340px)] leading-[0.85] select-none" aria-hidden>
+        <p
+          ref={markRef}
+          onPointerMove={wake}
+          className={`hc-display hc-wordmark text-[clamp(72px,19vw,340px)] leading-[0.85] select-none${active ? ' is-flowing' : ''}`}
+          aria-hidden
+        >
           algoviz
         </p>
         <div className="grid gap-10 md:grid-cols-12 items-end">
@@ -22,6 +39,6 @@ export const Footer: React.FC = () => {
           <span>© 2026 AlgoViz</span>
         </div>
       </div>
-    </footer>
+    </GlowSection>
   );
 };

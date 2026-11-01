@@ -123,6 +123,64 @@
   font-size: 1.0625rem;
 }
 .hc-chapter-link { margin-top: 3.5rem; }
+/* Pill buttons: the arrow leans toward where the button goes. */
+.hc-chapter-link svg,
+.hc-glass-cta button svg { transition: translate 240ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@media (hover: hover) {
+  .hc-chapter-link:hover svg,
+  .hc-glass-cta button:hover svg { translate: 4px 0; }
+}
+
+/* Split-text reveals (SplitText.tsx): letters and words rise as inline blocks. */
+.hc-split-line { display: block; }
+.hc-split-word { display: inline-block; white-space: nowrap; }
+.hc-split-piece { display: inline-block; }
+
+/* Segment fields (GlowSection.tsx + FieldCanvas.tsx): gradient blobs and particles drawn on a
+   canvas under the content, scroll-driven, with film grain on top. */
+.hc-glow-host { position: relative; isolation: isolate; overflow: hidden; }
+.hc-glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.hc-field-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hc-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.hc-glow.is-dark::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Footer wordmark filled with the hero's field: yellow, orange and red under film grain. */
+.hc-wordmark { color: #f2c21a; }
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .hc-wordmark {
+    color: transparent;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.1 0 0 0 0 0.05 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      radial-gradient(40% 90% at 25% 40%, #fde047, transparent 70%),
+      radial-gradient(35% 90% at 75% 60%, #ed4b44, transparent 70%),
+      linear-gradient(100deg, #f59e0b, #f2c21a 35%, #ed4b44 65%, #f59e0b);
+    background-size: 180px 180px, 200% 100%, 200% 100%, 200% 100%;
+    background-position: 0 0, 0% 0, 100% 0, 0% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    /* The fill only paints inside the box, and the tight leading would cut the g's descender:
+       pad the box out and take the same space back so the layout does not move. */
+    padding-block: 0.05em 0.2em;
+    margin-block: -0.05em -0.2em;
+    animation: hcWordmarkFlow 10s ease-in-out infinite alternate;
+    animation-play-state: paused;
+  }
+  .hc-wordmark.is-flowing { animation-play-state: running; }
+}
+@keyframes hcWordmarkFlow {
+  to { background-position: 0 0, 100% 0, 0% 0, 100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hc-wordmark { animation: none; }
+}
 
 .hc-text-link {
   font-weight: 700;
@@ -164,6 +222,7 @@
 .hc-picker-title { font-size: clamp(32px, 3.2vw, 52px); color: #4a463e; }
 .hc-picker-list { display: flex; flex-direction: column; gap: 0.2rem; }
 .hc-pick {
+  position: relative;
   font-size: clamp(32px, 3.2vw, 52px);
   color: #6f6a5f;
   transition: color 200ms;
@@ -172,7 +231,16 @@
 @media (hover: hover) {
   .hc-pick:hover { color: #1a1a1a; }
 }
-.hc-pick.is-on { text-decoration: underline; text-decoration-thickness: 6px; text-underline-offset: 8px; text-decoration-color: #ed4b44; }
+/* The chosen story's marker: one bar that slides between labels (Framer layoutId). */
+.hc-pick-mark {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.1em;
+  height: 6px;
+  border-radius: 3px;
+  background: #ed4b44;
+}
 @media (max-width: 1023px) {
   .hc-picker-list { flex-direction: row; overflow-x: auto; gap: 1.5rem; max-width: 100%; padding-bottom: 0.5rem; }
 }
@@ -267,7 +335,26 @@
   .hc-item:hover { background: rgb(255 255 255 / 0.22); transform: translateX(6px); }
 }
 .hc-item:active { transform: scale(0.96); }
-.hc-item-name { font-weight: 700; font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem); line-height: 1.3; }
+.hc-item-name { font-weight: 700; font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem); line-height: 1.3; display: inline-flex; align-items: center; gap: 0.4rem; }
+/* On hover or focus, an underline draws in under the name and an arrow springs in after it. */
+.hc-item-name-text {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0% 2px no-repeat;
+  transition: background-size 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hc-item-arrow {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  opacity: 0;
+  translate: -6px 0;
+  transition: opacity 180ms, translate 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.hc-item:focus-visible .hc-item-name-text { background-size: 100% 2px; }
+.hc-item:focus-visible .hc-item-arrow { opacity: 1; translate: 0 0; }
+@media (hover: hover) {
+  .hc-item:hover .hc-item-name-text { background-size: 100% 2px; }
+  .hc-item:hover .hc-item-arrow { opacity: 1; translate: 0 0; }
+}
 .hc-item-meta { font-size: 0.875rem; font-weight: 500; color: var(--soft, #4a463e); }
 .hc-item-line { font-size: 0.9375rem; line-height: 1.45; color: var(--soft, #4a463e); max-width: 44ch; }
 @media (hover: hover) {
@@ -470,6 +557,22 @@ main h1[tabindex='-1']:focus { outline: none; }
   transition: transform 150ms ease-out;
 }
 .mp-turn-btn:active { transform: scale(0.96); }
+
+/* Hover touches shared with the home page: names draw an underline in, arrows lean the way the
+   button goes (back arrows lean back). */
+.mp-row-name {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0% 3px no-repeat;
+  transition: background-size 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mp-row:focus-visible .mp-row-name { background-size: 100% 3px; }
+.mp-turn-btn svg,
+.mp-back svg { transition: translate 240ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@media (hover: hover) {
+  .mp-row:hover .mp-row-name { background-size: 100% 3px; }
+  .mp-turn-next:hover svg { translate: 4px 0; }
+  .mp-turn-btn:not(.mp-turn-next):hover svg,
+  .mp-back:hover svg { translate: -4px 0; }
+}
 .mp-turn-next { margin-left: auto; text-align: right; }
 
 /* ── Algorithm pages ───────────────────────────────────────────────────────────────────── */
