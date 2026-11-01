@@ -1,6 +1,9 @@
 import React, { useRef } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases, useHeldValue, useProgress, useTweened } from './useAnimPhases';
+import { PALETTE, SceneDefs, tint, useSvgIds } from './kit/materials';
+import { CityBasin, Coupling, Drop, METAL, Pipe as PipeShape, PillTag, PlumbingDefs, Tank, WATER as WATER_KIT, WaterTower } from './kit/plumbing';
+import { useChapter } from './kit/chapter';
 import type { AugmentEntry, FlowSearchState } from '../../algorithms/flowSearch';
 
 /**
@@ -44,11 +47,9 @@ const RULER_X = 34;
 /** Room a tank takes below its centre: its body plus the level plaque hung under it. */
 const TANK_BOTTOM = 58;
 
-const WATER = '#38bdf8';
-const WATER_DEEP = '#0284c7';
-const STEEL = '#d6d3d1';
-const STEEL_DARK = '#78716c';
-const GOLD = '#f59e0b';
+const WATER_DEEP = WATER_KIT.deep;
+const GOLD = PALETTE.gold;
+const PLUM = '#8b3fb0';
 
 const quad = (p0: Pt, c: Pt, p2: Pt, t: number): Pt => ({
   x: (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * c.x + t * t * p2.x,
@@ -118,14 +119,15 @@ function pointOnRoute(route: number[], pipes: Pipe[], pos: Pt[], p: number, viaB
   return { x: pos[a].x + (pos[b].x - pos[a].x) * t, y: pos[a].y + (pos[b].y - pos[a].y) * t };
 }
 
-const Droplet: React.FC<{ at: Pt; scale?: number; color?: string }> = ({ at, scale = 1, color = WATER_DEEP }) => (
-  <g transform={`translate(${at.x}, ${at.y}) scale(${scale})`} pointerEvents="none">
-    <path d="M0,-11 C5,-4 8,0 8,4 A8,8 0 0 1 -8,4 C-8,0 -5,-4 0,-11 Z" fill={color} stroke="#ffffff" strokeWidth="1.5" />
-    <ellipse cx="-2.5" cy="2" rx="2" ry="3" fill="#ffffff" opacity="0.55" />
+const Droplet: React.FC<{ at: Pt; scale?: number; color?: string; ids?: string }> = ({ at, scale = 1, color = WATER_DEEP, ids = '' }) => (
+  <g transform={`translate(${at.x}, ${at.y})`}>
+    <Drop ids={ids} scale={scale} deep={color === '#0369a1'} />
   </g>
 );
 
 export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, stepMs }) => {
+  const ids = useSvgIds();
+  const field = useChapter();
   const st: any = step.state || {};
   const nodes: { id: string; label: string }[] = st.nodes || [];
   const cap: number[][] = st.capacityMatrix || [];
@@ -494,11 +496,11 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       return { text: full ? `full ${f}/${p.cap}` : `${f} / ${p.cap}`, tone: full ? 'full' : 'plain' };
     })();
     const tagStyle = {
-      plain: { fill: '#ffffff', stroke: '#d6d3d1', ink: '#44403c' },
-      full: { fill: '#fee2e2', stroke: '#f87171', ink: '#991b1b' },
-      room: { fill: '#fffbeb', stroke: GOLD, ink: '#78350f' },
-      surge: { fill: '#e0f2fe', stroke: WATER_DEEP, ink: '#075985' },
-      undo: { fill: '#f5f3ff', stroke: '#8b5cf6', ink: '#5b21b6' },
+      plain: { fill: '#fbf9f4', stroke: '#cfc6b4', ink: '#3a3732' },
+      full: { fill: '#fbe3e1', stroke: '#cc2e2e', ink: '#801818' },
+      room: { fill: '#fdf1c7', stroke: GOLD, ink: '#5c3a00' },
+      surge: { fill: '#e3f0fd', stroke: WATER_DEEP, ink: '#173a85' },
+      undo: { fill: '#f3e8f8', stroke: PLUM, ink: '#5a2378' },
     }[tag?.tone ?? 'plain'];
     // Tags carry the pipe's direction arrow inside them, so they are a little wider than their text.
     const tagW = (tag?.text.length ?? 0) * 7.6 + 30;
@@ -510,44 +512,26 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       const deg = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI + (flip ? 180 : 0);
       return (
         <g transform={`translate(${a.x}, ${a.y}) rotate(${deg})`}>
-          <path d="M -5 -5 L 3 0 L -5 5" fill="none" stroke={STEEL_DARK} strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M -5 -5 L 3 0 L -5 5" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         </g>
       );
     };
     return (
       <g key={`pipe-${p.u}-${p.v}`} data-pipe={`${p.u}-${p.v}`}>
-        {(glow || lit) && (
-          <path d={pipePath(p)} fill="none" stroke={glow ? GOLD : '#fde68a'} strokeWidth={casing + (glow ? 12 : 7)} strokeLinecap="round" opacity={glow ? 0.9 : 0.7} />
-        )}
-        {isPouring(p) && <path d={pipePath(p)} fill="none" stroke="#bae6fd" strokeWidth={casing + 10} strokeLinecap="round" opacity="0.9" />}
-        <path d={pipePath(p)} fill="none" stroke={STEEL_DARK} strokeWidth={casing + 3} strokeLinecap="round" />
-        <path d={pipePath(p)} fill="none" stroke={STEEL} strokeWidth={casing} strokeLinecap="round" />
-        <path
-          d={pipePath(p)}
-          fill="none"
-          stroke={WATER}
-          strokeWidth={water}
-          strokeLinecap="round"
-          style={{ transition: 'stroke-width 0.9s var(--ease-move)' }}
-        />
-        {water > 0 && (
-          <path
-            d={pipePath(p)}
-            fill="none"
-            stroke="#ffffff"
-            strokeOpacity="0.6"
-            strokeWidth={Math.max(1, water * 0.3)}
-            strokeDasharray="8 10"
-            className="animate-flow-dash"
-          />
-        )}
+        <PipeShape d={pipePath(p)} casing={casing} water={water} glow={glow ? 'strong' : lit ? 'soft' : undefined} pouring={isPouring(p)} />
+        {[0.16, 0.84].map((tt) => {
+          const a = quad(p.p0, p.c, p.p2, tt);
+          const b = quad(p.p0, p.c, p.p2, tt + 0.02);
+          return <Coupling key={tt} x={a.x} y={a.y} angle={(Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI} casing={casing} />;
+        })}
         {/* Return valve: a pipe carrying water can send it back (the reverse edge). It spins while that happens. */}
         {!isPR && f > 0 && (
           <g transform={`translate(${quad(p.p0, p.c, p.p2, 0.8).x}, ${quad(p.p0, p.c, p.p2, 0.8).y})`} data-valve={`${p.u}-${p.v}`} data-valve-open={valveOpen(p) || undefined}>
-            {valveOpen(p) && <circle r="12" fill="#ede9fe" stroke="#8b5cf6" strokeWidth="1.5" opacity="0.9" />}
+            {valveOpen(p) && <circle r="14" fill={tint(PLUM, 0.8)} stroke={PLUM} strokeWidth="1.5" opacity="0.95" />}
             <g className={valveOpen(p) ? 'animate-spin' : undefined} style={{ transformBox: 'fill-box', transformOrigin: 'center' }}>
-              <circle r="6.5" fill="#f5f3ff" stroke="#7c3aed" strokeWidth="2" />
-              <path d="M -6 0 H 6 M 0 -6 V 6" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" />
+              <circle r="8" fill={PLUM} stroke={tint(PLUM, -0.35)} strokeWidth="1.5" />
+              <path d="M -7 0 H 7 M 0 -7 V 7" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+              <circle r="2.6" fill={tint(PLUM, 0.6)} />
             </g>
           </g>
         )}
@@ -639,10 +623,11 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
           <g key={`tag-${q.id}`} transform={`translate(${at.x}, ${at.y})`} data-bottleneck-badge>
             <line x1="0" y1="0" x2={leader.x} y2={leader.y} stroke={style.stroke} strokeWidth="2" strokeDasharray="3 2" />
             <g className="animate-story-pop">
-              <rect x={-q.w / 2} y="-14" width={q.w} height="28" rx="14" fill={style.fill} stroke={style.stroke} strokeWidth="1.5" />
-              <text textAnchor="middle" y="5" fontSize="14" fontWeight="800" fill={style.ink}>
-                {tag.text}
-              </text>
+              <PillTag w={q.w} h={28} fill={style.fill} stroke={style.stroke}>
+                <text textAnchor="middle" y="5" fontSize="14" fontWeight="900" fill={style.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
+                  {tag.text}
+                </text>
+              </PillTag>
             </g>
           </g>
         );
@@ -651,12 +636,12 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
           {/* a short tether from the tag to its pipe, so it is clear which pipe it describes */}
           <line x1="0" y1="0" x2={leader.x} y2={leader.y} stroke={style.stroke} strokeWidth="1.5" strokeDasharray="2 2" />
           <g key={`${tag.tone}-${phase}`} className={tag.tone === 'room' || tag.tone === 'surge' || tag.tone === 'undo' ? 'animate-story-pop' : undefined}>
-            <rect x={-q.w / 2} y="-11" width={q.w} height="22" rx="11" fill={style.fill} stroke={style.stroke} strokeWidth="1.3" />
+            <PillTag w={q.w} fill={style.fill} stroke={style.stroke}>{null}</PillTag>
             {/* the pipe's direction (an "undo" runs against it, so its arrow turns round) */}
             <g transform={`translate(${-q.w / 2 + 12}, 0) rotate(${ang + (tag.tone === 'undo' ? 180 : 0)})`}>
               <path d="M -4 -4.5 L 3 0 L -4 4.5" fill="none" stroke={style.ink} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
             </g>
-            <text x={7} textAnchor="middle" y="4.5" fontSize="13" fontWeight="800" fill={style.ink}>
+            <text x={7} textAnchor="middle" y="4.5" fontSize="13" fontWeight="800" fill={style.ink} style={{ fontFamily: '"Red Hat Text", system-ui, sans-serif' }}>
               {tag.text}
             </text>
           </g>
@@ -685,23 +670,23 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
               y1={levelY(h)}
               x2={SW - 12}
               y2={levelY(h)}
-              stroke={color ?? '#dccbb2'}
+              stroke={color ?? '#d9cdb8'}
               strokeWidth={color ? 2 : 1.2}
               strokeDasharray={color ? '7 5' : '3 7'}
               opacity={color ? 0.75 : 1}
             />
           );
         })}
-        <text x={RULER_X} y={top - 22} textAnchor="middle" fontSize="11" fontWeight="800" fill="#78350f" letterSpacing="1">
+        <text x={RULER_X} y={top - 22} textAnchor="middle" fontSize="12" fontWeight="900" fill={PALETTE.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
           LEVEL
         </text>
-        <rect x={RULER_X - 12} y={top - 14} width="24" height={GROUND - top + 14} rx="5" fill="#f3e2c4" stroke="#a16207" strokeWidth="1.5" />
+        <rect x={RULER_X - 13} y={top - 14} width="26" height={GROUND - top + 14} rx="13" fill={`url(#${ids}-post)`} />
         {Array.from({ length: maxH + 1 }, (_, h) => {
           const color = hot.get(h);
           return (
             <g key={`level-mark-${h}`} transform={`translate(${RULER_X}, ${levelY(h)})`}>
-              {color && <circle r="10" fill={color} />}
-              <text textAnchor="middle" y="4" fontSize="11.5" fontWeight="800" fill={color ? '#ffffff' : '#78350f'}>
+              {color && <circle r="11" fill={color} />}
+              <text textAnchor="middle" y="4" fontSize="12" fontWeight="900" fill={color ? '#ffffff' : PALETTE.ink}>
                 {h}
               </text>
             </g>
@@ -720,15 +705,8 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       // Water tower
       return (
         <g key={`node-${i}`} transform={`translate(${p.x}, ${p.y})`}>
-          <line x1="-16" y1="22" x2="-22" y2="54" stroke="#92400e" strokeWidth="4" />
-          <line x1="16" y1="22" x2="22" y2="54" stroke="#92400e" strokeWidth="4" />
-          <rect x="-28" y="-26" width="56" height="50" rx="8" fill="#e0f2fe" stroke={STEEL_DARK} strokeWidth="2.5" />
-          <rect x="-25" y="-16" width="50" height="37" rx="5" fill={WATER} />
-          <path d="M -32 -26 L 0 -44 L 32 -26 Z" fill="#b45309" stroke="#78350f" strokeWidth="2" />
-          <text textAnchor="middle" y="7" fontSize="15" fontWeight="800" fill="#ffffff">
-            {label(i)}
-          </text>
-          {isCurrent && <circle r="30" fill="none" stroke={WATER_DEEP} strokeWidth="3" className="animate-story-ripple" />}
+          <WaterTower ids={ids} label={label(i)} />
+          {isCurrent && <circle r="34" fill="none" stroke={WATER_DEEP} strokeWidth="3" className="animate-story-ripple" />}
         </g>
       );
     }
@@ -737,33 +715,14 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       const level = Math.min(1, delivered / intoSink);
       return (
         <g key={`node-${i}`} transform={`translate(${p.x}, ${p.y})`}>
-          <text textAnchor="middle" y="-34" fontSize="30">
-            🏙️
-          </text>
-          <rect x="-30" y="-20" width="60" height="44" rx="10" fill="#f5f5f4" stroke={STEEL_DARK} strokeWidth="2.5" />
-          <rect
-            x="-27"
-            y={21 - 38 * level}
-            width="54"
-            height={38 * level}
-            rx="6"
-            fill={WATER}
-            style={{ transition: 'all 0.9s var(--ease-move)' }}
-          />
-          <text textAnchor="middle" y="7" fontSize="15" fontWeight="800" fill="#1c1917">
-            {label(i)}
-          </text>
+          <CityBasin ids={ids} level={level} label={label(i)} />
         </g>
       );
     }
     return (
       <g key={`node-${i}`} transform={`translate(${p.x}, ${p.y})`}>
-        {isCurrent && <circle r="24" fill="none" stroke={WATER_DEEP} strokeWidth="3" className="animate-story-ripple" />}
-        <circle r="23" fill="#f5f5f4" stroke={isVisited ? WATER_DEEP : STEEL_DARK} strokeWidth={isVisited ? 4 : 2.5} strokeDasharray={isVisited && !isCurrent ? '5 3' : undefined} />
-        <circle r="15" fill={isVisited ? '#e0f2fe' : '#fafaf9'} stroke="#d6d3d1" />
-        <text textAnchor="middle" y="5" fontSize="14" fontWeight="800" fill="#1c1917">
-          {label(i)}
-        </text>
+        {isCurrent && <circle r="30" fill="none" stroke={WATER_DEEP} strokeWidth="3" className="animate-story-ripple" />}
+        <Tank ids={ids} w={44} h={30} level={isVisited ? 0.35 : 0} label={label(i)} ring={isVisited && !isCurrent ? tint(WATER_DEEP, 0.4) : undefined} />
       </g>
     );
   };
@@ -783,11 +742,12 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       return (
         <g key={`mark-${i}`} transform={`translate(${p.x}, ${p.y})`} data-dead-end={id}>
           <g className="animate-story-pop">
-            <path d="M -13 -13 L 13 13 M 13 -13 L -13 13" stroke="#b91c1c" strokeWidth="4" strokeLinecap="round" opacity="0.75" />
-            <rect x="-30" y="27" width="60" height="16" rx="4" fill="#fef2f2" stroke="#fca5a5" />
-            <text textAnchor="middle" y="39" fontSize="10.5" fontWeight="800" fill="#991b1b">
-              dead end
-            </text>
+            <path d="M -14 -14 L 14 14 M 14 -14 L -14 14" stroke="#cc2e2e" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+            <g transform="translate(0, 36)">
+              <PillTag w={68} h={20} fill="#fbe3e1" stroke="#cc2e2e">
+                <text textAnchor="middle" y="4" fontSize="11" fontWeight="800" fill="#801818">dead end</text>
+              </PillTag>
+            </g>
           </g>
         </g>
       );
@@ -800,9 +760,9 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
     return (
       <g key={`mark-${i}`} transform={`translate(${p.x + (i === t ? 36 : 18)}, ${p.y + (i === t ? 8 : -16)})`} data-ring-flag={id} data-ring={ring}>
         <g className={fresh ? 'animate-story-pop' : undefined}>
-          <line x1="0" y1="0" x2="0" y2="-30" stroke="#57534e" strokeWidth="2" />
-          <path d="M 0 -30 L 44 -30 L 38 -22 L 44 -14 L 0 -14 Z" fill={fresh ? '#0284c7' : '#e0f2fe'} stroke="#0369a1" strokeWidth="1.2" />
-          <text x="19" y="-18.5" textAnchor="middle" fontSize="10" fontWeight="800" fill={fresh ? '#ffffff' : '#075985'}>
+          <line x1="0" y1="2" x2="0" y2="-32" stroke={PALETTE.walnut} strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 0 -32 L 46 -32 Q 40 -24 46 -16 L 0 -16 Z" fill={fresh ? WATER_DEEP : '#e3f0fd'} stroke={WATER_DEEP} strokeWidth="1.2" strokeLinejoin="round" />
+          <text x="20" y="-20.5" textAnchor="middle" fontSize="10.5" fontWeight="800" fill={fresh ? '#ffffff' : '#173a85'}>
             ring {ring}
           </text>
         </g>
@@ -817,18 +777,20 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
     const stiltTop = p.y + 22;
     return (
       <g key={`stilts-${i}`}>
-        <line x1={p.x - 15} y1={stiltTop} x2={p.x - 18} y2={GROUND} stroke="#c49a6c" strokeWidth="3" />
-        <line x1={p.x + 15} y1={stiltTop} x2={p.x + 18} y2={GROUND} stroke="#c49a6c" strokeWidth="3" />
+        <ellipse cx={p.x} cy={GROUND + 2} rx="24" ry="4" fill="#3a2414" opacity="0.14" />
+        <line x1={p.x - 15} y1={stiltTop} x2={p.x - 18} y2={GROUND} stroke={PALETTE.walnut} strokeWidth="5" strokeLinecap="round" />
+        <line x1={p.x + 15} y1={stiltTop} x2={p.x + 18} y2={GROUND} stroke={PALETTE.walnut} strokeWidth="5" strokeLinecap="round" />
+        <line x1={p.x - 16} y1={(stiltTop + GROUND) / 2} x2={p.x + 16} y2={(stiltTop + GROUND) / 2} stroke={tint(PALETTE.walnut, 0.2)} strokeWidth="3" strokeLinecap="round" />
         {showJack && (
           <g className="animate-story-pop">
             <polyline
               points={`${p.x - 12},${GROUND} ${p.x + 12},${(GROUND + stiltTop) / 2 + 8} ${p.x - 12},${(GROUND + stiltTop) / 2 - 8} ${p.x + 12},${stiltTop + 2}`}
               fill="none"
-              stroke="#eab308"
-              strokeWidth="5"
+              stroke={PALETTE.gold}
+              strokeWidth="6"
               strokeLinejoin="round"
             />
-            <rect x={p.x - 16} y={GROUND - 6} width="32" height="6" rx="2" fill="#a16207" />
+            <rect x={p.x - 18} y={GROUND - 7} width="36" height="8" rx="4" fill={METAL.rim} />
           </g>
         )}
       </g>
@@ -850,43 +812,24 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
         <g transform={`translate(${p.x}, ${p.y})`}>
           {/* level plaque hung under the tank */}
           <g data-tank-level={h}>
-            <rect
-              x="-25"
-              y="26"
-              width="50"
-              height="18"
-              rx="5"
-              fill={isActive ? '#fde68a' : isTarget ? '#e0f2fe' : '#f3e2c4'}
-              stroke={isActive ? '#b45309' : isTarget ? WATER_DEEP : '#a16207'}
-              strokeWidth="1.3"
-            />
-            <text textAnchor="middle" y="39" fontSize="11" fontWeight="800" fill={isTarget ? '#075985' : '#78350f'}>
+            <rect x="-27" y="30" width="54" height="19" rx="9.5" fill={isActive ? '#fdf1c7' : isTarget ? '#e3f0fd' : '#fbf9f4'} stroke={isActive ? GOLD : isTarget ? WATER_DEEP : '#cfc6b4'} strokeWidth="1.4" />
+            <text textAnchor="middle" y="43.5" fontSize="11.5" fontWeight="800" fill={isTarget ? '#173a85' : PALETTE.ink}>
               level {h}
             </text>
           </g>
+          {i === s && <path d="M -30 -28 Q 0 -52 30 -28 Z" fill={PALETTE.berry} stroke={tint(PALETTE.berry, -0.35)} strokeWidth="2" />}
           {i === t && (
-            <text textAnchor="middle" y="-32" fontSize="26">
-              🏙️
-            </text>
+            <g transform="translate(0, -30)">
+              <rect x="-24" y="-24" width="13" height="24" rx="2" fill={`url(#${ids}-brick)`} />
+              <rect x="-9" y="-34" width="16" height="34" rx="2" fill={tint(PALETTE.sky, 0.15)} />
+              <rect x="9" y="-18" width="15" height="18" rx="2" fill={tint(PALETTE.leaf, 0.2)} />
+            </g>
           )}
-          {i === s && <path d="M -30 -24 L 0 -42 L 30 -24 Z" fill="#b45309" stroke="#78350f" strokeWidth="2" />}
-          <rect x="-26" y="-24" width="52" height="46" rx="8" fill="#f5f5f4" stroke={isActive ? GOLD : isTarget ? WATER_DEEP : STEEL_DARK} strokeWidth={isActive || isTarget ? 4 : 2.5} />
-          <rect
-            x="-23"
-            y={19 - 40 * level}
-            width="46"
-            height={40 * level}
-            rx="5"
-            fill={WATER}
-            style={{ transition: 'all 0.8s var(--ease-move)' }}
-          />
-          <text textAnchor="middle" y="5" fontSize="14" fontWeight="800" fill={level > 0.55 ? '#ffffff' : '#1c1917'}>
-            {label(i)}
-          </text>
+          <Tank ids={ids} w={52} h={42} level={level} label={label(i)} ring={isActive ? GOLD : isTarget ? WATER_DEEP : undefined} />
           {overflowing && (
             <g className="animate-story-bob">
-              <Droplet at={{ x: 30, y: -12 }} scale={0.6} />
-              <text x="30" y="-28" textAnchor="middle" fontSize="9" fontWeight="700" fill={WATER_DEEP}>
+              <Droplet ids={ids} at={{ x: 34, y: -14 }} scale={0.65} />
+              <text x="34" y="-30" textAnchor="middle" fontSize="10.5" fontWeight="800" fill={WATER_DEEP}>
                 extra!
               </text>
             </g>
@@ -905,6 +848,7 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       if (pk >= 1) continue; // arrived: it has joined the tank
       travellers.push(
         <Droplet
+          ids={ids}
           key={`d-${k}`}
           at={pointOnRoute(route, pipes, pos, pk, phase === 'surge' ? undoHops : undefined)}
           scale={phase === 'scout' ? 1.15 : 0.85}
@@ -927,7 +871,7 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       return `${k === 0 ? 'M' : 'L'} ${q.x.toFixed(1)} ${q.y.toFixed(1)}`;
     }).join(' ');
   };
-  const TWINE = '#c2410c';
+  const TWINE = '#c4501a';
   const searchLayer: React.ReactNode[] = [];
   let scoutAt: Pt | null = null;
   if (exploring && search) {
@@ -960,7 +904,7 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
         const d = lineAlong([Number(u), Number(v)], fresh && phase === 'walk' ? progress : 1);
         if (d)
           searchLayer.push(
-            <path key={`trail-${v}`} d={d} fill="none" stroke="#0284c7" strokeWidth="3.5" strokeDasharray="2 6" strokeLinecap="round" opacity="0.85" data-trail={`${u}-${v}`} />,
+            <path key={`trail-${v}`} d={d} fill="none" stroke={WATER_DEEP} strokeWidth="3.5" strokeDasharray="2 6" strokeLinecap="round" opacity="0.85" data-trail={`${u}-${v}`} />,
           );
       });
       if (probe) scoutAt = pointOnRoute([pu, pv], pipes, pos, probe.verdict === 'take' ? progress : peekBack(progress), searchBack);
@@ -984,13 +928,13 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
     // A scout standing at a tank waits just above it, so the tank's name stays readable.
     const resting = !['walk', 'peek', 'rewind', 'pull'].includes(phase);
     const at = resting ? { x: scoutAt.x, y: scoutAt.y - 34 } : scoutAt;
-    travellers.push(<Droplet key="scout" at={at} scale={1.15} color="#0369a1" />);
+    travellers.push(<Droplet ids={ids} key="scout" at={at} scale={1.15} color="#0369a1" />);
   }
   if (isPR && phase === 'pour' && prFrom >= 0 && prTo >= 0) {
     for (let k = 0; k < 3; k++) {
       const pk = Math.max(0, Math.min(1, progress * 1.25 - k * 0.12));
       if (pk >= 1) continue;
-      travellers.push(<Droplet key={`d-${k}`} at={pointOnRoute([prFrom, prTo], pipes, pos, pk)} scale={0.8} />);
+      travellers.push(<Droplet ids={ids} key={`d-${k}`} at={pointOnRoute([prFrom, prTo], pipes, pos, pk)} scale={0.8} />);
     }
   }
 
@@ -1007,15 +951,22 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       status={status}
     >
       <svg viewBox={`0 0 ${SW} ${H}`} className="w-full h-auto overflow-visible" role="img" aria-label="Water pipe network">
+        <SceneDefs ids={ids} floor={field.bg} />
+        <PlumbingDefs ids={ids} />
         <defs>
-          <linearGradient id="storySky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#fdfaf5" />
-            <stop offset="100%" stopColor="#f3eadc" />
+          <linearGradient id={`${ids}-sky`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f7f2e8" />
+            <stop offset="100%" stopColor="#ece3d2" />
+          </linearGradient>
+          <linearGradient id={`${ids}-post`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor={tint(PALETTE.oak, 0.2)} />
+            <stop offset="1" stopColor={PALETTE.oakDeep} />
           </linearGradient>
         </defs>
-        <rect x="0" y="0" width={SW} height={H} rx="18" fill="url(#storySky)" />
-        <rect x="0" y={GROUND} width={SW} height={H - GROUND} rx="0" fill="#e4d2bc" />
-        <line x1="0" y1={GROUND} x2={SW} y2={GROUND} stroke="#c8b090" strokeWidth="2" />
+        <rect x="0" y="0" width={SW} height={H} rx="18" fill={`url(#${ids}-sky)`} />
+        <path d={`M0 ${GROUND} C${SW * 0.18} ${GROUND - 46} ${SW * 0.32} ${GROUND - 40} ${SW * 0.5} ${GROUND - 12} S${SW * 0.82} ${GROUND - 52} ${SW} ${GROUND - 18} V${GROUND} Z`} fill={tint(field.bg, 0.55)} opacity="0.6" />
+        <path d={`M0 ${GROUND} H${SW} V${H - 18} Q${SW} ${H} ${SW - 18} ${H} H18 Q0 ${H} 0 ${H - 18} Z`} fill={`url(#${ids}-floor)`} />
+        <line x1="0" y1={GROUND} x2={SW} y2={GROUND} stroke={tint(field.bg, -0.25)} strokeWidth="3" />
 
         {isPR && renderRuler()}
         {isPR && nodes.map((_, i) => renderStilts(i))}
@@ -1030,7 +981,7 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
 
       {!isPR && route.length > 1 && (phase === 'bottleneck' || phase === 'surge' || phase === 'filled') && (
         <div className="flex flex-wrap items-center gap-1.5 mt-3 font-sans text-xs text-stone-700" data-route-summary>
-          <span className="font-semibold uppercase tracking-wider text-stone-500 mr-1">This route:</span>
+          <span className="font-bold text-stone-700 mr-1">This route:</span>
           {phase === 'bottleneck' ? (
             <>
               {routeHops.map((h, i) => (
@@ -1038,7 +989,7 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
                   <span className="font-bold text-stone-900">{label(h.a)}</span>
                   <span
                     className={`px-2 py-0.5 rounded-full border font-bold ${
-                      h.room === bottleneck ? 'bg-amber-400 border-amber-600 text-amber-950' : 'bg-white border-stone-300 text-stone-600'
+                      h.room === bottleneck ? 'bg-[#f2c21a] border-transparent text-stone-900' : 'bg-[#fbf9f4] border-stone-300 text-stone-700'
                     }`}
                   >
                     room {h.room} →
@@ -1060,14 +1011,14 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
 
       {exploring && search && !isDfs && search.round > 0 && (
         <div className="flex flex-wrap items-center gap-2 mt-3 font-sans text-xs text-stone-600" data-scout-queue>
-          <span className="font-semibold uppercase tracking-wider text-stone-500">Scouts waiting in line:</span>
+          <span className="font-bold text-stone-700">Scouts waiting in line:</span>
           {queue.length === 0 && <span className="italic">nobody</span>}
           {queue.map((q, i) => (
             <span
               key={`${q}-${i}`}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-50 border border-sky-300 text-sky-900 font-bold animate-story-pop"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 text-sky-900 font-bold animate-story-pop"
             >
-              💧 {label(Number(q))}
+              <span aria-hidden className="w-2.5 h-2.5 rounded-full bg-sky-600" /> {label(Number(q))}
               <span className="font-semibold text-sky-700">· ring {ringOf(Number(q))}</span>
             </span>
           ))}
@@ -1076,12 +1027,12 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       )}
       {exploring && search && isDfs && search.round > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 mt-3 font-sans text-xs text-stone-600" data-scout-string-summary>
-          <span className="font-semibold uppercase tracking-wider text-stone-500 mr-1">🧶 String laid:</span>
+          <span className="font-bold text-stone-700 mr-1">String laid:</span>
           {stringRoute.length === 0 && <span className="italic">wound back in</span>}
           {stringRoute.map((v, i) => (
             <React.Fragment key={`str-${v}-${i}`}>
               {i > 0 && <span className="text-orange-800 font-bold">→</span>}
-              <span className="px-2 py-0.5 rounded-full bg-orange-50 border border-orange-300 text-orange-900 font-bold">{label(v)}</span>
+              <span className="px-3 py-0.5 rounded-full bg-orange-50 text-orange-900 font-bold">{label(v)}</span>
             </React.Fragment>
           ))}
           {deadEnds.length > 0 && (

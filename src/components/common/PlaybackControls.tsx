@@ -115,7 +115,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           aria-valuetext={`Step ${shownStep} of ${totalSteps}`}
           className="flex-1 h-1 bg-obsidian-700 appearance-none cursor-pointer accent-amber disabled:opacity-40"
         />
-        <span className="font-mono text-xs text-chalk-500 tabular-nums w-10 text-right">{Math.round(progressPercent)}%</span>
+        <span className="font-mono text-xs text-chalk-400 tabular-nums w-10 text-right">{Math.round(progressPercent)}%</span>
       </div>
 
       {/* Speed */}
@@ -135,12 +135,13 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         <span className="font-mono text-xs font-semibold text-amber-glow min-w-[3rem] text-center tabular-nums">
           {speed.toFixed(speed % 1 === 0 ? 1 : 2)}x
         </span>
-        <div className="hidden md:flex items-center gap-0.5">
+        <div className="hidden md:flex items-center gap-0.5 dock-tray">
           {[0.5, 1, 2, 4].map((s) => (
             <button
               key={s}
               onClick={() => onSpeedChange(s)}
-              className={`min-w-[32px] min-h-[32px] px-1.5 font-mono text-xs transition-[color,transform] duration-150 ease-out active:scale-[0.96] ${speed === s ? 'text-amber font-bold' : 'text-chalk-500 hover:text-chalk-200'}`}
+              className={`dock-chip ${speed === s ? 'is-on' : ''}`}
+              aria-pressed={speed === s}
               title={`Set speed to ${s}x`}
             >
               {s}x
@@ -149,8 +150,8 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         </div>
       </div>
 
-      <p className="hidden 2xl:block font-sans text-xs text-chalk-500">
-        <kbd className="px-1 border border-hairline">Space</kbd> play · <kbd className="px-1 border border-hairline">← →</kbd> step · <kbd className="px-1 border border-hairline">R</kbd> reset
+      <p className="hidden 2xl:block font-sans text-xs text-chalk-400">
+        <kbd className="dock-kbd">Space</kbd> play · <kbd className="dock-kbd">← →</kbd> step · <kbd className="dock-kbd">R</kbd> reset
       </p>
     </div>
   );

@@ -151,7 +151,7 @@ describe('Story (Animation) Mode', () => {
     expect(narrationOf(final)).toMatch(/best treasure is/);
     const kinds = [...final.matchAll(/data-tree-node="([^"]+)" data-kind="([a-z]+)"/g)].map((m) => m[2]);
     expect(kinds).toContain('pruned');
-    expect(final).toMatch(/can’t beat 🏆|too heavy|misses a deadline/);
+    expect(final).toMatch(/can’t beat the best|too heavy|misses a deadline/);
     // The camera ends on the trophy cave.
     expect(kinds.filter((k) => k === 'solution').length).toBe(1);
   });
@@ -159,7 +159,7 @@ describe('Story (Animation) Mode', () => {
   it('LCS keeps the full necklaces by default and offers the answer grid', () => {
     const { steps } = stepsOf('lcs');
     const html = renderScene('lcs', steps[5]);
-    expect(html).toMatch(/data-lcs-view="grid"[^>]*>🧮 Answer grid/);
+    expect(html).toMatch(/data-lcs-view="grid"[^>]*>Answer grid/);
     expect(html).toContain('data-necklaces-size="full"');
     expect(html).not.toContain('data-lcs-grid');
   });
@@ -211,7 +211,7 @@ describe('Story (Animation) Mode', () => {
     const { steps } = stepsOf('karatsuba');
     const html = renderScene('karatsuba', steps[3]);
     expect(html).toMatch(/data-workshop-view="workshop"[^>]*aria-checked="true"|aria-checked="true"[^>]*data-workshop-view="workshop"/);
-    expect(html).toMatch(/data-workshop-view="tree"[^>]*>🌳 Recursion tree/);
+    expect(html).toMatch(/data-workshop-view="tree"[^>]*>Recursion tree/);
     expect(html).not.toContain('data-karatsuba-tree');
   });
 
@@ -239,7 +239,7 @@ describe('Story (Animation) Mode', () => {
     for (const role of ['P1', 'P2', 'P3']) expect((end.match(new RegExp(`data-branch="${role}"`, 'g')) ?? []).length).toBe(splitJobs);
     expect(jobsOf(end)[0].state).toBe('optimal');
     expect(end).toContain(`final answer: ${last.state.num1} × ${last.state.num2} = ${last.result.product}`);
-    expect(end).toContain('🎯 Follow');
+    expect(end).toContain('>Follow<');
     // While a helper is being called, the answers of finished helpers ride up their branches.
     const p2 = steps.find((s) => /^Step 2B/.test(s.title))!;
     expect(render(p2)).toMatch(/↑\d+/);
@@ -249,7 +249,7 @@ describe('Story (Animation) Mode', () => {
     const { steps } = stepsOf('max-subarray');
     const html = renderScene('max-subarray', steps[1]);
     expect(html).toContain('aria-label="Coin road"');
-    expect(html).toMatch(/data-road-view="tree"[^>]*>🌳 Split &amp; merge tree/);
+    expect(html).toMatch(/data-road-view="tree"[^>]*>Split &amp; merge tree/);
     expect(html).not.toContain('data-max-subarray-tree');
   });
 
@@ -275,7 +275,7 @@ describe('Story (Animation) Mode', () => {
     expect(end).not.toContain('data-tree-narration');
     expect(end).not.toContain('🦉');
     expect(end).toContain('aria-label="Zoom in"');
-    expect(end).toContain('🎯 Follow');
+    expect(end).toContain('>Follow<');
     expect(piecesOf(end).every((p) => p.state !== 'later')).toBe(true);
     expect(end).toMatch(/↑-?\d+/);
     expect(end).toContain(`answer for the whole road: ${last.result.maxSum} coins`);
@@ -310,7 +310,7 @@ describe('Story (Animation) Mode', () => {
 
   it('Matrix Chain: the best order is shown as nested gift boxes', () => {
     const { steps } = stepsOf('matrix-chain-multiplication');
-    expect(renderScene('matrix-chain-multiplication', steps[steps.length - 1])).toContain('🎀');
+    expect(renderScene('matrix-chain-multiplication', steps[steps.length - 1])).toContain('data-bow');
   });
 
   it('Assembly Line and TSP finish with the fastest / cheapest route', () => {
@@ -330,8 +330,8 @@ describe('Story (Animation) Mode', () => {
     const { steps } = stepsOf('randomized-quicksort');
     const placed = steps.find((s) => /^Pivot in Final/.test(s.title));
     const html = renderScene('randomized-quicksort', placed);
-    expect(html).toContain('👑');
-    expect(html).toContain('🏅');
+    expect(html).toContain('data-crown');
+    expect(html).toContain('data-final-spot');
   });
 
   it('Hiring Problem fills the hiring jar once per hire', () => {

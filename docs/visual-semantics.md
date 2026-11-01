@@ -19,16 +19,16 @@ colour always means the same thing, whichever algorithm you are watching.
 
 | Semantic | Symbol | Meaning | Used for (examples) |
 |---|---|---|---|
-| **current** (amber) | ▶ | What the algorithm is looking at right now; the strongest cue | Active pseudocode line, cell being computed, square being tried, current window, item being interviewed, element being swapped |
-| **compare** (sky) | ⇄ | Values being compared or read for the current decision | DP source cells, hash hit awaiting character check, character entering a Rabin-Karp window, bars being compared |
+| **current** (marigold) | ▶ | What the algorithm is looking at right now; the strongest cue | Active pseudocode line, cell being computed, square being tried, current window, item being interviewed, element being swapped |
+| **compare** (cobalt) | ⇄ | Values being compared or read for the current decision | DP source cells, hash hit awaiting character check, character entering a Rabin-Karp window, bars being compared |
 | **match** (green) | ✓ | A comparison succeeded / a check passed | Matching characters, verified window characters, found occurrences |
-| **mismatch** (rose) | ✗ | A comparison failed / a constraint is violated | Character mismatch, attacked N-Queens square, colouring conflict, negative-weight cycle edge |
-| **pruned** (slate, dashed) | ✂ | Deliberately skipped; cannot lead to a better answer. Not an error | Pruned / infeasible search-tree nodes, candidate not hired, character leaving a window (OUT) |
-| **backtrack** (violet) | ↩ | A choice being undone | Reserved for backtracking undo states |
-| **decision** (teal) | ● | An option the algorithm selected | Placed queen, pivot, hired candidate, shortest-path tree / flow / cover edges |
+| **mismatch** (coral red) | ✗ | A comparison failed / a constraint is violated | Character mismatch, attacked N-Queens square, colouring conflict, negative-weight cycle edge |
+| **pruned** (warm grey, dashed) | ✂ | Deliberately skipped; cannot lead to a better answer. Not an error | Pruned / infeasible search-tree nodes, candidate not hired, character leaving a window (OUT) |
+| **backtrack** (plum) | ↩ | A choice being undone | Reserved for backtracking undo states |
+| **decision** (ink) | ● | An option the algorithm selected | Placed queen, pivot, hired candidate, shortest-path tree / flow / cover edges |
 | **final** (green, heavier border) | ★ | Part of the completed answer | Final answer card, DP traceback path, elements in their final sorted position |
-| **formula** (indigo) | ƒ | A formula or reference value; read, not acted on | Recurrence and formula call-outs |
-| **warning** (orange) | ⚠ | Something to notice | Hash collision (spurious hit), TSP input that is not metric |
+| **formula** (sepia) | ƒ | A formula or reference value; read, not acted on | Recurrence and formula call-outs |
+| **warning** (burnt orange) | ⚠ | Something to notice | Hash collision (spurious hit), TSP input that is not metric |
 
 ## Where it lives
 

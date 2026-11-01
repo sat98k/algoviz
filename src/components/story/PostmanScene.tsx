@@ -1,6 +1,21 @@
 import React from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases } from './useAnimPhases';
+import { PALETTE, SceneDefs, tint, useSvgIds } from './kit/materials';
+import { House, Walker } from './kit/props';
+import { useChapter } from './kit/chapter';
+
+/** The post office: a red-roofed building with a letter sign. */
+const PostOffice: React.FC = () => (
+  <g>
+    <ellipse cx="0" cy="13" rx="16" ry="3" fill="#3a2414" opacity="0.14" />
+    <rect x="-13" y="-4" width="26" height="17" rx="1.5" fill="#f3e3c3" />
+    <rect x="3" y="-4" width="10" height="17" fill="#3a2414" opacity="0.08" />
+    <path d="M-15 -3 H15 L12 -10 H-12 Z" fill="#cc2e2e" />
+    <rect x="-7" y="-1" width="14" height="9" rx="1.5" fill="#ffffff" stroke={PALETTE.ink} strokeWidth="1" />
+    <path d="M-7 -1 L0 4 L7 -1" fill="none" stroke={PALETTE.ink} strokeWidth="1" />
+  </g>
+);
 
 /**
  * 📮 Travelling Salesman (Held-Karp) as a postman with a stamp card.
@@ -15,9 +30,11 @@ import { useAnimPhases } from './useAnimPhases';
 const W = 640;
 const H = 400;
 const M = 60;
-const GOLD = '#f59e0b';
+const GOLD = '#e8a817';
 
 export const PostmanScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
+  const ids = useSvgIds();
+  const field = useChapter();
   const st: any = step.state || {};
   const cities: { id: number; label: string; x: number; y: number }[] = st.cities || [];
   const n = cities.length;
@@ -77,7 +94,6 @@ export const PostmanScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
 
   return (
     <StoryStage
-      emoji="📮"
       title="The Postman’s Notebook"
       subtitle="Each notebook page: cheapest way to collect a set of stamps and stand at a house."
       narration={narration}
@@ -86,27 +102,28 @@ export const PostmanScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
       {/* the stamp card */}
       {(phaseName === 'fill' || phaseName === 'close' || phaseName === 'base') && (
         <div className="flex flex-wrap items-center justify-center gap-1.5 mb-3 font-sans text-xs">
-          <span className="font-semibold uppercase tracking-wider text-stone-500 mr-1">Stamp card:</span>
+          <span className="font-bold text-stone-700 mr-1">Stamp card:</span>
           {cities.map((c, i) => (
-            <span key={c.id} className={`w-9 h-9 flex flex-col items-center justify-center rounded-md border-2 ${inMask(i) ? 'bg-green-50 border-green-500 text-green-800' : 'bg-white border-dashed border-stone-300 text-stone-400'}`}>
-              <span className="text-[10px] font-bold">{c.label}</span>
-              <span className="text-sm leading-none">{inMask(i) ? '✅' : '·'}</span>
+            <span key={c.id} className={`w-10 h-10 flex flex-col items-center justify-center rounded-full border-2 ${inMask(i) ? 'bg-[#18bc42] border-transparent text-stone-900' : 'bg-[#fbf9f4] border-dashed border-stone-300 text-stone-500'}`}>
+              <span className="text-xs font-black">{c.label}</span>
+              <span className="text-sm leading-none" aria-hidden>{inMask(i) ? '✓' : '·'}</span>
             </span>
           ))}
         </div>
       )}
 
       <svg viewBox={`0 0 ${W} ${H}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: W * 1.2 }} role="img" aria-label="Town map">
-        <rect x="0" y="0" width={W} height={H} rx="18" fill="#eef5e4" />
+        <SceneDefs ids={ids} floor={field.bg} />
+        <rect x="0" y="0" width={W} height={H} rx="22" fill={tint(field.bg, 0.84)} />
 
         {/* faint roads with walking costs */}
         {cities.map((_, i) =>
           cities.map((__, j) =>
             j > i ? (
               <g key={`r-${i}-${j}`}>
-                <line x1={pos[i].x} y1={pos[i].y} x2={pos[j].x} y2={pos[j].y} stroke="#d6cbb5" strokeWidth="2" />
+                <line x1={pos[i].x} y1={pos[i].y} x2={pos[j].x} y2={pos[j].y} stroke={tint(field.bg, 0.45)} strokeWidth="2.5" strokeDasharray="2 6" strokeLinecap="round" />
                 {n <= 5 && (
-                  <text x={(pos[i].x + pos[j].x) / 2} y={(pos[i].y + pos[j].y) / 2 - 4} textAnchor="middle" fontSize="10" fill="#a8a29e">
+                  <text x={(pos[i].x + pos[j].x) / 2} y={(pos[i].y + pos[j].y) / 2 - 4} textAnchor="middle" fontSize="11.5" fontWeight="700" fill="#6b645a">
                     {cost[i]?.[j]}
                   </text>
                 )}
@@ -123,10 +140,10 @@ export const PostmanScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
             const b = pos[c.v];
             return (
               <g key={`c-${c.u}-${c.v}`} opacity={phase === 'choose' && !c.isChosen ? 0.3 : 1}>
-                <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={win ? '#16a34a' : '#0284c7'} strokeWidth={win ? 6 : 4} strokeDasharray={win ? undefined : '8 6'} strokeLinecap="round" />
+                <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={win ? '#0c8030' : '#2457c5'} strokeWidth={win ? 7 : 4} strokeDasharray={win ? undefined : '8 6'} strokeLinecap="round" />
                 <g transform={`translate(${a.x * 0.6 + b.x * 0.4}, ${a.y * 0.6 + b.y * 0.4})`}>
-                  <rect x="-40" y="-12" width="80" height="22" rx="11" fill="#ffffff" stroke={win ? '#16a34a' : '#0284c7'} />
-                  <text textAnchor="middle" y="4" fontSize="11" fontWeight="800" fill="#1c1917">
+                  <rect x="-42" y="-12" width="84" height="24" rx="12" fill={win ? '#dff5e5' : '#fbf9f4'} stroke={win ? '#0c8030' : '#2457c5'} strokeWidth="1.5" />
+                  <text textAnchor="middle" y="4.5" fontSize="12" fontWeight="900" fill={PALETTE.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                     {c.subCost}+{c.edgeCost}={c.totalCost}
                   </text>
                 </g>
@@ -136,7 +153,7 @@ export const PostmanScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
 
         {/* the final tour */}
         {tour.map((e) => (
-          <line key={`tour-${e.u}-${e.v}`} x1={pos[e.u].x} y1={pos[e.u].y} x2={pos[e.v].x} y2={pos[e.v].y} stroke={GOLD} strokeWidth="7" strokeLinecap="round" className="animate-story-pop" />
+          <line key={`tour-${e.u}-${e.v}`} x1={pos[e.u].x} y1={pos[e.u].y} x2={pos[e.v].x} y2={pos[e.v].y} stroke={GOLD} strokeWidth="8" strokeLinecap="round" className="animate-story-pop" />
         ))}
 
         {/* houses */}
@@ -145,18 +162,22 @@ export const PostmanScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
           const here = (phaseName === 'fill' && i === at) || (phaseName === 'close' && i === 0);
           return (
             <g key={c.id} transform={`translate(${p.x}, ${p.y})`}>
-              {here && <circle r="30" fill="#fde68a" opacity="0.7" />}
-              <circle r="22" fill={inMask(i) && phaseName !== 'complete' ? '#dcfce7' : '#fffaf0'} stroke={here ? '#ea580c' : '#a16207'} strokeWidth={here ? 4 : 2.5} />
-              <text textAnchor="middle" y="7" fontSize="18">
-                {i === 0 ? '🏤' : '🏠'}
-              </text>
-              <text textAnchor="middle" y="38" fontSize="13" fontWeight="900" fill="#1c1917">
-                {c.label}
-              </text>
-              {here && phaseName === 'fill' && (
-                <text x="22" y="-18" fontSize="18">
-                  🚶
+              {here && <circle r="32" fill={PALETTE.goldLight} opacity="0.7" />}
+              <ellipse cx="0" cy="19" rx="24" ry="6" fill="#3a2414" opacity="0.14" />
+              <circle r="24" fill={inMask(i) && phaseName !== 'complete' ? '#dff5e5' : '#fbf9f4'} stroke={here ? '#c4501a' : tint(field.bg, -0.25)} strokeWidth={here ? 4.5 : 2.5} />
+              <g transform="translate(0, 2)">{i === 0 ? <PostOffice /> : <House size={26} roof={[PALETTE.berry, PALETTE.sky, PALETTE.leaf][i % 3]} />}</g>
+              <g transform="translate(0, 40)">
+                <rect x="-14" y="-10" width="28" height="19" rx="9.5" fill={PALETTE.ink} />
+                <text textAnchor="middle" y="4.5" fontSize="12.5" fontWeight="900" fill="#f3efe6" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
+                  {c.label}
                 </text>
+              </g>
+              {here && phaseName === 'fill' && (
+                <g transform="translate(28, -16)">
+                  <g className="animate-story-bob">
+                    <Walker size={22} color={PALETTE.sky} />
+                  </g>
+                </g>
               )}
             </g>
           );

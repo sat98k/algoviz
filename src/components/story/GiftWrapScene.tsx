@@ -32,17 +32,31 @@ const parseGroups = (s: string): Group | null => {
   return tokens.length ? read() : null;
 };
 
-const BOX_COLOURS = ['#fecaca', '#bfdbfe', '#bbf7d0', '#fde68a', '#ddd6fe', '#fbcfe8'];
+const BOX_COLOURS = ['#f6c1b8', '#bcd3ef', '#c4e3b8', '#f8df8e', '#d9c6ea', '#f3c3d4'];
+
+/** The ribbon bow on the finished parcel. */
+const BowIcon: React.FC = () => (
+  <svg width="30" height="22" viewBox="-15 -11 30 22" aria-hidden data-bow>
+    <path d="M0 0 C-6 -9 -13 -6 -11 0 C-13 6 -6 9 0 0 Z" fill="#d9473b" />
+    <path d="M0 0 C6 -9 13 -6 11 0 C13 6 6 9 0 0 Z" fill="#b8392e" />
+    <path d="M-1 1 L-5 10 M1 1 L5 10" stroke="#a5322a" strokeWidth="2.6" strokeLinecap="round" />
+    <circle r="2.8" fill="#ef6a5d" />
+  </svg>
+);
 
 const Boxes: React.FC<{ g: Group; depth?: number }> = ({ g, depth = 0 }) =>
   typeof g === 'string' ? (
-    <span className="px-2 py-1 rounded-md bg-[#d6b98c] border border-[#8b6b4a] font-mono text-sm font-black text-stone-900">{g}</span>
+    <span className="px-2.5 py-1 rounded-lg bg-[#e2c9a4] font-mono text-sm font-black text-stone-900" style={{ boxShadow: 'inset 0 -3px 0 rgb(0 0 0 / 0.12)' }}>{g}</span>
   ) : (
     <span
-      className="relative inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl border-2 animate-story-pop"
-      style={{ background: BOX_COLOURS[depth % BOX_COLOURS.length], borderColor: '#9f1239' }}
+      className="relative inline-flex items-center gap-1.5 px-3 py-2.5 rounded-2xl animate-story-pop"
+      style={{ background: BOX_COLOURS[depth % BOX_COLOURS.length], boxShadow: 'inset 0 -4px 0 rgb(0 0 0 / 0.1), 0 4px 10px -6px rgb(58 36 20 / 0.5)', backgroundImage: 'linear-gradient(90deg, transparent calc(50% - 3px), rgb(217 71 59 / 0.55) calc(50% - 3px), rgb(217 71 59 / 0.55) calc(50% + 3px), transparent calc(50% + 3px))' }}
     >
-      {depth === 0 && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-base">🎀</span>}
+      {depth === 0 && (
+        <span className="absolute -top-4 left-1/2 -translate-x-1/2">
+          <BowIcon />
+        </span>
+      )}
       {g.map((c, k) => (
         <Boxes key={k} g={c} depth={depth + 1} />
       ))}
@@ -53,11 +67,11 @@ const Coins: React.FC<{ value: number; label: string; tone: string }> = ({ value
   <div className="flex flex-col items-center gap-1">
     <div className="flex flex-col-reverse items-center h-16 justify-start">
       {Array.from({ length: Math.min(8, Math.max(value > 0 ? 1 : 0, Math.ceil(Math.log2(value + 1)))) }, (_, k) => (
-        <span key={k} className="w-8 h-2 -mt-0.5 rounded-full bg-yellow-400 border border-yellow-700" />
+        <span key={k} className="w-9 h-2.5 -mt-0.5 rounded-full bg-[#e8a817]" style={{ boxShadow: 'inset 0 -2px 0 #9a6416, inset 0 1px 0 #fff6d6' }} />
       ))}
     </div>
-    <span className="font-mono text-base font-black text-stone-900">{value.toLocaleString()}</span>
-    <span className={`text-[11px] font-semibold ${tone}`}>{label}</span>
+    <span className="font-display text-xl font-black text-stone-900">{value.toLocaleString()}</span>
+    <span className={`text-xs font-bold ${tone}`}>{label}</span>
   </div>
 );
 
@@ -120,7 +134,6 @@ export const GiftWrapScene: React.FC<StorySceneProps> = ({ step }) => {
 
   return (
     <StoryStage
-      emoji="🎁"
       title="Gluing Panels"
       subtitle="Glue cost = rows × shared side × columns. Where you put the divider decides the cost."
       narration={narration}
@@ -128,7 +141,7 @@ export const GiftWrapScene: React.FC<StorySceneProps> = ({ step }) => {
     >
       <div className="flex flex-col items-center gap-5 font-sans">
         {/* the workbench with panels */}
-        <div className="flex flex-wrap items-end justify-center gap-2 px-4 pt-6 pb-3 rounded-2xl bg-[#efe3d3] border-2 border-[#d5be9f] min-h-[140px]">
+        <div className="flex flex-wrap items-end justify-center gap-2 px-5 pt-7 pb-4 rounded-[22px] min-h-[140px]" style={{ background: 'linear-gradient(#f3e6cf, #e3cfac)', boxShadow: 'inset 0 -6px 0 rgb(0 0 0 / 0.08)' }}>
           {mats.map((mat) => {
             const on = inStretch(mat.id);
             const leftSide = showDivider && mat.id <= (k ?? 0);
@@ -136,21 +149,21 @@ export const GiftWrapScene: React.FC<StorySceneProps> = ({ step }) => {
               <React.Fragment key={mat.id}>
                 <div className="flex flex-col items-center gap-1 transition-all duration-500" style={{ opacity: on ? 1 : 0.3, transform: on && kind !== 'intro' && kind !== 'final' ? 'translateY(-8px)' : 'none' }}>
                   <div
-                    className="rounded-md border-2 shadow-sm flex items-center justify-center"
+                    className="rounded-lg flex items-center justify-center"
                     style={{
                       width: scale(mat.cols),
                       height: scale(mat.rows),
-                      background: showDivider && on ? (leftSide ? '#fecdd3' : '#bfdbfe') : 'repeating-linear-gradient(90deg, #d6b98c 0 6px, #cda877 6px 12px)',
-                      borderColor: '#8b6b4a',
+                      background: showDivider && on ? (leftSide ? '#f6c1b8' : '#bcd3ef') : 'repeating-linear-gradient(90deg, #e2c9a4 0 7px, #d8bd94 7px 14px)',
+                      boxShadow: 'inset 0 -4px 0 rgb(0 0 0 / 0.14), 0 5px 10px -6px rgb(58 36 20 / 0.6)',
                     }}
                   >
                     <span className="font-mono text-sm font-black text-stone-900">{mat.name}</span>
                   </div>
-                  <span className="text-[11px] font-semibold text-stone-600">
+                  <span className="text-xs font-bold text-stone-700">
                     {mat.rows}×{mat.cols}
                   </span>
                 </div>
-                {showDivider && mat.id === k && <div className="self-stretch w-1.5 rounded-full bg-red-500 mx-1 animate-story-pop" title="divider" />}
+                {showDivider && mat.id === k && <div className="self-stretch w-2 rounded-full bg-[#cc2e2e] mx-1 animate-story-pop" title="divider" />}
               </React.Fragment>
             );
           })}
@@ -158,15 +171,15 @@ export const GiftWrapScene: React.FC<StorySceneProps> = ({ step }) => {
 
         {kind === 'split' && (
           <div className="flex flex-wrap items-end justify-center gap-6">
-            <Coins value={left} label="build left group" tone="text-rose-700" />
+            <Coins value={left} label="build left group" tone="text-red-800" />
             <span className="text-2xl text-stone-400 pb-6">+</span>
             <Coins value={right} label="build right group" tone="text-blue-700" />
             <span className="text-2xl text-stone-400 pb-6">+</span>
-            <Coins value={glue} label="glue them" tone="text-amber-700" />
+            <Coins value={glue} label="glue them" tone="text-stone-700" />
             <span className="text-2xl text-stone-400 pb-6">=</span>
             <div className={`flex flex-col items-center pb-5 ${isNewBest ? 'animate-story-pop' : ''}`}>
-              <span className="font-mono text-xl font-black text-stone-900">{total.toLocaleString()}</span>
-              {isNewBest ? <span className="text-xs font-bold text-green-700">⭐ cheapest so far</span> : <span className="text-xs text-stone-500">not cheaper</span>}
+              <span className="font-display text-3xl font-black text-stone-900">{total.toLocaleString()}</span>
+              {isNewBest ? <span className="px-3 py-0.5 rounded-full bg-[#18bc42] text-xs font-bold text-stone-900">cheapest so far</span> : <span className="text-xs font-semibold text-stone-500">not cheaper</span>}
             </div>
           </div>
         )}

@@ -41,14 +41,14 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
       : `Lines ${activeLines[0]}–${activeLines[activeLines.length - 1]}`;
 
   return (
-    <section aria-label="Pseudocode" className="flex flex-col gap-2 p-3 sm:p-4 bg-obsidian-900 border border-hairline w-full min-w-0">
+    <section aria-label="Pseudocode" className="sp-card flex flex-col gap-3 w-full min-w-0">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-1.5 font-sans text-sm font-semibold text-chalk-200">
-          <Terminal className="w-3.5 h-3.5 text-amber" />
+        <h2 className="sp-label">
+          <Terminal className="w-4 h-4" aria-hidden />
           Pseudocode
         </h2>
         {activeLineText && (
-          <span className="font-mono text-xs px-2 py-0.5 bg-sem-current/15 border border-sem-current/50 text-sem-current-ink font-semibold">
+          <span className="font-mono text-xs px-3 py-1 rounded-full bg-sem-current/15 text-sem-current-ink font-bold">
             {activeLineText}
           </span>
         )}
@@ -57,7 +57,7 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
       <div
         ref={containerRef}
         data-testid="pseudocode-scroll"
-        className={`relative py-2 bg-obsidian-950 border border-hairline font-mono overflow-y-auto overflow-x-hidden overscroll-contain leading-relaxed ${maxHeightClass}`}
+        className={`relative p-1.5 rounded-2xl bg-obsidian-950 font-mono overflow-y-auto overflow-x-hidden overscroll-contain leading-relaxed ${maxHeightClass}`}
       >
         {pseudocode.map((line, idx) => {
           const lineNum = idx + 1;
@@ -73,8 +73,8 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
               key={lineNum}
               id={`pseudocode-line-${lineNum}`}
               data-line-num={lineNum}
-              className={`grid grid-cols-[auto_1fr] items-start px-2 py-0.5 transition-colors duration-200 border-l-4 ${
-                isActive ? 'bg-sem-current/15 text-sem-current-ink font-semibold border-sem-current' : 'text-chalk-200 border-transparent'
+              className={`grid grid-cols-[auto_1fr] items-start px-2 py-1 rounded-xl transition-colors duration-200 ${
+                isActive ? 'bg-sem-current/15 text-sem-current-ink font-semibold' : 'text-chalk-200'
               }`}
             >
               <span
@@ -85,10 +85,10 @@ export const CodeExplanation: React.FC<CodeExplanationProps> = ({ step, pseudoco
                 {lineNum}
               </span>
               <div className="whitespace-pre-wrap break-words min-w-0">
-                <span className="text-[13px] sm:text-sm">{codePart}</span>
+                <span className="text-sm">{codePart}</span>
                 {commentPart && (
                   <span
-                    className={`font-sans block sm:inline sm:ml-2 text-xs sm:text-[13px] italic ${
+                    className={`font-sans block sm:inline sm:ml-2 text-sm italic ${
                       isActive ? 'text-chalk-100 font-medium' : 'text-chalk-400 font-normal'
                     }`}
                   >

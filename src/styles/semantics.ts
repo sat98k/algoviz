@@ -39,16 +39,16 @@ export const SEMANTIC_KINDS: Semantic[] = [
  */
 export const SEMANTIC_TOKENS: Record<'light' | 'dark', Record<Semantic, { accent: string; ink: string }>> = {
   light: {
-    current: { accent: '180 83 9', ink: '120 53 15' },
-    compare: { accent: '2 132 199', ink: '7 89 133' },
-    match: { accent: '4 120 87', ink: '6 78 59' },
-    mismatch: { accent: '190 18 60', ink: '136 19 55' },
-    pruned: { accent: '100 116 139', ink: '51 65 85' },
-    backtrack: { accent: '109 40 217', ink: '76 29 149' },
-    decision: { accent: '15 118 110', ink: '19 78 74' },
-    final: { accent: '4 120 87', ink: '6 78 59' },
-    formula: { accent: '67 56 202', ink: '49 46 129' },
-    warning: { accent: '194 65 12', ink: '124 45 18' },
+    current: { accent: '166 112 0', ink: '92 58 0' },
+    compare: { accent: '36 87 197', ink: '23 58 133' },
+    match: { accent: '12 128 48', ink: '8 76 28' },
+    mismatch: { accent: '204 46 46', ink: '128 24 24' },
+    pruned: { accent: '128 120 106', ink: '74 70 62' },
+    backtrack: { accent: '139 63 176', ink: '90 35 120' },
+    decision: { accent: '26 26 26', ink: '26 26 26' },
+    final: { accent: '12 128 48', ink: '8 76 28' },
+    formula: { accent: '120 88 50', ink: '74 50 22' },
+    warning: { accent: '196 80 18', ink: '120 45 10' },
   },
   dark: {
     current: { accent: '245 158 11', ink: '252 211 77' },

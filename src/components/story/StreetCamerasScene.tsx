@@ -1,5 +1,22 @@
 import React from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
+import { PALETTE, SceneDefs, tint, useSvgIds } from './kit/materials';
+import { useChapter } from './kit/chapter';
+
+/** A security camera on a short bracket, looking down-left; its foot is at (0, 0). */
+const Camera: React.FC<{ beam?: boolean }> = ({ beam }) => (
+  <g>
+    {beam && <path d="M-14 -22 L-58 18 L-24 30 Z" fill={PALETTE.goldLight} opacity="0.55" />}
+    <path d="M0 0 V-14 H-6" stroke={PALETTE.ink} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <g transform="translate(-10, -20) rotate(24)">
+      <rect x="-12" y="-6" width="22" height="12" rx="4" fill="#f3efe6" stroke={PALETTE.ink} strokeWidth="1.6" />
+      <rect x="-12" y="-6" width="22" height="4" rx="2" fill="#ffffff" opacity="0.8" />
+      <circle cx="-12" cy="0" r="4.2" fill={PALETTE.ink} />
+      <circle cx="-12.6" cy="-0.8" r="1.4" fill={PALETTE.sky} />
+      <circle cx="6" cy="-1" r="1.6" fill="#cc2e2e" />
+    </g>
+  </g>
+);
 
 /**
  * 📷 Vertex Cover (2-approximation) as security cameras at street corners.
@@ -14,6 +31,8 @@ const W = 640;
 const H = 420;
 
 export const StreetCamerasScene: React.FC<StorySceneProps> = ({ step }) => {
+  const ids = useSvgIds();
+  const field = useChapter();
   const st: any = step.state || {};
   const nodes: { id: string; label: string }[] = st.nodes || [];
   const edges: { u: string; v: string }[] = st.edges || [];
@@ -61,7 +80,8 @@ export const StreetCamerasScene: React.FC<StorySceneProps> = ({ step }) => {
       status={`Cameras • ${cams.length} | Unwatched streets • ${uncovered.length}`}
     >
       <svg viewBox={`0 0 ${W} ${H}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: W * 1.2 }} role="img" aria-label="Streets and corners">
-        <rect x="0" y="0" width={W} height={H} rx="18" fill="#e7e5e4" />
+        <SceneDefs ids={ids} floor={field.bg} />
+        <rect x="0" y="0" width={W} height={H} rx="22" fill={tint(field.bg, 0.84)} />
         {edges.map((e, i) => {
           const a = pos.get(e.u)!;
           const b = pos.get(e.v)!;
@@ -71,9 +91,11 @@ export const StreetCamerasScene: React.FC<StorySceneProps> = ({ step }) => {
           const isMatching = matching.some((m) => same(m, e));
           return (
             <g key={`st-${i}`}>
-              {isPicked && <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fde047" strokeWidth="24" strokeLinecap="round" />}
-              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={watched ? '#86efac' : '#57534e'} strokeWidth="13" strokeLinecap="round" style={{ transition: 'stroke 0.6s' }} />
-              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={isMatching ? '#f59e0b' : '#ffffff'} strokeWidth={isMatching ? 3 : 1.5} strokeDasharray="8 8" />
+              <line x1={a.x} y1={a.y + 5} x2={b.x} y2={b.y + 5} stroke="#3a2414" strokeOpacity="0.12" strokeWidth="22" strokeLinecap="round" />
+              {isPicked && <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={PALETTE.goldLight} strokeWidth="32" strokeLinecap="round" />}
+              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={watched ? '#3fbf62' : '#d8ccb6'} strokeWidth="22" strokeLinecap="round" style={{ transition: 'stroke 0.6s' }} />
+              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#57514a" strokeWidth="15" strokeLinecap="round" />
+              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={isMatching ? PALETTE.gold : '#f4ead2'} strokeWidth={isMatching ? 3.5 : 1.8} strokeDasharray="9 9" />
             </g>
           );
         })}
@@ -83,16 +105,16 @@ export const StreetCamerasScene: React.FC<StorySceneProps> = ({ step }) => {
           const isNew = kind === 'cams' && picked && (picked.u === nd.id || picked.v === nd.id);
           return (
             <g key={nd.id} transform={`translate(${p.x}, ${p.y})`}>
-              <circle r="22" fill={hasCam ? '#fef3c7' : '#ffffff'} stroke={hasCam ? '#d97706' : '#78716c'} strokeWidth={hasCam ? 4 : 2.5} />
-              <text textAnchor="middle" y="5" fontSize="13" fontWeight="900" fill="#1c1917">
+              <ellipse cx="0" cy="20" rx="24" ry="6" fill="#3a2414" opacity="0.14" />
+              <circle r="23" fill={hasCam ? PALETTE.goldLight : '#fbf9f4'} stroke={hasCam ? PALETTE.gold : '#a39b8c'} strokeWidth={hasCam ? 4 : 2.5} />
+              <circle r="16" fill="none" stroke="#ffffff" strokeOpacity="0.7" strokeWidth="1.5" />
+              <text textAnchor="middle" y="5" fontSize="14" fontWeight="900" fill={PALETTE.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                 {nd.label}
               </text>
               {hasCam && (
-                <g transform="translate(16, -22)">
-                  <g className={isNew ? 'animate-story-pop' : undefined}>
-                    <text textAnchor="middle" fontSize="22">
-                      📷
-                    </text>
+                <g transform="translate(18, -16)">
+                  <g className={isNew ? 'animate-story-drop' : undefined}>
+                    <Camera beam={!!isNew} />
                   </g>
                 </g>
               )}
@@ -100,7 +122,7 @@ export const StreetCamerasScene: React.FC<StorySceneProps> = ({ step }) => {
           );
         })}
       </svg>
-      <p className="mt-2 text-center text-xs text-stone-500">Green = watched street · dark = not watched yet · orange dashes = streets we picked</p>
+      <p className="mt-2 text-center text-sm text-stone-600">Green edges = watched street · grey = not watched yet · gold dashes = streets we picked</p>
     </StoryStage>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { OwlGlyph } from '../home/OwlMascot';
 import { Eye, FastForward, Lightbulb, Pause, Play, RotateCcw } from 'lucide-react';
 import { cardDuration, endsSentence, fadeFor, playChirp, prefersReducedMotion, tickMs, useOwlPrefs, wordDuration } from './owlVoice';
 import { OwlSoundToggle, OwlSpeedControl } from './OwlControls';
@@ -194,9 +195,6 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
       </span>
     ));
 
-  const pillButton =
-    'flex items-center gap-1.5 px-2.5 py-1 font-sans text-xs font-semibold border transition-colors';
-
   return (
     <div
       data-owl-briefing
@@ -216,7 +214,7 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
             className="relative text-5xl leading-none select-none rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-amber"
           >
             <span aria-hidden className={`inline-block ${hopping ? 'owl-hop' : talking ? 'owl-talking' : 'owl-idle'}`} data-owl-state={hopping ? 'hop' : talking ? 'talking' : 'idle'}>
-              🦉
+              <OwlGlyph />
             </span>
           </button>
           {notes.map((n) => (
@@ -231,9 +229,9 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
           )}
         </div>
 
-        <div className="flex-1 min-w-0 flex flex-col gap-2 px-4 py-3 bg-obsidian-900 border border-amber/40 rounded-2xl rounded-tl-sm">
+        <div className="flex-1 min-w-0 flex flex-col gap-3 px-5 py-4 sm:px-6 sm:py-5 bg-obsidian-900 rounded-3xl rounded-tl-md">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-sans text-sm font-semibold text-amber">The problem</h2>
+            <h2 className="lb-heading lb-heading-sm">The problem</h2>
             <div className="flex flex-wrap items-center gap-1.5">
               <OwlSpeedControl />
               <OwlSoundToggle />
@@ -244,7 +242,7 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
                   onClick={() => setPaused((v) => !v)}
                   title={paused ? 'Carry on reading' : 'Pause the owl'}
                   aria-pressed={paused}
-                  className={`${pillButton} ${paused ? 'border-chalk-100 bg-chalk-100 text-obsidian-950 hover:bg-chalk-300' : 'border-amber bg-amber text-obsidian-950 hover:bg-amber-glow'}`}
+                  className={`c-pill ${paused ? '' : 'c-pill-go'}`}
                 >
                   {paused ? <Play className="w-3.5 h-3.5 fill-current" aria-hidden /> : <Pause className="w-3.5 h-3.5 fill-current" aria-hidden />}
                   {paused ? 'Play' : 'Pause'}
@@ -259,7 +257,7 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
                     setPaused(false);
                     setRunId((r) => r + 1);
                   }}
-                  className={`${pillButton} border-hairline text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-850`}
+                  className={"c-pill"}
                 >
                   <RotateCcw className="w-3.5 h-3.5" aria-hidden />
                   Replay
@@ -272,7 +270,7 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
                     setPaused(false);
                     setSkipped(true);
                   }}
-                  className={`${pillButton} border-hairline text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-850`}
+                  className={"c-pill"}
                 >
                   <FastForward className="w-3.5 h-3.5" aria-hidden />
                   Show everything
@@ -281,27 +279,27 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
             </div>
           </div>
 
-          <p className="font-sans text-[15px] sm:text-base leading-relaxed text-chalk-100">{words('story')}</p>
-          <p className="font-sans text-[15px] leading-relaxed text-chalk-100">
+          <p className="font-sans text-lg leading-relaxed text-chalk-100">{words('story')}</p>
+          <p className="font-sans text-base leading-relaxed text-chalk-100">
             <strong className="owl-reveal font-semibold text-amber" data-on={on(offsets.goal)}>
               Our goal:{' '}
             </strong>
             {words('goal')}
           </p>
           {units.example.length > 0 && (
-            <p className="font-sans text-sm leading-relaxed text-chalk-300">
+            <p className="font-sans text-base leading-relaxed text-chalk-300">
               <span className="owl-reveal font-semibold text-chalk-200" data-on={on(offsets.example)}>
                 A tiny example:{' '}
               </span>
               {words('example')}
             </p>
           )}
-          <p className="owl-reveal font-sans text-xs leading-relaxed text-chalk-400" data-on={on(offsets.problem)} data-owl-textbook>
+          <p className="owl-reveal font-sans text-sm leading-relaxed text-chalk-400" data-on={on(offsets.problem)} data-owl-textbook>
             <span className="font-semibold">In textbook words: </span>
             <RichTokens tokens={problem} />
           </p>
           {!done && (
-            <div className="h-1 w-full bg-obsidian-800 rounded-full overflow-hidden" aria-hidden>
+            <div className="h-1.5 w-full bg-obsidian-800 rounded-full overflow-hidden" aria-hidden>
               <div className="h-full w-full origin-left bg-amber transition-transform duration-700 ease-out" style={{ transform: `scaleX(${((shown > 0 ? times[shown - 1] : 0) / end).toFixed(3)})` }} />
             </div>
           )}
@@ -359,7 +357,7 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
               </li>
             ))}
           </ul>
-          <p className="lb-tip">Tip: switch on 🎬 Animation Mode to see the owl's story, then press Step (→) at your own pace.</p>
+          <p className="lb-tip">Tip: switch on Animation Mode to see the owl's story, then press Step (→) at your own pace.</p>
         </div>
         {dpBrief && (
           <div className="lb-panel">

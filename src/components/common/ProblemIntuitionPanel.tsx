@@ -1,4 +1,5 @@
 import React, { useId, useMemo, useState } from 'react';
+import { OwlGlyph } from '../home/OwlMascot';
 import { BookOpen, ChevronDown } from 'lucide-react';
 import { GlossaryKey } from '../../config/glossary';
 import { OwlBriefing } from '../../config/owlBriefings';
@@ -108,7 +109,7 @@ export const ProblemIntuitionPanel: React.FC<ProblemIntuitionPanelProps> = ({ pr
         <span className="lb-toggle-title">
           {owl ? (
             <span aria-hidden className="text-base leading-none">
-              🦉
+              <OwlGlyph />
             </span>
           ) : (
             <BookOpen className="w-3.5 h-3.5 text-amber" />

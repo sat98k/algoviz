@@ -57,7 +57,7 @@ const FOLD_LIMIT = 36;
 const MAX_OPEN_ANSWERS = 4;
 const AMBER = '#d97706';
 const RED = '#dc2626';
-const GOLD = '#f59e0b';
+const GOLD = '#e8a817';
 const STONE = '#a8a29e';
 
 const prefersReducedMotion = () =>
@@ -330,7 +330,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
     const common = { x: -w / 2, y: -h / 2, width: w, height: h, rx: 10 };
     const fill = kind === 'solution' ? '#fef3c7' : kind === 'pruned' ? '#fef2f2' : '#ffffff';
     const stroke =
-      kind === 'active' ? AMBER : kind === 'trying' ? AMBER : kind === 'path' ? '#f59e0b' : kind === 'solution' ? '#b45309' : kind === 'pruned' ? '#fca5a5' : kind === 'waiting' ? '#0ea5e9' : '#d6d3d1';
+      kind === 'active' ? AMBER : kind === 'trying' ? AMBER : kind === 'path' ? '#e8a817' : kind === 'solution' ? '#b45309' : kind === 'pruned' ? '#fca5a5' : kind === 'waiting' ? '#0ea5e9' : '#d6d3d1';
     return (
       <>
         {isFolded && (
@@ -377,7 +377,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
           )}
           {kind === 'solution' && (
             <text x={nodeW / 2 + 2} y={-nodeH / 2 + 4} textAnchor="middle" fontSize="16">
-              🏆
+              ★
             </text>
           )}
           {kind === 'waiting' && (
@@ -404,7 +404,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
           )}
           {fc && (
             <text y={nodeH / 2 + 22} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="#78716c">
-              {`done${fc.pruned ? ` · ✂${fc.pruned}` : ''}${fc.solutions ? ` · 🏆${fc.solutions}` : ''}`}
+              {`done${fc.pruned ? ` · ✂${fc.pruned}` : ''}${fc.solutions ? ` · ★${fc.solutions}` : ''}`}
             </text>
           )}
           {id === activeId && kind !== 'solution' && (
@@ -438,30 +438,30 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
     <div className="flex flex-col gap-2 mt-4" data-state-space-tree>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="font-display font-bold text-sm sm:text-base text-stone-900">🌳 The search tree</h3>
+          <h3 className="font-display font-black text-base sm:text-lg text-stone-900">The search tree</h3>
           <p className="font-sans text-xs text-stone-600">{caption}</p>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5 font-sans text-xs font-semibold">
+        <div className="c-group font-sans text-xs font-semibold">
           <button
             type="button"
             onClick={() => setMode('follow')}
             aria-pressed={mode === 'follow'}
-            className={`px-3 py-1 rounded-full transition-colors ${mode === 'follow' ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+            className={`c-pill ${mode === 'follow' ? 'is-on' : ''}`}
           >
-            🎯 Follow
+            Follow
           </button>
           <button
             type="button"
             onClick={() => setMode('whole')}
             aria-pressed={mode === 'whole'}
-            className={`px-3 py-1 rounded-full transition-colors ${mode === 'whole' ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+            className={`c-pill ${mode === 'whole' ? 'is-on' : ''}`}
           >
-            🗺️ Whole tree
+            Whole tree
           </button>
         </div>
       </div>
 
-      <div ref={wrapRef} className="relative w-full rounded-xl border border-amber-200 bg-[#fdfaf5]" style={{ height: panelHeight }}>
+      <div ref={wrapRef} className="relative w-full rounded-[22px] bg-[#fbf9f4]" style={{ height: panelHeight }}>
         <svg
           viewBox={`${camX} ${camY} ${camW} ${camH}`}
           preserveAspectRatio="xMidYMid meet"
@@ -487,7 +487,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
           <svg
             width={mapW}
             height={mapH}
-            className="absolute top-2 right-2 rounded-lg border border-amber-200 bg-white/90 shadow-sm"
+            className="absolute top-2 right-2 rounded-xl bg-white/90"
             aria-hidden
           >
             {visible
@@ -514,7 +514,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1 font-sans text-[11px] text-stone-600">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 font-sans text-xs text-stone-600">
         <span>
           <span className="inline-block w-3 h-3 align-[-2px] rounded border-2 border-amber-600 mr-1" />
           now
@@ -524,7 +524,7 @@ export const StateSpaceTree: React.FC<StateSpaceTreeProps> = ({
           choices so far
         </span>
         <span>✂ cut off: can never work</span>
-        <span>🏆 answer</span>
+        <span>★ answer</span>
         {visible.some((id) => kindOf(id) === 'waiting') && <span>⏳ found, waiting to be explored</span>}
         {fold && <span>▤ finished branch, folded up</span>}
       </div>

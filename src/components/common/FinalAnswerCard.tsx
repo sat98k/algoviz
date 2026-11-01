@@ -25,11 +25,11 @@ export const FinalAnswerCard: React.FC<FinalAnswerCardProps> = ({ isFinal, resul
   return (
     <section
       aria-label="Final answer"
-      className="flex items-start gap-3 p-4 bg-obsidian-950 border border-dashed border-hairline text-chalk-400"
+      className="sp-card flex items-start gap-3 text-chalk-300"
     >
-      <Hourglass className="w-4 h-4 mt-0.5 shrink-0 text-chalk-500" />
+      <Hourglass className="w-4 h-4 mt-1 shrink-0" aria-hidden />
       <div className="flex flex-col gap-0.5">
-        <span className="font-sans text-sm font-semibold text-chalk-300">Final answer</span>
+        <span className="sp-label">Final answer</span>
         <span className="font-sans text-sm">
           The answer appears here when the algorithm finishes. You are on step {stepNumber} of {totalSteps}.
         </span>

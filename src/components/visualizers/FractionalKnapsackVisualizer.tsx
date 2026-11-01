@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { FitToBox, FitToScreenContext } from '../common/FitToBox';
+import { BarChart3, Clapperboard } from 'lucide-react';
 import { AlgorithmStep } from '../../types/algorithm';
 import { FractionalKnapsackItem } from '../../algorithms/fractionalKnapsack';
 import { SEM } from '../../styles/semantics';
@@ -69,42 +70,19 @@ export const FractionalKnapsackVisualizer: React.FC<FractionalKnapsackVisualizer
   };
 
   return (
-    <div className={`flex flex-col items-center w-full min-h-[380px] p-3 sm:p-6 bg-obsidian-900 border border-hairline gap-5 ${fit ? 'lg:flex-1 lg:min-h-0 lg:p-2 lg:gap-1.5' : ''}`}>
+    <div className={`flex flex-col items-center w-full min-h-[380px] p-3 sm:p-6 bg-obsidian-900 rounded-[28px] gap-5 ${fit ? 'lg:flex-1 lg:min-h-0 lg:p-2 lg:gap-1.5' : ''}`}>
       {/* ─── Mode Switcher Header ─── */}
-      <div className={`flex flex-wrap items-center justify-between w-full max-w-5xl px-1 pb-3 border-b border-hairline gap-3 ${fit ? 'lg:pb-1.5 lg:max-w-none' : ''}`}>
-        <div className="flex items-center gap-3">
-          <span className="font-sans text-xs text-chalk-400 font-semibold uppercase tracking-wider">
-            View Mode:
-          </span>
-          <div className="inline-flex p-1 bg-obsidian-950 border border-hairline rounded-lg shadow-sm">
-            <button
-              type="button"
-              onClick={() => setViewMode('story')}
-              data-view-mode="story"
-              className={`px-3 py-1.5 text-xs font-sans font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-                viewMode === 'story'
-                  ? 'bg-amber text-obsidian-950 shadow-sm font-bold'
-                  : 'text-chalk-400 hover:text-chalk-200'
-              }`}
-            >
-              <span>🎬</span> Animation Mode
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('technical')}
-              data-view-mode="technical"
-              className={`px-3 py-1.5 text-xs font-sans font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-                viewMode === 'technical'
-                  ? 'bg-obsidian-800 text-chalk-100 border border-hairline font-bold'
-                  : 'text-chalk-400 hover:text-chalk-200'
-              }`}
-            >
-              <span>📊</span> Technical View
-            </button>
-          </div>
+      <div className={`ss-toggle w-full max-w-5xl px-1 ${fit ? 'lg:max-w-none' : ''}`}>
+        <div role="radiogroup" aria-label="View mode" className="c-group">
+          <button type="button" onClick={() => setViewMode('story')} data-view-mode="story" role="radio" aria-checked={viewMode === 'story'} className="c-pill">
+            <Clapperboard className="w-4 h-4" aria-hidden /> Animation Mode
+          </button>
+          <button type="button" onClick={() => setViewMode('technical')} data-view-mode="technical" role="radio" aria-checked={viewMode === 'technical'} className="c-pill">
+            <BarChart3 className="w-4 h-4" aria-hidden /> Technical View
+          </button>
         </div>
-        <span className="text-xs font-sans text-chalk-400">
-          {viewMode === 'story' ? 'Interactive physical knapsack, block piles & laser slicing' : 'Formulas, detailed cards & segmented capacity bar'}
+        <span className="ss-toggle-hint">
+          {viewMode === 'story' ? 'Cheese wheels, a cutting board and a leather backpack' : 'Formulas, detailed cards & segmented capacity bar'}
         </span>
       </div>
 

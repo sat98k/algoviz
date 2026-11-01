@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases } from './useAnimPhases';
 import { LcsGridView } from './LcsGridView';
+import { PALETTE as KIT, tint, useSvgIds } from './kit/materials';
 
 /**
  * 📿 Longest Common Subsequence as two bead necklaces.
@@ -31,9 +32,10 @@ const GAP = 10;
 const PAD = 40;
 const TOP_Y = 60;
 const BOT_Y = 200;
-const PALETTE = ['#f87171', '#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#f472b6', '#22d3ee', '#a3e635', '#fb923c'];
+const PALETTE = ['#e8776b', '#6f9fd8', '#5dbb85', '#f0c94a', '#a785cf', '#e08fb0', '#57b8c4', '#a9c24a', '#ef9a56'];
 
 export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
+  const ids = useSvgIds();
   const [view, setView] = useState<'beads' | 'grid'>(() => (typeof window === 'undefined' ? 'beads' : readView()));
   const choose = (v: 'beads' | 'grid') => {
     setView(v);
@@ -96,9 +98,11 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
     const tied = pairs.some(([a, b]) => (row === 'top' ? a - 1 === k : b - 1 === k));
     return (
       <g key={`${row}-${k}`} style={{ transform: `translateY(${up}px)`, transition: 'transform 0.5s var(--ease-out)', opacity: dim(row, k) ? 0.25 : 1 }}>
-        <circle cx={cx(k)} cy={y} r={BEAD / 2} fill={colour(ch)} stroke={tied ? '#b45309' : lifted(row, k) ? '#f59e0b' : '#57534e'} strokeWidth={tied || lifted(row, k) ? 4 : 1.5} />
-        <circle cx={cx(k) - 7} cy={y - 8} r="5" fill="#ffffff" opacity="0.6" />
-        <text x={cx(k)} y={y + 7} textAnchor="middle" fontSize="20" fontWeight="900" fill="#1c1917">
+        <ellipse cx={cx(k) + 2} cy={y + BEAD / 2 + 4} rx={BEAD * 0.36} ry="4" fill="#3a2414" opacity="0.14" />
+        {(tied || lifted(row, k)) && <circle cx={cx(k)} cy={y} r={BEAD / 2 + 5} fill="none" stroke={tied ? tint(KIT.gold, -0.2) : KIT.gold} strokeWidth="4" />}
+        <circle cx={cx(k)} cy={y} r={BEAD / 2} fill={`url(#${ids}-bead-${Math.max(0, PALETTE.indexOf(colour(ch)))})`} />
+        <ellipse cx={cx(k) - 8} cy={y - 9} rx="7" ry="4.5" fill="#ffffff" opacity="0.6" transform={`rotate(-30 ${cx(k) - 8} ${y - 9})`} />
+        <text x={cx(k)} y={y + 7} textAnchor="middle" fontSize="20" fontWeight="900" fill={KIT.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
           {ch}
         </text>
       </g>
@@ -107,18 +111,17 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
 
   return (
     <StoryStage
-      emoji="📿"
       title="Two Bead Necklaces"
       subtitle="Find the longest chain of beads that appears in both necklaces, in order."
       narration={narration}
       status={phaseName === 'final' ? `Shared chain • ${finalChain.length} beads` : filling ? `Best chain here • ${phase === 'judge' ? cell : '?'}` : 'Ready'}
     >
       <div className="flex justify-center mb-3">
-        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5 font-sans text-xs font-semibold" role="radiogroup" aria-label="Picture">
+        <div className="c-group" role="radiogroup" aria-label="Picture">
           {(
             [
-              ['beads', '📿 Necklaces'],
-              ['grid', '🧮 Answer grid'],
+              ['beads', 'Necklaces'],
+              ['grid', 'Answer grid'],
             ] as const
           ).map(([v, label]) => (
             <button
@@ -128,7 +131,7 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
               aria-checked={view === v}
               data-lcs-view={v}
               onClick={() => choose(v)}
-              className={`px-3 py-1 rounded-full transition-colors ${view === v ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+              className="c-pill"
             >
               {label}
             </button>
@@ -138,7 +141,7 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
 
       {/* With the grid on, the necklaces shrink into a small side panel (above it on narrow screens) but keep acting out each comparison. */}
       <div className={grid ? 'flex flex-col lg:flex-row items-center lg:items-start justify-center gap-4' : undefined}>
-      <div className={grid ? 'w-full max-w-[240px] shrink-0 rounded-xl border border-amber-200 bg-white/60 p-2' : undefined} data-necklace-panel>
+      <div className={grid ? 'w-full max-w-[240px] shrink-0 rounded-2xl bg-[#fbf9f4] p-2' : undefined} data-necklace-panel>
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="block mx-auto w-full h-auto overflow-visible"
@@ -147,22 +150,44 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
         aria-label="Two necklaces"
         data-necklaces-size={grid ? 'small' : 'full'}
       >
-        {/* strings */}
-        <line x1={PAD - 16} y1={TOP_Y} x2={PAD + X.length * (BEAD + GAP)} y2={TOP_Y} stroke="#a8a29e" strokeWidth="2" />
-        <line x1={PAD - 16} y1={BOT_Y} x2={PAD + Y.length * (BEAD + GAP)} y2={BOT_Y} stroke="#a8a29e" strokeWidth="2" />
+        <defs>
+          {PALETTE.map((c, k) => (
+            <radialGradient key={k} id={`${ids}-bead-${k}`} cx="0.36" cy="0.32" r="0.75">
+              <stop offset="0" stopColor={tint(c, 0.45)} />
+              <stop offset="0.55" stopColor={c} />
+              <stop offset="1" stopColor={tint(c, -0.3)} />
+            </radialGradient>
+          ))}
+        </defs>
+        {/* cords */}
+        {[
+          [TOP_Y, X.length],
+          [BOT_Y, Y.length],
+        ].map(([y, len]) => (
+          <g key={y}>
+            <path d={`M${PAD - 18} ${y - 6} Q${PAD - 30} ${y} ${PAD - 18} ${y + 6}`} fill="none" stroke="#8a6a44" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1={PAD - 16} y1={y} x2={PAD + len * (BEAD + GAP)} y2={y} stroke="#8a6a44" strokeWidth="3" strokeLinecap="round" />
+            <line x1={PAD - 16} y1={y} x2={PAD + len * (BEAD + GAP)} y2={y} stroke="#c9a77a" strokeWidth="1.2" strokeDasharray="2 3" />
+          </g>
+        ))}
 
         {/* golden threads between tied beads */}
         {pairs.map(([a, b]) => (
-          <line key={`t-${a}-${b}`} x1={cx(a - 1)} y1={TOP_Y + BEAD / 2} x2={cx(b - 1)} y2={BOT_Y - BEAD / 2} stroke="#d97706" strokeWidth="4" strokeLinecap="round" className="animate-story-pop" />
+          <line key={`t-${a}-${b}`} x1={cx(a - 1)} y1={TOP_Y + BEAD / 2} x2={cx(b - 1)} y2={BOT_Y - BEAD / 2} stroke={KIT.gold} strokeWidth="4.5" strokeLinecap="round" className="animate-story-pop" />
         ))}
 
         {/* the comparison: a link when they match, a cross when they don't */}
         {filling && phase === 'judge' && i > 0 && j > 0 && (
           <g>
-            <line x1={cx(i - 1)} y1={TOP_Y + 24 + BEAD / 2} x2={cx(j - 1)} y2={BOT_Y - 24 - BEAD / 2} stroke={isMatch ? '#16a34a' : '#dc2626'} strokeWidth="4" strokeDasharray={isMatch ? undefined : '6 6'} />
-            <text x={(cx(i - 1) + cx(j - 1)) / 2 + 14} y={(TOP_Y + BOT_Y) / 2 + 6} fontSize="20" fontWeight="900" fill={isMatch ? '#16a34a' : '#dc2626'} className="animate-story-pop">
-              {isMatch ? 'click!' : '✗'}
-            </text>
+            <line x1={cx(i - 1)} y1={TOP_Y + 24 + BEAD / 2} x2={cx(j - 1)} y2={BOT_Y - 24 - BEAD / 2} stroke={isMatch ? '#0c8030' : '#cc2e2e'} strokeWidth="4" strokeDasharray={isMatch ? undefined : '6 6'} strokeLinecap="round" />
+            <g transform={`translate(${(cx(i - 1) + cx(j - 1)) / 2 + 30}, ${(TOP_Y + BOT_Y) / 2})`}>
+              <g className="animate-story-pop">
+                <rect x="-28" y="-13" width="56" height="26" rx="13" fill={isMatch ? '#0c8030' : '#cc2e2e'} />
+                <text textAnchor="middle" y="5" fontSize="14" fontWeight="900" fill="#ffffff" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
+                  {isMatch ? 'click!' : 'no'}
+                </text>
+              </g>
+            </g>
           </g>
         )}
 
@@ -176,7 +201,7 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
           <>
             <span className="font-semibold">Best shared chain for these beads:</span>
             {Array.from({ length: cell }, (_, k) => (
-              <span key={k} className="w-4 h-4 rounded-full bg-amber-400 border border-amber-700 animate-story-pop" />
+              <span key={k} className="w-4 h-4 rounded-full bg-[#e8a817] animate-story-pop" style={{ boxShadow: 'inset -2px -2px 0 rgb(0 0 0 / 0.15), inset 2px 2px 0 rgb(255 255 255 / 0.4)' }} />
             ))}
             <span className="font-black text-stone-900">{cell}</span>
           </>
@@ -185,7 +210,7 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
           <>
             <span className="font-semibold">Shared chain so far:</span>
             {(st.lcsString || '').split('').map((ch: string, k: number) => (
-              <span key={k} className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-amber-700 font-black text-stone-900" style={{ background: colour(ch) }}>
+              <span key={k} className="w-8 h-8 flex items-center justify-center rounded-full font-black text-stone-900" style={{ background: colour(ch), boxShadow: 'inset -3px -3px 0 rgb(0 0 0 / 0.15), inset 3px 3px 0 rgb(255 255 255 / 0.35)' }}>
                 {ch}
               </span>
             ))}

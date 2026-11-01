@@ -61,12 +61,12 @@ export const LcsGridView: React.FC<Props> = ({ X, Y, phase, colour, table, direc
         data-grid-header={`${kind}-${k}`}
       >
         {ch === undefined ? (
-          <span className="text-xs font-bold text-stone-400" title="no beads">
+          <span className="text-xs font-bold text-stone-500" title="no beads">
             ∅
           </span>
         ) : (
           <span
-            className={`flex items-center justify-center rounded-full font-black text-stone-900 border ${active ? 'border-amber-500 ring-2 ring-amber-400' : 'border-stone-500'}`}
+            className={`flex items-center justify-center rounded-full font-black text-stone-900 ${active ? 'ring-[3px] ring-[#e8a817]' : ''}`}
             style={{ width: CELL * 0.7, height: CELL * 0.7, background: colour(ch), transition: 'all 0.3s' }}
           >
             {ch}
@@ -87,9 +87,9 @@ export const LcsGridView: React.FC<Props> = ({ X, Y, phase, colour, table, direc
   return (
     <div className="flex flex-col items-center gap-3 font-sans" data-lcs-grid>
       <div className="overflow-x-auto max-w-full">
-        <div className="inline-grid rounded-xl bg-[#efe3d3] p-2 border border-amber-200 shadow-sm" style={{ gridTemplateColumns: `repeat(${n + 2}, ${CELL}px)` }}>
+        <div className="inline-grid rounded-[22px] bg-[#f3efe6] p-2.5" style={{ gridTemplateColumns: `repeat(${n + 2}, ${CELL}px)` }}>
           {/* top-left corner, then one header per column: the first j beads below */}
-          <div className="flex items-end justify-end pr-1 pb-0.5 text-[9px] font-bold leading-tight text-stone-500 text-right" style={{ width: CELL, height: CELL }}>
+          <div className="flex items-end justify-end pr-1 pb-0.5 text-[11px] font-bold leading-tight text-stone-600 text-right" style={{ width: CELL, height: CELL }}>
             top ↓<br />
             below →
           </div>
@@ -112,16 +112,16 @@ export const LcsGridView: React.FC<Props> = ({ X, Y, phase, colour, table, direc
                     key={`${r}-${c}`}
                     data-cell={`${r}-${c}`}
                     data-cell-state={cur ? 'current' : src ? 'source' : gold ? 'path' : done ? 'filled' : 'empty'}
-                    className={`relative flex items-center justify-center m-[2px] rounded-md border font-black tabular-nums ${CELL >= 48 ? 'text-xl' : 'text-base'}`}
+                    className={`relative flex items-center justify-center m-[2px] rounded-xl border font-black tabular-nums font-display ${CELL >= 48 ? 'text-xl' : 'text-base'}`}
                     style={{
                       width: CELL - 4,
                       height: CELL - 4,
                       transition: 'background 0.35s, border-color 0.35s',
-                      background: cur ? '#fde68a' : gold ? '#fcd34d' : src ? '#e0f2fe' : done ? '#fffbeb' : '#f5efe6',
-                      borderColor: cur ? '#d97706' : gold ? '#b45309' : src ? '#0284c7' : done ? '#d6c3a5' : '#e7dccb',
+                      background: cur ? '#fde68a' : gold ? '#f2c21a' : src ? '#dbe7fb' : done ? '#fbf9f4' : '#ece5d6',
+                      borderColor: cur ? '#e8a817' : gold ? '#a87a00' : src ? '#2457c5' : done ? 'transparent' : 'transparent',
                       borderWidth: cur || src || gold ? 2.5 : 1,
                       borderStyle: done || cur ? 'solid' : 'dashed',
-                      color: done ? (r === 0 || c === 0 ? '#a8a29e' : '#451a03') : '#c4b5a0',
+                      color: done ? (r === 0 || c === 0 ? '#8a8273' : '#1a1a1a') : '#b3a990',
                     }}
                   >
                     {cur && !revealed ? (
@@ -133,7 +133,7 @@ export const LcsGridView: React.FC<Props> = ({ X, Y, phase, colour, table, direc
                     ) : null}
                     {/* where this square's answer came from */}
                     {done && r > 0 && c > 0 && (!cur || revealed) && (
-                      <span className="absolute top-0 left-0.5 text-[10px] font-bold leading-none text-stone-500">{arrow(directions[r]?.[c])}</span>
+                      <span className="absolute top-0.5 left-1 text-[11px] font-bold leading-none text-stone-500">{arrow(directions[r]?.[c])}</span>
                     )}
                     {bead && (
                       <span
@@ -162,18 +162,18 @@ export const LcsGridView: React.FC<Props> = ({ X, Y, phase, colour, table, direc
         </p>
       )}
 
-      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] text-stone-600">
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-stone-600">
         <span>
-          <span className="inline-block w-3 h-3 align-[-2px] rounded mr-1 border-2" style={{ background: '#fde68a', borderColor: '#d97706' }} />
+          <span className="inline-block w-3 h-3 align-[-2px] rounded mr-1 border-2" style={{ background: '#fde68a', borderColor: '#e8a817' }} />
           square being worked out
         </span>
         <span>
-          <span className="inline-block w-3 h-3 align-[-2px] rounded mr-1 border-2" style={{ background: '#e0f2fe', borderColor: '#0284c7' }} />
+          <span className="inline-block w-3 h-3 align-[-2px] rounded mr-1 border-2" style={{ background: '#dbe7fb', borderColor: '#2457c5' }} />
           squares it reads from
         </span>
         <span>↖ beads matched · ↑ ← kept the better neighbour</span>
         <span>
-          <span className="inline-block w-3 h-3 align-[-2px] rounded mr-1 border-2" style={{ background: '#fcd34d', borderColor: '#b45309' }} />
+          <span className="inline-block w-3 h-3 align-[-2px] rounded mr-1 border-2" style={{ background: '#f2c21a', borderColor: '#a87a00' }} />
           path back from the corner
         </span>
         <span>

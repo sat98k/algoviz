@@ -4,10 +4,12 @@ import { FitToBox, FitToScreenContext } from '../common/FitToBox';
 import { OwlSoundToggle, OwlSpeedControl } from '../common/OwlControls';
 import { READING, endsSentence, fadeFor, playChirp, plainWords, prefersReducedMotion, tickMs, useOwlPrefs, wordDuration } from '../common/owlVoice';
 import { useOwlFlying } from '../common/owlFlight';
+import { OwlGlyph } from '../home/OwlMascot';
 import { NarrationGate, NarrationGateContext } from './narrationGate';
 
 interface StoryStageProps {
-  emoji: string;
+  /** Kept for the scenes that still pass one; the header no longer shows an emoji. */
+  emoji?: string;
   title: string;
   subtitle: string;
   /** One plain-English sentence describing what is happening right now. */
@@ -23,18 +25,15 @@ interface StoryStageProps {
  * In the player's fit-to-screen layout the frame fills its pane at a fixed size, and only the
  * drawing inside zooms to fit (FitToBox); the header and the owl keep their normal size.
  */
-export const StoryStage: React.FC<StoryStageProps> = ({ emoji, title, subtitle, narration, status, children }) => {
+export const StoryStage: React.FC<StoryStageProps> = ({ title, subtitle, narration, status, children }) => {
   const { enabled: fit } = useContext(FitToScreenContext);
   return (
   <div
     data-story-stage
-    className={`flex flex-col w-full bg-[#faf7f2] border border-amber-200/90 rounded-2xl p-4 sm:p-6 select-none relative shadow-md text-stone-800 gap-4 ${fit ? 'lg:flex-1 lg:min-h-0 lg:px-4 lg:py-2.5 lg:gap-2' : ''}`}
+    className={`ss-stage flex flex-col w-full rounded-[28px] p-4 sm:p-6 select-none relative text-stone-800 gap-4 ${fit ? 'lg:flex-1 lg:min-h-0 lg:px-4 lg:py-2.5 lg:gap-2' : ''}`}
   >
-    <div className={`flex flex-wrap items-center justify-between pb-3 border-b border-amber-200/80 gap-3 ${fit ? 'lg:pb-1.5' : ''}`}>
-      <div className={`flex items-center gap-3 ${fit ? 'lg:gap-2' : ''}`}>
-        <span className={`text-3xl drop-shadow ${fit ? 'lg:text-xl' : ''}`} aria-hidden>
-          {emoji}
-        </span>
+    <div className={`flex flex-wrap items-end justify-between gap-3 ${fit ? "lg:pb-0" : "pb-1"}`}>
+      <div className="min-w-0">
         <div className={fit ? 'lg:flex lg:items-baseline lg:gap-3 lg:flex-wrap' : undefined}>
           <h2 className={`ss-title ${fit ? 'ss-title-fit' : ''}`}>{title}</h2>
           <p className="ss-subtitle">{subtitle}</p>
@@ -79,14 +78,14 @@ interface OwlBubbleProps {
 }
 
 const bubbleClass = (steady: boolean) =>
-  `relative font-sans text-sm sm:text-base text-stone-800 bg-white border border-amber-200 rounded-2xl rounded-tl-sm px-4 py-2.5 shadow-sm leading-relaxed ${steady ? 'lg:flex-1 lg:min-h-[4.25rem] lg:py-2 lg:text-[15px] lg:leading-snug' : ''}`;
-const wrapClass = 'flex items-start gap-3 sm:sticky z-30 -mx-2 px-2 py-1 bg-[#faf7f2]/95 rounded-xl';
+  `relative font-sans text-sm sm:text-base text-stone-800 bg-[#fbf9f4] rounded-2xl rounded-tl-sm px-4 py-2.5 leading-relaxed ${steady ? 'lg:flex-1 lg:min-h-[4.25rem] lg:py-2 lg:text-[15px] lg:leading-snug' : ''}`;
+const wrapClass = 'flex items-start gap-3 sm:sticky z-30 -mx-2 px-2 py-1 bg-[#f3efe6]/95 rounded-xl';
 const wrapTop = 'var(--owl-top, calc(2.75rem + var(--dock-h, 0px) + 0.5rem))';
 
 const PlainOwlBubble: React.FC<OwlBubbleProps> = ({ narration, className = '', steady = false }) => (
   <div data-story-owl className={`${wrapClass} ${className}`} style={{ top: wrapTop }} aria-live="polite">
     <span className="text-2xl shrink-0" aria-hidden data-owl-avatar>
-      🦉
+      <OwlGlyph />
     </span>
     <p data-story-narration className={bubbleClass(steady)}>
       {narration}
@@ -208,7 +207,7 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
           className={`inline-block text-2xl ${talking ? 'owl-talking' : 'owl-idle'}`}
           style={flying ? { opacity: 0 } : undefined}
         >
-          🦉
+          <OwlGlyph />
         </span>
         {notes.map((n) => (
           <span key={n.id} aria-hidden className="owl-note font-sans text-xs font-bold text-amber-600" style={{ '--note-dx': `${n.dx}px` } as React.CSSProperties}>
@@ -237,7 +236,7 @@ const NarratedOwlBubble: React.FC<OwlBubbleProps & { gate: NarrationGate }> = ({
           }}
           disabled={!reading}
           title="Show the owl's whole sentence now, play the animation and carry on"
-          className="flex items-center gap-1 px-2.5 py-1 font-sans text-xs font-semibold border border-amber bg-amber text-obsidian-950 hover:bg-amber-glow disabled:opacity-40 disabled:bg-transparent disabled:text-chalk-400 disabled:border-hairline"
+          className="c-pill c-pill-go"
         >
           <FastForward className="w-3.5 h-3.5" aria-hidden />
           Skip

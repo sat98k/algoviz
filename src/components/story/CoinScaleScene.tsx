@@ -172,45 +172,70 @@ export const CoinScaleScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
   const status = kind === 'final' || kind === 'solution' ? `Balanced groups • ${Math.max(solutions.length, st.found ? 1 : 0)}` : `On the pan • ${sum} of ${target}`;
 
   return (
-    <StoryStage emoji="⚖️" title="Balance the Scale" subtitle="Each coin goes on the pan or into the skip tray. Match the gold block exactly." narration={narration} status={status}>
+    <StoryStage title="Balance the Scale" subtitle="Each coin goes on the pan or into the skip tray. Match the gold block exactly." narration={narration} status={status}>
       <svg viewBox={`0 0 ${W} ${H}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: W * 1.2 }} role="img" aria-label="Balance scale">
         {/* table */}
-        <rect x="0" y={tableY + 14} width={W} height="22" rx="6" fill="#d9c2a3" />
-        <rect x="0" y={tableY + 10} width={W} height="8" rx="4" fill="#efe3d3" />
+        <defs>
+          <linearGradient id="coinScaleTable" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#ecd7b4" />
+            <stop offset="1" stopColor="#c9a77a" />
+          </linearGradient>
+          <linearGradient id="coinScaleBrass" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#fde68a" />
+            <stop offset="0.5" stopColor="#e8a817" />
+            <stop offset="1" stopColor="#9a6416" />
+          </linearGradient>
+          <radialGradient id="coinScaleGold" cx="0.36" cy="0.3" r="0.8">
+            <stop offset="0" stopColor="#fff6d6" />
+            <stop offset="0.5" stopColor="#f0c94a" />
+            <stop offset="1" stopColor="#c48a12" />
+          </radialGradient>
+        </defs>
+        <rect x="0" y={tableY + 22} width={W} height="16" rx="8" fill="#3a2414" opacity="0.1" />
+        <rect x="0" y={tableY + 10} width={W} height="26" rx="10" fill="url(#coinScaleTable)" />
+        <rect x="0" y={tableY + 10} width={W} height="4" rx="2" fill="#ffffff" opacity="0.4" />
         {/* skip tray */}
-        <rect x={trayX} y={tableY - 34} width="120" height="44" rx="10" fill="#e7e5e4" stroke="#a8a29e" strokeDasharray="5 4" />
-        <text x={trayX + 60} y={tableY + 30} textAnchor="middle" fontSize="11" fontWeight="700" fill="#78716c">
+        <rect x={trayX} y={tableY - 30} width="120" height="44" rx="14" fill="#3a2414" opacity="0.08" />
+        <rect x={trayX} y={tableY - 34} width="120" height="44" rx="14" fill="#efe9dc" stroke="#cfc6b4" strokeWidth="1.5" />
+        <text x={trayX + 60} y={tableY + 31} textAnchor="middle" fontSize="12" fontWeight="800" fill="#4a463e">
           skip tray
         </text>
 
         {/* stand */}
-        <rect x={PIVOT.x - 7} y={PIVOT.y} width="14" height={tableY - PIVOT.y + 12} fill="#a16207" />
-        <path d={`M ${PIVOT.x - 46} ${tableY + 12} L ${PIVOT.x + 46} ${tableY + 12} L ${PIVOT.x + 24} ${tableY - 6} L ${PIVOT.x - 24} ${tableY - 6} Z`} fill="#78350f" />
+        <rect x={PIVOT.x - 7} y={PIVOT.y} width="14" height={tableY - PIVOT.y + 12} rx="4" fill="url(#coinScaleBrass)" />
+        <path d={`M ${PIVOT.x - 46} ${tableY + 12} L ${PIVOT.x + 46} ${tableY + 12} L ${PIVOT.x + 24} ${tableY - 6} L ${PIVOT.x - 24} ${tableY - 6} Z`} fill="#6e4426" />
         {/* beam */}
-        <line x1={leftEnd.x} y1={leftEnd.y} x2={rightEnd.x} y2={rightEnd.y} stroke="#b45309" strokeWidth="10" strokeLinecap="round" style={{ transition: 'all 0.8s var(--ease-move)' }} />
-        <circle cx={PIVOT.x} cy={PIVOT.y} r="9" fill="#78350f" />
+        <line x1={leftEnd.x} y1={leftEnd.y} x2={rightEnd.x} y2={rightEnd.y} stroke="#c98a12" strokeWidth="10" strokeLinecap="round" style={{ transition: 'all 0.8s var(--ease-move)' }} />
+        <circle cx={PIVOT.x} cy={PIVOT.y} r="10" fill="url(#coinScaleBrass)" stroke="#6e4426" strokeWidth="1.5" />
         {balanced && kind !== 'intro' && (
-          <text x={PIVOT.x} y={PIVOT.y - 22} textAnchor="middle" fontSize="22" className="animate-story-pop">
-            ✨
-          </text>
+          <g transform={`translate(${PIVOT.x}, ${PIVOT.y - 26})`}>
+            <g className="animate-story-pop">
+              <rect x="-40" y="-12" width="80" height="24" rx="12" fill="#0c8030" />
+              <text textAnchor="middle" y="5" fontSize="13" fontWeight="900" fill="#ffffff" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
+                balanced
+              </text>
+            </g>
+          </g>
         )}
 
         {/* pans */}
         {[leftEnd, rightEnd].map((e, k) => (
           <g key={k}>
-            <line x1={e.x} y1={e.y} x2={e.x - 44} y2={e.y + PAN_DROP} stroke="#78716c" strokeWidth="1.5" />
-            <line x1={e.x} y1={e.y} x2={e.x + 44} y2={e.y + PAN_DROP} stroke="#78716c" strokeWidth="1.5" />
-            <path d={`M ${e.x - 56} ${e.y + PAN_DROP} Q ${e.x} ${e.y + PAN_DROP + 26} ${e.x + 56} ${e.y + PAN_DROP} Z`} fill="#fde68a" stroke="#b45309" strokeWidth="2" />
+            <line x1={e.x} y1={e.y} x2={e.x - 44} y2={e.y + PAN_DROP} stroke="#6e6658" strokeWidth="1.6" />
+            <line x1={e.x} y1={e.y} x2={e.x + 44} y2={e.y + PAN_DROP} stroke="#6e6658" strokeWidth="1.6" />
+            <path d={`M ${e.x - 56} ${e.y + PAN_DROP} Q ${e.x} ${e.y + PAN_DROP + 28} ${e.x + 56} ${e.y + PAN_DROP} Z`} fill="url(#coinScaleBrass)" />
+            <ellipse cx={e.x} cy={e.y + PAN_DROP} rx="56" ry="5" fill="#fde68a" stroke="#9a6416" strokeWidth="1" />
           </g>
         ))}
         {/* gold target block */}
         <g>
-          <rect x={leftEnd.x - 32} y={leftEnd.y + PAN_DROP - 44} width="64" height="40" rx="6" fill="#f59e0b" stroke="#92400e" strokeWidth="2" />
-          <text x={leftEnd.x} y={leftEnd.y + PAN_DROP - 18} textAnchor="middle" fontSize="16" fontWeight="900" fill="#451a03">
+          <path d={`M${leftEnd.x - 34} ${leftEnd.y + PAN_DROP - 4} L${leftEnd.x - 26} ${leftEnd.y + PAN_DROP - 44} H${leftEnd.x + 26} L${leftEnd.x + 34} ${leftEnd.y + PAN_DROP - 4} Z`} fill="url(#coinScaleBrass)" stroke="#9a6416" strokeWidth="1.5" strokeLinejoin="round" />
+          <path d={`M${leftEnd.x - 22} ${leftEnd.y + PAN_DROP - 40} H${leftEnd.x + 6}`} stroke="#ffffff" strokeOpacity="0.7" strokeWidth="2.5" strokeLinecap="round" />
+          <text x={leftEnd.x} y={leftEnd.y + PAN_DROP - 17} textAnchor="middle" fontSize="18" fontWeight="900" fill="#1a1a1a" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
             {target}
           </text>
         </g>
-        <text x={rightEnd.x} y={rightEnd.y + PAN_DROP + 34} textAnchor="middle" fontSize="12" fontWeight="800" fill={phase === 'reject' ? '#dc2626' : '#57534e'}>
+        <text x={rightEnd.x} y={rightEnd.y + PAN_DROP + 34} textAnchor="middle" fontSize="13" fontWeight="900" fill={phase === 'reject' ? '#cc2e2e' : '#3a3732'}>
           {phase === 'reject' && kind === 'overflow' ? 'too heavy!' : phase === 'reject' && kind === 'short-in' ? 'can’t reach it' : `pan: ${panSum}`}
         </text>
 
@@ -223,9 +248,11 @@ export const CoinScaleScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
           return (
             <g key={`coin-${i}`} style={{ transform: `translate(${p.x}px, ${p.y}px) scale(${s === 'pan' || s === 'trying' ? 0.72 : 1})`, transition: 'transform 0.8s var(--ease-move)', opacity: s === 'skipped' ? 0.55 : 1 }}>
               <g className={s === 'trying' ? 'animate-story-bob' : undefined}>
-                <ellipse cx="0" cy={r * 0.25} rx={r} ry={r * 0.82} fill="#a16207" />
-                <ellipse cx="0" cy="0" rx={r} ry={r * 0.82} fill={s === 'trying' ? '#fde68a' : '#facc15'} stroke={isNow ? '#ea580c' : '#a16207'} strokeWidth={isNow ? 3 : 1.5} strokeDasharray={s === 'trying' ? '4 3' : undefined} />
-                <text textAnchor="middle" y="5" fontSize={Math.max(11, r * 0.7)} fontWeight="900" fill="#713f12">
+                <ellipse cx="0" cy={r * 0.9} rx={r * 0.9} ry={r * 0.2} fill="#3a2414" opacity="0.16" />
+                <ellipse cx="0" cy={r * 0.25} rx={r} ry={r * 0.82} fill="#9a6416" />
+                <ellipse cx="0" cy="0" rx={r} ry={r * 0.82} fill={s === 'trying' ? '#fde68a' : 'url(#coinScaleGold)'} stroke={isNow ? '#c4501a' : '#b07a12'} strokeWidth={isNow ? 3 : 1} strokeDasharray={s === 'trying' ? '4 3' : undefined} />
+                <ellipse cx="0" cy="0" rx={r * 0.74} ry={r * 0.6} fill="none" stroke="#b07a12" strokeOpacity="0.45" strokeWidth="1" />
+                <text textAnchor="middle" y="5" fontSize={Math.max(12, r * 0.72)} fontWeight="900" fill="#4a2e00" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                   {v}
                 </text>
               </g>
@@ -253,9 +280,9 @@ export const CoinScaleScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
 
       {solutions.length > 0 && (
         <div className="mt-3 flex flex-wrap justify-center gap-2 font-sans text-xs">
-          <span className="self-center font-semibold uppercase tracking-wider text-stone-500">🏆 Balanced groups:</span>
+          <span className="self-center font-bold text-sm text-stone-700">Balanced groups:</span>
           {solutions.map((s, k) => (
-            <span key={k} className={`px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 font-bold text-amber-900 ${k === solutions.length - 1 && kind === 'solution' ? 'animate-story-pop' : ''}`}>
+            <span key={k} className={`px-3 py-1 rounded-full bg-[#f2c21a] font-bold text-stone-900 ${k === solutions.length - 1 && kind === 'solution' ? 'animate-story-pop' : ''}`}>
               {s.join(' + ')}
             </span>
           ))}

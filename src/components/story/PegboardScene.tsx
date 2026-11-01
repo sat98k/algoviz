@@ -1,6 +1,8 @@
 import React from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases, useHeldValue, useProgress, useTweened } from './useAnimPhases';
+import { PALETTE, tint, useSvgIds } from './kit/materials';
+import { useChapter } from './kit/chapter';
 
 /**
  * 📌 Pegs on a cork board, shared by the convex hull algorithms.
@@ -19,12 +21,14 @@ const W = 720;
 const H = 420;
 const M = 46;
 
-const BAND = '#c2410c';
-const RIBBON = '#db2777';
-const OK = '#16a34a';
-const BAD = '#dc2626';
+const BAND = '#d9573f';
+const RIBBON = '#d4688c';
+const OK = '#0c8030';
+const BAD = '#cc2e2e';
 
 export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, stepMs }) => {
+  const ids = useSvgIds();
+  const field = useChapter();
   const st: any = step.state || {};
   const points: P[] = st.points || [];
   const isJarvis = algorithmId === 'jarvis-march';
@@ -195,7 +199,6 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
 
   return (
     <StoryStage
-      emoji={isJarvis ? '🎁' : '📌'}
       title={isJarvis ? 'Gift-Wrapping the Pegs' : 'Rubber Band on a Pegboard'}
       subtitle={isJarvis ? 'Keep every peg on the ribbon’s left; tie the next corner, repeat.' : 'Hook the band peg by peg; snap it off any peg that makes a dent.'}
       narration={narration}
@@ -203,28 +206,35 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
     >
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto overflow-visible" role="img" aria-label="Pegboard">
         <defs>
-          <pattern id="storyCork" width="14" height="14" patternUnits="userSpaceOnUse">
-            <rect width="14" height="14" fill="#e3c08f" />
-            <circle cx="3" cy="4" r="1.1" fill="#c99a62" />
-            <circle cx="10" cy="9" r="0.9" fill="#b9874f" />
-            <circle cx="7" cy="1" r="0.6" fill="#d4a76f" />
+          <pattern id={`${ids}-cork`} width="16" height="16" patternUnits="userSpaceOnUse">
+            <rect width="16" height="16" fill="#e6c899" />
+            <circle cx="3" cy="4" r="1.1" fill="#d1ad78" />
+            <circle cx="11" cy="10" r="0.9" fill="#c79f68" />
+            <circle cx="8" cy="1.5" r="0.7" fill="#dcbb88" />
+            <circle cx="13" cy="3" r="0.5" fill="#f2dcb4" />
           </pattern>
-          <radialGradient id="storyBrass" cx="35%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#fef3c7" />
-            <stop offset="55%" stopColor="#d97706" />
-            <stop offset="100%" stopColor="#92400e" />
+          <radialGradient id={`${ids}-brass`} cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#fff6d6" />
+            <stop offset="50%" stopColor={PALETTE.gold} />
+            <stop offset="100%" stopColor="#8a5a0c" />
           </radialGradient>
+          <linearGradient id={`${ids}-frame`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={tint(field.bg, 0.1)} />
+            <stop offset="1" stopColor={tint(field.bg, -0.2)} />
+          </linearGradient>
         </defs>
-        <rect x="0" y="0" width={W} height={H} rx="18" fill="#a16207" />
-        <rect x="10" y="10" width={W - 20} height={H - 20} rx="12" fill="url(#storyCork)" />
+        <rect x="0" y="6" width={W} height={H} rx="22" fill="#3a2414" opacity="0.14" />
+        <rect x="0" y="0" width={W} height={H} rx="22" fill={`url(#${ids}-frame)`} />
+        <rect x="12" y="12" width={W - 24} height={H - 24} rx="14" fill={`url(#${ids}-cork)`} />
+        <rect x="12" y="12" width={W - 24} height="6" rx="3" fill="#3a2414" opacity="0.12" />
 
         {/* Jarvis: the ribbon's right side, outside the fence */}
         {outside && (
           <>
-            <clipPath id="storyBoardClip">
-              <rect x="10" y="10" width={W - 20} height={H - 20} rx="12" />
+            <clipPath id={`${ids}-clip`}>
+              <rect x="12" y="12" width={W - 24} height={H - 24} rx="14" />
             </clipPath>
-            <path d={outside} fill={BAD} fillOpacity="0.12" clipPath="url(#storyBoardClip)" />
+            <path d={outside} fill={BAD} fillOpacity="0.12" clipPath={`url(#${ids}-clip)`} />
           </>
         )}
 
@@ -233,12 +243,15 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
           <g>
             <path
               d={`M ${pv.x} ${pv.y} L ${pv.x + R * Math.cos(beamAngle - 0.05)} ${pv.y - R * Math.sin(beamAngle - 0.05)} L ${pv.x + R * Math.cos(beamAngle + 0.05)} ${pv.y - R * Math.sin(beamAngle + 0.05)} Z`}
-              fill="#fef08a"
-              opacity="0.55"
+              fill={PALETTE.goldLight}
+              opacity="0.7"
             />
-            <text x={pv.x} y={pv.y + 34} textAnchor="middle" fontSize="24">
-              🗼
-            </text>
+            <g transform={`translate(${pv.x}, ${pv.y + 30})`}>
+              <path d="M-7 14 L-4 -10 H4 L7 14 Z" fill="#fbf9f4" stroke={PALETTE.ink} strokeWidth="1.4" strokeLinejoin="round" />
+              <path d="M-5 0 H5 M-6 7 H6" stroke="#cc2e2e" strokeWidth="3" />
+              <rect x="-5" y="-16" width="10" height="7" rx="1.5" fill={PALETTE.gold} stroke={PALETTE.ink} strokeWidth="1.2" />
+              <path d="M-6 -16 L0 -21 L6 -16 Z" fill="#cc2e2e" />
+            </g>
           </g>
         )}
 
@@ -246,12 +259,12 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
         {triplet && kind === 'check' && (
           <g>
             {isJarvis ? (
-              <line x1={at(triplet[0]).x} y1={at(triplet[0]).y} x2={at(triplet[2]).x} y2={at(triplet[2]).y} stroke={phase === 'verdict' ? (replaces ? BAD : OK) : '#78716c'} strokeWidth="2" strokeDasharray="5 5" />
+              <line x1={at(triplet[0]).x} y1={at(triplet[0]).y} x2={at(triplet[2]).x} y2={at(triplet[2]).y} stroke={phase === 'verdict' ? (replaces ? BAD : OK) : '#7a7266'} strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" />
             ) : (
               <polyline
                 points={triplet.map((p) => `${at(p).x},${at(p).y}`).join(' ')}
                 fill="none"
-                stroke={phase === 'verdict' ? (turn === 'ccw' ? OK : BAD) : '#78716c'}
+                stroke={phase === 'verdict' ? (turn === 'ccw' ? OK : BAD) : '#7a7266'}
                 strokeWidth="3"
                 strokeDasharray="7 5"
               />
@@ -259,8 +272,8 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
             {phase === 'verdict' && !isJarvis && (
               <g transform={`translate(${at(triplet[1]).x}, ${at(triplet[1]).y - 30})`}>
                 <g className="animate-story-pop">
-                  <rect x="-46" y="-13" width="92" height="24" rx="12" fill="#ffffff" stroke={turn === 'ccw' ? OK : BAD} strokeWidth="2" />
-                  <text textAnchor="middle" y="4" fontSize="12" fontWeight="800" fill={turn === 'ccw' ? OK : BAD}>
+                  <rect x="-48" y="-14" width="96" height="26" rx="13" fill={turn === 'ccw' ? OK : BAD} />
+                  <text textAnchor="middle" y="4.5" fontSize="13" fontWeight="900" fill="#ffffff" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                     {turn === 'ccw' ? '↺ bends left' : '↻ dent!'}
                   </text>
                 </g>
@@ -269,8 +282,8 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
             {phase === 'verdict' && isJarvis && (
               <g transform={`translate(${at(triplet[2]).x}, ${at(triplet[2]).y - 32})`}>
                 <g className="animate-story-pop">
-                  <rect x="-62" y="-13" width="124" height="24" rx="12" fill="#ffffff" stroke={replaces ? BAD : OK} strokeWidth="2" />
-                  <text textAnchor="middle" y="4" fontSize="12" fontWeight="800" fill={replaces ? BAD : OK}>
+                  <rect x="-64" y="-14" width="128" height="26" rx="13" fill={replaces ? BAD : OK} />
+                  <text textAnchor="middle" y="4.5" fontSize="13" fontWeight="900" fill="#ffffff" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                     {turn === 'collinear' ? (replaces ? 'same line, further' : 'same line, closer') : replaces ? 'right side: swing!' : 'left side ✓'}
                   </text>
                 </g>
@@ -282,8 +295,9 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
         {/* Rubber band / ribbon */}
         {bandPoints.length > 1 && (
           <>
-            <path d={bandD} fill={isFinal ? (isJarvis ? '#fbcfe8' : '#fed7aa') : 'none'} fillOpacity={isFinal ? 0.35 : 0} stroke="#00000022" strokeWidth="9" strokeLinejoin="round" strokeLinecap="round" transform="translate(2,3)" />
-            <path d={bandD} fill="none" stroke={isJarvis ? RIBBON : BAND} strokeWidth="6" strokeLinejoin="round" strokeLinecap="round" />
+            <path d={bandD} fill={isFinal ? (isJarvis ? RIBBON : BAND) : 'none'} fillOpacity={isFinal ? 0.14 : 0} stroke="#3a2414" strokeOpacity="0.16" strokeWidth="10" strokeLinejoin="round" strokeLinecap="round" transform="translate(2,4)" />
+            <path d={bandD} fill="none" stroke={isJarvis ? RIBBON : BAND} strokeWidth="7" strokeLinejoin="round" strokeLinecap="round" />
+            <path d={bandD} fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" transform="translate(-1,-1.5)" />
           </>
         )}
 
@@ -297,9 +311,14 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
 
         {/* Snapping peg */}
         {popping && (
-          <text x={at(popping).x + 16} y={at(popping).y - 14} fontSize="18" fontWeight="900" fill={BAD} className="animate-story-pop">
-            snap!
-          </text>
+          <g transform={`translate(${at(popping).x + 30}, ${at(popping).y - 18})`}>
+            <g className="animate-story-pop">
+              <rect x="-26" y="-13" width="52" height="26" rx="13" fill={BAD} />
+              <text textAnchor="middle" y="5" fontSize="14" fontWeight="900" fill="#ffffff" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
+                snap!
+              </text>
+            </g>
+          </g>
         )}
 
         {/* Pegs */}
@@ -312,29 +331,31 @@ export const PegboardScene: React.FC<StorySceneProps> = ({ step, algorithmId, st
           const inside = isFinal && !hooked;
           return (
             <g key={`peg-${p.id}`} opacity={inside ? 0.55 : 1}>
-              <ellipse cx={c.x + 3} cy={c.y + 4} rx="9" ry="6" fill="#00000030" />
-              <circle cx={c.x} cy={c.y} r={hooked ? 10 : 8.5} fill="url(#storyBrass)" stroke={hooked ? (isJarvis ? RIBBON : BAND) : '#78350f'} strokeWidth={hooked ? 3 : 1.5} />
-              <text x={c.x} y={c.y + 26} textAnchor="middle" fontSize="12" fontWeight="700" fill="#451a03">
+              <ellipse cx={c.x + 4} cy={c.y + 5} rx="10" ry="6" fill="#3a2414" opacity="0.22" />
+              <circle cx={c.x} cy={c.y} r={hooked ? 11 : 9} fill={`url(#${ids}-brass)`} stroke={hooked ? (isJarvis ? RIBBON : BAND) : '#8a5a0c'} strokeWidth={hooked ? 3.5 : 1.2} />
+              <circle cx={c.x - 3} cy={c.y - 3} r="2.4" fill="#ffffff" opacity="0.75" />
+              <text x={c.x} y={c.y + 27} textAnchor="middle" fontSize="12.5" fontWeight="800" fill={PALETTE.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                 {lbl(p)}
               </text>
               {isPivot && (
-                <text x={c.x} y={c.y - 14} textAnchor="middle" fontSize="20">
-                  📍
-                </text>
+                <g transform={`translate(${c.x}, ${c.y - 16})`}>
+                  <path d="M0 6 C-8 -4 -8 -14 0 -14 C8 -14 8 -4 0 6 Z" fill="#cc2e2e" stroke={tint('#cc2e2e', -0.35)} strokeWidth="1.2" />
+                  <circle cy="-8" r="2.8" fill="#ffffff" />
+                </g>
               )}
               {ord !== undefined && ord > 0 && lit && (kind === 'sort' || kind === 'seed' || kind === 'check' || kind === 'push' || kind === 'pop') && (
                 <g className={kind === 'sort' ? 'animate-story-pop' : undefined}>
-                  <circle cx={c.x + 15} cy={c.y - 13} r="9" fill="#fef9c3" stroke="#ca8a04" strokeWidth="1.5" />
-                  <text x={c.x + 15} y={c.y - 9} textAnchor="middle" fontSize="10" fontWeight="800" fill="#713f12">
+                  <circle cx={c.x + 16} cy={c.y - 14} r="10" fill={PALETTE.ink} />
+                  <text x={c.x + 16} y={c.y - 10} textAnchor="middle" fontSize="11" fontWeight="900" fill="#f3efe6" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                     {ord}
                   </text>
                 </g>
               )}
               {isJarvis && kind === 'check' && triplet?.[2]?.id === p.id && (
-                <circle cx={c.x} cy={c.y} r="16" fill="none" stroke="#78716c" strokeWidth="2.5" strokeDasharray="4 3" />
+                <circle cx={c.x} cy={c.y} r="17" fill="none" stroke="#7a7266" strokeWidth="2.5" strokeDasharray="4 3" />
               )}
               {current?.id === p.id && !isFinal && (kind === 'push' || kind === 'check' || kind === 'pop') && !isJarvis && (
-                <circle cx={c.x} cy={c.y} r="16" fill="none" stroke="#f59e0b" strokeWidth="3" className="animate-story-ripple" />
+                <circle cx={c.x} cy={c.y} r="17" fill="none" stroke={PALETTE.gold} strokeWidth="3" className="animate-story-ripple" />
               )}
             </g>
           );

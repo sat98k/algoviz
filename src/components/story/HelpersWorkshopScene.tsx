@@ -1,5 +1,30 @@
 import React, { useState } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
+import { PALETTE } from './kit/materials';
+import { Person } from './kit/Person';
+
+/** A helper at a workbench (busy), a done tick, or an empty stool, as a small drawing. */
+const Station: React.FC<{ state: 'busy' | 'done' | 'empty'; k: number }> = ({ state, k }) => (
+  <svg width="64" height="64" viewBox="-32 -60 64 64" aria-hidden>
+    <ellipse cx="0" cy="0" rx="26" ry="4" fill="#3a2414" opacity="0.14" />
+    {state === 'busy' ? (
+      <g>
+        <Person height={56} skin={PALETTE.skins[(k * 2 + 1) % 5]} hair={PALETTE.hair[k % 5]} hairStyle={((k * 3) % 5) as 0 | 1 | 2 | 3 | 4} shirt={['#e3a32b', '#3f78b5', '#3e9b4f'][k % 3]} />
+        <rect x="-11" y="-36" width="22" height="7" rx="3.5" fill={PALETTE.gold} />
+      </g>
+    ) : state === 'done' ? (
+      <g transform="translate(0, -24)">
+        <circle r="17" fill="#0c8030" />
+        <path d="M-7 0 L-2 5 L8 -6" stroke="#ffffff" strokeWidth="3.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    ) : (
+      <g>
+        <ellipse cx="0" cy="-26" rx="16" ry="5" fill="#a8743f" />
+        <path d="M-12 -24 L-14 0 M12 -24 L14 0 M0 -22 V0" stroke="#8a5a35" strokeWidth="3" strokeLinecap="round" />
+      </g>
+    )}
+  </svg>
+);
 import { KaratsubaTreeView } from './KaratsubaTreeView';
 
 /**
@@ -25,18 +50,18 @@ const readView = (): 'workshop' | 'tree' => {
 };
 
 const HIGH = '#fde68a';
-const LOW = '#bae6fd';
+const LOW = '#bcd3ef';
 
 const Digits: React.FC<{ value: string; tone?: string; zeros?: number; label?: string }> = ({ value, tone = '#fffaf0', zeros = 0, label }) => (
   <span className="inline-flex items-center gap-1">
-    {label && <span className="mr-1 text-xs font-bold text-stone-500">{label}</span>}
+    {label && <span className="mr-1 text-base font-black text-stone-600">{label}</span>}
     {value.split('').map((d, i) => (
-      <span key={i} className="w-7 h-8 flex items-center justify-center rounded-md border border-stone-400 font-mono text-base font-black text-stone-900 shadow-sm" style={{ background: tone }}>
+      <span key={i} className="w-8 h-9 flex items-center justify-center rounded-xl font-display text-lg font-black text-stone-900" style={{ background: tone, boxShadow: 'inset 0 -3px 0 rgb(0 0 0 / 0.12)' }}>
         {d}
       </span>
     ))}
     {Array.from({ length: zeros }, (_, i) => (
-      <span key={`z${i}`} className="w-7 h-8 flex items-center justify-center rounded-md border border-dashed border-stone-300 font-mono text-base font-bold text-stone-400 bg-white animate-story-pop">
+      <span key={`z${i}`} className="w-8 h-9 flex items-center justify-center rounded-xl border-2 border-dashed border-stone-300 font-display text-lg font-bold text-stone-400 animate-story-pop">
         0
       </span>
     ))}
@@ -127,18 +152,17 @@ export const HelpersWorkshopScene: React.FC<StorySceneProps> = ({ step }) => {
 
   return (
     <StoryStage
-      emoji="👷"
       title="Three Helpers, Not Four"
       subtitle="Split the numbers, let three helpers multiply the pieces, then put the answers back together."
       narration={narration}
       status={kind === 'final' ? 'Multiplication done' : `Depth • ${Math.max(0, trail.length - 1)}`}
     >
       <div className="flex justify-center mb-3">
-        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5 font-sans text-xs font-semibold" role="radiogroup" aria-label="Picture">
+        <div className="c-group" role="radiogroup" aria-label="Picture">
           {(
             [
-              ['workshop', '👷 Workshop'],
-              ['tree', '🌳 Recursion tree'],
+              ['workshop', 'Workshop'],
+              ['tree', 'Recursion tree'],
             ] as const
           ).map(([v, label]) => (
             <button
@@ -148,7 +172,7 @@ export const HelpersWorkshopScene: React.FC<StorySceneProps> = ({ step }) => {
               aria-checked={view === v}
               data-workshop-view={v}
               onClick={() => choose(v)}
-              className={`px-3 py-1 rounded-full transition-colors ${view === v ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+              className="c-pill"
             >
               {label}
             </button>
@@ -161,9 +185,9 @@ export const HelpersWorkshopScene: React.FC<StorySceneProps> = ({ step }) => {
       ) : (
       <div className="flex flex-col items-center gap-5 font-sans">
         {trail.length > 1 && (
-          <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs text-stone-500">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 text-sm text-stone-600">
             {trail.map((t, i) => (
-              <span key={i} className={`px-2 py-0.5 rounded-full border ${i === trail.length - 1 ? 'bg-amber-100 border-amber-400 text-amber-900 font-bold' : 'bg-white border-stone-200'}`}>
+              <span key={i} className={`px-3 py-0.5 rounded-full ${i === trail.length - 1 ? 'bg-[#1a1a1a] text-[#f3efe6] font-bold' : 'bg-[#fbf9f4]'}`}>
                 {t}
               </span>
             ))}
@@ -178,13 +202,11 @@ export const HelpersWorkshopScene: React.FC<StorySceneProps> = ({ step }) => {
               [Y, yh, yl, 'Y'],
             ].map(([whole, hi, lo, name]) => (
               <div key={name} className="flex items-center gap-2">
-                <span className="w-5 text-sm font-black text-stone-500">{name}</span>
+                <span className="w-6 font-display text-base font-black text-stone-700">{name}</span>
                 {split && kind !== 'call' && kind !== 'base' ? (
                   <>
                     <Digits value={hi} tone={HIGH} />
-                    <span className="text-lg" aria-hidden>
-                      🔪
-                    </span>
+                    <span aria-hidden className="inline-block w-1.5 h-8 rounded-full bg-[#cc2e2e]" />
                     <Digits value={lo} tone={LOW} />
                   </>
                 ) : (
@@ -201,49 +223,48 @@ export const HelpersWorkshopScene: React.FC<StorySceneProps> = ({ step }) => {
             {chairs.map((c) => {
               const busy = kind === c.key;
               return (
-                <div key={c.key} className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 ${busy ? 'border-amber-500 bg-amber-50 animate-story-pop' : 'border-stone-200 bg-white'}`}>
-                  <span className="text-3xl">{busy ? '👷' : c.result ? '✅' : '🪑'}</span>
-                  <span className="text-xs font-bold text-stone-600">{c.who}</span>
+                <div key={c.key} className={`flex flex-col items-center gap-1 p-3 rounded-[20px] ${busy ? 'bg-[#fdf1c7] animate-story-pop' : 'bg-[#fbf9f4]'}`}>
+                  <Station state={busy ? 'busy' : c.result ? 'done' : 'empty'} k={chairs.indexOf(c)} />
+                  <span className="text-sm font-bold text-stone-700">{c.who}</span>
                   <span className="font-mono text-sm text-stone-800">{c.job}</span>
                   {c.result && <span className="font-mono text-base font-black text-green-800">= {c.result}</span>}
                 </div>
               );
             })}
-            <div className="flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-dashed border-green-400 bg-green-50">
-              <span className="text-3xl opacity-60">🪑</span>
-              <span className="text-xs font-bold text-green-800">4th helper</span>
-              <span className="text-xs text-green-700 text-center">not needed! 🎉</span>
+            <div className="flex flex-col items-center gap-1 p-3 rounded-[20px] bg-[#18bc42]">
+              <Station state="empty" k={3} />
+              <span className="text-sm font-bold text-stone-900">4th helper</span>
+              <span className="text-sm font-black text-stone-900 text-center">not needed!</span>
             </div>
           </div>
         )}
 
         {kind === 'cross' && (
           <div className="flex flex-wrap items-center justify-center gap-2 font-mono text-base">
-            <span className="px-3 py-1.5 rounded-lg bg-amber-100 border border-amber-400 font-black">{d.p3}</span>
+            <span className="px-3 py-1.5 rounded-full bg-[#fdf1c7] font-black">{d.p3}</span>
             <span>−</span>
-            <span className="px-3 py-1.5 rounded-lg bg-stone-100 border border-stone-300">{d.p1}</span>
+            <span className="px-3 py-1.5 rounded-full bg-[#e3dccd]">{d.p1}</span>
             <span>−</span>
-            <span className="px-3 py-1.5 rounded-lg bg-stone-100 border border-stone-300">{d.p2}</span>
+            <span className="px-3 py-1.5 rounded-full bg-[#e3dccd]">{d.p2}</span>
             <span>=</span>
-            <span className="px-3 py-1.5 rounded-lg bg-green-100 border border-green-500 font-black animate-story-pop">{d.crossTerm}</span>
-            <span className="text-xs font-sans text-stone-500">(= a·d + b·c)</span>
+            <span className="px-3 py-1.5 rounded-full bg-[#18bc42] font-black animate-story-pop">{d.crossTerm}</span>
+            <span className="text-sm font-sans text-stone-600">(= a·d + b·c)</span>
           </div>
         )}
 
         {kind === 'combine' && m !== undefined && (
-          <div className="flex flex-col items-end gap-1.5 p-4 rounded-xl bg-white border border-stone-200">
+          <div className="flex flex-col items-end gap-1.5 p-5 rounded-[22px] bg-[#fbf9f4]">
             <Digits value={String(d.p1)} tone={HIGH} zeros={2 * m} />
             <Digits value={String(d.crossTerm)} tone="#dcfce7" zeros={m} label="+" />
             <Digits value={String(d.p2)} tone={LOW} label="+" />
-            <div className="w-full border-t-2 border-stone-700 my-1" />
+            <div className="w-full h-1 rounded-full bg-stone-800 my-1" />
             <Digits value={String(d.finalResult)} tone="#fef3c7" />
           </div>
         )}
 
         {kind === 'base' && (
           <div className="flex items-center gap-3 text-2xl">
-            <span>🧮</span>
-            <span className="font-mono font-black text-stone-800">
+            <span className="font-mono font-black text-stone-800 px-4 py-2 rounded-full bg-[#fbf9f4]">
               {X} × {Y} = {d.baseProduct}
             </span>
           </div>

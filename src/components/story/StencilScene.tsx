@@ -1,6 +1,16 @@
 import React from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases, useHeldValue } from './useAnimPhases';
+import { PALETTE, tint, useSvgIds } from './kit/materials';
+
+/** A drawn magnifying glass (the detective's lens), centred on its glass. */
+const Lens: React.FC<{ size?: number }> = ({ size = 22 }) => (
+  <g transform={`scale(${size / 22})`}>
+    <path d="M6 6 L13 13" stroke={PALETTE.walnut} strokeWidth="4" strokeLinecap="round" />
+    <circle r="8" fill="#dff1ff" fillOpacity="0.7" stroke={PALETTE.ink} strokeWidth="2.4" />
+    <path d="M-4 -3 A5 5 0 0 1 1 -6" stroke="#ffffff" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+  </g>
+);
 
 /**
  * 🔍 Stencil-on-a-sentence story shared by the string matching algorithms.
@@ -20,13 +30,13 @@ const PAD = 24;
 const TEXT_Y = 64;
 const STENCIL_Y = 128;
 
-const INK = '#451a03';
-const MATCH = '#16a34a';
-const MISS = '#dc2626';
-const MEMORY = '#7c3aed';
-const GOLD = '#f59e0b';
+const INK = PALETTE.ink;
+const MATCH = '#0c8030';
+const MISS = '#cc2e2e';
+const MEMORY = '#8b3fb0';
+const GOLD = PALETTE.gold;
 
-const FP_COLORS = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+const FP_COLORS = ['#e3a32b', '#3e9b4f', '#3f78b5', '#d9573f', '#8a5aa8', '#d4688c', '#2f9488'];
 
 /** A little barcode "fingerprint": the same hash always draws the same picture. */
 const Fingerprint: React.FC<{ hash: number; tone?: 'neutral' | 'match' | 'miss' }> = ({ hash, tone = 'neutral' }) => {
@@ -34,10 +44,10 @@ const Fingerprint: React.FC<{ hash: number; tone?: 'neutral' | 'match' | 'miss' 
     h: 10 + ((hash * 37 + k * 53) % 5) * 5,
     c: FP_COLORS[(hash + k * 3) % FP_COLORS.length],
   }));
-  const border = tone === 'match' ? MATCH : tone === 'miss' ? MISS : '#d6d3d1';
+  const border = tone === 'match' ? MATCH : tone === 'miss' ? MISS : '#cfc6b4';
   return (
     <svg width="78" height="44" viewBox="0 0 78 44" aria-hidden>
-      <rect x="1" y="1" width="76" height="42" rx="8" fill="#ffffff" stroke={border} strokeWidth="2" />
+      <rect x="1" y="1" width="76" height="42" rx="12" fill="#fbf9f4" stroke={border} strokeWidth="2" />
       {bars.map((b, k) => (
         <rect key={k} x={9 + k * 11} y={40 - b.h - 4} width="7" height={b.h} rx="2" fill={b.c} />
       ))}
@@ -48,6 +58,7 @@ const Fingerprint: React.FC<{ hash: number; tone?: 'neutral' | 'match' | 'miss' 
 type Mark = 'none' | 'ok' | 'miss' | 'memory' | 'looking';
 
 export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, stepMs }) => {
+  const ids = useSvgIds();
   const st: any = step.state || {};
   const text: string = st.text || '';
   const pattern: string = st.pattern || '';
@@ -239,21 +250,20 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
 
   const markStyle = (mk: Mark) =>
     mk === 'ok'
-      ? { fill: '#dcfce7', stroke: MATCH }
+      ? { fill: '#bfe9cb', stroke: MATCH }
       : mk === 'miss'
-      ? { fill: '#fee2e2', stroke: MISS }
+      ? { fill: '#f7c9c4', stroke: MISS }
       : mk === 'memory'
-      ? { fill: '#ede9fe', stroke: MEMORY }
+      ? { fill: '#e6d3ef', stroke: MEMORY }
       : mk === 'looking'
-      ? { fill: '#fffbeb', stroke: GOLD }
-      : { fill: '#fffaf0', stroke: '#d6c3a5' };
+      ? { fill: PALETTE.goldLight, stroke: GOLD }
+      : { fill: '#fbf3e3', stroke: '#c9b48f' };
 
   const rk = st.hashInfo;
   const rolling = st.rollingInfo;
 
   return (
     <StoryStage
-      emoji={isRK ? '🕵️' : '🔍'}
       title={isKMP ? (inLps ? 'The Stencil Studies Itself' : 'Smart Stencil with Jump-Back Notes') : isRK ? 'Fingerprint Detective' : 'Sliding Stencil'}
       subtitle={
         isRK
@@ -279,8 +289,11 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
             <span className="font-semibold">Word’s fingerprint</span>
           </div>
           {(st.verifiedIndices?.length > 0 || kind === 'rk-spurious' || (kind === 'compare' && isRK)) && (
-            <span className="text-3xl animate-story-pop" title="Detective checking letters">
-              {kind === 'rk-spurious' ? '🤷' : '🕵️'}
+            <span className="animate-story-pop inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#fbf9f4] font-bold text-stone-800" title="Detective checking letters">
+              <svg width="22" height="22" viewBox="-11 -11 26 26" aria-hidden>
+                <Lens />
+              </svg>
+              {kind === 'rk-spurious' ? 'false alarm' : 'checking'}
             </span>
           )}
         </div>
@@ -288,7 +301,18 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
 
       <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.3 }} role="img" aria-label="Sentence and sliding stencil">
         {/* Wooden shelf the letters sit on */}
-        <rect x={PAD - 10} y={TEXT_Y - 8} width={n * CELL + 20} height={TILE + 16} rx="10" fill="#efe3d3" stroke="#d5be9f" strokeWidth="2" />
+        <defs>
+          <linearGradient id={`${ids}-tile`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#fff9ec" />
+            <stop offset="1" stopColor="#efdfbf" />
+          </linearGradient>
+          <linearGradient id={`${ids}-shelf`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={tint(PALETTE.oak, 0.15)} />
+            <stop offset="1" stopColor={PALETTE.oakDeep} />
+          </linearGradient>
+        </defs>
+        <rect x={PAD - 10} y={TEXT_Y + TILE + 2} width={n * CELL + 20} height="16" rx="8" fill="#3a2414" opacity="0.1" transform="translate(0, 4)" />
+        <rect x={PAD - 10} y={TEXT_Y + TILE - 2} width={n * CELL + 20} height="14" rx="7" fill={`url(#${ids}-shelf)`} />
 
         {/* Highlighter swipes over found matches */}
         {matchIndices.map((mi) => (
@@ -299,8 +323,8 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
             width={m * CELL - 4}
             height={TILE + 8}
             rx="8"
-            fill="#fde047"
-            opacity="0.75"
+            fill={PALETTE.goldLight}
+            opacity="0.9"
             className="animate-story-pop"
           />
         ))}
@@ -315,7 +339,7 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
               height={TILE + 24}
               rx="12"
               fill="none"
-              stroke="#0ea5e9"
+              stroke="#2457c5"
               strokeWidth="3"
               strokeDasharray="7 5"
             />
@@ -336,17 +360,18 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
                 transition: 'transform 0.6s ease-in, opacity 0.6s ease-in',
               }}
             >
+              <rect x={tileX(i)} y={TEXT_Y + 4} width={TILE} height={TILE} rx="8" fill="#c9a77a" />
               <rect
                 x={tileX(i)}
                 y={TEXT_Y}
                 width={TILE}
                 height={TILE}
-                rx="7"
-                fill="#fdf6e3"
-                stroke={compared ? GOLD : joining ? '#0ea5e9' : '#b08968'}
-                strokeWidth={compared || joining ? 3 : 1.5}
+                rx="8"
+                fill={`url(#${ids}-tile)`}
+                stroke={compared ? GOLD : joining ? '#2457c5' : '#d4bf98'}
+                strokeWidth={compared || joining ? 3 : 1.2}
               />
-              <text x={tileX(i) + TILE / 2} y={TEXT_Y + TILE / 2 + 7} textAnchor="middle" fontSize="20" fontWeight="800" fill={INK} fontFamily="ui-sans-serif, system-ui">
+              <text x={tileX(i) + TILE / 2} y={TEXT_Y + TILE / 2 + 7} textAnchor="middle" fontSize="21" fontWeight="900" fill={INK} fontFamily='"Red Hat Display", system-ui, sans-serif'>
                 {ch}
               </text>
             </g>
@@ -356,34 +381,43 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
         {/* Reading finger */}
         {showFinger && (
           <g style={{ transform: `translateX(${PAD + fingerAt * CELL + CELL / 2}px)`, transition: 'transform 0.6s var(--ease-move)' }}>
-            <text x="0" y={TEXT_Y - 16} textAnchor="middle" fontSize="22">
-              👇
-            </text>
+            <g transform={`translate(0, ${TEXT_Y - 16})`}>
+              <g className="animate-story-bob">
+                <path d="M0 8 L-7 -2 H-3 V-12 H3 V-2 H7 Z" fill={PALETTE.ink} />
+              </g>
+            </g>
           </g>
         )}
 
         {/* The stencil: a paper strip gliding horizontally */}
         {!step.isFinal && kind !== 'lps-done' && m > 0 && (
           <g style={{ transform: `translateX(${shownShift * CELL}px)`, transition: 'transform 0.8s var(--ease-move)' }} data-stencil-shift={shownShift}>
-            <rect x={PAD - 4} y={STENCIL_Y - 6} width={m * CELL + 8} height={TILE + 12} rx="8" fill="#fff7ed" stroke="#c2410c" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.95" />
+            <rect x={PAD - 4} y={STENCIL_Y - 2} width={m * CELL + 8} height={TILE + 12} rx="12" fill="#3a2414" opacity="0.1" />
+            <rect x={PAD - 4} y={STENCIL_Y - 6} width={m * CELL + 8} height={TILE + 12} rx="12" fill="#e9f3fb" fillOpacity="0.85" stroke="#2457c5" strokeWidth="1.5" />
+            <rect x={PAD} y={STENCIL_Y - 3} width={m * CELL} height="4" rx="2" fill="#ffffff" opacity="0.8" />
             {Array.from(pattern).map((ch, k) => {
               const mk = marks[k];
               const sty = markStyle(mk);
               return (
                 <g key={`p-${k}`} className={mk === 'miss' && phase !== 'glide' ? 'animate-story-shake' : undefined}>
-                  <rect x={tileX(k)} y={STENCIL_Y} width={TILE} height={TILE} rx="7" fill={sty.fill} stroke={sty.stroke} strokeWidth={mk === 'none' ? 1.5 : 2.5} />
-                  <text x={tileX(k) + TILE / 2} y={STENCIL_Y + TILE / 2 + 7} textAnchor="middle" fontSize="20" fontWeight="800" fill="#7c2d12" fontFamily="ui-sans-serif, system-ui">
+                  <rect x={tileX(k)} y={STENCIL_Y} width={TILE} height={TILE} rx="8" fill={sty.fill} stroke={sty.stroke} strokeWidth={mk === 'none' ? 1.2 : 2.5} />
+                  <text x={tileX(k) + TILE / 2} y={STENCIL_Y + TILE / 2 + 7} textAnchor="middle" fontSize="21" fontWeight="900" fill={INK} fontFamily='"Red Hat Display", system-ui, sans-serif'>
                     {ch}
                   </text>
                   {(mk === 'ok' || mk === 'miss') && (
-                    <text x={tileX(k) + TILE - 2} y={STENCIL_Y + TILE + 16} textAnchor="middle" fontSize="14" fontWeight="900" fill={mk === 'ok' ? MATCH : MISS}>
-                      {mk === 'ok' ? '✓' : '✗'}
-                    </text>
+                    <g transform={`translate(${tileX(k) + TILE - 2}, ${STENCIL_Y + TILE + 10})`}>
+                      <g className="animate-story-pop">
+                        <circle r="9" fill={mk === 'ok' ? MATCH : MISS} />
+                        <path d={mk === 'ok' ? 'M-4 0 L-1 3 L4 -3' : 'M-3 -3 L3 3 M3 -3 L-3 3'} stroke="#ffffff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                      </g>
+                    </g>
                   )}
                   {mk === 'looking' && (
-                    <text x={tileX(k) + TILE / 2} y={(TEXT_Y + TILE + STENCIL_Y) / 2 + 8} textAnchor="middle" fontSize="22" className="animate-story-bob">
-                      🔍
-                    </text>
+                    <g transform={`translate(${tileX(k) + TILE / 2 - 3}, ${(TEXT_Y + TILE + STENCIL_Y) / 2 + 2})`}>
+                      <g className="animate-story-bob">
+                        <Lens size={20} />
+                      </g>
+                    </g>
                   )}
                 </g>
               );
@@ -395,7 +429,7 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
       {/* KMP jump-back notebook */}
       {isKMP && (
         <div className="mt-3 flex flex-col items-center gap-1.5 font-sans">
-          <span className="text-xs font-semibold uppercase tracking-wider text-stone-500">📒 Jump-back notes</span>
+          <span className="text-sm font-bold text-stone-700">Jump-back notes</span>
           <div className="flex flex-wrap justify-center gap-1.5">
             {Array.from(pattern).map((ch, k) => {
               const written = k < (st.lpsFilled ?? (inLps ? 0 : m));
@@ -404,11 +438,11 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
               return (
                 <div
                   key={`note-${k}`}
-                  className={`flex flex-col items-center w-9 rounded-md border shadow-sm ${
-                    used ? 'bg-violet-100 border-violet-500 ring-2 ring-violet-300' : written ? 'bg-yellow-50 border-yellow-300' : 'bg-stone-50 border-stone-200'
+                  className={`flex flex-col items-center w-10 py-0.5 rounded-xl border ${
+                    used ? 'bg-violet-100 border-violet-500 ring-2 ring-violet-300' : written ? 'bg-[#fdf1c7] border-transparent' : 'bg-[#f3efe6] border-transparent'
                   } ${fresh ? 'animate-story-pop' : ''}`}
                 >
-                  <span className="text-xs font-bold text-amber-950">{ch}</span>
+                  <span className="text-xs font-bold text-stone-800">{ch}</span>
                   <span className={`text-sm font-black ${written ? 'text-violet-800' : 'text-stone-300'}`}>{written ? lpsTable[k] : '·'}</span>
                 </div>
               );

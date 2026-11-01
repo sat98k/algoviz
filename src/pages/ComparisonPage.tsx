@@ -42,10 +42,10 @@ const GlanceRow: React.FC<{ label: string; a: React.ReactNode; b: React.ReactNod
   names,
 }) => (
   <div className="grid grid-cols-1 md:grid-cols-[9rem_1fr_1fr] gap-x-6 gap-y-2 py-3.5 border-b border-hairline last:border-b-0">
-    <div className="font-mono text-[10px] uppercase tracking-widest text-chalk-500 pt-0.5">{label}</div>
+    <div className="cmp-row-label">{label}</div>
     {[a, b].map((cell, i) => (
-      <div key={i} className="min-w-0 font-sans text-sm leading-relaxed text-chalk-200">
-        <span className={`md:hidden block font-mono text-[10px] uppercase tracking-wider mb-0.5 ${i === 0 ? 'text-amber' : 'text-acid-500'}`}>
+      <div key={i} className="min-w-0 font-sans text-base leading-relaxed text-chalk-200">
+        <span className="md:hidden cmp-side mb-1">
           {names[i]}
         </span>
         {cell}
@@ -86,14 +86,14 @@ const AlgorithmColumn: React.FC<ColumnProps> = ({ config, steps, stepIdx, inputs
   const accentText = accent === 'amber' ? 'text-amber' : 'text-acid-500';
 
   return (
-    <div className="flex flex-col gap-4 p-5 sm:p-6 bg-obsidian-950 border border-hairline min-w-0">
+    <div className="flex flex-col gap-4 p-5 sm:p-6 rounded-[28px] bg-obsidian-950 min-w-0">
       {/* Column Header */}
       <div className="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-hairline">
         <div>
-          <span className={`font-mono text-xs uppercase tracking-wider font-semibold ${accentText}`}>{config.paradigm}</span>
-          <h3 className="font-display font-bold text-2xl text-chalk-100 mt-1">{config.name}</h3>
+          <span className={`font-sans text-sm font-bold ${accentText}`}>{config.paradigm}</span>
+          <h3 className="hc-display text-3xl text-chalk-100 mt-1">{config.name}</h3>
         </div>
-        <div className="text-right font-mono text-[11px] text-chalk-500">
+        <div className="text-right font-mono text-xs text-chalk-400">
           <div>
             TIME: <strong className="text-chalk-300">{config.complexity.timeWorst}</strong> worst
           </div>
@@ -110,8 +110,8 @@ const AlgorithmColumn: React.FC<ColumnProps> = ({ config, steps, stepIdx, inputs
               STEP {Math.min(stepIdx + 1, steps.length)} / {steps.length}
               {finished && <span className="ml-2 text-acid-500 font-semibold">· FINISHED</span>}
             </div>
-            <p className="font-display font-semibold text-sm text-chalk-100">{step.title}</p>
-            <p className="font-sans text-xs leading-relaxed text-chalk-400 min-h-[2.5rem]">{step.description}</p>
+            <p className="font-display font-black text-lg text-chalk-100">{step.title}</p>
+            <p className="font-sans text-sm leading-relaxed text-chalk-300 min-h-[2.5rem]">{step.description}</p>
           </div>
 
           {/* Visualizer Stage */}
@@ -123,16 +123,16 @@ const AlgorithmColumn: React.FC<ColumnProps> = ({ config, steps, stepIdx, inputs
           {metrics.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
               {metrics.map(({ key, label }) => (
-                <div key={key} className="p-3 bg-obsidian-900 border border-hairline flex flex-col justify-between">
-                  <span className="text-[10px] text-chalk-500 uppercase tracking-wider">{label}</span>
-                  <strong className="text-xl text-amber-glow mt-1 tabular-nums">{step.metrics[key] as number}</strong>
+                <div key={key} className="p-3 rounded-2xl bg-obsidian-900 flex flex-col justify-between">
+                  <span className="font-sans text-sm text-chalk-400">{label}</span>
+                  <strong className="font-display font-black text-3xl text-chalk-100 mt-1 tabular-nums">{step.metrics[key] as number}</strong>
                 </div>
               ))}
             </div>
           )}
 
           {summary && (
-            <div className="flex gap-2 p-3 bg-obsidian-900 border border-acid-500/30">
+            <div className="flex gap-2 p-4 rounded-2xl bg-sem-match/15">
               <CheckCircle2 className="w-4 h-4 text-acid-500 shrink-0 mt-0.5" />
               <p className="font-sans text-sm text-chalk-100 leading-relaxed">{summary.headline}</p>
             </div>
@@ -216,7 +216,7 @@ export const ComparisonPage: React.FC = () => {
 
   const names: [string, string] = [configA.name, configB.name];
   const selectClass =
-    'w-full px-3 py-2 bg-obsidian-900 border border-hairline text-chalk-100 font-sans text-sm focus:outline-none focus:border-amber';
+    'cmp-select';
 
   return (
     <div className="flex flex-col gap-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
@@ -225,19 +225,22 @@ export const ComparisonPage: React.FC = () => {
         initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="flex flex-col gap-6 pb-6 border-b border-hairline"
+        className="flex flex-col gap-8"
       >
-        <div>
-          <p className="flex items-center gap-2 font-sans text-base font-bold text-amber">
-            <GitCompare className="w-4 h-4" aria-hidden />
-            Compare two algorithms
+        <header className="cmp-hero">
+          <h1 className="hc-display cmp-title">
+            <GitCompare className="cmp-title-icon" aria-hidden />
+            {group.title}, side by side
+          </h1>
+          <p className="hc-lead cmp-lead">
+            <span className="font-bold">The problem: </span>
+            {group.problem}
           </p>
-          <h1 className="hc-display text-[clamp(40px,6vw,96px)] text-chalk-100 mt-2">{group.title}, side by side</h1>
-        </div>
+        </header>
 
         {/* 1. Pick a problem */}
         <div className="flex flex-col gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-500">1 · Choose a problem</span>
+          <h2 className="cmp-step">Choose a problem</h2>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Problem to compare">
             {groups.map((g) => (
               <button
@@ -245,24 +248,16 @@ export const ComparisonPage: React.FC = () => {
                 type="button"
                 aria-pressed={g.id === groupId}
                 onClick={() => selectGroup(g.id)}
-                className={`px-3 py-1.5 font-mono text-xs border transition-colors ${
-                  g.id === groupId
-                    ? 'bg-amber text-obsidian-950 border-amber font-bold'
-                    : 'bg-obsidian-950 text-chalk-300 border-hairline hover:text-chalk-100 hover:border-amber/50'
-                }`}
+                className="c-pill"
               >
                 {g.title}
-                <span className={`ml-1.5 ${g.id === groupId ? 'opacity-70' : 'text-chalk-500'}`}>({g.members.length})</span>
+                <span className="opacity-70">{g.members.length}</span>
               </button>
             ))}
           </div>
-          <p className="font-sans text-sm sm:text-base text-chalk-200 leading-relaxed max-w-3xl">
-            <span className="font-semibold text-chalk-100">The problem: </span>
-            {group.problem}
-          </p>
           {group.note && (
-            <p className="flex gap-2 font-sans text-xs text-chalk-400 max-w-3xl">
-              <Info className="w-3.5 h-3.5 text-amber shrink-0 mt-0.5" />
+            <p className="flex gap-2 font-sans text-base text-chalk-300 max-w-3xl">
+              <Info className="w-4 h-4 shrink-0 mt-1" aria-hidden />
               {group.note}
             </p>
           )}
@@ -270,10 +265,10 @@ export const ComparisonPage: React.FC = () => {
 
         {/* 2. Pick two algorithms */}
         <div className="flex flex-col gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-500">2 · Choose two algorithms</span>
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-end gap-3 p-4 bg-obsidian-950 border border-hairline">
+          <h2 className="cmp-step">Choose two algorithms</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-end gap-3 p-4 sm:p-5 rounded-[24px] bg-obsidian-950">
             <label className="flex flex-col gap-1.5">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-amber font-semibold">Algorithm A</span>
+              <span className="cmp-side"><span className="cmp-badge cmp-badge-a">A</span> Algorithm A</span>
               <select value={idA} onChange={(e) => selectA(e.target.value)} className={selectClass}>
                 {group.members.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -287,12 +282,12 @@ export const ComparisonPage: React.FC = () => {
               onClick={swap}
               title="Swap A and B"
               aria-label="Swap algorithm A and algorithm B"
-              className="justify-self-center p-2 text-chalk-400 hover:text-chalk-100 hover:bg-obsidian-850 border border-hairline transition-colors"
+              className="c-pill justify-self-center"
             >
               <ArrowLeftRight className="w-4 h-4" />
             </button>
             <label className="flex flex-col gap-1.5">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-acid-500 font-semibold">Algorithm B</span>
+              <span className="cmp-side"><span className="cmp-badge cmp-badge-b">B</span> Algorithm B</span>
               <select value={idB} onChange={(e) => selectB(e.target.value)} className={selectClass}>
                 {group.members
                   .filter((m) => m.id !== idA)
@@ -309,14 +304,14 @@ export const ComparisonPage: React.FC = () => {
 
       {/* At a glance: how the approaches differ and when to choose each */}
       <section aria-labelledby="glance-heading" className="flex flex-col gap-3">
-        <h2 id="glance-heading" className="font-display font-bold text-xl sm:text-2xl text-chalk-100">
+        <h2 id="glance-heading" className="cmp-h2">
           At a glance
         </h2>
-        <div className="px-4 sm:px-6 bg-obsidian-950 border border-hairline">
+        <div className="px-4 sm:px-6 rounded-[28px] bg-obsidian-950">
           <div className="hidden md:grid grid-cols-[9rem_1fr_1fr] gap-x-6 py-3 border-b border-hairline font-display font-bold text-base">
             <span />
-            <span className="text-amber">{configA.name}</span>
-            <span className="text-acid-500">{configB.name}</span>
+            <span className="cmp-side"><span className="cmp-badge cmp-badge-a">A</span> {configA.name}</span>
+            <span className="cmp-side"><span className="cmp-badge cmp-badge-b">B</span> {configB.name}</span>
           </div>
           <GlanceRow label="Key idea" names={names} a={profileA.keyIdea} b={profileB.keyIdea} />
           <GlanceRow label="Paradigm" names={names} a={configA.paradigm} b={configB.paradigm} />
@@ -357,7 +352,7 @@ export const ComparisonPage: React.FC = () => {
       {/* Side-by-side run on the same input */}
       <section aria-labelledby="run-heading" className="flex flex-col gap-4">
         <div>
-          <h2 id="run-heading" className="font-display font-bold text-xl sm:text-2xl text-chalk-100">
+          <h2 id="run-heading" className="cmp-h2">
             Watch them side by side
           </h2>
           <p className="font-sans text-sm text-chalk-400 mt-1">

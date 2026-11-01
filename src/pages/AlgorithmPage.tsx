@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { OwlGlyph } from '../components/home/OwlMascot';
 import { AlgorithmStep } from '../types/algorithm';
 import { getAlgorithmById } from '../config/algorithmRegistry';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -560,7 +561,6 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
           <button type="button" onClick={onBack} className="mp-back">
             <ArrowLeft className="w-4 h-4" aria-hidden /> {config.moduleName}
           </button>
-          <p className="al-kicker">{config.paradigm}</p>
           <h1 className="hc-display al-title">{config.name}</h1>
           <p className="hc-lead al-lead">{storyLine(config.id, config.problemStatement)}</p>
           {startButton('Start the animation')}
@@ -601,7 +601,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
       <OwlFlightLayer />
 
       {/* Compact header: a bar marked with the module's chapter colour. */}
-      <div className="al-bar" style={{ ['--chapter' as string]: learnField.bg }}>
+      <div className="al-bar" style={{ ['--chapter' as string]: learnField.bg, ['--chapter-ink' as string]: learnField.ink }}>
         <div className="flex flex-wrap items-center gap-3 min-w-0">
           <button
             type="button"
@@ -611,7 +611,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
             title="Back to the owl's explanation of the problem and how it works"
           >
             <ArrowLeft className="w-3.5 h-3.5" aria-hidden />
-            <span aria-hidden>🦉</span> Problem &amp; how it works
+            <span aria-hidden className="text-base leading-none"><OwlGlyph /></span> Problem &amp; how it works
           </button>
           <h1 className="hc-display al-bar-title">{config.name}</h1>
         </div>

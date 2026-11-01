@@ -21,6 +21,8 @@ import { StoryModeToggle, StoryViewMode } from '../story/StoryModeToggle';
 import { stepDurationMs } from '../story/useAnimPhases';
 import { FitResetKey, FitToBox, FitToScreenContext } from '../common/FitToBox';
 import { NarrationGateProvider } from '../story/narrationGate';
+import { ChapterContext } from '../story/kit/chapter';
+import { moduleField } from '../../styles/fields';
 
 interface VisualizerStageProps {
   config: AlgorithmConfig;
@@ -91,7 +93,7 @@ const StageBody: React.FC<VisualizerStageProps> = (props) => {
   // Fractional Knapsack draws its own frame and toggle; it zooms only its drawing itself.
   if (!scene)
     return (
-      <div className={`flex flex-col w-full ${fill}`}>
+      <div data-technical className={`flex flex-col w-full ${fill}`}>
         <TechnicalVisualizer {...props} />
       </div>
     );
@@ -102,12 +104,16 @@ const StageBody: React.FC<VisualizerStageProps> = (props) => {
       <div className={`flex flex-col w-full gap-3 ${fill} ${fit ? 'lg:gap-1.5' : ''}`}>
         <StoryModeToggle mode={mode} onChange={setMode} storyHint={scene.hint} compact={fit} />
         {mode === 'story' ? (
-          <div className={`flex flex-col w-full ${fill}`}>
-            <Scene step={step} algorithmId={config.id} stepMs={stepDurationMs(speed)} />
-          </div>
+          <ChapterContext.Provider value={moduleField(config.module)}>
+            <div className={`flex flex-col w-full ${fill}`}>
+              <Scene step={step} algorithmId={config.id} stepMs={stepDurationMs(speed)} />
+            </div>
+          </ChapterContext.Provider>
         ) : (
           <FitToBox>
-            <TechnicalVisualizer {...props} />
+            <div data-technical>
+              <TechnicalVisualizer {...props} />
+            </div>
           </FitToBox>
         )}
       </div>

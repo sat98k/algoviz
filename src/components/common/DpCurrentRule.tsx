@@ -8,15 +8,15 @@ import { DP_TONE, formulaClass } from './DpBriefPanel';
  * numbers. Shows only data the step provides; never computes or predicts values.
  */
 export const DpCurrentRule: React.FC<{ rule?: DpRuleStep }> = ({ rule }) => (
-  <aside aria-label="Rule for this cell" aria-live="polite" className="flex flex-col gap-2 p-3 bg-obsidian-900 border border-hairline">
-    <h3 className="flex items-center gap-1.5 font-sans text-sm font-semibold text-chalk-300">
-      <Crosshair className="w-3 h-3 text-amber" /> Rule for this cell
+  <aside aria-label="Rule for this cell" aria-live="polite" className="sp-card flex flex-col gap-2">
+    <h3 className="sp-label">
+      <Crosshair className="w-4 h-4" aria-hidden /> Rule for this cell
     </h3>
     {!rule ? (
-      <p className="font-sans text-xs text-chalk-500">No formula is applied in this step.</p>
+      <p className="sp-meta">No formula is applied in this step.</p>
     ) : (
       <>
-        <span className={`self-start px-1.5 py-0.5 border font-sans text-xs font-bold ${DP_TONE[rule.tone].chip}`}>{rule.label}</span>
+        <span className={`self-start px-3 py-1 rounded-full border font-sans text-xs font-bold ${DP_TONE[rule.tone].chip}`}>{rule.label}</span>
         <dl className="flex flex-col gap-1.5">
           {rule.check && (
             <div className="flex flex-wrap items-baseline gap-x-2">

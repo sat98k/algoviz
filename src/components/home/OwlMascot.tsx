@@ -4,16 +4,17 @@ import React from 'react';
  * The site's narrator drawn flat in the page's colours: a round ink body, a bone belly,
  * big eyes that blink and a yellow beak. `look` turns the pupils toward one side.
  */
-export const OwlMascot: React.FC<{ className?: string; look?: 'left' | 'right' | 'ahead'; body?: string; wing?: string }> = ({
+export const OwlMascot: React.FC<{ className?: string; look?: 'left' | 'right' | 'ahead'; body?: string; wing?: string; still?: boolean }> = ({
   className = '',
   look = 'ahead',
   body = '#1a1a1a',
   wing = '#ed4b44',
+  still = false,
 }) => {
   const dx = look === 'left' ? -5 : look === 'right' ? 5 : 0;
   return (
     <svg viewBox="0 0 200 220" className={`hc-owl ${className}`} role="img" aria-label="The AlgoViz owl">
-      <g className="hc-owl-body">
+      <g className={still ? undefined : 'hc-owl-body'}>
         {/* ear tufts */}
         <path d="M44 58 L34 10 L82 44 Z" fill={body} />
         <path d="M156 58 L166 10 L118 44 Z" fill={body} />
@@ -26,7 +27,7 @@ export const OwlMascot: React.FC<{ className?: string; look?: 'left' | 'right' |
         <path d="M22 118 q-8 50 30 74 q-6 -40 2 -70 Z" fill={wing} />
         <path d="M178 118 q8 50 -30 74 q6 -40 -2 -70 Z" fill={wing} />
         {/* eyes */}
-        <g className="hc-owl-eyes">
+        <g className={still ? undefined : 'hc-owl-eyes'}>
           <circle cx="68" cy="88" r="30" fill="#fff" />
           <circle cx="132" cy="88" r="30" fill="#fff" />
           <circle cx={68 + dx} cy="90" r="13" fill="#1a1a1a" />
@@ -42,3 +43,9 @@ export const OwlMascot: React.FC<{ className?: string; look?: 'left' | 'right' |
     </svg>
   );
 };
+
+/**
+ * The owl at text size, standing in wherever the 🦉 emoji used to: 1em wide, so the font size
+ * of its container sizes it. It holds still; its container's classes move it.
+ */
+export const OwlGlyph: React.FC<{ className?: string }> = ({ className = '' }) => <OwlMascot still className={`owl-glyph ${className}`} />;

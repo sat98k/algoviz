@@ -1,3 +1,28 @@
+/**
+ * Redesign C: the off-palette Tailwind hues the visualizers used directly (sky, indigo, emerald, rose,
+ * violet, slate…) are re-drawn from the home page's poster colours, so every hard-coded shade follows the
+ * theme. Light steps mix toward white, dark steps toward a warm near-black; 700 and darker read as text
+ * on the bone page.
+ */
+const mix = (hex, to, t) => {
+  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return '#' + c.map((v, i) => Math.round(v + (to[i] - v) * t).toString(16).padStart(2, '0')).join('');
+};
+const WHITE = [255, 255, 255];
+const INK = [36, 22, 14];
+const scale = (base) => ({
+  50: mix(base, WHITE, 0.9), 100: mix(base, WHITE, 0.8), 200: mix(base, WHITE, 0.62), 300: mix(base, WHITE, 0.42),
+  400: mix(base, WHITE, 0.2), 500: base, 600: mix(base, INK, 0.25), 700: mix(base, INK, 0.45),
+  800: mix(base, INK, 0.6), 900: mix(base, INK, 0.72), 950: mix(base, INK, 0.82),
+});
+const COBALT = scale('#2f63d6');
+const GREEN = scale('#18bc42');
+const CORAL = scale('#ed4b44');
+const PINK = scale('#e2678a');
+const PLUM = scale('#9b4dca');
+const WARM_GREY = scale('#8a8273');
+const LIME = scale('#8fbf1a');
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -10,6 +35,11 @@ export default {
   theme: {
     extend: {
       colors: {
+        sky: COBALT, blue: COBALT, cyan: COBALT, indigo: COBALT,
+        emerald: GREEN, green: GREEN, teal: GREEN, lime: LIME,
+        rose: CORAL, red: CORAL, pink: PINK, fuchsia: PINK,
+        violet: PLUM, purple: PLUM,
+        slate: WARM_GREY, gray: WARM_GREY,
         obsidian: {
           950: 'rgb(var(--bg-surface) / <alpha-value>)',
           900: 'rgb(var(--bg-canvas) / <alpha-value>)',
@@ -64,11 +94,17 @@ export default {
           'warning-ink': 'rgb(var(--sem-warning-ink) / <alpha-value>)',
         },
       },
+      // Redesign C type scale: the app renders at 75% on wide screens, so the small steps sit higher
+      // than Tailwind's (13px and 15px) and stay readable next to the home page's large type.
+      fontSize: {
+        xs: ['0.8125rem', { lineHeight: '1.2rem' }],
+        sm: ['0.9375rem', { lineHeight: '1.4rem' }],
+      },
       fontFamily: {
         display: ['"Red Hat Display"', 'system-ui', 'sans-serif'],
         serif: ['"Instrument Serif"', 'Georgia', 'serif'],
         sans: ['"Red Hat Text"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'Fira Code', 'monospace'],
+        mono: ['"Red Hat Mono"', 'ui-monospace', 'monospace'],
       },
       // Strong custom curves (Emil Kowalski's set) in place of the weak built-in ones: ease-out for
       // things entering or answering a press, ease-in-out for objects moving across a scene.

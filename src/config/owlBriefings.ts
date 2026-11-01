@@ -591,7 +591,7 @@ export const OWL_BRIEFINGS: Record<string, OwlBriefing> = {
     watch: [
       'The prize wheel picking the pivot.',
       'The little fence moving right each time a shorter kid joins the left group.',
-      'Medals (🏅) appearing as kids reach their final spots.',
+      'Gold stars set into the floor as kids reach their final spots.',
     ],
   },
 

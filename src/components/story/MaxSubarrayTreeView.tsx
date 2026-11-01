@@ -182,7 +182,7 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
           {done && nd?.result && (
             <g transform={`translate(${(sx0 + sx1 + cx0 + cx1) / 4}, ${(y0 + y1) / 2})`}>
               <g key={fresh ? `up-${stepKey}` : 'up'} className={fresh ? 'animate-story-pop' : undefined}>
-                <rect x={-chipW(nd.result.maxSum) / 2} y="-10" width={chipW(nd.result.maxSum)} height="20" rx="10" fill={won ? '#f59e0b' : '#ffffff'} stroke={won ? '#b45309' : '#d6c3a5'} />
+                <rect x={-chipW(nd.result.maxSum) / 2} y="-10" width={chipW(nd.result.maxSum)} height="20" rx="10" fill={won ? '#e8a817' : '#ffffff'} stroke={won ? '#b45309' : '#d6c3a5'} />
                 <text textAnchor="middle" y="4" fontSize="11" fontWeight="800" fill={won ? '#451a03' : '#57534e'}>
                   ↑{nd.result.maxSum}
                 </text>
@@ -222,7 +222,7 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
         onClick={() => clickPiece(r.key)}
         style={{ cursor: 'pointer' }}
       >
-        {isActive && <rect x={x0 - 7} y={y0 - 7} width={pw(r) + 14} height={TILE + 14} rx="12" fill="none" stroke="#f59e0b" strokeWidth="3" className="animate-story-halo" />}
+        {isActive && <rect x={x0 - 7} y={y0 - 7} width={pw(r) + 14} height={TILE + 14} rx="12" fill="none" stroke="#e8a817" strokeWidth="3" className="animate-story-halo" />}
         <rect
           x={x0 - 4}
           y={y0 - 4}
@@ -257,7 +257,7 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
                 height={TILE}
                 rx="6"
                 fill={scanned ? '#e0f2fe' : v >= 0 ? '#fef9c3' : '#fee2e2'}
-                stroke={lit ? '#f59e0b' : v >= 0 ? '#ca8a04' : '#dc2626'}
+                stroke={lit ? '#e8a817' : v >= 0 ? '#ca8a04' : '#dc2626'}
                 strokeWidth={lit ? 3 : 1.2}
               />
               <text x={tx + TILE / 2} y={y0 + 20} textAnchor="middle" fontSize="12" fontWeight="900" fill={v >= 0 ? '#713f12' : '#991b1b'}>
@@ -348,9 +348,9 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
       );
     }
     return (
-      <div className="mt-3 rounded-xl border border-violet-200 bg-white px-4 py-3 font-sans text-sm text-stone-700" data-piece-card>
+      <div className="mt-3 rounded-[20px] bg-[#fbf9f4] px-4 py-3 font-sans text-sm text-stone-700" data-piece-card>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-          <span className="font-bold text-stone-900">🔍 {head}</span>
+          <span className="font-bold text-stone-900">{head}</span>
           {picked && (
             <button type="button" onClick={() => setPicked(undefined)} className="text-xs font-semibold text-violet-700 hover:underline">
               Follow the current piece
@@ -370,7 +370,7 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
       </p>
 
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2 font-sans text-xs font-semibold">
-        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5">
+        <div className="c-group">
           <button
             type="button"
             onClick={() => {
@@ -378,26 +378,26 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
               setMode('follow');
             }}
             aria-pressed={mode === 'follow' && !picked}
-            className={`px-3 py-1 rounded-full transition-colors ${mode === 'follow' && !picked ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+            className={`c-pill ${mode === 'follow' && !picked ? 'is-on' : ''}`}
           >
-            🎯 Follow
+            Follow
           </button>
           <button
             type="button"
             onClick={() => setMode('whole')}
             aria-pressed={mode === 'whole'}
-            className={`px-3 py-1 rounded-full transition-colors ${mode === 'whole' ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+            className={`c-pill ${mode === 'whole' ? 'is-on' : ''}`}
           >
-            🗺️ Whole tree
+            Whole tree
           </button>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5" aria-label="Zoom">
+        <div className="c-group" aria-label="Zoom">
           <button
             type="button"
             aria-label="Zoom out"
             disabled={zi === 0}
             onClick={() => setZoomIdx(Math.max(0, zi - 1))}
-            className="w-7 h-7 rounded-full text-base text-stone-700 hover:bg-amber-50 disabled:opacity-30"
+            className="c-pill !px-0 w-9"
           >
             −
           </button>
@@ -407,7 +407,7 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
             aria-label="Zoom in"
             disabled={zi === ZOOMS.length - 1}
             onClick={() => setZoomIdx(Math.min(ZOOMS.length - 1, zi + 1))}
-            className="w-7 h-7 rounded-full text-base text-stone-700 hover:bg-amber-50 disabled:opacity-30"
+            className="c-pill !px-0 w-9"
           >
             +
           </button>
@@ -416,7 +416,7 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
 
       <div
         ref={wrapRef}
-        className="relative w-full rounded-xl border border-amber-200 bg-[#fdfaf5] touch-none select-none"
+        className="relative w-full rounded-[22px] bg-[#fbf9f4] touch-none select-none"
         style={{ height: PANEL_H, cursor: drag.current?.moved ? 'grabbing' : 'grab' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -434,7 +434,7 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
           {pieces}
         </svg>
         {mode !== 'whole' && (camW < width || camH < height) && (
-          <svg width={MAP_W} height={MAP_H} className="absolute top-2 right-2 rounded-lg border border-amber-200 bg-white/90 shadow-sm pointer-events-none" aria-hidden>
+          <svg width={MAP_W} height={MAP_H} className="absolute top-2 right-2 rounded-xl bg-white/90 pointer-events-none" aria-hidden>
             {plan.map((r) => {
               const ms = Math.min(MAP_W / width, MAP_H / height);
               const ox = (MAP_W - width * ms) / 2;
@@ -461,7 +461,7 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
           </svg>
         )}
       </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 font-sans text-[11px] text-stone-600">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 font-sans text-xs text-stone-600">
         <span>
           <span className="inline-block w-3 h-3 align-[-2px] rounded bg-yellow-300 mr-1" />
           best stretch of a piece

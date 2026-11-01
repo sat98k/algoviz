@@ -18,6 +18,7 @@ When creating, refactoring, or reviewing visualizers—especially **Story / Anim
 
 2. **Full Light Mode Aesthetic**:
    - Beginner-friendly animated views use a warm daylight palette (`#faf7f2` background, blonde oak / maple cutting board `#efe3d3`, tan/caramel leather).
+   - Redesign C: scenes sit on the light grained stage and stand on their module's chapter colour; see `docs/animation-preferences.md` §9 for the scene kit.
    - Do **NOT** force dark mode or cold grays in the animation views.
 
 3. **Unclipped Stage & True Physical Trajectories**:

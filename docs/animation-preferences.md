@@ -73,3 +73,24 @@ Never trigger actions simultaneously if they depend on each other physically:
 * **Search trees** (`src/components/story/StateSpaceTree.tsx`): backtracking scenes (N-Queens, Subset Sum) show their state-space tree under the physical scene. The camera follows the current node at real size (never zoomed in past it, never shrunk to fit unless the viewer picks "Whole tree"), pruned branches are snipped with ✂ and a short reason, and once a tree passes ~36 nodes, finished branches fold into bundles (answers stay open when there are four or fewer). Each scene supplies its own node drawing (mini chessboards, coins).
 * **SVG gotcha**: never put an `animate-story-*` class on a `<g>` that also has a `transform` attribute; the CSS animation overrides the position. Nest the animated group inside the positioned one.
 * **Existing scenes**: Water pipes (Ford-Fulkerson, Edmonds-Karp, Push-Relabel), Stencil (Naive, KMP, Rabin-Karp), Pegboard (Graham's Scan, Jarvis' March), Cubby wall (0-1 Knapsack DP), Huffman mobile (Huffman, incl. decoding), Chessboard (N-Queens), Town map (Floyd-Warshall, Bellman-Ford), Balance scale (Subset Sum), Painting houses (Graph Coloring), Treasure caves (0-1 Knapsack B&B, Job Selection B&B), Coin road (Maximum Subarray), Helpers workshop (Karatsuba), Bead necklaces (LCS), Gluing panels (Matrix Chain), Car factory (Assembly Line), Postman's notebook (TSP Held-Karp), Word tree (Suffix Tree), Sliding curtain (Line Segment Intersection), Height line-up (Randomized Quicksort), Interview room (Hiring Problem), Clay balls (Karger), Street cameras (Vertex Cover), Radio towers (Set Cover), Rope network (TSP 2-Approximation). Every algorithm now has a story scene.
+
+---
+
+## 9. The scene kit (redesign C, carries the home page's feel)
+The home page is the reference for every scene: bone paper, flat poster colour chapters, lit objects, film grain.
+New and rebuilt scenes use `src/components/story/kit/`:
+* **Stage** (`StoryStage`): the light surface with the home hero's grain, the scene title in Red Hat Display Black
+  capitals, the drawn owl (`OwlGlyph`) instead of the 🦉 emoji. No emoji in the header or the drawing.
+* **Chapter colour** (`useChapter()`): the module's field, as on the home and module pages. The scene stands on it:
+  `<Room floor={field.bg}>` makes the floor that colour; the wall stays warm and light.
+* **Materials** (`materials.tsx`): one light from the upper left. Fills are `<Lit>` gradients, objects stand on a
+  `<ContactShadow>`, `SceneDefs` holds the shared shadow filter, wall, floor and gold. Colours come from `PALETTE`
+  (natural skins, hair, fabrics, wood, gold); never neon.
+* **People** (`Person.tsx`): rounded, lit figures with varied skin, hair and clothes, feet at (0, 0). Parts GSAP can
+  move: `.sk-figure`, `.sk-arm-l`, `.sk-arm-r`, `.sk-eyes`.
+* **Motion** (`useStepTimeline`, GSAP): one timeline per step. React draws where things end up; the timeline moves
+  them there from where they were (`fromTo` on an inner `<g>` that React does not position). It waits for the owl,
+  stands still while paused, is sped up to fit the step, and jumps to the end under reduced motion. Eases:
+  `story.out` (arriving), `story.move` (travelling), `story.land` (dropping into place with a small overshoot).
+  Start from a visible picture: never hide the drawing while the owl reads.
+* **Reference scene**: `HeightLineupScene.tsx` (Randomized Quicksort).

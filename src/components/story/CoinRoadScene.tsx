@@ -129,18 +129,17 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
 
   return (
     <StoryStage
-      emoji="🪙"
       title="The Coin Road"
       subtitle="Coin tiles add, thief tiles take away. Find the richest unbroken stretch."
       narration={narration}
       status={kind === 'final' ? `Richest stretch • ${finalSum}` : range ? `Looking at • ${rangeText(range)}` : 'Ready'}
     >
       <div className="flex justify-center mb-3">
-        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5 font-sans text-xs font-semibold" role="radiogroup" aria-label="Picture">
+        <div className="c-group" role="radiogroup" aria-label="Picture">
           {(
             [
-              ['road', '🛣️ Coin road'],
-              ['tree', '🌳 Split & merge tree'],
+              ['road', 'Coin road'],
+              ['tree', 'Split & merge tree'],
             ] as const
           ).map(([v, label]) => (
             <button
@@ -150,7 +149,7 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
               aria-checked={view === v}
               data-road-view={v}
               onClick={() => choose(v)}
-              className={`px-3 py-1 rounded-full transition-colors ${view === v ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+              className="c-pill"
             >
               {label}
             </button>
@@ -162,11 +161,20 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
         <MaxSubarrayTreeView arr={arr} nodes={st.treeNodes || []} activeId={st.activeNodeId} scan={scan as any} isFinal={!!step.isFinal} stepKey={step.stepIndex} />
       ) : (
         <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.3 }} role="img" aria-label="Coin road">
-          <rect x={PAD - 12} y={ROAD_Y - 12} width={width - 2 * PAD + 24} height={TILE + 24} rx="14" fill="#d6c3a5" />
+          <defs>
+            <radialGradient id="coinRoadGold" cx="0.36" cy="0.3" r="0.8">
+              <stop offset="0" stopColor="#fff6d6" />
+              <stop offset="0.5" stopColor="#f0c94a" />
+              <stop offset="1" stopColor="#c48a12" />
+            </radialGradient>
+          </defs>
+          <rect x={PAD - 12} y={ROAD_Y - 6} width={width - 2 * PAD + 24} height={TILE + 24} rx="18" fill="#3a2414" opacity="0.1" />
+          <rect x={PAD - 12} y={ROAD_Y - 12} width={width - 2 * PAD + 24} height={TILE + 24} rx="18" fill="#57514a" />
+          <line x1={PAD - 4} y1={ROAD_Y - 6} x2={width - PAD + 4} y2={ROAD_Y - 6} stroke="#f4ead2" strokeOpacity="0.5" strokeWidth="1.5" strokeDasharray="8 8" />
 
           {/* final / combine highlights */}
           {optimal && (kind === 'final' || kind === 'combine') && (
-            <rect x={x(optimal[0]) - 6} y={ROAD_Y - 8} width={x(optimal[1]) - x(optimal[0]) + TILE + 12} height={TILE + 16} rx="12" fill="#fde047" opacity="0.8" className="animate-story-pop" />
+            <rect x={x(optimal[0]) - 6} y={ROAD_Y - 8} width={x(optimal[1]) - x(optimal[0]) + TILE + 12} height={TILE + 16} rx="12" fill="#f2c21a" opacity="0.95" className="animate-story-pop" />
           )}
           {kind === 'cross-sum' && st.crossLeftRange && st.crossRightRange && (
             <rect
@@ -175,7 +183,7 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
               width={x(st.crossRightRange[1]) - x(st.crossLeftRange[0]) + TILE + 12}
               height={TILE + 16}
               rx="12"
-              fill="#bae6fd"
+              fill="#9cc2f0"
               className="animate-story-pop"
             />
           )}
@@ -185,14 +193,27 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
             const lit = lanternAt === i;
             return (
               <g key={i} opacity={active ? 1 : 0.3} style={{ transition: 'opacity 0.5s' }}>
-                <rect x={x(i)} y={ROAD_Y} width={TILE} height={TILE} rx="10" fill={v >= 0 ? '#fef9c3' : '#fee2e2'} stroke={lit ? '#f59e0b' : v >= 0 ? '#ca8a04' : '#dc2626'} strokeWidth={lit ? 4 : 2} />
-                <text x={x(i) + TILE / 2} y={ROAD_Y + 28} textAnchor="middle" fontSize="22">
-                  {v >= 0 ? '🪙' : '🦹'}
-                </text>
-                <text x={x(i) + TILE / 2} y={ROAD_Y + 54} textAnchor="middle" fontSize="15" fontWeight="900" fill={v >= 0 ? '#713f12' : '#991b1b'}>
+                <rect x={x(i)} y={ROAD_Y + 4} width={TILE} height={TILE} rx="12" fill={v >= 0 ? '#c9a77a' : '#9c3a32'} />
+                <rect x={x(i)} y={ROAD_Y} width={TILE} height={TILE} rx="12" fill={v >= 0 ? '#fbf3e3' : '#f7d6d1'} stroke={lit ? '#e8a817' : 'none'} strokeWidth={lit ? 4 : 0} />
+                {v >= 0 ? (
+                  <g transform={`translate(${x(i) + TILE / 2}, ${ROAD_Y + 20})`}>
+                    <ellipse cy="10" rx="11" ry="2.5" fill="#3a2414" opacity="0.15" />
+                    <circle r="11" fill="#9a6416" />
+                    <circle r="9.5" cy="-0.6" fill="url(#coinRoadGold)" />
+                    <circle r="6.5" cy="-0.6" fill="none" stroke="#b07a12" strokeOpacity="0.5" strokeWidth="1" />
+                  </g>
+                ) : (
+                  <g transform={`translate(${x(i) + TILE / 2}, ${ROAD_Y + 20})`}>
+                    <circle r="11" fill="#2b2420" />
+                    <rect x="-11" y="-5" width="22" height="7" rx="3.5" fill="#cc2e2e" />
+                    <circle cx="-4.5" cy="-1.5" r="1.8" fill="#ffffff" />
+                    <circle cx="4.5" cy="-1.5" r="1.8" fill="#ffffff" />
+                  </g>
+                )}
+                <text x={x(i) + TILE / 2} y={ROAD_Y + 52} textAnchor="middle" fontSize="16" fontWeight="900" fill={v >= 0 ? '#4a2e00' : '#801818'} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                   {v > 0 ? `+${v}` : v}
                 </text>
-                <text x={x(i) + TILE / 2} y={ROAD_Y + TILE + 18} textAnchor="middle" fontSize="10" fill="#78716c">
+                <text x={x(i) + TILE / 2} y={ROAD_Y + TILE + 22} textAnchor="middle" fontSize="11" fontWeight="700" fill="#6b645a">
                   {i + 1}
                 </text>
               </g>
@@ -202,34 +223,42 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
           {/* the cut ribbon */}
           {mid !== undefined && kind !== 'final' && kind !== 'base' && kind !== 'intro' && (
             <g>
-              <line x1={x(mid) + TILE + GAP / 2} y1={ROAD_Y - 30} x2={x(mid) + TILE + GAP / 2} y2={ROAD_Y + TILE + 26} stroke="#dc2626" strokeWidth="4" strokeDasharray="8 5" />
-              <text x={x(mid) + TILE + GAP / 2} y={ROAD_Y - 36} textAnchor="middle" fontSize="18">
-                ✂️
-              </text>
+              <line x1={x(mid) + TILE + GAP / 2} y1={ROAD_Y - 30} x2={x(mid) + TILE + GAP / 2} y2={ROAD_Y + TILE + 26} stroke="#cc2e2e" strokeWidth="4" strokeDasharray="8 5" strokeLinecap="round" />
+              <g transform={`translate(${x(mid) + TILE + GAP / 2}, ${ROAD_Y - 42})`}>
+                <circle r="11" fill="#cc2e2e" />
+                <path d="M-4 -4 L4 4 M4 -4 L-4 4" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+                <circle cx="-4.5" cy="4.5" r="2" fill="none" stroke="#ffffff" strokeWidth="1.4" />
+                <circle cx="4.5" cy="4.5" r="2" fill="none" stroke="#ffffff" strokeWidth="1.4" />
+              </g>
             </g>
           )}
 
           {/* flags at the best left / right reach */}
           {scan?.bestLeft && kind !== 'final' && (
-            <text x={x(scan.bestLeft.index) + 6} y={ROAD_Y - 8} fontSize="20">
-              🚩
-            </text>
+            <g transform={`translate(${x(scan.bestLeft.index) + 10}, ${ROAD_Y - 8})`}>
+              <line x1="0" y1="0" x2="0" y2="-22" stroke="#6e4426" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M0 -22 L15 -17.5 L0 -13 Z" fill="#0c8030" />
+            </g>
           )}
           {scan?.bestRight && kind !== 'final' && (
-            <text x={x(scan.bestRight.index) + TILE - 26} y={ROAD_Y - 8} fontSize="20">
-              🚩
-            </text>
+            <g transform={`translate(${x(scan.bestRight.index) + TILE - 10}, ${ROAD_Y - 8})`}>
+              <line x1="0" y1="0" x2="0" y2="-22" stroke="#6e4426" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M0 -22 L-15 -17.5 L0 -13 Z" fill="#0c8030" />
+            </g>
           )}
 
           {/* lantern + basket */}
           {lanternAt !== undefined && (
             <g style={{ transform: `translate(${x(lanternAt) + TILE / 2}px, ${ROAD_Y + TILE + 44}px)`, transition: 'transform 0.6s var(--ease-move)' }}>
-              <text textAnchor="middle" fontSize="24" y="0">
-                🏮
-              </text>
-              <rect x="-30" y="8" width="60" height="22" rx="8" fill="#fffbeb" stroke="#d97706" />
-              <text textAnchor="middle" y="24" fontSize="12" fontWeight="800" fill="#78350f">
-                🧺 {basket}
+              <g transform="translate(0, -8)">
+                <circle r="13" fill="#fde68a" opacity="0.6" />
+                <path d="M-4 -12 H4 M0 -12 V-9" stroke="#6e4426" strokeWidth="1.6" strokeLinecap="round" />
+                <rect x="-7" y="-9" width="14" height="16" rx="6" fill="#d9473b" />
+                <rect x="-4" y="-6" width="8" height="10" rx="3" fill="#fde68a" />
+              </g>
+              <rect x="-34" y="10" width="68" height="24" rx="12" fill="#1a1a1a" />
+              <text textAnchor="middle" y="26.5" fontSize="12.5" fontWeight="900" fill="#f3efe6" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
+                basket {basket}
               </text>
             </g>
           )}
@@ -248,12 +277,12 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
             const win = st.winner === key;
             return (
               <div key={key} className={`flex flex-col items-center ${win ? 'animate-story-pop' : ''}`}>
-                <span className="text-xl">{win ? '🏆' : ' '}</span>
+                <span className="h-6 text-sm font-black text-stone-900">{win ? 'winner' : ' '}</span>
                 <div
-                  className={`w-24 flex flex-col items-center justify-end rounded-t-lg border-2 ${win ? 'h-24 bg-amber-200 border-amber-500' : 'h-16 bg-stone-100 border-stone-300'}`}
+                  className={`w-24 flex flex-col items-center justify-end rounded-t-2xl ${win ? 'h-24 bg-[#f2c21a]' : 'h-16 bg-[#e3dccd]'}`}
                 >
-                  <span className="text-lg font-black text-stone-900">{val}</span>
-                  <span className="text-[11px] font-semibold text-stone-600 pb-1">{name}</span>
+                  <span className="font-display text-2xl font-black text-stone-900">{val}</span>
+                  <span className="text-xs font-bold text-stone-700 pb-1.5">{name}</span>
                 </div>
               </div>
             );

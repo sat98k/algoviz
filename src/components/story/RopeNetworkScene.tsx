@@ -1,5 +1,11 @@
 import React from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
+import { PALETTE, SceneDefs, tint, useSvgIds } from './kit/materials';
+import { House } from './kit/props';
+import { useChapter } from './kit/chapter';
+
+const ROPE = '#a8814f';
+const TRIP = '#e8a817';
 
 /**
  * 🪢 TSP 2-approximation as a rope network walked around like a hedge.
@@ -18,6 +24,8 @@ const H = 420;
 const M = 60;
 
 export const RopeNetworkScene: React.FC<StorySceneProps> = ({ step }) => {
+  const ids = useSvgIds();
+  const field = useChapter();
   const st: any = step.state || {};
   const cities: { id: number; label: string; x: number; y: number }[] = st.cities || [];
   const cost: number[][] = st.costMatrix || [];
@@ -79,37 +87,45 @@ export const RopeNetworkScene: React.FC<StorySceneProps> = ({ step }) => {
     const len = Math.hypot(dx, dy) || 1;
     const ox = (-dy / len) * offset;
     const oy = (dx / len) * offset;
-    return <line key={key} x1={a.x + ox} y1={a.y + oy} x2={b.x + ox} y2={b.y + oy} stroke={stroke} strokeWidth={width} strokeDasharray={dash} strokeLinecap="round" />;
+    const xy = { x1: a.x + ox, y1: a.y + oy, x2: b.x + ox, y2: b.y + oy };
+    if (width < 4) return <line key={key} {...xy} stroke={stroke} strokeWidth={width} strokeDasharray={dash} strokeLinecap="round" />;
+    return (
+      <g key={key}>
+        <line {...xy} stroke="#3a2414" strokeOpacity="0.12" strokeWidth={width + 3} strokeLinecap="round" transform="translate(0, 3)" />
+        <line {...xy} stroke={stroke} strokeWidth={width} strokeDasharray={dash} strokeLinecap="round" />
+        {!dash && <line {...xy} stroke={tint(stroke, 0.45)} strokeWidth={Math.max(1.5, width * 0.32)} strokeDasharray="3 4" strokeLinecap="round" />}
+      </g>
+    );
   };
 
   const inNetwork = (i: number) => (mask & (1 << i)) !== 0;
 
   return (
     <StoryStage
-      emoji="🪢"
       title="Ropes, Then a Walk Around"
       subtitle="Tie the cheapest rope network, walk around it, and take shortcuts past towns already visited."
       narration={narration}
       status={kind === 'final' ? `Tour • ${st.optimalCost} (≤ ${2 * mstWeight})` : `Ropes tied • ${mstWeight}`}
     >
       <svg viewBox={`0 0 ${W} ${H}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: W * 1.2 }} role="img" aria-label="Towns and ropes">
-        <rect x="0" y="0" width={W} height={H} rx="18" fill="#eef5e4" />
+        <SceneDefs ids={ids} floor={field.bg} />
+        <rect x="0" y="0" width={W} height={H} rx="22" fill={tint(field.bg, 0.84)} />
 
         {/* faint roads */}
-        {cities.map((_, i) => cities.map((__, j) => (j > i ? line(i, j, '#d6cbb5', 1.5, undefined, 0, `r-${i}-${j}`) : null)))}
+        {cities.map((_, i) => cities.map((__, j) => (j > i ? line(i, j, tint(field.bg, 0.45), 1.5, '2 5', 0, `r-${i}-${j}`) : null)))}
 
         {/* candidate ropes while choosing */}
-        {kind === 'mst-look' && cands.map((c, k) => line(c.u, c.v, c.isChosen ? '#16a34a' : '#0284c7', 3, '6 6', 0, `c-${k}`))}
+        {kind === 'mst-look' && cands.map((c, k) => line(c.u, c.v, c.isChosen ? '#0c8030' : '#2457c5', 3, '6 6', 0, `c-${k}`))}
 
         {/* the rope network (doubled in step 2) */}
         {mst.map((e, k) =>
           kind === 'double' || kind === 'shortcut'
-            ? [line(e.u, e.v, '#a16207', 4, undefined, 4, `m1-${k}`), line(e.u, e.v, '#a16207', 4, undefined, -4, `m2-${k}`)]
-            : line(e.u, e.v, kind === 'final' ? '#d6b98c' : '#a16207', 6, undefined, 0, `m-${k}`)
+            ? [line(e.u, e.v, ROPE, 5, undefined, 4, `m1-${k}`), line(e.u, e.v, ROPE, 5, undefined, -4, `m2-${k}`)]
+            : line(e.u, e.v, kind === 'final' ? tint(ROPE, 0.45) : ROPE, 7, undefined, 0, `m-${k}`)
         )}
 
         {/* the walk with shortcuts */}
-        {tour.map((e, k) => line(e.u, e.v, '#f59e0b', 6, cost[e.u]?.[e.v] !== undefined && !mst.some((m) => (m.u === e.u && m.v === e.v) || (m.u === e.v && m.v === e.u)) ? '10 6' : undefined, 0, `t-${k}`))}
+        {tour.map((e, k) => line(e.u, e.v, TRIP, 6, cost[e.u]?.[e.v] !== undefined && !mst.some((m) => (m.u === e.u && m.v === e.v) || (m.u === e.v && m.v === e.u)) ? '10 6' : undefined, 0, `t-${k}`))}
 
         {/* towns */}
         {cities.map((c, i) => {
@@ -118,17 +134,21 @@ export const RopeNetworkScene: React.FC<StorySceneProps> = ({ step }) => {
           const tied = phase === 'mst' && inNetwork(i);
           return (
             <g key={c.id} transform={`translate(${p.x}, ${p.y})`}>
-              <circle r="22" fill={tied ? '#fef3c7' : '#fffaf0'} stroke={i === st.currentCity && kind === 'shortcut' ? '#ea580c' : '#a16207'} strokeWidth={i === st.currentCity && kind === 'shortcut' ? 4 : 2.5} />
-              <text textAnchor="middle" y="7" fontSize="18">
-                🏠
-              </text>
-              <text textAnchor="middle" y="38" fontSize="13" fontWeight="900" fill="#1c1917">
-                {c.label}
-              </text>
+              <ellipse cx="0" cy="19" rx="24" ry="6" fill="#3a2414" opacity="0.14" />
+              <circle r="24" fill={tied ? PALETTE.goldLight : '#fbf9f4'} stroke={i === st.currentCity && kind === 'shortcut' ? '#c4501a' : tint(field.bg, -0.25)} strokeWidth={i === st.currentCity && kind === 'shortcut' ? 4.5 : 2.5} />
+              <g transform="translate(0, 2)">
+                <House size={26} roof={[PALETTE.berry, PALETTE.sky, PALETTE.leaf][i % 3]} />
+              </g>
+              <g transform="translate(0, 40)">
+                <rect x="-14" y="-10" width="28" height="19" rx="9.5" fill={PALETTE.ink} />
+                <text textAnchor="middle" y="4.5" fontSize="12.5" fontWeight="900" fill="#f3efe6" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
+                  {c.label}
+                </text>
+              </g>
               {visitIdx >= 0 && (kind === 'shortcut' || kind === 'final') && (
                 <g transform="translate(18, -18)">
-                  <circle r="9" fill="#f59e0b" stroke="#92400e" />
-                  <text textAnchor="middle" y="4" fontSize="10" fontWeight="900" fill="#ffffff">
+                  <circle r="11" fill={TRIP} stroke={tint(TRIP, -0.35)} strokeWidth="1.5" />
+                  <text textAnchor="middle" y="4" fontSize="11.5" fontWeight="900" fill={PALETTE.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                     {visitIdx + 1}
                   </text>
                 </g>
@@ -137,7 +157,7 @@ export const RopeNetworkScene: React.FC<StorySceneProps> = ({ step }) => {
           );
         })}
       </svg>
-      <p className="mt-2 text-center text-xs text-stone-500">Brown = ropes (cheapest network) · gold = the trip · gold dashes = shortcuts past visited towns</p>
+      <p className="mt-2 text-center text-sm text-stone-600">Brown = ropes (cheapest network) · gold = the trip · gold dashes = shortcuts past visited towns</p>
     </StoryStage>
   );
 };

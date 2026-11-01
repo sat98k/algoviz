@@ -1,5 +1,23 @@
 import React from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
+import { PALETTE, SceneDefs, tint, useSvgIds } from './kit/materials';
+import { useChapter } from './kit/chapter';
+
+const BARK = '#7a4f2c';
+
+/** A small ant facing right, centred on its middle. */
+const Ant: React.FC = () => (
+  <g>
+    {[-5, 0, 5].map((x) => (
+      <path key={x} d={`M${x} 0 L${x - 3} 6 M${x} 0 L${x + 3} 6`} stroke={PALETTE.ink} strokeWidth="1.2" strokeLinecap="round" />
+    ))}
+    <ellipse cx="-7" cy="-1" rx="5" ry="4" fill={PALETTE.ink} />
+    <ellipse cx="0" cy="-1" rx="3" ry="3" fill={PALETTE.ink} />
+    <circle cx="6" cy="-2" r="3.4" fill={PALETTE.ink} />
+    <path d="M8 -4 Q11 -9 13 -8 M7 -5 Q8 -10 11 -11" stroke={PALETTE.ink} strokeWidth="1" fill="none" strokeLinecap="round" />
+    <circle cx="-8" cy="-2.5" r="1.2" fill="#ffffff" opacity="0.5" />
+  </g>
+);
 
 /**
  * 🌳 Suffix Tree as a word tree.
@@ -17,6 +35,8 @@ const LEVEL = 92;
 const LEAF_W = 74;
 
 export const WordTreeScene: React.FC<StorySceneProps> = ({ step }) => {
+  const ids = useSvgIds();
+  const field = useChapter();
   const st: any = step.state || {};
   const text: string = st.text || '';
   const pattern: string = st.pattern || '';
@@ -96,7 +116,6 @@ export const WordTreeScene: React.FC<StorySceneProps> = ({ step }) => {
 
   return (
     <StoryStage
-      emoji="🌳"
       title="The Word Tree"
       subtitle="Every ending of the text is a path from the trunk to an apple. Branch ribbons spell the letters."
       narration={narration}
@@ -104,9 +123,9 @@ export const WordTreeScene: React.FC<StorySceneProps> = ({ step }) => {
     >
       {searching && (
         <div className="flex items-center justify-center gap-1 mb-3 font-mono">
-          <span className="mr-2 font-sans text-xs font-semibold uppercase tracking-wider text-stone-500">🐜 follows:</span>
+          <span className="mr-2 font-sans text-sm font-bold text-stone-700">The ant follows:</span>
           {pattern.split('').map((ch, k) => (
-            <span key={k} className={`w-8 h-9 flex items-center justify-center rounded-md border-2 text-lg font-black ${k < matched ? 'bg-green-100 border-green-500 text-green-900' : 'bg-white border-stone-300 text-stone-500'}`}>
+            <span key={k} className={`w-9 h-9 flex items-center justify-center rounded-xl text-lg font-black ${k < matched ? 'bg-[#18bc42] text-stone-900' : 'bg-[#fbf9f4] text-stone-500'}`}>
               {ch}
             </span>
           ))}
@@ -114,7 +133,22 @@ export const WordTreeScene: React.FC<StorySceneProps> = ({ step }) => {
       )}
 
       <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.2 }} role="img" aria-label="Word tree">
-        <rect x="0" y="0" width={width} height={height} rx="18" fill="#eef5e4" />
+        <SceneDefs ids={ids} floor={field.bg} />
+        <defs>
+          <radialGradient id={`${ids}-apple`} cx="0.35" cy="0.3" r="0.8">
+            <stop offset="0" stopColor="#f59a8e" />
+            <stop offset="0.55" stopColor="#d9473b" />
+            <stop offset="1" stopColor="#9c2a22" />
+          </radialGradient>
+          <radialGradient id={`${ids}-golden`} cx="0.35" cy="0.3" r="0.8">
+            <stop offset="0" stopColor="#fff1b0" />
+            <stop offset="0.55" stopColor={PALETTE.gold} />
+            <stop offset="1" stopColor="#a8700f" />
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width={width} height={height} rx="22" fill="#eef3e3" />
+        <ellipse cx={width / 2} cy={height * 0.42} rx={width * 0.48} ry={height * 0.4} fill="#dfe9cf" />
+        <path d={`M0 ${height - 26} H${width} V${height - 22} Q${width} ${height} ${width - 22} ${height} H22 Q0 ${height} 0 ${height - 22} Z`} fill={`url(#${ids}-floor)`} />
 
         {/* branches with letter ribbons */}
         {placed
@@ -126,10 +160,12 @@ export const WordTreeScene: React.FC<StorySceneProps> = ({ step }) => {
             const label = p.n.edgeLabel.length > 7 ? `${p.n.edgeLabel.slice(0, 6)}…` : p.n.edgeLabel;
             return (
               <g key={`b-${p.n.id}`}>
-                <line x1={p.px} y1={p.py! + 10} x2={p.x} y2={p.y - 14} stroke={lit && searching ? '#16a34a' : '#8b5a2b'} strokeWidth={lit && searching ? 8 : 6} strokeLinecap="round" />
+                <path d={`M${p.px} ${p.py! + 10} Q${p.px} ${(p.py! + p.y) / 2} ${p.x} ${p.y - 14}`} fill="none" stroke={lit && searching ? '#0c8030' : BARK} strokeWidth={lit && searching ? 9 : 7} strokeLinecap="round" />
+                <path d={`M${p.px} ${p.py! + 10} Q${p.px} ${(p.py! + p.y) / 2} ${p.x} ${p.y - 14}`} fill="none" stroke={lit && searching ? '#5dd47e' : tint(BARK, 0.3)} strokeWidth="2" strokeLinecap="round" transform="translate(-1.5, -1)" />
                 <g transform={`translate(${mx}, ${my})`}>
-                  <rect x={-label.length * 5 - 8} y="-11" width={label.length * 10 + 16} height="21" rx="6" fill="#fffbeb" stroke="#d97706" />
-                  <text textAnchor="middle" y="5" fontSize="13" fontWeight="900" fill="#78350f" fontFamily="ui-monospace, monospace">
+                  <rect x={-label.length * 5 - 8} y="-9" width={label.length * 10 + 16} height="21" rx="10.5" fill="#3a2414" opacity="0.1" />
+                  <rect x={-label.length * 5 - 8} y="-11" width={label.length * 10 + 16} height="21" rx="10.5" fill="#fbf9f4" stroke={lit && searching ? '#0c8030' : PALETTE.gold} strokeWidth="1.5" />
+                  <text textAnchor="middle" y="5" fontSize="13" fontWeight="700" fill={PALETTE.ink} fontFamily="'Red Hat Mono', ui-monospace, monospace">
                     {label}
                   </text>
                 </g>
@@ -148,29 +184,42 @@ export const WordTreeScene: React.FC<StorySceneProps> = ({ step }) => {
             <g key={n.id} transform={`translate(${p.x}, ${p.y})`}>
               <g className={isNew ? 'animate-story-pop' : undefined}>
                 {n.id === 'root' ? (
-                  <rect x="-22" y="-14" width="44" height="26" rx="8" fill="#78350f" />
+                  <g>
+                    <ellipse cx="0" cy="-18" rx="44" ry="26" fill="#6fa85a" />
+                    <ellipse cx="-14" cy="-24" rx="22" ry="14" fill="#8cc272" opacity="0.8" />
+                    <rect x="-12" y="-12" width="24" height="26" rx="6" fill={BARK} />
+                    <rect x="-9" y="-12" width="5" height="26" rx="2.5" fill={tint(BARK, 0.25)} />
+                  </g>
                 ) : isApple ? (
                   <g>
-                    <circle r="15" fill={golden ? '#facc15' : '#ef4444'} stroke={golden ? '#a16207' : '#991b1b'} strokeWidth="2" />
-                    <path d="M 0 -15 Q 3 -22 8 -22" fill="none" stroke="#166534" strokeWidth="2.5" />
-                    <text textAnchor="middle" y="5" fontSize="12" fontWeight="900" fill="#ffffff">
+                    <ellipse cx="0" cy="17" rx="11" ry="3" fill="#3a2414" opacity="0.14" />
+                    <circle r="16" fill={`url(#${ids}-${golden ? 'golden' : 'apple'})`} />
+                    <path d="M 0 -15 Q 2 -21 0 -24" fill="none" stroke={BARK} strokeWidth="2.4" strokeLinecap="round" />
+                    <path d="M 1 -20 Q 8 -26 13 -20 Q 7 -16 1 -20 Z" fill="#4f8a3c" />
+                    <ellipse cx="-6" cy="-6" rx="4" ry="2.6" fill="#ffffff" opacity="0.5" transform="rotate(-30 -6 -6)" />
+                    <text textAnchor="middle" y="5" fontSize="12.5" fontWeight="900" fill={golden ? PALETTE.ink : '#ffffff'} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                       {n.suffixIndex}
                     </text>
                   </g>
                 ) : (
-                  <circle r="9" fill="#a16207" stroke="#78350f" strokeWidth="2" />
+                  <g>
+                    <circle r="10" fill={BARK} />
+                    <circle r="5" cx="-2" cy="-2" fill={tint(BARK, 0.25)} />
+                  </g>
                 )}
               </g>
               {isAnt && (
-                <text x="14" y="-12" fontSize="20" className="animate-story-bob">
-                  🐜
-                </text>
+                <g transform="translate(20, -14)">
+                  <g className="animate-story-bob">
+                    <Ant />
+                  </g>
+                </g>
               )}
             </g>
           );
         })}
       </svg>
-      <p className="mt-2 text-center text-xs text-stone-500">The number on an apple is where that ending starts in “{text}” (counting from 0).</p>
+      <p className="mt-2 text-center text-sm text-stone-600">The number on an apple is where that ending starts in “{text}” (counting from 0).</p>
     </StoryStage>
   );
 };

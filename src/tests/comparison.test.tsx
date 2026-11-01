@@ -104,7 +104,9 @@ describe('ComparisonPage rendering', () => {
 
   it('offers every comparable problem with aria-pressed state', () => {
     for (const g of getComparisonGroups()) expect(html).toContain(g.title);
-    expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
+    // Only the problem picker is counted: the playback speed presets carry aria-pressed too.
+    const picker = html.slice(html.indexOf('aria-label="Problem to compare"'), html.indexOf('Choose two algorithms'));
+    expect(picker.match(/aria-pressed="true"/g)).toHaveLength(1);
   });
 
   it('renders the at-a-glance rows and both profiles', () => {

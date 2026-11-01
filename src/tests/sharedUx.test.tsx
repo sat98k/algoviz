@@ -178,12 +178,15 @@ describe('Readable text', () => {
 
   it('pseudocode code is at least 13px and nothing on it is below 12px', () => {
     const src = read('components/common/CodeExplanation.tsx');
-    expect(src).toContain('text-[13px] sm:text-sm');
+    // text-sm is 15px in the redesign's type scale (tailwind.config.js).
+    expect(src).toContain('<span className="text-sm">{codePart}</span>');
     expect(src).not.toMatch(/text-\[(9|10|11)px\]/);
   });
 
-  it('the step explanation body is 15–16px', () => {
-    expect(read('components/common/StepExplanation.tsx')).toContain('text-[15px] sm:text-base');
+  it('the step explanation body is at least 15px', () => {
+    // .sp-body in home-c.css is 1.0625rem.
+    expect(read('components/common/StepExplanation.tsx')).toContain('sp-body');
+    expect(read('styles/home-c.css')).toMatch(/.sp-body { font-size: 1.0625rem;/);
   });
 });
 

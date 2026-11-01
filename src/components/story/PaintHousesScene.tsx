@@ -2,6 +2,8 @@ import React, { useRef } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases } from './useAnimPhases';
 import { COLOR_NAMES } from '../../algorithms/graphColoring';
+import { PALETTE, SceneDefs, tint, useSvgIds } from './kit/materials';
+import { useChapter } from './kit/chapter';
 
 /**
  * 🎨 Graph colouring as painting houses joined by fences.
@@ -14,9 +16,13 @@ import { COLOR_NAMES } from '../../algorithms/graphColoring';
 
 const W = 680;
 const H = 470;
-const PAINT = ['#ffffff', '#ef4444', '#3b82f6', '#22c55e', '#facc15', '#f97316', '#a855f7', '#06b6d4', '#ec4899'];
+// Unpainted, then the paint colours in the order COLOR_NAMES lists them (red, blue, green, yellow…).
+const PAINT = ['#f6f1e7', '#e04a3f', '#3f78b5', '#3e9b4f', '#efc12a', '#e8803a', '#8a5aa8', '#2fa3b5', '#d4688c'];
+const F = { fontFamily: '"Red Hat Display", system-ui, sans-serif' };
 
 export const PaintHousesScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
+  const ids = useSvgIds();
+  const field = useChapter();
   const st: any = step.state || {};
   const nodes: { id: string; label: string }[] = st.nodes || [];
   const edges: { u: string; v: string }[] = st.edges || [];
@@ -96,7 +102,11 @@ export const PaintHousesScene: React.FC<StorySceneProps> = ({ step, stepMs }) =>
   return (
     <StoryStage emoji="🎨" title="Paint the Houses" subtitle="Houses joined by a fence are neighbours: they must get different colours." narration={narration} status={status}>
       <svg viewBox={`0 0 ${W} ${H}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: W * 1.2 }} role="img" aria-label="Houses and fences">
-        <rect x="0" y="0" width={W} height={H} rx="18" fill="#eef5e4" />
+        <SceneDefs ids={ids} floor={field.bg} />
+        <rect x="0" y="0" width={W} height={H} rx="22" fill={tint(field.bg, 0.82)} />
+        {[0.18, 0.55, 0.85].map((fx, j) => (
+          <ellipse key={j} cx={W * fx} cy={H * (j === 1 ? 0.2 : 0.62)} rx={W * 0.15} ry={H * 0.1} fill={tint(field.bg, 0.68)} opacity="0.7" />
+        ))}
 
         {/* fences */}
         {edges.map((e, i) => {
@@ -106,18 +116,25 @@ export const PaintHousesScene: React.FC<StorySceneProps> = ({ step, stepMs }) =>
           const clashing = kind === 'clash' && phase === 'clash' && ((e.u === cur && e.v === clashWith) || (e.v === cur && e.u === clashWith));
           const len = Math.hypot(b.x - a.x, b.y - a.y);
           const posts = Math.max(2, Math.floor(len / 34));
+          const wood = clashing ? '#cc2e2e' : '#b07a4a';
           return (
             <g key={`fence-${i}`}>
-              <line x1={a.x} y1={a.y - 8} x2={b.x} y2={b.y - 8} stroke={clashing ? '#dc2626' : '#a16207'} strokeWidth={clashing ? 5 : 3} />
-              <line x1={a.x} y1={a.y + 2} x2={b.x} y2={b.y + 2} stroke={clashing ? '#dc2626' : '#a16207'} strokeWidth={clashing ? 5 : 3} />
+              <line x1={a.x} y1={a.y + 10} x2={b.x} y2={b.y + 10} stroke="#3a2414" strokeOpacity="0.1" strokeWidth="8" strokeLinecap="round" />
+              <line x1={a.x} y1={a.y - 9} x2={b.x} y2={b.y - 9} stroke={wood} strokeWidth={clashing ? 5 : 3.5} strokeLinecap="round" />
+              <line x1={a.x} y1={a.y + 1} x2={b.x} y2={b.y + 1} stroke={tint(wood, -0.12)} strokeWidth={clashing ? 5 : 3.5} strokeLinecap="round" />
               {Array.from({ length: posts + 1 }, (_, p) => {
                 const t = p / posts;
-                return <rect key={p} x={a.x + (b.x - a.x) * t - 2.5} y={a.y + (b.y - a.y) * t - 16} width="5" height="24" rx="1.5" fill="#78350f" />;
+                const x = a.x + (b.x - a.x) * t;
+                const y = a.y + (b.y - a.y) * t;
+                return <path key={p} d={`M${x - 3} ${y + 8} V${y - 14} L${x} ${y - 18} L${x + 3} ${y - 14} V${y + 8} Z`} fill={tint(wood, 0.1)} stroke={tint(wood, -0.3)} strokeWidth="0.8" />;
               })}
               {clashing && (
-                <text x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 12} textAnchor="middle" fontSize="26" className="animate-story-pop">
-                  ⚡
-                </text>
+                <g transform={`translate(${(a.x + b.x) / 2}, ${(a.y + b.y) / 2 - 16})`}>
+                  <g className="animate-story-pop">
+                    <circle r="15" fill="#fbe3e1" stroke="#cc2e2e" strokeWidth="2" />
+                    <path d="M3 -10 L-5 1 H1 L-3 10 L6 -2 H0 Z" fill="#cc2e2e" />
+                  </g>
+                </g>
               )}
             </g>
           );
@@ -127,46 +144,70 @@ export const PaintHousesScene: React.FC<StorySceneProps> = ({ step, stepMs }) =>
         {nodes.map((n, i) => {
           const p = pos[i];
           const c = paintOf(n.id);
+          const wall = PAINT[c] ?? PAINT[0];
           const isCur = n.id === cur && kind !== 'final' && kind !== 'solution';
           const wiping = n.id === cur && kind === 'clash' && phase === 'clash';
           return (
             <g key={n.id} transform={`translate(${p.x}, ${p.y})`}>
-              {isCur && <circle r="44" fill="#fde68a" opacity="0.6" />}
+              {isCur && <circle r="46" fill={PALETTE.goldLight} opacity="0.6" />}
+              <ellipse cx="0" cy="36" rx="34" ry="7" fill="#3a2414" opacity="0.15" />
               <g className={wiping ? 'animate-story-shake' : undefined}>
-                <path d="M -32 -4 L 0 -34 L 32 -4 Z" fill="#9a3412" stroke="#7c2d12" strokeWidth="2" strokeLinejoin="round" />
-                <rect x="-26" y="-6" width="52" height="40" rx="3" fill={PAINT[c] ?? '#ffffff'} stroke="#57534e" strokeWidth="2" style={{ transition: 'fill 0.6s var(--ease-move)' }} />
-                <rect x="-6" y="14" width="12" height="20" rx="2" fill="#78350f" />
-                <rect x="-20" y="2" width="10" height="9" fill="#e0f2fe" stroke="#57534e" strokeWidth="1" />
-                <rect x="10" y="2" width="10" height="9" fill="#e0f2fe" stroke="#57534e" strokeWidth="1" />
+                <rect x="-26" y="-6" width="52" height="40" rx="3" fill={wall} style={{ transition: 'fill 0.6s var(--ease-move)' }} />
+                <rect x="6" y="-6" width="20" height="40" fill="#3a2414" opacity="0.1" />
+                <path d="M -33 -3 L 0 -36 L 33 -3 Z" fill="#a94a35" />
+                <path d="M 0 -36 L 33 -3 L 14 -3 Z" fill="#863726" />
+                <rect x="-6" y="14" width="12" height="20" rx="2" fill={PALETTE.walnut} />
+                <circle cx="3" cy="25" r="1.2" fill={PALETTE.goldLight} />
+                {[-20, 10].map((x) => (
+                  <g key={x}>
+                    <rect x={x} y="2" width="10" height="9" rx="1.5" fill="#dff1ff" />
+                    <rect x={x} y="2" width="10" height="3" rx="1" fill="#ffffff" opacity="0.7" />
+                  </g>
+                ))}
               </g>
-              <text textAnchor="middle" y="50" fontSize="13" fontWeight="900" fill="#1c1917">
-                {n.label}
-              </text>
-              {isCur && kind === 'scrape' && phase === 'scrape' && (
-                <text x="34" y="-18" fontSize="20" className="animate-story-bob">
-                  🧽
+              <g transform="translate(0, 52)">
+                <rect x="-14" y="-10" width="28" height="19" rx="9.5" fill={PALETTE.ink} />
+                <text textAnchor="middle" y="4.5" fontSize="12.5" fontWeight="900" fill="#f3efe6" style={F}>
+                  {n.label}
                 </text>
+              </g>
+              {isCur && kind === 'scrape' && phase === 'scrape' && (
+                <g transform="translate(36, -20)">
+                  <g className="animate-story-bob">
+                    <rect x="-10" y="-7" width="20" height="14" rx="4" fill="#efc12a" />
+                    <rect x="-10" y="2" width="20" height="5" rx="2" fill="#3e9b4f" />
+                    {[-5, 0, 5].map((x) => <circle key={x} cx={x} cy="-2" r="1.2" fill="#c49a1a" />)}
+                  </g>
+                </g>
               )}
               {isCur && (kind === 'paint' || (kind === 'clash' && phase === 'brush')) && (
-                <text x="34" y="-18" fontSize="20" className="animate-story-pop">
-                  🖌️
-                </text>
+                <g transform="translate(38, -22) rotate(30)">
+                  <g className="animate-story-pop">
+                    <rect x="-2.5" y="-4" width="5" height="22" rx="2.5" fill={PALETTE.walnut} />
+                    <rect x="-5" y="-10" width="10" height="7" rx="1.5" fill="#9aa8b4" />
+                    <path d="M-5 -10 Q0 -24 5 -10 Z" fill={wall} />
+                  </g>
+                </g>
               )}
             </g>
           );
         })}
 
-        {/* paint buckets */}
+        {/* paint cans */}
         {Array.from({ length: k }, (_, j) => {
           const c = j + 1;
           const x = W / 2 + (j - (k - 1) / 2) * 62;
           const active = bucketActive(c);
           return (
-            <g key={`bucket-${c}`} transform={`translate(${x}, ${H - 34 - (active ? 10 : 0)})`} style={{ transition: 'transform 0.4s' }}>
-              <path d="M -18 -14 L 18 -14 L 14 16 L -14 16 Z" fill="#d6d3d1" stroke="#57534e" strokeWidth="2" />
-              <ellipse cx="0" cy="-14" rx="18" ry="5" fill={PAINT[c]} stroke="#57534e" strokeWidth="1.5" />
-              <path d="M -18 -14 Q 0 -36 18 -14" fill="none" stroke="#57534e" strokeWidth="1.5" />
-              {active && <circle r="26" cy="0" fill="none" stroke="#f59e0b" strokeWidth="3" />}
+            <g key={`bucket-${c}`} transform={`translate(${x}, ${H - 34 - (active ? 10 : 0)})`} style={{ transition: 'transform 0.4s var(--ease-out)' }}>
+              <ellipse cx="0" cy="19" rx="18" ry="4" fill="#3a2414" opacity="0.15" />
+              <path d="M -17 -12 L 17 -12 L 14 16 Q 0 20 -14 16 Z" fill="#c8d2da" />
+              <path d="M 4 -12 L 17 -12 L 14 16 Q 9 18 4 18 Z" fill="#9aa8b4" />
+              <rect x="-15.5" y="-2" width="31" height="10" fill={PAINT[c]} opacity="0.9" />
+              <ellipse cx="0" cy="-12" rx="17" ry="5" fill={PAINT[c]} stroke={tint(PAINT[c], -0.3)} strokeWidth="1.2" />
+              <ellipse cx="-5" cy="-13" rx="6" ry="1.6" fill="#ffffff" opacity="0.45" />
+              <path d="M -17 -12 Q 0 -36 17 -12" fill="none" stroke="#5c6670" strokeWidth="1.8" />
+              {active && <circle r="27" cy="0" fill="none" stroke={PALETTE.gold} strokeWidth="3" />}
             </g>
           );
         })}
@@ -175,9 +216,9 @@ export const PaintHousesScene: React.FC<StorySceneProps> = ({ step, stepMs }) =>
       {solutions.length > 1 && (
         <div className="mt-3 flex flex-wrap justify-center gap-2">
           {solutions.slice(0, 18).map((s, j) => (
-            <div key={j} className="flex gap-0.5 p-1 rounded-md bg-white border border-stone-200 shadow-sm">
+            <div key={j} className="flex gap-0.5 p-1.5 rounded-full bg-[#fbf9f4]">
               {nodes.map((n) => (
-                <span key={n.id} className="w-3 h-3 rounded-sm border border-stone-300" style={{ background: PAINT[s[n.id]] }} />
+                <span key={n.id} className="w-3.5 h-3.5 rounded-full" style={{ background: PAINT[s[n.id]] }} />
               ))}
             </div>
           ))}

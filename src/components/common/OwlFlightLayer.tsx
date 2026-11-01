@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { OwlGlyph } from '../home/OwlMascot';
 import { clearOwlFlight, peekOwlFlight, setOwlFlying } from './owlFlight';
 import { playChirp, prefersReducedMotion } from './owlVoice';
 import { pageZoom } from '../../utils/pageZoom';
@@ -109,7 +110,7 @@ export const OwlFlightLayer: React.FC = () => {
       className="fixed z-[70] pointer-events-none select-none leading-none"
       style={{ left: flight.from.x, top: flight.from.y, fontSize: flight.from.size, transform: 'translate(-50%, -50%)' }}
     >
-      <span className="inline-block owl-flap">🦉</span>
+      <span className="inline-block owl-flap"><OwlGlyph /></span>
     </span>
   );
 };

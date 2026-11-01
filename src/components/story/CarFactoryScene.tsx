@@ -1,6 +1,20 @@
 import React from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases, useProgress } from './useAnimPhases';
+import { PALETTE, tint, useSvgIds } from './kit/materials';
+import { Flag } from './kit/props';
+import { useChapter } from './kit/chapter';
+
+/** A gear for a station's machine. */
+const Gear: React.FC<{ x: number; y: number }> = ({ x, y }) => (
+  <g transform={`translate(${x}, ${y})`}>
+    {Array.from({ length: 8 }, (_, k) => (
+      <rect key={k} x="-2" y="-9.5" width="4" height="5" rx="1" fill="#6b7680" transform={`rotate(${k * 45})`} />
+    ))}
+    <circle r="6.5" fill="#9aa8b4" />
+    <circle r="2.5" fill="#4a5560" />
+  </g>
+);
 
 /**
  * 🏭 Assembly Line Scheduling as a car factory with two conveyor belts.
@@ -16,20 +30,27 @@ const SX = 150;
 const GAPX = 130;
 const Y1 = 110;
 const Y2 = 300;
-const GOLD = '#f59e0b';
+const GOLD = '#e8a817';
 
-const Car: React.FC<{ x: number; y: number; ghost?: boolean; colour?: string }> = ({ x, y, ghost, colour = '#dc2626' }) => (
-  <g transform={`translate(${x}, ${y})`} opacity={ghost ? 0.55 : 1}>
-    <rect x="-20" y="-12" width="40" height="13" rx="4" fill={colour} stroke="#1c1917" strokeWidth="1.2" />
-    <path d="M -12 -12 L -7 -21 L 8 -21 L 13 -12 Z" fill={colour} stroke="#1c1917" strokeWidth="1.2" />
-    <rect x="-6" y="-19" width="5" height="6" fill="#e0f2fe" />
-    <rect x="1" y="-19" width="6" height="6" fill="#e0f2fe" />
-    <circle cx="-11" cy="2" r="4.5" fill="#1c1917" />
-    <circle cx="11" cy="2" r="4.5" fill="#1c1917" />
+const Car: React.FC<{ x: number; y: number; ghost?: boolean; colour?: string }> = ({ x, y, ghost, colour = '#d9473b' }) => (
+  <g transform={`translate(${x}, ${y})`} opacity={ghost ? 0.5 : 1}>
+    <ellipse cx="0" cy="7" rx="22" ry="3" fill="#3a2414" opacity="0.18" />
+    <path d="M -21 0 Q -21 -12 -12 -12 L -8 -21 Q -6 -23 -3 -23 L 7 -23 Q 10 -23 12 -20 L 16 -12 Q 21 -11 21 -4 L 21 0 Z" fill={colour} />
+    <path d="M -21 0 L 21 0 L 21 -4 Q 21 -7 18 -7 L -18 -7 Q -21 -7 -21 -4 Z" fill={tint(colour, -0.2)} />
+    <path d="M -6 -20 L 0 -20 L 0 -13 L -9 -13 Z M 3 -20 L 9 -20 L 13 -13 L 3 -13 Z" fill="#dff1ff" />
+    <path d="M -18 -9 H 17" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" />
+    {[-11, 11].map((cx) => (
+      <g key={cx}>
+        <circle cx={cx} cy="1" r="5" fill="#1a1a1a" />
+        <circle cx={cx} cy="1" r="2" fill="#c9c2b2" />
+      </g>
+    ))}
   </g>
 );
 
 export const CarFactoryScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
+  const ids = useSvgIds();
+  const field = useChapter();
   const st: any = step.state || {};
   const n: number = st.numStations ?? (st.a1 || []).length;
   const a = [st.a1 || [], st.a2 || []] as number[][];
@@ -97,35 +118,45 @@ export const CarFactoryScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
     const p = Math.min(1, prog);
     const x = x0 + (x1 - x0) * p;
     const y = viaRamp ? y0 + (y1 - y0) * p : y0;
-    return <Car key={`g-${fromLine}`} x={x} y={y + 38} ghost colour="#78716c" />;
+    return <Car key={`g-${fromLine}`} x={x} y={y + 38} ghost colour="#8a8273" />;
   };
 
   return (
     <StoryStage
-      emoji="🏭"
       title="The Car Factory"
       subtitle="Stay on your belt or take the forklift across. Each station keeps only the fastest car."
       narration={narration}
       status={st.minTotalTime !== undefined ? `Fastest route • ${st.minTotalTime} min` : `Station • ${j + 1} of ${n}`}
     >
       <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.15 }} role="img" aria-label="Car factory">
-        <rect x="0" y="0" width={width} height={height} rx="18" fill="#f5efe6" />
+        <defs>
+          <linearGradient id={`${ids}-concrete`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#f0ebe1" />
+            <stop offset="1" stopColor="#e2dacb" />
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width={width} height={height} rx="22" fill={`url(#${ids}-concrete)`} />
+        {[Y1, Y2].map((y) => (
+          <rect key={y} x="8" y={y - 82} width={width - 16} height="150" rx="16" fill={tint(field.bg, 0.8)} opacity="0.55" />
+        ))}
 
         {/* entry and exit */}
-        <text x="34" y={(Y1 + Y2) / 2 + 8} textAnchor="middle" fontSize="28">
-          🚪
-        </text>
-        <text x={sx(n - 1) + 120} y={(Y1 + Y2) / 2 + 8} textAnchor="middle" fontSize="28">
-          🏁
-        </text>
+        <g transform={`translate(34, ${(Y1 + Y2) / 2})`}>
+          <rect x="-15" y="-22" width="30" height="40" rx="5" fill="#8a5a35" />
+          <rect x="-11" y="-18" width="22" height="34" rx="3" fill="#b07a4a" />
+          <circle cx="6" cy="0" r="2" fill={PALETTE.goldLight} />
+        </g>
+        <g transform={`translate(${sx(n - 1) + 116}, ${(Y1 + Y2) / 2 + 16})`}>
+          <Flag size={34} checkered />
+        </g>
         {[0, 1].map((l) => (
           <g key={`io-${l}`}>
-            <line x1="52" y1={(Y1 + Y2) / 2} x2={sx(0) - 40} y2={ly(l + 1)} stroke="#a8a29e" strokeWidth="5" strokeDasharray="8 6" />
-            <text x={(52 + sx(0) - 40) / 2} y={((Y1 + Y2) / 2 + ly(l + 1)) / 2 + (l ? 18 : -8)} fontSize="11" fontWeight="700" fill="#57534e">
+            <line x1="52" y1={(Y1 + Y2) / 2} x2={sx(0) - 40} y2={ly(l + 1)} stroke="#b8ad98" strokeWidth="5" strokeDasharray="8 6" strokeLinecap="round" />
+            <text x={(52 + sx(0) - 40) / 2} y={((Y1 + Y2) / 2 + ly(l + 1)) / 2 + (l ? 18 : -8)} fontSize="12" fontWeight="800" fill="#3a3732">
               {e[l]} min
             </text>
-            <line x1={sx(n - 1) + 40} y1={ly(l + 1)} x2={sx(n - 1) + 104} y2={(Y1 + Y2) / 2} stroke={phaseName !== 'forward' && phaseName !== 'init' && st.winningLine === l + 1 ? GOLD : '#a8a29e'} strokeWidth="5" strokeDasharray="8 6" />
-            <text x={sx(n - 1) + 72} y={((Y1 + Y2) / 2 + ly(l + 1)) / 2 + (l ? 18 : -8)} fontSize="11" fontWeight="700" fill="#57534e">
+            <line x1={sx(n - 1) + 40} y1={ly(l + 1)} x2={sx(n - 1) + 104} y2={(Y1 + Y2) / 2} stroke={phaseName !== 'forward' && phaseName !== 'init' && st.winningLine === l + 1 ? GOLD : '#b8ad98'} strokeWidth="5" strokeDasharray="8 6" strokeLinecap="round" />
+            <text x={sx(n - 1) + 72} y={((Y1 + Y2) / 2 + ly(l + 1)) / 2 + (l ? 18 : -8)} fontSize="12" fontWeight="800" fill="#3a3732">
               {xx[l]} min
             </text>
           </g>
@@ -134,9 +165,14 @@ export const CarFactoryScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
         {/* belts */}
         {[1, 2].map((l) => (
           <g key={`belt-${l}`}>
-            <rect x={sx(0) - 44} y={ly(l) - 6} width={sx(n - 1) - sx(0) + 88} height="14" rx="7" fill="#57534e" />
-            <line x1={sx(0) - 40} y1={ly(l) + 1} x2={sx(n - 1) + 40} y2={ly(l) + 1} stroke="#a8a29e" strokeWidth="2" strokeDasharray="6 6" className="animate-flow-dash" />
-            <text x={sx(0) - 52} y={ly(l) + 5} textAnchor="end" fontSize="12" fontWeight="800" fill="#44403c">
+            <rect x={sx(0) - 44} y={ly(l) - 2} width={sx(n - 1) - sx(0) + 88} height="16" rx="8" fill="#3a2414" opacity="0.14" />
+            <rect x={sx(0) - 44} y={ly(l) - 6} width={sx(n - 1) - sx(0) + 88} height="16" rx="8" fill="#3c3833" />
+            <rect x={sx(0) - 44} y={ly(l) - 6} width={sx(n - 1) - sx(0) + 88} height="4" rx="2" fill="#6b655d" />
+            {[sx(0) - 36, sx(n - 1) + 36].map((cx) => (
+              <circle key={cx} cx={cx} cy={ly(l) + 2} r="6" fill="#9aa8b4" stroke="#4a5560" strokeWidth="1.5" />
+            ))}
+            <line x1={sx(0) - 28} y1={ly(l) + 3} x2={sx(n - 1) + 28} y2={ly(l) + 3} stroke="#8a8273" strokeWidth="2" strokeDasharray="6 6" className="animate-flow-dash" />
+            <text x={sx(0) - 54} y={ly(l) + 7} textAnchor="end" fontSize="13" fontWeight="900" fill="#1a1a1a" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
               belt {l}
             </text>
           </g>
@@ -151,10 +187,15 @@ export const CarFactoryScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
               const gold = goldSegments.some((g) => g.fromStation === s + 1 && g.fromLine === l + 1 && g.toLine !== g.fromLine);
               return (
                 <g key={l}>
-                  <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={gold ? GOLD : '#d6d3d1'} strokeWidth={gold ? 6 : 3} strokeDasharray={gold ? undefined : '4 5'} />
-                  <text x={(from.x + to.x) / 2 + (l === 0 ? -16 : 16)} y={(from.y + to.y) / 2 + (l === 0 ? -6 : 14)} textAnchor="middle" fontSize="10" fontWeight="700" fill="#78716c">
-                    🚜 {t[l][s]}
-                  </text>
+                  <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={gold ? GOLD : '#cfc6b4'} strokeWidth={gold ? 6 : 3} strokeDasharray={gold ? undefined : '4 5'} strokeLinecap="round" />
+                  <g transform={`translate(${(from.x + to.x) / 2 + (l === 0 ? -18 : 18)}, ${(from.y + to.y) / 2 + (l === 0 ? -8 : 10)})`}>
+                    <rect x="-22" y="-10" width="44" height="20" rx="10" fill="#fbf9f4" stroke={gold ? GOLD : '#cfc6b4'} strokeWidth="1.2" />
+                    <rect x="-16" y="-4" width="9" height="7" rx="1.5" fill={PALETTE.gold} />
+                    <path d="M-7 -4 V-8 M-7 -8 H-4" stroke="#4a5560" strokeWidth="1.4" strokeLinecap="round" />
+                    <text x="6" y="4.5" textAnchor="middle" fontSize="11.5" fontWeight="800" fill="#3a3732">
+                      {t[l][s]}
+                    </text>
+                  </g>
                 </g>
               );
             })}
@@ -169,19 +210,21 @@ export const CarFactoryScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
             const gold = onPath(l, s) && (phaseName === 'backtrack' || phaseName === 'complete');
             return (
               <g key={`st-${l}-${s}`}>
-                <rect x={sx(s) - 36} y={ly(l) - 60} width="72" height="46" rx="8" fill={gold ? '#fef3c7' : '#ffffff'} stroke={gold ? GOLD : isNow ? '#ea580c' : '#78716c'} strokeWidth={gold || isNow ? 4 : 2} />
-                <text x={sx(s) - 20} y={ly(l) - 31} fontSize="15">
-                  ⚙️
-                </text>
-                <text x={sx(s) + 12} y={ly(l) - 31} textAnchor="middle" fontSize="12" fontWeight="800" fill="#44403c">
+                <rect x={sx(s) - 36} y={ly(l) - 56} width="72" height="46" rx="12" fill="#3a2414" opacity="0.1" />
+                <rect x={sx(s) - 36} y={ly(l) - 60} width="72" height="46" rx="12" fill={gold ? PALETTE.goldLight : '#fbf9f4'} stroke={gold ? GOLD : isNow ? '#c4501a' : '#cfc6b4'} strokeWidth={gold || isNow ? 4 : 1.5} />
+                <Gear x={sx(s) - 16} y={ly(l) - 37} />
+                <text x={sx(s) + 12} y={ly(l) - 32} textAnchor="middle" fontSize="13" fontWeight="900" fill="#1a1a1a" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                   {a[l - 1][s]}m
                 </text>
                 {done !== null && done !== undefined && (
                   <g className={isNow ? 'animate-story-pop' : undefined}>
-                    <Car x={sx(s)} y={ly(l) + (l === 1 ? 38 : 38)} colour={gold ? GOLD : '#dc2626'} />
-                    <text x={sx(s)} y={ly(l) + 62} textAnchor="middle" fontSize="12" fontWeight="900" fill="#1c1917">
-                      ⏱ {done}
-                    </text>
+                    <Car x={sx(s)} y={ly(l) + (l === 1 ? 38 : 38)} colour={gold ? GOLD : '#d9473b'} />
+                    <g transform={`translate(${sx(s)}, ${ly(l) + 58})`}>
+                      <rect x="-22" y="-10" width="44" height="20" rx="10" fill="#1a1a1a" />
+                      <text textAnchor="middle" y="4.5" fontSize="12" fontWeight="900" fill="#f3efe6" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
+                        {done} min
+                      </text>
+                    </g>
                   </g>
                 )}
               </g>

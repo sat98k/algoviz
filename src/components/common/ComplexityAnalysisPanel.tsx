@@ -28,76 +28,78 @@ const KIND_HELP: Record<BoundKind, string> = {
   Approximation: 'Runs in polynomial time and returns a near-optimal answer with a proven guarantee.',
 };
 
+/** Inline formula text (variables, short expressions) in the code face. */
 const formula = 'font-mono text-sem-formula-ink';
 
-/** "Time and space complexity": bounds per case, space, what dominates, and how it is derived. */
+/**
+ * "Time and space complexity": bounds per case, space, what dominates, and how it is derived.
+ * Laid out like the home page: the bounds are the big display type, the tags are pills, the
+ * recurrence sits on an ink field.
+ */
 export const ComplexityAnalysisPanel: React.FC<ComplexityAnalysisPanelProps> = ({ analysis, paradigm }) => {
   const paradigmTerm = PARADIGM_TERMS[paradigm];
   return (
-    <section aria-labelledby="complexity-heading" className="flex flex-col gap-4 p-4 sm:p-5 bg-obsidian-900 border border-hairline">
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-hairline">
-        <h2 id="complexity-heading" className="font-display font-bold text-lg text-chalk-100">
+    <section aria-labelledby="complexity-heading" className="cx-panel">
+      <div className="cx-head">
+        <h2 id="complexity-heading" className="cx-title">
           Time and space complexity
         </h2>
-        <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-          <span className="flex items-center gap-1.5 px-2 py-0.5 border border-hairline bg-obsidian-950 text-chalk-300">
-            <Layers className="w-3 h-3 text-amber" />
+        <div className="cx-tags">
+          <span className="cx-tag">
+            <Layers className="w-4 h-4" aria-hidden />
             {paradigmTerm ? <Term termKey={paradigmTerm}>{paradigm}</Term> : paradigm}
           </span>
           {analysis.kinds.map((k) => (
-            <span key={k} title={KIND_HELP[k]} className="px-2 py-0.5 border border-sem-formula/40 bg-sem-formula/10 text-sem-formula-ink">
+            <span key={k} title={KIND_HELP[k]} className="cx-tag cx-tag-ink">
               {k}
             </span>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* Time */}
-        <div className="flex flex-col gap-2 p-3.5 bg-obsidian-950 border border-hairline">
-          <h3 className="flex items-center gap-1.5 font-sans text-xs font-semibold text-chalk-400">
-            <Clock className="w-3 h-3 text-amber" /> Time
+      <div className="cx-grid">
+        <div className="cx-card">
+          <h3 className="cx-card-title">
+            <Clock className="w-4 h-4" aria-hidden /> Time
           </h3>
-          <dl className="flex flex-col gap-2.5">
+          <dl className="cx-cases">
             {analysis.time.map((t) => (
-              <div key={t.case} className="flex flex-col gap-0.5">
-                <div className="flex flex-wrap items-baseline gap-x-2">
-                  <dt className="font-mono text-[11px] text-chalk-400 min-w-[6.5rem]">{CASE_LABEL[t.case]}</dt>
-                  <dd className={`${formula} text-base font-bold`}>{t.bound}</dd>
-                </div>
-                {t.note && <p className="font-sans text-xs leading-relaxed text-chalk-300">{t.note}</p>}
+              <div key={t.case} className="cx-case">
+                <dt className="cx-case-label">{CASE_LABEL[t.case]}</dt>
+                <dd className="cx-bound">{t.bound}</dd>
+                {t.note && <p className="cx-note">{t.note}</p>}
               </div>
             ))}
           </dl>
         </div>
 
-        {/* Space */}
-        <div className="flex flex-col gap-2 p-3.5 bg-obsidian-950 border border-hairline">
-          <h3 className="flex items-center gap-1.5 font-sans text-xs font-semibold text-chalk-400">
-            <Cpu className="w-3 h-3 text-acid-500" /> Space
+        <div className="cx-card">
+          <h3 className="cx-card-title">
+            <Cpu className="w-4 h-4" aria-hidden /> Space
           </h3>
-          <p className={`${formula} text-base font-bold`}>{analysis.space.bound}</p>
-          <p className="font-sans text-xs leading-relaxed text-chalk-300">{analysis.space.explanation}</p>
+          <p className="cx-bound">{analysis.space.bound}</p>
+          <p className="cx-note">{analysis.space.explanation}</p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 font-sans text-sm leading-relaxed text-chalk-200">
+      {analysis.recurrence && (
+        <div className="cx-recurrence">
+          <span className="cx-recurrence-label">Recurrence</span>
+          <code className="cx-recurrence-text">{analysis.recurrence}</code>
+        </div>
+      )}
+
+      <div className="cx-prose">
         <p>
-          <strong className="text-chalk-100">What dominates: </strong>
+          <strong>What dominates: </strong>
           {analysis.dominant}
         </p>
-        {analysis.recurrence && (
-          <p>
-            <strong className="text-chalk-100">Recurrence: </strong>
-            <span className={`${formula} px-1.5 py-0.5 bg-sem-formula/10 border border-sem-formula/30`}>{analysis.recurrence}</span>
-          </p>
-        )}
         <div>
-          <strong className="text-chalk-100">Why: </strong>
+          <strong>Why: </strong>
           {analysis.derivation}
         </div>
         <div>
-          <strong className="text-chalk-100">Variables: </strong>
+          <strong>Variables: </strong>
           <ul className="inline">
             {analysis.variables.map((v, i) => (
               <li key={v.symbol} className="inline">
@@ -110,10 +112,10 @@ export const ComplexityAnalysisPanel: React.FC<ComplexityAnalysisPanelProps> = (
       </div>
 
       {analysis.implementationNote && (
-        <p className="flex gap-2 p-3 bg-obsidian-950 border border-dashed border-hairline font-sans text-xs leading-relaxed text-chalk-300">
-          <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-chalk-400" />
+        <p className="cx-impl">
+          <Info className="w-4 h-4 mt-1 shrink-0" aria-hidden />
           <span>
-            <strong className="text-chalk-200">About this implementation: </strong>
+            <strong>About this implementation: </strong>
             {analysis.implementationNote}
           </span>
         </p>

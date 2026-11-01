@@ -1,4 +1,5 @@
 import React from 'react';
+import { BarChart3, Clapperboard } from 'lucide-react';
 
 export type StoryViewMode = 'technical' | 'story';
 
@@ -11,38 +12,28 @@ interface StoryModeToggleProps {
   compact?: boolean;
 }
 
-/** The 🎬 / 📊 switch shown above any visualizer that has a story scene. */
+/** The Technical View / Animation Mode switch shown above any visualizer that has a story scene. */
 export const StoryModeToggle: React.FC<StoryModeToggleProps> = ({ mode, onChange, storyHint, compact = false }) => {
-  const button = (value: StoryViewMode, icon: string, label: string, activeClass: string) => (
+  const button = (value: StoryViewMode, Icon: typeof BarChart3, label: string) => (
     <button
       type="button"
       onClick={() => onChange(value)}
       data-view-mode={value}
       role="radio"
       aria-checked={mode === value}
-      className={`px-3 py-1.5 text-xs font-sans font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-        mode === value ? activeClass : 'text-chalk-400 hover:text-chalk-200'
-      }`}
+      className="c-pill"
     >
-      <span aria-hidden>{icon}</span> {label}
+      <Icon className="w-4 h-4" aria-hidden /> {label}
     </button>
   );
 
   return (
-    <div
-      data-story-toggle
-      className={`flex flex-wrap items-center justify-between w-full px-3 py-2 bg-obsidian-950 border border-hairline gap-3 ${compact ? 'lg:py-1 lg:gap-2' : ''}`}
-    >
-      <div className="flex items-center gap-3">
-        <span className="ss-viewlabel">View Mode:</span>
-        <div role="radiogroup" aria-label="View mode" className="inline-flex p-1 bg-obsidian-900 border border-hairline rounded-lg shadow-sm">
-          {button('technical', '📊', 'Technical View', 'bg-obsidian-800 text-chalk-100 border border-hairline font-bold')}
-          {button('story', '🎬', 'Animation Mode', 'bg-amber text-obsidian-950 shadow-sm font-bold')}
-        </div>
+    <div data-story-toggle className={`ss-toggle ${compact ? 'ss-toggle-fit' : ''}`}>
+      <div role="radiogroup" aria-label="View mode" className="c-group">
+        {button('technical', BarChart3, 'Technical View')}
+        {button('story', Clapperboard, 'Animation Mode')}
       </div>
-      <span className="text-xs font-sans text-chalk-400">
-        {mode === 'story' ? storyHint : 'Switch to Animation Mode for a beginner-friendly story'}
-      </span>
+      <span className="ss-toggle-hint">{mode === 'story' ? storyHint : 'Switch to Animation Mode for a beginner-friendly story'}</span>
     </div>
   );
 };

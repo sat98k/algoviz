@@ -452,7 +452,7 @@ describe('Fractional Knapsack keeps a fixed frame in the player', () => {
     const fits = html.split('data-fit-box=').length - 1;
     expect(fits).toBe(1);
     const fit = html.indexOf('data-fit-box=');
-    expect(html.indexOf('View Mode:')).toBeLessThan(fit);
+    expect(html.indexOf('aria-label="View mode"')).toBeLessThan(fit);
     expect(html.indexOf('The Cheese Knapsack')).toBeLessThan(fit);
     expect(html.indexOf('data-story-narration')).toBeLessThan(fit);
     expect(html.indexOf('Kitchen Table')).toBeGreaterThan(fit);

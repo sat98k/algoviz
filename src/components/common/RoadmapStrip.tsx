@@ -20,20 +20,15 @@ export const RoadmapStrip: React.FC<RoadmapStripProps> = ({ labels, active, reac
   <nav
     aria-label="Where we are in the algorithm"
     data-roadmap
-    className="flex items-center gap-2 w-full px-3 py-1.5 bg-obsidian-950 border border-hairline overflow-x-auto"
+    className="rm-strip"
   >
-    <span className="shrink-0 font-sans text-xs font-semibold text-chalk-400">How it works:</span>
-    <ol className="flex items-center gap-1">
+    <span className="rm-label">How it works</span>
+    <ol className="rm-list">
       {labels.map((label, i) => {
         const isActive = spanHas(active, i);
         const isReached = reached.has(i);
         return (
-          <li key={i} className="flex items-center gap-1 shrink-0">
-            {i > 0 && (
-              <span aria-hidden className="text-chalk-500 text-xs">
-                ›
-              </span>
-            )}
+          <li key={i} className="shrink-0">
             <button
               type="button"
               disabled={!isReached}
@@ -41,15 +36,9 @@ export const RoadmapStrip: React.FC<RoadmapStripProps> = ({ labels, active, reac
               aria-current={isActive ? 'step' : undefined}
               data-roadmap-chip={i}
               title={isReached ? `Jump to the start of step ${i + 1}` : `Step ${i + 1} is not reached in this run yet`}
-              className={`flex items-center gap-1.5 px-2 py-0.5 font-sans text-xs whitespace-nowrap border transition-colors ${
-                isActive
-                  ? 'bg-amber text-obsidian-950 border-amber font-bold'
-                  : isReached
-                  ? 'text-chalk-200 border-hairline hover:bg-obsidian-850'
-                  : 'text-chalk-500 border-transparent cursor-default'
-              }`}
+              className="rm-chip"
             >
-              <span className="tabular-nums">{i + 1}</span>
+              <span className="rm-num">{i + 1}</span>
               {label}
             </button>
           </li>

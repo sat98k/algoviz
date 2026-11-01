@@ -261,7 +261,7 @@ export const KaratsubaTreeView: React.FC<Props> = ({ num1, num2, nodes, activeId
           {done && (
             <g transform={`translate(${ansAt.x}, ${ansAt.y})`}>
               <g key={fresh ? `up-${stepKey}` : 'up'} className={fresh ? 'animate-story-pop' : undefined}>
-                <rect x={-chipW(answer) / 2} y="-10" width={chipW(answer)} height="20" rx="10" fill={merging ? '#f59e0b' : '#ffffff'} stroke={merging ? '#b45309' : '#d6c3a5'} />
+                <rect x={-chipW(answer) / 2} y="-10" width={chipW(answer)} height="20" rx="10" fill={merging ? '#e8a817' : '#ffffff'} stroke={merging ? '#b45309' : '#d6c3a5'} />
                 <text textAnchor="middle" y="4" fontSize="11" fontWeight="800" fill={merging ? '#451a03' : '#57534e'} fontFamily="ui-monospace, monospace">
                   {answer}
                 </text>
@@ -288,7 +288,7 @@ export const KaratsubaTreeView: React.FC<Props> = ({ num1, num2, nodes, activeId
       : done
       ? `= ${nd.result}`
       : j.base
-      ? '🧮 multiply'
+      ? 'multiply'
       : nd.status === 'dividing' && title.startsWith('Recursive Call') && isActive
       ? 'new job'
       : `cut m=${j.m} · ⏳ ${kidsDone}/3 helpers`;
@@ -296,7 +296,7 @@ export const KaratsubaTreeView: React.FC<Props> = ({ num1, num2, nodes, activeId
     const outline = !nd ? '#d6d3d1' : nd.status === 'optimal' ? '#b45309' : isActive ? '#ea580c' : done ? (j.base ? '#16a34a' : '#ca8a04') : '#a8896a';
     return (
       <g key={`j-${j.key}`} data-job={`${j.x}x${j.y}`} data-state={nd ? nd.status : 'later'} onClick={() => clickJob(j.key)} style={{ cursor: 'pointer' }}>
-        {isActive && <rect x={x0 - 7} y={p.y - 7} width={p.w + 14} height={NODE_H + 14} rx="14" fill="none" stroke="#f59e0b" strokeWidth="3" className="animate-story-halo" />}
+        {isActive && <rect x={x0 - 7} y={p.y - 7} width={p.w + 14} height={NODE_H + 14} rx="14" fill="none" stroke="#e8a817" strokeWidth="3" className="animate-story-halo" />}
         <rect
           x={x0}
           y={p.y}
@@ -386,10 +386,10 @@ export const KaratsubaTreeView: React.FC<Props> = ({ num1, num2, nodes, activeId
       );
     }
     return (
-      <div className="mt-3 rounded-xl border border-violet-200 bg-white px-4 py-3 font-sans text-sm text-stone-700" data-job-card>
+      <div className="mt-3 rounded-[20px] bg-[#fbf9f4] px-4 py-3 font-sans text-sm text-stone-700" data-job-card>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
           <span className="font-bold text-stone-900">
-            🔍 {j.x} × {j.y}
+            {j.x} × {j.y}
             <span className="font-normal text-stone-500">{whose}</span>
           </span>
           {picked && (
@@ -415,7 +415,7 @@ export const KaratsubaTreeView: React.FC<Props> = ({ num1, num2, nodes, activeId
       </p>
 
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2 font-sans text-xs font-semibold">
-        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5">
+        <div className="c-group">
           <button
             type="button"
             onClick={() => {
@@ -423,26 +423,26 @@ export const KaratsubaTreeView: React.FC<Props> = ({ num1, num2, nodes, activeId
               setMode('follow');
             }}
             aria-pressed={mode === 'follow' && !picked}
-            className={`px-3 py-1 rounded-full transition-colors ${mode === 'follow' && !picked ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+            className={`c-pill ${mode === 'follow' && !picked ? 'is-on' : ''}`}
           >
-            🎯 Follow
+            Follow
           </button>
           <button
             type="button"
             onClick={() => setMode('whole')}
             aria-pressed={mode === 'whole'}
-            className={`px-3 py-1 rounded-full transition-colors ${mode === 'whole' ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+            className={`c-pill ${mode === 'whole' ? 'is-on' : ''}`}
           >
-            🗺️ Whole tree
+            Whole tree
           </button>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5" aria-label="Zoom">
+        <div className="c-group" aria-label="Zoom">
           <button
             type="button"
             aria-label="Zoom out"
             disabled={zi === 0}
             onClick={() => setZoomIdx(Math.max(0, zi - 1))}
-            className="w-7 h-7 rounded-full text-base text-stone-700 hover:bg-amber-50 disabled:opacity-30"
+            className="c-pill !px-0 w-9"
           >
             −
           </button>
@@ -452,7 +452,7 @@ export const KaratsubaTreeView: React.FC<Props> = ({ num1, num2, nodes, activeId
             aria-label="Zoom in"
             disabled={zi === ZOOMS.length - 1}
             onClick={() => setZoomIdx(Math.min(ZOOMS.length - 1, zi + 1))}
-            className="w-7 h-7 rounded-full text-base text-stone-700 hover:bg-amber-50 disabled:opacity-30"
+            className="c-pill !px-0 w-9"
           >
             +
           </button>
@@ -461,7 +461,7 @@ export const KaratsubaTreeView: React.FC<Props> = ({ num1, num2, nodes, activeId
 
       <div
         ref={wrapRef}
-        className="relative w-full rounded-xl border border-amber-200 bg-[#fdfaf5] touch-none select-none"
+        className="relative w-full rounded-[22px] bg-[#fbf9f4] touch-none select-none"
         style={{ height: PANEL_H, cursor: drag.current?.moved ? 'grabbing' : 'grab' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -473,7 +473,7 @@ export const KaratsubaTreeView: React.FC<Props> = ({ num1, num2, nodes, activeId
           {boxes}
         </svg>
         {mode !== 'whole' && (camW < width || camH < height) && (
-          <svg width={MAP_W} height={MAP_H} className="absolute top-2 right-2 rounded-lg border border-amber-200 bg-white/90 shadow-sm pointer-events-none" aria-hidden>
+          <svg width={MAP_W} height={MAP_H} className="absolute top-2 right-2 rounded-xl bg-white/90 pointer-events-none" aria-hidden>
             {(() => {
               const ms = Math.min(MAP_W / width, MAP_H / height);
               const ox = (MAP_W - width * ms) / 2;
@@ -502,7 +502,7 @@ export const KaratsubaTreeView: React.FC<Props> = ({ num1, num2, nodes, activeId
           </svg>
         )}
       </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 font-sans text-[11px] text-stone-600">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 font-sans text-xs text-stone-600">
         {(['P1', 'P2', 'P3'] as Role[]).map((r) => (
           <span key={r}>
             <span className="inline-block w-3 h-3 align-[-2px] rounded mr-1 border" style={{ background: ROLE_STYLE[r].fill, borderColor: ROLE_STYLE[r].stroke }} />

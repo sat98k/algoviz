@@ -1,6 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases, useHeldValue, useProgress } from './useAnimPhases';
+import { PALETTE, SceneDefs, tint, useSvgIds } from './kit/materials';
+import { Flag, House, Hub, Swirl, Van, Walker } from './kit/props';
+import { useChapter } from './kit/chapter';
 
 /**
  * 🗺️ Towns and one-way roads, shared by the shortest-path algorithms.
@@ -20,9 +23,11 @@ type Road = { u: number; v: number; w: number; p0: Pt; c: Pt; p2: Pt; mid: Pt; t
 const W = 680;
 const H = 440;
 const TOWN_R = 26;
-const GREEN = '#16a34a';
-const GOLD = '#f59e0b';
-const BLUE = '#0284c7';
+const GREEN = '#0c8030';
+const GOLD = PALETTE.gold;
+const BLUE = '#2457c5';
+const RED = '#cc2e2e';
+const ASPHALT = '#57514a';
 
 const quad = (p0: Pt, c: Pt, p2: Pt, t: number): Pt => ({
   x: (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * c.x + t * t * p2.x,
@@ -32,6 +37,8 @@ const quad = (p0: Pt, c: Pt, p2: Pt, t: number): Pt => ({
 const fmtCost = (v: number | null | undefined) => (v === null || v === undefined ? '?' : `${v}`);
 
 export const TownMapScene: React.FC<StorySceneProps> = ({ step, algorithmId, stepMs }) => {
+  const ids = useSvgIds();
+  const field = useChapter();
   const st: any = step.state || {};
   const isFW = algorithmId === 'floyd-warshall';
   const nodes: { id: string; label: string }[] = st.nodes || [];
@@ -217,24 +224,27 @@ export const TownMapScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
     const isNow = edgeNow && edgeNow.u === r.u && edgeNow.v === r.v;
     const isCycle = cycleEdge && cycleEdge.u === r.u && cycleEdge.v === r.v;
     const isBest = bestRoads.has(key) || plannerRoads.has(key);
-    const base = isCycle ? '#fca5a5' : isBest ? '#86efac' : '#e8d5b0';
-    const edge = isCycle ? '#dc2626' : isBest ? GREEN : isNow ? GOLD : '#b9965f';
+    const kerb = isCycle ? RED : isBest ? GREEN : isNow ? GOLD : '#d8ccb6';
     return (
       <g key={`road-${key}`}>
-        {isNow && <path d={roadD(r)} fill="none" stroke="#fde68a" strokeWidth="16" strokeLinecap="round" />}
-        <path d={roadD(r)} fill="none" stroke={edge} strokeWidth="9" strokeLinecap="round" markerEnd={`url(#storyRoadArrow-${isCycle ? 'red' : isBest ? 'green' : 'brown'})`} />
-        <path d={roadD(r)} fill="none" stroke={base} strokeWidth="5" strokeLinecap="round" />
-        <path d={roadD(r)} fill="none" stroke="#ffffff" strokeWidth="1.2" strokeDasharray="5 6" opacity="0.8" />
+        <path d={roadD(r)} fill="none" stroke="#3a2414" strokeOpacity="0.12" strokeWidth="14" strokeLinecap="round" transform="translate(0, 4)" />
+        {isNow && <path d={roadD(r)} fill="none" stroke={PALETTE.goldLight} strokeWidth="22" strokeLinecap="round" />}
+        <path d={roadD(r)} fill="none" stroke={kerb} strokeWidth="14" strokeLinecap="round" markerEnd={`url(#${ids}-arrow-${isCycle ? 'red' : isBest ? 'green' : 'brown'})`} />
+        <path d={roadD(r)} fill="none" stroke={ASPHALT} strokeWidth="9" strokeLinecap="round" />
+        <path d={roadD(r)} fill="none" stroke="#f4ead2" strokeWidth="1.6" strokeDasharray="6 7" opacity="0.9" />
         <g transform={`translate(${r.tag.x}, ${r.tag.y})`}>
-          <rect x="-15" y="-10" width="30" height="19" rx="9" fill={r.w < 0 ? '#dcfce7' : '#fffbeb'} stroke={r.w < 0 ? GREEN : '#d6b98c'} />
-          <text textAnchor="middle" y="4" fontSize="11" fontWeight="800" fill={r.w < 0 ? '#166534' : '#78350f'}>
+          <rect x="-16" y="-9" width="32" height="21" rx="10.5" fill="#3a2414" opacity="0.1" />
+          <rect x="-16" y="-11" width="32" height="21" rx="10.5" fill={r.w < 0 ? '#dff5e5' : '#fbf9f4'} stroke={r.w < 0 ? GREEN : '#cfc6b4'} strokeWidth="1.4" />
+          <text textAnchor="middle" y="4" fontSize="12" fontWeight="900" fill={r.w < 0 ? '#084c1c' : PALETTE.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
             {r.w}
           </text>
         </g>
         {isCycle && (
-          <text x={r.mid.x} y={r.mid.y + 8} textAnchor="middle" fontSize="26" className="animate-story-bob">
-            🌀
-          </text>
+          <g transform={`translate(${r.mid.x}, ${r.mid.y})`}>
+            <g className="animate-story-bob">
+              <Swirl size={26} />
+            </g>
+          </g>
         )}
       </g>
     );
@@ -252,46 +262,44 @@ export const TownMapScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
     const price = priceOf(i);
     return (
       <g key={`town-${i}`} transform={`translate(${p.x}, ${p.y})`}>
-        {isHub && <circle r={TOWN_R + 8} fill="none" stroke={GOLD} strokeWidth="4" className="animate-story-ripple" />}
-        <circle r={TOWN_R} fill={isHub ? '#fef3c7' : plannerEnd ? '#dcfce7' : '#fffaf0'} stroke={isHub ? GOLD : plannerEnd ? GREEN : '#a16207'} strokeWidth={isHub || plannerEnd ? 4 : 2.5} />
-        {/* little house */}
-        <path d="M -11 2 L 0 -9 L 11 2 Z" fill="#b45309" />
-        <rect x="-8" y="2" width="16" height="10" fill="#fde68a" stroke="#92400e" strokeWidth="1" />
-        <text textAnchor="middle" y={TOWN_R + 15} fontSize="13" fontWeight="900" fill="#1c1917">
-          {label(i)}
-        </text>
-        {isHub && (
-          <text x={TOWN_R - 2} y={-TOWN_R + 2} fontSize="18">
-            🏛️
+        {isHub && <circle r={TOWN_R + 9} fill="none" stroke={GOLD} strokeWidth="4" className="animate-story-ripple" />}
+        <ellipse cx="0" cy={TOWN_R - 2} rx={TOWN_R} ry={TOWN_R * 0.3} fill="#3a2414" opacity="0.14" />
+        <circle r={TOWN_R} fill={`url(#${ids}-plaza)`} stroke={isHub ? GOLD : plannerEnd ? GREEN : tint(field.bg, -0.25)} strokeWidth={isHub || plannerEnd ? 4.5 : 2.5} />
+        <g transform="translate(0, 1)">{isHub ? <Hub size={30} /> : <House size={26} roof={i % 3 === 0 ? PALETTE.berry : i % 3 === 1 ? PALETTE.sky : PALETTE.leaf} />}</g>
+        <g transform={`translate(0, ${TOWN_R + 13})`}>
+          <rect x="-13" y="-10" width="26" height="19" rx="9.5" fill={PALETTE.ink} />
+          <text textAnchor="middle" y="4.5" fontSize="12.5" fontWeight="900" fill="#f3efe6" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
+            {label(i)}
           </text>
-        )}
+        </g>
         {wasHub && !isHub && (
-          <text x={TOWN_R - 6} y={-TOWN_R + 6} fontSize="12">
-            🚩
-          </text>
+          <g transform={`translate(${TOWN_R - 6}, ${-TOWN_R + 8})`}>
+            <Flag size={18} color={GOLD} />
+          </g>
         )}
         {isStartTown && isFW && (
-          <text x={-TOWN_R - 14} y={-TOWN_R + 8} fontSize="18">
-            🧍
-          </text>
+          <g transform={`translate(${-TOWN_R - 10}, ${-TOWN_R + 6})`}>
+            <Walker size={20} />
+          </g>
         )}
         {isGoal && (
-          <text x={-TOWN_R - 14} y={-TOWN_R + 8} fontSize="18">
-            🏁
-          </text>
+          <g transform={`translate(${-TOWN_R - 12}, ${-TOWN_R + 12})`}>
+            <Flag size={20} checkered />
+          </g>
         )}
         {!isFW && (
           <g transform={`translate(${TOWN_R + 4}, ${-TOWN_R - 4})`}>
             <g className={shake ? 'animate-story-shake' : undefined}>
-              <path d="M 0 0 L 8 -10 L 44 -10 L 44 10 L 8 10 Z" fill={price === null || price === undefined ? '#f5f5f4' : '#fef9c3'} stroke="#a16207" strokeWidth="1.5" />
-              <circle cx="9" cy="0" r="2.5" fill="#a16207" />
-              <text x="27" y="4" textAnchor="middle" fontSize="12" fontWeight="900" fill="#451a03">
+              <path d="M 0 2 L 8 -8 L 46 -8 Q 48 -8 48 -6 L 48 10 Q 48 12 46 12 L 8 12 Z" fill="#3a2414" opacity="0.1" />
+              <path d="M 0 0 L 8 -10 L 46 -10 Q 48 -10 48 -8 L 48 8 Q 48 10 46 10 L 8 10 Z" fill={price === null || price === undefined ? '#efe9dc' : PALETTE.goldLight} stroke={price === null || price === undefined ? '#cfc6b4' : PALETTE.gold} strokeWidth="1.5" strokeLinejoin="round" />
+              <circle cx="9" cy="0" r="2.5" fill="#ffffff" stroke={PALETTE.walnut} strokeWidth="1" />
+              <text x="29" y="4.5" textAnchor="middle" fontSize="13" fontWeight="900" fill={PALETTE.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                 {fmtCost(price)}
               </text>
             </g>
             {relaxedHere && (
               <g className="animate-story-pop">
-                <text x="27" y="-14" textAnchor="middle" fontSize="11" fontWeight="800" fill="#dc2626" textDecoration="line-through">
+                <text x="27" y="-14" textAnchor="middle" fontSize="12" fontWeight="800" fill={RED} textDecoration="line-through">
                   {fmtCost(prevDist[nodes[i].id])}
                 </text>
               </g>
@@ -326,15 +334,15 @@ export const TownMapScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
               y1={pos[a as number].y}
               x2={pos[b as number].x}
               y2={pos[b as number].y}
-              stroke={cost === null ? '#a8a29e' : phase === 'verdict' && kind === 'fw-better' ? GREEN : GOLD}
+              stroke={cost === null ? '#a39b8c' : phase === 'verdict' && kind === 'fw-better' ? GREEN : GOLD}
               strokeWidth={cost === null ? 3 : 6}
               strokeDasharray={cost === null ? '3 7' : undefined}
               strokeLinecap="round"
               opacity="0.9"
             />
             <g transform={`translate(${pos[a as number].x * 0.62 + pos[b as number].x * 0.38}, ${pos[a as number].y * 0.62 + pos[b as number].y * 0.38})`}>
-              <rect x="-22" y="-11" width="44" height="21" rx="10" fill="#ffffff" stroke={GOLD} strokeWidth="1.5" />
-              <text textAnchor="middle" y="4" fontSize="11" fontWeight="800" fill="#78350f">
+              <rect x="-24" y="-11" width="48" height="22" rx="11" fill="#fbf9f4" stroke={GOLD} strokeWidth="1.5" />
+              <text textAnchor="middle" y="4.5" fontSize="12" fontWeight="900" fill={PALETTE.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                 {cost === null ? 'no way' : `${cost}`}
               </text>
             </g>
@@ -362,31 +370,38 @@ export const TownMapScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
         <defs>
           {(
             [
-              ['brown', '#b9965f'],
+              ['brown', '#b8ab94'],
               ['green', GREEN],
-              ['red', '#dc2626'],
+              ['red', RED],
             ] as const
           ).map(([name, colour]) => (
-            <marker key={name} id={`storyRoadArrow-${name}`} viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto">
+            <marker key={name} id={`${ids}-arrow-${name}`} viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.6" markerHeight="2.6" orient="auto">
               <path d="M 0 0 L 10 5 L 0 10 z" fill={colour} />
             </marker>
           ))}
+          <radialGradient id={`${ids}-plaza`} cx="0.38" cy="0.32" r="0.8">
+            <stop offset="0" stopColor="#fffdf7" />
+            <stop offset="1" stopColor={tint(field.bg, 0.72)} />
+          </radialGradient>
         </defs>
-        <rect x="0" y="0" width={W} height={H} rx="18" fill="#eef5e4" />
-        <rect x="8" y="8" width={W - 16} height={H - 16} rx="14" fill="none" stroke="#cfe0bd" strokeWidth="2" strokeDasharray="6 6" />
+        <SceneDefs ids={ids} floor={field.bg} />
+        <rect x="0" y="0" width={W} height={H} rx="22" fill={tint(field.bg, 0.86)} />
+        {[0.22, 0.5, 0.78].map((fx, k) => (
+          <ellipse key={k} cx={W * fx} cy={H * (k % 2 ? 0.3 : 0.74)} rx={W * 0.16} ry={H * 0.11} fill={tint(field.bg, 0.74)} opacity="0.7" />
+        ))}
         {roads.map(renderRoad)}
         {fwOverlay}
         {nodes.map((_, i) => renderTown(i))}
         {vanAt && (
-          <text x={vanAt.x} y={vanAt.y + 7} textAnchor="middle" fontSize="24">
-            🚚
-          </text>
+          <g transform={`translate(${vanAt.x}, ${vanAt.y - 4})`}>
+            <Van size={30} />
+          </g>
         )}
       </svg>
 
       {isFW && kind === 'final' && n > 1 && (
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2 font-sans text-sm text-stone-700">
-          <span className="font-semibold">🧭 Trip planner:</span>
+          <span className="font-bold">Trip planner:</span>
           <select
             aria-label="From town"
             value={trip.from}

@@ -98,14 +98,14 @@ export const TreasureCaveScene: React.FC<StorySceneProps> = ({ step, algorithmId
       id: c.id,
       parentId: parentOf.get(c.id) ?? null,
       children: (c.children || []).map((k) => k.id),
-      edgeLabel: c.level > 0 && c.decided !== undefined ? `${c.took ? 'take' : 'skip'} ${isJobs ? `J${c.decided}` : `🧀${c.decided}`}` : undefined,
+      edgeLabel: c.level > 0 && c.decided !== undefined ? `${c.took ? 'take' : 'skip'} ${isJobs ? `J${c.decided}` : `cheese ${c.decided}`}` : undefined,
       status: c.id === bestCaveId ? 'solution' : isPruned ? 'pruned' : waiting ? 'waiting' : 'open',
       pruneNote: isPruned
         ? c.pruneType === 'infeasible' || /^Weight|Infeasible/.test(c.pruneReason || '')
           ? isJobs
             ? 'misses a deadline'
             : 'too heavy'
-          : 'can’t beat 🏆'
+          : 'can’t beat the best'
         : undefined,
     };
   }
@@ -115,24 +115,32 @@ export const TreasureCaveScene: React.FC<StorySceneProps> = ({ step, algorithmId
 
   const renderCave = (id: string, k: SpaceNodeKind) => {
     const c = caveById.get(id)!;
-    const fill = k === 'solution' ? '#fef3c7' : k === 'waiting' ? '#eef6fb' : '#e7d8c1';
+    const rock = k === 'solution' ? '#f2c21a' : k === 'waiting' ? '#dfe7ec' : '#d9c7a8';
     return (
       <g>
-        <rect x="-42" y="-29" width="84" height="58" rx="22" fill={fill} stroke="#8b6b4a" strokeWidth="1.2" />
-        <text x="-22" y="-7" textAnchor="middle" fontSize="13">
-          💰
-        </text>
-        <text x="10" y="-6" textAnchor="middle" fontSize="13" fontWeight="900" fill="#451a03">
+        <path d="M-42 26 Q-46 -6 -30 -24 Q-8 -36 18 -30 Q42 -22 43 2 Q44 24 34 29 Z" fill="#3a2414" opacity="0.12" transform="translate(0, 4)" />
+        <path d="M-42 26 Q-46 -6 -30 -24 Q-8 -36 18 -30 Q42 -22 43 2 Q44 24 34 29 Z" fill={rock} />
+        <path d="M-30 -24 Q-8 -36 18 -30 Q30 -26 36 -16 Q10 -26 -26 -18 Z" fill="#ffffff" opacity="0.35" />
+        {/* the loot: a small gold heap */}
+        <g transform="translate(-22, -8)">
+          <circle cx="-3" cy="2" r="5" fill="#c98a12" />
+          <circle cx="3" cy="2" r="5" fill="#e8a817" />
+          <circle cx="0" cy="-3" r="5" fill="#f0c94a" />
+        </g>
+        <text x="10" y="-4" textAnchor="middle" fontSize="13.5" fontWeight="900" fill="#1a1a1a" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
           {money(c.loot)}
         </text>
-        <text x="-22" y="12" textAnchor="middle" fontSize="12">
-          🔮
-        </text>
-        <text x="10" y="13" textAnchor="middle" fontSize="11" fontWeight="700" fill="#6b21a8">
+        {/* the promise: a crystal ball */}
+        <g transform="translate(-22, 13)">
+          <circle r="6" fill="#b48ad0" />
+          <circle r="2" cx="-2" cy="-2" fill="#ffffff" opacity="0.8" />
+          <rect x="-5" y="5" width="10" height="3" rx="1.5" fill="#6e4426" />
+        </g>
+        <text x="10" y="15" textAnchor="middle" fontSize="12" fontWeight="800" fill="#5a2378">
           ≤{money(c.bound)}
         </text>
         {!isJobs && c.weight !== undefined && c.level > 0 && (
-          <text y="26" textAnchor="middle" fontSize="9" fontWeight="600" fill="#78716c">
+          <text y="27" textAnchor="middle" fontSize="10" fontWeight="700" fill="#4a463e">
             {c.weight} of {capacity} kg
           </text>
         )}
@@ -190,23 +198,26 @@ export const TreasureCaveScene: React.FC<StorySceneProps> = ({ step, algorithmId
 
   return (
     <StoryStage
-      emoji="🔦"
       title="Treasure Caves"
-      subtitle={`🔮 = the most treasure a cave could still lead to. Caves that can’t beat the trophy chest get roped off.`}
+      subtitle={`A crystal ball shows the most treasure a cave could still lead to. Caves that can’t beat the trophy chest get roped off.`}
       narration={narration}
       status={status}
     >
       <div className="flex flex-wrap items-center justify-center gap-4 mb-3 font-sans text-sm">
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 ${kind === 'best' ? 'border-amber-500 bg-amber-100 animate-story-pop' : 'border-amber-300 bg-amber-50'}`}>
-          <span className="text-xl">🏆</span>
-          <span className="font-bold text-amber-950">
-            {money(best)} {bestPicks.length > 0 && <span className="font-normal text-amber-800">({bestPicks.map((p) => pickName(p)).join(', ')})</span>}
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${kind === 'best' ? 'bg-[#f2c21a] animate-story-pop' : 'bg-[#fdf1c7]'}`}>
+          <svg width="22" height="22" viewBox="-11 -12 22 24" aria-hidden>
+            <path d="M-7 -10 H7 V-3 A7 7 0 0 1 -7 -3 Z" fill="#e8a817" />
+            <rect x="-1.5" y="3" width="3" height="4" fill="#9a6416" />
+            <rect x="-6" y="7" width="12" height="3.5" rx="1.5" fill="#6e4426" />
+          </svg>
+          <span className="font-bold text-stone-900">
+            {money(best)} {bestPicks.length > 0 && <span className="font-normal text-stone-700">({bestPicks.map((p) => pickName(p)).join(', ')})</span>}
           </span>
         </div>
         <div className="flex items-center gap-1.5 text-stone-600">
           <span className="font-semibold">Explorers waiting:</span>
           {Array.from({ length: Math.min(12, st.queueSize ?? 0) }, (_, i) => (
-            <span key={i}>🔦</span>
+            <span key={i} className="w-3 h-3 rounded-full bg-[#2457c5]" aria-hidden />
           ))}
           {(st.queueSize ?? 0) === 0 && <span className="italic">none</span>}
         </div>
@@ -224,8 +235,8 @@ export const TreasureCaveScene: React.FC<StorySceneProps> = ({ step, algorithmId
         leafGap={118}
         panelHeight={420}
         renderNode={renderCave}
-        levelLabel={(d) => (d === 0 ? "start" : decidedAt.has(d) ? `${isJobs ? "J" : "🧀"}${decidedAt.get(d)}?` : undefined)}
-        caption={`Each level decides one ${thing}: take it or skip it. 💰 = treasure so far, 🔮 = the most this cave could still lead to. Explorers visit the brightest crystal ball first, so the search jumps around the tree.`}
+        levelLabel={(d) => (d === 0 ? "start" : decidedAt.has(d) ? `${isJobs ? "J" : "cheese "}${decidedAt.get(d)}?` : undefined)}
+        caption={`Each level decides one ${thing}: take it or skip it. The gold heap is the treasure so far, the crystal ball the most this cave could still lead to. Explorers visit the brightest crystal ball first, so the search jumps around the tree.`}
       />
     </StoryStage>
   );

@@ -20,7 +20,7 @@ const LEVEL = 66;
 const ROOT_Y = 64;
 const GAP = 26;
 
-const MARBLES = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#7c3aed', '#db2777', '#0891b2', '#65a30d', '#ea580c', '#4f46e5'];
+const MARBLES = ['#3f78b5', '#d9473b', '#3e9b4f', '#e3a32b', '#8a5aa8', '#d4688c', '#2f9488', '#8fa53a', '#e07b39', '#5466b8'];
 
 export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
   const st: any = step.state || {};
@@ -138,11 +138,11 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
     return (
       <g key={n.id} style={{ transform: `translate(${p.x}px, ${p.y + dy}px)`, transition: 'transform 0.9s var(--ease-move)' }}>
         {/* string up to the parent's bar (only once it has been tied under one) */}
-        {parent && <line x1="0" y1={-LEVEL} x2="0" y2="0" stroke={onPath ? '#f59e0b' : '#78716c'} strokeWidth={onPath ? 3.5 : 1.8} />}
+        {parent && <line x1="0" y1={-LEVEL} x2="0" y2="0" stroke={onPath ? '#e8a817' : '#8a8273'} strokeWidth={onPath ? 4 : 2} strokeLinecap="round" />}
         {showCodes && p.side && (
           <g transform={`translate(${p.side === '0' ? -11 : 11}, ${-LEVEL / 2})`}>
-            <circle r="9" fill={p.side === '0' ? '#e0f2fe' : '#fef3c7'} stroke={p.side === '0' ? '#0284c7' : '#d97706'} strokeWidth="1.5" />
-            <text textAnchor="middle" y="4" fontSize="11" fontWeight="900" fill={p.side === '0' ? '#075985' : '#92400e'}>
+            <circle r="10" fill={p.side === '0' ? '#2457c5' : '#c4501a'} />
+            <text textAnchor="middle" y="4" fontSize="12" fontWeight="900" fill="#ffffff" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
               {p.side}
             </text>
           </g>
@@ -152,28 +152,36 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
         <g className={isNew ? 'animate-story-pop' : undefined}>
           {leaf ? (
             <g>
-              {glow && <rect x={-r - 6} y="-2" width={2 * r + 12} height={2.3 * r + 10} rx="10" fill="#fde68a" opacity="0.7" />}
-              {/* lid and glass jar */}
-              <rect x={-r * 0.7} y="0" width={r * 1.4} height="6" rx="2" fill="#a16207" />
-              <rect x={-r} y="6" width={2 * r} height={2.1 * r} rx={r * 0.45} fill="#f0f9ff" fillOpacity="0.85" stroke="#94a3b8" strokeWidth="1.8" />
+              {glow && <rect x={-r - 7} y="-3" width={2 * r + 14} height={2.3 * r + 12} rx={r * 0.6} fill="#fde68a" opacity="0.75" />}
+              {/* glass jar with a screw lid, lit from the upper left */}
+              <ellipse cx="0" cy={6 + 2.1 * r + 3} rx={r * 0.9} ry="3" fill="#3a2414" opacity="0.14" />
+              <rect x={-r} y="6" width={2 * r} height={2.1 * r} rx={r * 0.45} fill="#eef6fb" fillOpacity="0.9" stroke="#9fb3c2" strokeWidth="1.6" />
+              <rect x={-r * 0.78} y="10" width={r * 0.22} height={2.1 * r - 10} rx={r * 0.11} fill="#ffffff" opacity="0.8" />
+              <rect x={-r * 0.74} y="-1" width={r * 1.48} height="8" rx="3" fill="#c98a12" />
+              <rect x={-r * 0.74} y="-1" width={r * 1.48} height="3" rx="1.5" fill="#fde68a" opacity="0.7" />
               {Array.from({ length: Math.min(n.freq, 9) }, (_, k) => {
                 const per = 3;
                 const mr = Math.max(3, r * 0.26);
                 const cx = (k % per - 1) * mr * 2.1;
                 const cy = 6 + 2.1 * r - mr - 3 - Math.floor(k / per) * mr * 1.9;
-                return <circle key={k} cx={cx} cy={cy} r={mr} fill={colourOf(n.char)} stroke="#ffffff" strokeWidth="0.8" />;
+                return (
+                  <g key={k}>
+                    <circle cx={cx} cy={cy} r={mr} fill={colourOf(n.char)} />
+                    <circle cx={cx - mr * 0.3} cy={cy - mr * 0.35} r={mr * 0.35} fill="#ffffff" opacity="0.6" />
+                  </g>
+                );
               })}
-              <rect x={-r * 0.62} y={6 + r * 0.25} width={r * 1.24} height={r * 0.78} rx="3" fill="#fffbeb" stroke="#d6c3a5" />
-              <text textAnchor="middle" y={6 + r * 0.25 + r * 0.6} fontSize={Math.max(11, r * 0.62)} fontWeight="900" fill="#451a03">
+              <rect x={-r * 0.62} y={6 + r * 0.25} width={r * 1.24} height={r * 0.8} rx={r * 0.2} fill="#fbf3e3" stroke="#d8c4a0" strokeWidth="1" />
+              <text textAnchor="middle" y={6 + r * 0.25 + r * 0.6} fontSize={Math.max(12, r * 0.64)} fontWeight="900" fill="#1a1a1a" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                 {n.char === ' ' ? '␣' : n.char}
               </text>
-              <text textAnchor="middle" y={6 + 2.1 * r + 14} fontSize="10" fontWeight="700" fill="#57534e">
+              <text textAnchor="middle" y={6 + 2.1 * r + 16} fontSize="11.5" fontWeight="800" fill="#4a463e">
                 ×{n.freq}
               </text>
               {showCodes && n.char !== undefined && (
                 <g transform={`translate(0, ${6 + 2.1 * r + 30})`}>
-                  <rect x={-Math.max(16, leafCode.length * 4 + 8)} y="-10" width={2 * Math.max(16, leafCode.length * 4 + 8)} height="18" rx="5" fill="#ffffff" stroke="#a8a29e" />
-                  <text textAnchor="middle" y="3" fontSize="11" fontWeight="800" fill="#1c1917" fontFamily="ui-monospace, monospace">
+                  <rect x={-Math.max(16, leafCode.length * 4.5 + 9)} y="-10" width={2 * Math.max(16, leafCode.length * 4.5 + 9)} height="20" rx="10" fill="#1a1a1a" />
+                  <text textAnchor="middle" y="4" fontSize="12" fontWeight="700" fill="#f3efe6" fontFamily="'Red Hat Mono', ui-monospace, monospace">
                     {leafCode}
                   </text>
                 </g>
@@ -186,15 +194,17 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
                 const rx = n.right ? (byId.get(n.right.id)?.x ?? p.x) - p.x : 0;
                 return (
                   <>
-                    {glow && <rect x={lx - 8} y="-8" width={rx - lx + 16} height="16" rx="8" fill="#fde68a" opacity="0.8" />}
-                    <rect x={lx - 4} y="-4" width={rx - lx + 8} height="8" rx="4" fill="#b45309" stroke="#78350f" strokeWidth="1.2" />
+                    {glow && <rect x={lx - 9} y="-9" width={rx - lx + 18} height="18" rx="9" fill="#fde68a" opacity="0.8" />}
+                    <rect x={lx - 4} y="-1" width={rx - lx + 8} height="8" rx="4" fill="#3a2414" opacity="0.12" />
+                    <rect x={lx - 4} y="-4" width={rx - lx + 8} height="8" rx="4" fill="#8a5a35" />
+                    <rect x={lx - 2} y="-3.5" width={rx - lx + 4} height="2.5" rx="1.25" fill="#c49a6c" />
                   </>
                 );
               })()}
-              <circle r="5" fill="#78350f" />
-              <g transform="translate(0, 16)">
-                <rect x="-14" y="-8" width="28" height="15" rx="7" fill="#fef3c7" stroke="#d97706" />
-                <text textAnchor="middle" y="3" fontSize="10" fontWeight="800" fill="#78350f">
+              <circle r="5.5" fill="#c98a12" stroke="#6e4426" strokeWidth="1.2" />
+              <g transform="translate(0, 18)">
+                <rect x="-15" y="-9" width="30" height="18" rx="9" fill="#fbf9f4" stroke="#e8a817" strokeWidth="1.4" />
+                <text textAnchor="middle" y="4" fontSize="11.5" fontWeight="900" fill="#1a1a1a" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                   {n.freq}
                 </text>
               </g>
@@ -208,7 +218,6 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
 
   return (
     <StoryStage
-      emoji="🫙"
       title={decoding ? 'Marble Decoder' : 'The Huffman Mobile'}
       subtitle={
         decoding ? 'Each bit tells the marble which string to roll down: 0 = left, 1 = right.' : 'Jar size = how often a letter appears. Always tie the two lightest together.'
@@ -221,8 +230,8 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
           {(st.encodedBits || '').split('').map((b: string, i: number) => (
             <span
               key={i}
-              className={`w-5 text-center rounded ${
-                i === st.bitIndex ? 'bg-amber-400 text-amber-950 font-black' : i < (st.bitIndex ?? -1) ? 'text-stone-400' : 'text-stone-700 bg-white border border-stone-200'
+              className={`w-6 py-0.5 text-center rounded-full ${
+                i === st.bitIndex ? 'bg-[#1a1a1a] text-[#f3efe6] font-black' : i < (st.bitIndex ?? -1) ? 'text-stone-400' : 'text-stone-800 bg-[#fbf9f4]'
               }`}
             >
               {b}
@@ -234,19 +243,17 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
       <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.25 }} role="img" aria-label="Huffman mobile">
         {placed.map(renderNode)}
         {marble && (
-          <circle
-            r="9"
-            fill="#dc2626"
-            stroke="#ffffff"
-            strokeWidth="2.5"
-            style={{ transform: `translate(${marble.x}px, ${marble.y - 9}px)`, transition: 'transform 0.7s ease-in' }}
-          />
+          <g style={{ transform: `translate(${marble.x}px, ${marble.y - 9}px)`, transition: 'transform 0.7s ease-in' }}>
+            <circle r="10" fill="#9c2a22" />
+            <circle r="8.5" cx="-0.8" cy="-0.8" fill="#d9473b" />
+            <circle r="3" cx="-3.5" cy="-3.5" fill="#ffffff" opacity="0.7" />
+          </g>
         )}
       </svg>
 
       {decoding && (
         <p className="mt-3 text-center font-sans text-base text-stone-700">
-          Message so far: <strong className="font-mono text-lg text-amber-900 tracking-wider">{st.accumulatedText || '…'}</strong>
+          Message so far: <strong className="font-mono text-lg text-stone-900 tracking-wider">{st.accumulatedText || '…'}</strong>
         </p>
       )}
     </StoryStage>

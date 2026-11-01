@@ -1,6 +1,8 @@
 import React, { useRef } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases } from './useAnimPhases';
+import { PALETTE, SceneDefs, tint, useSvgIds } from './kit/materials';
+import { useChapter } from './kit/chapter';
 
 /**
  * 🧱 Karger's Min-Cut as balls of clay tied with ropes.
@@ -14,9 +16,11 @@ import { useAnimPhases } from './useAnimPhases';
 
 const W = 640;
 const H = 420;
-const CLAYS = ['#fca5a5', '#93c5fd', '#86efac', '#fde68a', '#c4b5fd', '#f9a8d4', '#67e8f9', '#fdba74'];
+const CLAYS = ['#e8776b', '#6f9fd8', '#6fbf7a', '#f0c94a', '#a785cf', '#e08fb0', '#57b8c4', '#ef9a56'];
 
 export const ClayBlobsScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
+  const ids = useSvgIds();
+  const field = useChapter();
   const st: any = step.state || {};
   const nodes: { id: string; label: string; x?: number; y?: number }[] = st.nodes || [];
   const edges: { u: string; v: string; weight: number }[] = st.edges || [];
@@ -82,9 +86,18 @@ export const ClayBlobsScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
           key={`rope-${idx}-${k}`}
           d={`M ${a.x} ${a.y} Q ${c.x} ${c.y} ${b.x} ${b.y}`}
           fill="none"
-          stroke={glow ? '#f59e0b' : cut ? '#dc2626' : '#a16207'}
-          strokeWidth={glow ? 6 : 3.5}
+          stroke={glow ? PALETTE.gold : cut ? '#cc2e2e' : '#a8814f'}
+          strokeWidth={glow ? 7 : 5}
           strokeDasharray={cut ? '9 5' : undefined}
+          strokeLinecap="round"
+        />,
+        <path
+          key={`twist-${idx}-${k}`}
+          d={`M ${a.x} ${a.y} Q ${c.x} ${c.y} ${b.x} ${b.y}`}
+          fill="none"
+          stroke={glow ? PALETTE.goldLight : cut ? '#f3b4ad' : '#d9b98a'}
+          strokeWidth={glow ? 2.4 : 1.8}
+          strokeDasharray="3 4"
           strokeLinecap="round"
         />
       );
@@ -93,14 +106,24 @@ export const ClayBlobsScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
 
   return (
     <StoryStage
-      emoji="🧱"
       title="Squishing Clay Balls"
       subtitle="Pick a random rope, squish its two balls together, repeat until two balls are left."
       narration={narration}
       status={phaseName === 'complete' ? `This run’s cut • ${cutSize} rope${cutSize === 1 ? '' : 's'}` : `Balls left • ${nodes.length} of ${originalCount}`}
     >
       <svg viewBox={`0 0 ${W} ${H}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: W * 1.2 }} role="img" aria-label="Clay balls and ropes">
-        <rect x="0" y="0" width={W} height={H} rx="18" fill="#efe3d3" />
+        <SceneDefs ids={ids} floor={field.bg} />
+        <defs>
+          {CLAYS.map((c, j) => (
+            <radialGradient key={j} id={`${ids}-clay-${j}`} cx="0.36" cy="0.3" r="0.8">
+              <stop offset="0" stopColor={tint(c, 0.35)} />
+              <stop offset="0.6" stopColor={c} />
+              <stop offset="1" stopColor={tint(c, -0.25)} />
+            </radialGradient>
+          ))}
+        </defs>
+        <rect x="0" y="0" width={W} height={H} rx="22" fill={`url(#${ids}-floor)`} />
+        <rect x="10" y="10" width={W - 20} height={H - 20} rx="16" fill={tint(field.bg, 0.78)} />
         {ropes}
         {nodes.map((nd) => {
           const p = P(nd.id);
@@ -111,11 +134,13 @@ export const ClayBlobsScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
           return (
             <g key={nd.id} style={{ transform: `translate(${p.x}px, ${p.y}px)`, transition: 'transform 0.8s var(--ease-move)' }}>
               <g className={fresh ? 'animate-story-pop' : undefined}>
-                <ellipse cx="3" cy="5" rx={r} ry={r * 0.88} fill="#00000022" />
-                <ellipse rx={r} ry={r * 0.88} fill={colourOf(mem[0])} stroke={involved ? '#f59e0b' : '#78716c'} strokeWidth={involved ? 4 : 2} />
+                <ellipse cx="2" cy={r * 0.82} rx={r * 0.95} ry={r * 0.22} fill="#3a2414" opacity="0.18" />
+                {involved && <ellipse rx={r + 6} ry={r * 0.88 + 6} fill="none" stroke={PALETTE.gold} strokeWidth="4" />}
+                <ellipse rx={r} ry={r * 0.88} fill={`url(#${ids}-clay-${Math.max(0, CLAYS.indexOf(colourOf(mem[0])))})`} />
+                <path d={`M ${-r * 0.55} ${r * 0.25} q ${r * 0.5} ${r * 0.35} ${r * 1.05} 0`} fill="none" stroke="#3a2414" strokeOpacity="0.12" strokeWidth="2" />
                 {/* a fingerprint swirl for texture */}
                 <path d={`M ${-r * 0.4} ${-r * 0.2} q ${r * 0.3} ${-r * 0.35} ${r * 0.6} 0`} fill="none" stroke="#ffffff" strokeOpacity="0.5" strokeWidth="2" />
-                <text textAnchor="middle" y="5" fontSize={mem.length > 3 ? 10 : 12} fontWeight="900" fill="#1c1917">
+                <text textAnchor="middle" y="5" fontSize={mem.length > 3 ? 11 : 13} fontWeight="900" fill={PALETTE.ink} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
                   {mem.length > 4 ? `${mem.slice(0, 3).join(' ')} +${mem.length - 3}` : mem.join(' ')}
                 </text>
               </g>
@@ -125,9 +150,10 @@ export const ClayBlobsScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
         {phaseName === 'pick_edge' && phase === 'spin' && (
           <g transform={`translate(${W - 50}, 50)`}>
             <g className="animate-spin" style={{ transformBox: 'fill-box', transformOrigin: 'center' }}>
-              <text textAnchor="middle" y="10" fontSize="30">
-                🎯
-              </text>
+              {[18, 12, 6].map((rr, j) => (
+                <circle key={rr} r={rr} fill={j % 2 ? '#fbf9f4' : '#cc2e2e'} />
+              ))}
+              <path d="M0 -24 L0 -18 M0 18 L0 24 M-24 0 L-18 0 M18 0 L24 0" stroke={PALETTE.ink} strokeWidth="2" strokeLinecap="round" />
             </g>
           </g>
         )}

@@ -9,7 +9,7 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    include: ['three', '@react-three/fiber', '@shadergradient/react', '@paper-design/shaders-react', '@ybouane/liquidglass'],
+    include: ['gsap', '@gsap/react', 'three', '@react-three/fiber', '@shadergradient/react', '@paper-design/shaders-react', '@ybouane/liquidglass'],
   },
   test: {
     globals: true,

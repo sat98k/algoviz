@@ -481,7 +481,6 @@ main h1[tabindex='-1']:focus { outline: none; }
   padding: clamp(24px, 4vw, 48px);
   border-radius: 28px;
 }
-.al-kicker { margin-top: 1rem; font-weight: 700; font-size: 1.0625rem; }
 .al-title { font-size: clamp(40px, 6vw, 96px); max-width: 18ch; text-wrap: balance; }
 .al-lead { max-width: 44ch; color: var(--soft); }
 .al-start {
@@ -529,9 +528,16 @@ main h1[tabindex='-1']:focus { outline: none; }
   padding: 8px 12px 8px 16px;
   border-radius: 20px;
   background: rgb(var(--bg-surface));
-  border-inline-start: 10px solid var(--chapter, #18bc42);
 }
-.al-bar-title { font-size: clamp(1.25rem, 1rem + 0.8vw, 1.75rem); line-height: 1.1; }
+/* The algorithm's name sits on its chapter's colour field, like the module rows on the home page. */
+.al-bar-title {
+  font-size: clamp(1.25rem, 1rem + 0.8vw, 1.75rem);
+  line-height: 1.1;
+  padding: 0.3em 0.75em 0.35em;
+  border-radius: 999px;
+  background: var(--chapter, #18bc42);
+  color: var(--chapter-ink, #1a1a1a);
+}
 .al-pill {
   display: inline-flex;
   align-items: center;
@@ -598,47 +604,39 @@ main h1[tabindex='-1']:focus { outline: none; }
 [data-view='play'] [aria-label='Playback'] kbd { border-radius: 6px; }
 
 /* Side panels: rounded cards on the light surface, headings in the display face. */
-[data-view='play'] :is(section[aria-label='Pseudocode'], section[aria-label='Operation counts'], section[aria-label='Final answer'], section[aria-labelledby='step-explanation-heading']) {
+[data-view='play'] :is(section[aria-label='Pseudocode'], section[aria-label='Final answer']) {
   border-color: transparent;
   border-radius: 22px;
   background: rgb(var(--bg-surface));
 }
-[data-view='play'] section[aria-labelledby='step-explanation-heading'] {
-  border-inline-start: 8px solid rgb(var(--sem-current));
-}
-[data-view='play'] :is(section[aria-label='Pseudocode'], section[aria-label='Operation counts']) h2,
-[data-view='play'] #step-explanation-heading {
+[data-view='play'] section[aria-label='Pseudocode'] h2 {
   font-family: 'Red Hat Display', system-ui, sans-serif;
   font-weight: 900;
-  font-size: 1rem;
+  font-size: 1.0625rem;
   letter-spacing: -0.01em;
   color: rgb(var(--text-primary));
 }
 [data-view='play'] section[aria-label='Final answer'] { border-style: solid; }
 
-/* View mode switch above the scene. */
-[data-story-toggle] { border-color: transparent; border-radius: 20px; background: rgb(var(--bg-surface)); }
-[data-story-toggle] [role='radiogroup'] { border-radius: 999px; border-color: transparent; background: rgb(var(--bg-surface-elevated)); box-shadow: none; }
-[data-story-toggle] [role='radio'] { border-radius: 999px; min-height: 36px; }
+/* View mode switch above the scene (StoryModeToggle). */
+.ss-toggle { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.ss-toggle-hint { font-size: 0.875rem; font-weight: 500; color: rgb(var(--text-muted)); }
 
 /* The animation stage keeps its warm daylight paper (docs/animation-preferences.md); it loses the
    amber outline and drop shadow and takes the site's rounder corner. */
-[data-story-stage] { border-color: transparent; box-shadow: none; border-radius: 28px; }
+/* The stage: the light surface with the home hero's film grain, so drawings sit on paper with tooth. */
+.ss-stage {
+  background-color: #f3efe6;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.1 0 0 0 0 0.05 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 [data-story-stage] [data-story-narration] { border-radius: 20px; border-color: transparent; font-size: 1.0625rem; }
 
 /* ── Learn view panels ──────────────────────────────────────────────────────────────────── */
-[data-view='learn'] section[aria-label='Problem and how it works'],
-[data-view='learn'] section[aria-labelledby='complexity-heading'] {
+[data-view='learn'] section[aria-label='Problem and how it works'] {
   border-color: transparent;
   border-radius: 28px;
   background: rgb(var(--bg-surface));
   overflow: hidden;
-}
-[data-view='learn'] #complexity-heading {
-  font-family: 'Red Hat Display', system-ui, sans-serif;
-  font-weight: 900;
-  font-size: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);
-  letter-spacing: -0.02em;
 }
 /* The owl's speech: a bigger, calmer bubble. */
 [data-owl-briefing] { border-top-color: transparent; }
@@ -732,24 +730,42 @@ main h1[tabindex='-1']:focus { outline: none; }
 .lb-watch li::marker { color: #0b6b2a; }
 .lb-tip { font-size: 0.9375rem; color: rgb(var(--text-muted)); }
 
-/* ── Learn view: complexity ─────────────────────────────────────────────────────────────── */
-[data-view='learn'] section[aria-labelledby='complexity-heading'] { padding: clamp(20px, 3vw, 36px); gap: 1.25rem; }
-[data-view='learn'] section[aria-labelledby='complexity-heading'] .border-hairline,
-[data-view='learn'] section[aria-labelledby='complexity-heading'] .border-b { border-color: transparent; }
-[data-view='learn'] section[aria-labelledby='complexity-heading'] > .grid > div { border-radius: 22px; background: rgb(var(--bg-canvas)); padding: 1.25rem; }
-[data-view='learn'] section[aria-labelledby='complexity-heading'] > div:first-child span { border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.8125rem; font-family: 'Red Hat Text', system-ui, sans-serif; font-weight: 700; }
-[data-view='learn'] section[aria-labelledby='complexity-heading'] h3 { font-size: 0.9375rem; font-weight: 700; color: rgb(var(--text-secondary)); }
+/* ── Complexity (ComplexityAnalysisPanel): the bounds as display type, tags as pills ───────── */
+.cx-panel { display: flex; flex-direction: column; gap: clamp(18px, 2.5vw, 28px); padding: clamp(20px, 3vw, 40px); border-radius: 28px; background: rgb(var(--bg-surface)); }
+.cx-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.cx-title { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: clamp(1.75rem, 1.2rem + 1.8vw, 3rem); letter-spacing: -0.03em; line-height: 0.95; color: #1a1a1a; text-wrap: balance; }
+.cx-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.cx-tag { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 36px; padding: 0.35rem 1rem; border-radius: 999px; background: rgb(var(--bg-surface-elevated)); color: #1a1a1a; font-weight: 700; font-size: 0.9375rem; }
+.cx-tag-ink { background: #1a1a1a; color: #f3efe6; }
+.cx-grid { display: grid; gap: 12px; }
+@media (min-width: 1024px) { .cx-grid { grid-template-columns: 1.4fr 1fr; } }
+.cx-card { display: flex; flex-direction: column; gap: 1rem; padding: clamp(18px, 2.4vw, 28px); border-radius: 22px; background: rgb(var(--bg-canvas)); }
+.cx-card-title { display: flex; align-items: center; gap: 0.45rem; font-weight: 700; font-size: 1rem; color: rgb(var(--text-secondary)); }
+.cx-cases { display: flex; flex-direction: column; gap: 1.25rem; }
+.cx-case { display: grid; grid-template-columns: minmax(7.5rem, auto) 1fr; align-items: baseline; gap: 0.15rem 1rem; }
+.cx-case-label { font-weight: 700; font-size: 1rem; color: rgb(var(--text-secondary)); }
+.cx-bound { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: clamp(1.75rem, 1.3rem + 1.4vw, 2.75rem); letter-spacing: -0.02em; line-height: 1; color: #1a1a1a; font-variant-numeric: tabular-nums; }
+.cx-case .cx-note { grid-column: 1 / -1; }
+.cx-note { font-size: 1rem; line-height: 1.55; color: rgb(var(--text-secondary)); max-width: 70ch; }
+.cx-recurrence { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 1.25rem; padding: clamp(16px, 2.2vw, 24px) clamp(18px, 2.6vw, 32px); border-radius: 22px; background: #1a1a1a; color: #f3efe6; }
+.cx-recurrence-label { font-weight: 700; font-size: 1rem; color: #c9c2b2; }
+.cx-recurrence-text { font-family: 'Red Hat Mono', ui-monospace, monospace; font-weight: 500; font-size: clamp(1.0625rem, 0.95rem + 0.5vw, 1.375rem); overflow-wrap: anywhere; }
+.cx-prose { display: flex; flex-direction: column; gap: 0.9rem; font-size: 1.0625rem; line-height: 1.6; color: rgb(var(--text-secondary)); max-width: 80ch; }
+.cx-prose strong, .cx-impl strong { color: #1a1a1a; }
+.cx-impl { display: flex; gap: 0.6rem; padding: 1rem 1.25rem; border-radius: 20px; background: rgb(var(--bg-canvas)); font-size: 1rem; line-height: 1.55; color: rgb(var(--text-secondary)); }
 
 /* ── Player: scene header and view switch ──────────────────────────────────────────────── */
 .ss-title {
   font-family: 'Red Hat Display', system-ui, sans-serif;
   font-weight: 900;
-  font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.75rem);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  color: #1c1917;
+  font-size: clamp(2rem, 1.3rem + 2.6vw, 3.75rem);
+  letter-spacing: -0.035em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: #1a1a1a;
 }
-.ss-title-fit { font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem); }
+.ss-title-fit { font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2.25rem); }
 .ss-subtitle { margin-top: 0.15rem; font-size: 0.9375rem; line-height: 1.45; color: #57534e; }
 .ss-status {
   padding: 0.4rem 0.9rem;
@@ -761,3 +777,106 @@ main h1[tabindex='-1']:focus { outline: none; }
   font-variant-numeric: tabular-nums;
 }
 .ss-viewlabel { font-weight: 700; font-size: 0.9375rem; color: rgb(var(--text-secondary)); }
+
+/* The drawn owl at text size (OwlGlyph): its container's font size sets it. */
+.owl-glyph { display: inline-block; width: 1em; height: 1.1em; vertical-align: -0.2em; overflow: visible; }
+
+/* ── Shared controls (redesign C): every small control is a pill, like the home page's ───── */
+.c-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0 0.95rem;
+  border-radius: 999px;
+  background: rgb(var(--bg-surface-elevated));
+  color: #1a1a1a;
+  font-family: 'Red Hat Text', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  transition: background-color 150ms, color 150ms, transform 150ms var(--ease-out);
+}
+.c-pill:active:not(:disabled) { transform: scale(0.96); }
+.c-pill:disabled { opacity: 0.4; cursor: not-allowed; }
+.c-pill[aria-pressed='true'], .c-pill[aria-checked='true'], .c-pill.is-on { background: #1a1a1a; color: #f3efe6; }
+.c-pill-go { background: #0b6b2a; color: #ffffff; }
+@media (hover: hover) {
+  .c-pill:hover:not(:disabled):not([aria-pressed='true']):not([aria-checked='true']):not(.is-on):not(.c-pill-go) { background: rgb(var(--bg-surface-muted)); }
+  .c-pill-go:hover { background: #085220; }
+}
+/* A row of options in one rounded tray; the chosen one turns ink. */
+.c-group { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px; background: rgb(var(--bg-surface-elevated)); }
+.c-group > .c-pill { background: transparent; min-height: 32px; }
+.c-group > .c-pill[aria-pressed='true'], .c-group > .c-pill.is-on, .c-group > .c-pill[aria-checked='true'] { background: #1a1a1a; color: #f3efe6; }
+.c-group-value { min-width: 3.25rem; text-align: center; font-family: 'Red Hat Mono', ui-monospace, monospace; font-weight: 700; font-size: 0.875rem; font-variant-numeric: tabular-nums; color: #1a1a1a; }
+
+/* "How it works" roadmap (RoadmapStrip): numbered pills in one tray; the current step is ink. */
+.rm-strip { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 4px 4px 4px 1rem; border-radius: 999px; background: rgb(var(--bg-canvas)); overflow-x: auto; scrollbar-width: none; }
+.rm-label { flex-shrink: 0; font-weight: 700; font-size: 0.875rem; color: rgb(var(--text-secondary)); }
+.rm-list { display: flex; align-items: center; gap: 2px; }
+.rm-chip { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 34px; padding: 0 0.85rem 0 0.35rem; border-radius: 999px; font-weight: 700; font-size: 0.875rem; white-space: nowrap; color: #1a1a1a; transition: background-color 150ms, color 150ms; }
+.rm-chip:disabled { color: rgb(var(--text-dim)); cursor: default; }
+.rm-num { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgb(var(--bg-surface-elevated)); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+.rm-chip[aria-current='step'] { background: #1a1a1a; color: #f3efe6; }
+.rm-chip[aria-current='step'] .rm-num { background: #18bc42; color: #1a1a1a; }
+@media (hover: hover) { .rm-chip:not(:disabled):not([aria-current='step']):hover { background: rgb(var(--bg-surface-elevated)); } }
+
+/* Playback dock: speed presets as pills in a tray, keyboard keys as small rounded caps. */
+.dock-tray { padding: 3px; border-radius: 999px; background: rgb(255 255 255 / 0.08); }
+.dock-chip { min-width: 40px; min-height: 32px; padding: 0 0.6rem; border-radius: 999px; font-family: 'Red Hat Mono', ui-monospace, monospace; font-weight: 700; font-size: 0.8125rem; color: #c9c2b2; transition: background-color 150ms, color 150ms, transform 150ms var(--ease-out); }
+.dock-chip:active { transform: scale(0.96); }
+.dock-chip.is-on { background: #18bc42; color: #1a1a1a; }
+@media (hover: hover) { .dock-chip:not(.is-on):hover { color: #f3efe6; background: rgb(255 255 255 / 0.1); } }
+.dock-kbd { display: inline-block; padding: 0.05rem 0.45rem; border-radius: 6px; background: rgb(255 255 255 / 0.12); font-family: 'Red Hat Mono', ui-monospace, monospace; font-size: 0.75rem; color: #f3efe6; }
+
+/* Player side panels (StepExplanation, MetricsPanel, FinalAnswerCard, DpCurrentRule): rounded cards,
+   display headings, readable sizes; the step explanation is a light marigold field, no side stripe. */
+.sp-card { padding: 1rem 1.15rem; border-radius: 22px; background: rgb(var(--bg-surface)); }
+.sp-card-now { background: color-mix(in srgb, rgb(var(--sem-current)) 14%, rgb(var(--bg-surface))); }
+.sp-label { display: flex; align-items: center; gap: 0.45rem; font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: 1.0625rem; letter-spacing: -0.01em; color: #1a1a1a; }
+.sp-meta { font-size: 0.875rem; font-weight: 500; color: rgb(var(--text-muted)); }
+.sp-title { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem); line-height: 1.15; letter-spacing: -0.015em; color: #1a1a1a; }
+.sp-body { font-size: 1.0625rem; line-height: 1.55; color: rgb(var(--text-secondary)); }
+.sp-stat { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: 1.75rem; line-height: 1.05; font-variant-numeric: tabular-nums; color: #1a1a1a; }
+
+/* ── Technical views (VisualizerStage :is([data-technical], [data-input-dialog])) in the home page's language ──────────
+   Framed panels become borderless rounded fields; small bordered buttons become pills; the
+   capital panel titles take the home headline's voice (Red Hat Display Black). Grid and table
+   cells keep their hairlines: there the lines carry the data. */
+:is([data-technical], [data-input-dialog]) :is(div, section, aside, figure).border-hairline:is(.bg-obsidian-900, .bg-obsidian-950, .bg-obsidian-850, .bg-obsidian-800) {
+  border-color: transparent;
+  border-radius: 22px;
+}
+:is([data-technical], [data-input-dialog]) :is(div, section, aside, figure).border-hairline:not(:is(.bg-obsidian-900, .bg-obsidian-950, .bg-obsidian-850, .bg-obsidian-800)) {
+  border-radius: 18px;
+}
+:is([data-technical], [data-input-dialog]) > div > .bg-obsidian-900.border-hairline,
+:is([data-technical], [data-input-dialog]) > .bg-obsidian-900.border-hairline { background: rgb(var(--bg-surface)); border-radius: 28px; }
+:is([data-technical], [data-input-dialog]) button:is(.border, [class*='px-']) { border-radius: 999px; }
+:is([data-technical], [data-input-dialog]) button.border { min-height: 32px; padding-inline: 0.85rem; }
+:is([data-technical], [data-input-dialog]) .uppercase {
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+:is([data-technical], [data-input-dialog]) :is(span, div).border.border-hairline:is([class*='px-1'], [class*='px-2']) { border-radius: 999px; }
+
+/* ── Comparison page: a yellow chapter header, plain step headings, A/B marked by colour discs ── */
+.cmp-hero { display: flex; flex-direction: column; gap: 1.25rem; padding: clamp(24px, 4vw, 56px); border-radius: 28px; background: #f2c21a; color: #1a1a1a; }
+.cmp-title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25em; font-size: clamp(40px, 6vw, 96px); max-width: 18ch; text-wrap: balance; }
+.cmp-title-icon { width: 0.6em; height: 0.6em; flex-shrink: 0; }
+.cmp-lead { max-width: 60ch; color: #2b2200; }
+.cmp-step { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.625rem); letter-spacing: -0.015em; color: #1a1a1a; }
+.cmp-h2 { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.75rem); letter-spacing: -0.03em; line-height: 1; color: #1a1a1a; }
+.cmp-side { display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: 1rem; color: #1a1a1a; }
+.cmp-badge { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; font-size: 0.875rem; }
+.cmp-badge-a { background: #ed4b44; color: #0f0f0f; }
+.cmp-badge-b { background: #18bc42; color: #1a1a1a; }
+.cmp-row-label { font-weight: 700; font-size: 1rem; color: rgb(var(--text-secondary)); padding-top: 0.1rem; }
+.cmp-select { width: 100%; min-height: 44px; padding: 0 1rem; border-radius: 999px; background: rgb(var(--bg-surface)); color: #1a1a1a; font-weight: 600; font-size: 1rem; border: 0; }
+
+[data-input-dialog] > [role='dialog'] { border-color: transparent; border-radius: 28px; background: rgb(var(--bg-surface)); overflow: hidden; }
+[data-input-dialog] :is(input, textarea, select) { border-radius: 14px; font-size: 1rem; }
+[data-input-dialog] h2 { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: 1.25rem; letter-spacing: -0.01em; }

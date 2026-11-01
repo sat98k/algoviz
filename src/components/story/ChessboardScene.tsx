@@ -3,6 +3,7 @@ import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases } from './useAnimPhases';
 import { StateSpaceTree, SpaceTreeNode, SpaceNodeKind } from './StateSpaceTree';
 import { buildNQueensStateSpaceTree } from '../../algorithms/nQueensTree';
+import { PALETTE, useSvgIds } from './kit/materials';
 
 /**
  * ♛ N-Queens on a real wooden chessboard.
@@ -17,29 +18,30 @@ import { buildNQueensStateSpaceTree } from '../../algorithms/nQueensTree';
 
 const S = 56;
 const M = 34;
-const LIGHT = '#f0d9b5';
-const DARK = '#b58863';
-const RED = '#dc2626';
+const LIGHT = '#f2dfbf';
+const DARK = '#b98a5e';
+const RED = '#cc2e2e';
 
 /** A carved queen piece, drawn around (0, 0) = centre of its square. */
-const Queen: React.FC<{ ghost?: boolean; gold?: boolean }> = ({ ghost, gold }) => (
-  <g opacity={ghost ? 0.5 : 1}>
-    <ellipse cx="0" cy="19" rx="16" ry="4.5" fill="#00000030" />
-    <path
-      d="M -15 15 L -17 -6 L -9 3 L -6 -12 L 0 1 L 6 -12 L 9 3 L 17 -6 L 15 15 Z"
-      fill={gold ? '#fbbf24' : '#fafaf9'}
-      stroke={gold ? '#92400e' : '#44403c'}
-      strokeWidth="2"
-      strokeLinejoin="round"
-    />
-    <rect x="-16" y="13" width="32" height="6" rx="2" fill={gold ? '#d97706' : '#e7e5e4'} stroke={gold ? '#92400e' : '#44403c'} strokeWidth="1.6" />
-    {[-17, -6, 6, 17].map((x, i) => (
-      <circle key={i} cx={x} cy={i === 0 || i === 3 ? -8 : -14} r="2.6" fill={gold ? '#fde68a' : '#ffffff'} stroke={gold ? '#92400e' : '#44403c'} strokeWidth="1.3" />
-    ))}
-  </g>
-);
+const Queen: React.FC<{ ghost?: boolean; gold?: boolean }> = ({ ghost, gold }) => {
+  const body = gold ? PALETTE.gold : '#232020';
+  const shade = gold ? '#9a6416' : '#0d0c0c';
+  const shine = gold ? '#fff1b0' : '#6d6762';
+  return (
+    <g opacity={ghost ? 0.45 : 1}>
+      <ellipse cx="0" cy="20" rx="17" ry="4.5" fill="#3a2414" opacity="0.28" />
+      <path d="M -16 19 Q -16 13 -11 12 L -8 -2 Q -14 -6 -12 -11 L -6 -6 L -3 -15 L 0 -8 L 3 -15 L 6 -6 L 12 -11 Q 14 -6 8 -2 L 11 12 Q 16 13 16 19 Z" fill={body} />
+      <path d="M 3 -15 L 6 -6 L 12 -11 Q 14 -6 8 -2 L 11 12 Q 16 13 16 19 L 6 19 L 5 -2 Z" fill={shade} opacity="0.55" />
+      <path d="M -9 10 L -6.5 -2" stroke={shine} strokeWidth="2.2" strokeLinecap="round" opacity="0.8" />
+      <rect x="-17" y="16" width="34" height="5" rx="2.5" fill={shade} />
+      <circle cx="0" cy="-19" r="3.4" fill={gold ? '#fde68a' : PALETTE.gold} />
+      <circle cx="-1" cy="-20" r="1.1" fill="#ffffff" opacity="0.8" />
+    </g>
+  );
+};
 
 export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
+  const ids = useSvgIds();
   const st: any = step.state || {};
   const n: number = st.n || 4;
   const board: number[] = st.board || Array(n).fill(-1);
@@ -112,16 +114,13 @@ export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
         )}
         {nd.board.map((c, r) =>
           c < 0 ? null : (
-            <text
+            <circle
               key={`q-${r}`}
-              x={c * cell + cell / 2}
-              y={r * cell + cell * 0.82}
-              textAnchor="middle"
-              fontSize={cell * 0.95}
-              fill={r === nd.row && tested ? RED : kind === 'solution' ? '#b45309' : '#1c1917'}
-            >
-              ♛
-            </text>
+              cx={c * cell + cell / 2}
+              cy={r * cell + cell / 2}
+              r={cell * 0.34}
+              fill={r === nd.row && tested ? RED : kind === 'solution' ? PALETTE.gold : '#232020'}
+            />
           )
         )}
       </g>
@@ -160,7 +159,6 @@ export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
 
   return (
     <StoryStage
-      emoji="♛"
       title="Queens on a Chessboard"
       subtitle="Faint red marks = squares a queen can reach. Only unmarked squares are safe."
       narration={narration}
@@ -168,8 +166,19 @@ export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
     >
       <svg viewBox={`0 0 ${size} ${size}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: Math.min(560, size * 1.15) }} role="img" aria-label="Chessboard">
         {/* wooden frame */}
-        <rect x="4" y="4" width={size - 8} height={size - 8} rx="14" fill={solved ? '#fbbf24' : '#7c4a24'} style={{ transition: 'fill 0.6s' }} />
-        <rect x={M - 4} y={M - 4} width={n * S + 8} height={n * S + 8} rx="4" fill="#5c3418" />
+        <defs>
+          <linearGradient id={`${ids}-frame`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor={solved ? '#fde68a' : '#9a6a40'} />
+            <stop offset="1" stopColor={solved ? PALETTE.gold : '#5e3c20'} />
+          </linearGradient>
+          <linearGradient id={`${ids}-sheen`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#ffffff" stopOpacity="0.22" />
+            <stop offset="0.5" stopColor="#ffffff" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <rect x="4" y="12" width={size - 8} height={size - 8} rx="18" fill="#3a2414" opacity="0.18" />
+        <rect x="4" y="4" width={size - 8} height={size - 8} rx="18" fill={`url(#${ids}-frame)`} style={{ transition: 'fill 0.6s' }} />
+        <rect x={M - 4} y={M - 4} width={n * S + 8} height={n * S + 8} rx="6" fill="#4a2e18" />
 
         {Array.from({ length: n }, (_, r) =>
           Array.from({ length: n }, (_, c) => {
@@ -190,9 +199,10 @@ export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
           })
         )}
 
+        <rect x={M} y={M} width={n * S} height={n * S} fill={`url(#${ids}-sheen)`} pointerEvents="none" />
         {/* row and column numbers */}
         {Array.from({ length: n }, (_, k) => (
-          <g key={`lbl-${k}`} fontSize="12" fontWeight="700" fill="#fde68a">
+          <g key={`lbl-${k}`} fontSize="12.5" fontWeight="900" fill={solved ? PALETTE.ink : '#f6e6c4'} style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
             <text x={M - 18} y={cy(k) + 4} textAnchor="middle">
               {k + 1}
             </text>
@@ -204,9 +214,9 @@ export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
 
         {/* current row pointer */}
         {row >= 0 && row < n && !solved && (
-          <text x={M + n * S + 16} y={cy(row) + 6} textAnchor="middle" fontSize="18" fill="#fde68a" style={{ transition: 'y 0.5s' }}>
-            ◀
-          </text>
+          <g style={{ transform: `translate(${M + n * S + 16}px, ${cy(row)}px)`, transition: 'transform 0.5s var(--ease-move)' }}>
+            <path d="M6 -8 L-6 0 L6 8 Z" fill={PALETTE.gold} stroke="#6b4a10" strokeWidth="1.2" strokeLinejoin="round" />
+          </g>
         )}
 
         {/* standing queens */}
@@ -244,9 +254,12 @@ export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
               markerEnd="url(#storyArrowRed)"
               className="animate-story-pop"
             />
-            <text x={cx(col) + 18} y={cy(row) - 16} fontSize="18" fontWeight="900" fill={RED}>
-              ✗
-            </text>
+            <g transform={`translate(${cx(col) + 20}, ${cy(row) - 20})`}>
+              <g className="animate-story-pop">
+                <circle r="10" fill={RED} />
+                <path d="M-3.5 -3.5 L3.5 3.5 M3.5 -3.5 L-3.5 3.5" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" />
+              </g>
+            </g>
           </g>
         )}
 
@@ -255,9 +268,12 @@ export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
           <g transform={`translate(${cx(col)}, ${cy(row)})`}>
             <g key={`lift-${step.stepIndex}`} className="animate-story-lift">
               <Queen />
-              <text x="0" y="-26" textAnchor="middle" fontSize="20">
-                ✋
-              </text>
+              <g transform="translate(0, -34)">
+                <rect x="-22" y="-11" width="44" height="22" rx="11" fill="#8b3fb0" />
+                <text textAnchor="middle" y="4.5" fontSize="12" fontWeight="900" fill="#ffffff" style={{ fontFamily: '"Red Hat Display", system-ui, sans-serif' }}>
+                  undo
+                </text>
+              </g>
             </g>
           </g>
         )}
@@ -281,14 +297,14 @@ export const ChessboardScene: React.FC<StorySceneProps> = ({ step, stepMs }) => 
       {/* trophy shelf of solutions (find-all mode) */}
       {solutions.length > 0 && (
         <div className="mt-4 flex flex-col items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-stone-500">🏆 Solutions shelf</span>
+          <span className="font-display font-black text-base text-stone-900">Solutions shelf</span>
           <div className="flex flex-wrap justify-center gap-2">
             {solutions.slice(0, 16).map((sol, k) => (
               <svg key={k} width={n * 9 + 4} height={n * 9 + 4} viewBox={`0 0 ${n * 9 + 4} ${n * 9 + 4}`} className={k === solutions.length - 1 && solved ? 'animate-story-pop' : undefined}>
-                <rect width={n * 9 + 4} height={n * 9 + 4} rx="3" fill="#7c4a24" />
+                <rect width={n * 9 + 4} height={n * 9 + 4} rx="4" fill="#5e3c20" />
                 {sol.map((c, r) =>
                   Array.from({ length: n }, (_, cc) => (
-                    <rect key={`${r}-${cc}`} x={2 + cc * 9} y={2 + r * 9} width="9" height="9" fill={cc === c ? '#f59e0b' : (r + cc) % 2 ? DARK : LIGHT} />
+                    <rect key={`${r}-${cc}`} x={2 + cc * 9} y={2 + r * 9} width="9" height="9" fill={cc === c ? '#232020' : (r + cc) % 2 ? DARK : LIGHT} />
                   ))
                 )}
               </svg>
