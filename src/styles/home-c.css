@@ -515,3 +515,132 @@ main h1[tabindex='-1']:focus { outline: none; }
   color: #1a1a1a;
 }
 .al-ready p { max-width: 52ch; }
+
+/* ── Player ─────────────────────────────────────────────────────────────────────────────── */
+[data-view='play'] { gap: 12px; }
+
+/* Header bar: light surface, the module's chapter colour as a thick stripe on the leading edge. */
+.al-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 8px 12px 8px 16px;
+  border-radius: 20px;
+  background: rgb(var(--bg-surface));
+  border-inline-start: 10px solid var(--chapter, #18bc42);
+}
+.al-bar-title { font-size: clamp(1.25rem, 1rem + 0.8vw, 1.75rem); line-height: 1.1; }
+.al-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  background: rgb(var(--bg-surface-elevated));
+  color: rgb(var(--text-primary));
+  font-weight: 700;
+  font-size: 0.9375rem;
+  transition: background-color 150ms, transform 150ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .al-pill:hover { background: rgb(var(--bg-surface-muted)); }
+}
+.al-pill:active { transform: scale(0.96); }
+.al-seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgb(var(--bg-surface-elevated)); }
+.al-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  min-width: 36px;
+  justify-content: center;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: rgb(var(--text-muted));
+  transition: background-color 150ms, color 150ms, transform 150ms var(--ease-out);
+}
+.al-seg-btn[aria-pressed='true'] { background: #1a1a1a; color: #e6e0d2; }
+.al-seg-btn:active { transform: scale(0.96); }
+
+/* Playback dock: an ink bar. Re-pointing the colour tokens inside it turns every control light
+   on dark without touching the component. */
+[data-view='play'] [aria-label='Playback'] {
+  --bg-canvas: 26 26 26;
+  --bg-surface: 34 34 32;
+  --bg-surface-elevated: 48 47 44;
+  --bg-surface-muted: 62 60 56;
+  --text-primary: 243 239 230;
+  --text-secondary: 222 215 200;
+  --text-muted: 201 194 178;
+  --text-dim: 176 169 154;
+  --border-color: 255 255 255;
+  --border-opacity: 0.16;
+  --amber-primary: 24 188 66;
+  --amber-glow: 120 225 150;
+  background: #1a1a1a;
+  color: rgb(var(--text-primary));
+  border: 0;
+  border-radius: 20px;
+  padding: 8px 14px;
+}
+[data-view='play'] [aria-label='Playback'] button { border-radius: 999px; }
+[data-view='play'] [aria-label='Playback'] :is(button[title^='Play'], button[title^='Pause']) {
+  min-width: 112px;
+  justify-content: center;
+  font-size: 1rem;
+}
+[data-view='play'] [aria-label='Playback'] :focus-visible { outline-color: #18bc42; }
+[data-view='play'] [aria-label='Playback'] kbd { border-radius: 6px; }
+
+/* Side panels: rounded cards on the light surface, headings in the display face. */
+[data-view='play'] :is(section[aria-label='Pseudocode'], section[aria-label='Operation counts'], section[aria-label='Final answer'], section[aria-labelledby='step-explanation-heading']) {
+  border-color: transparent;
+  border-radius: 22px;
+  background: rgb(var(--bg-surface));
+}
+[data-view='play'] section[aria-labelledby='step-explanation-heading'] {
+  border-inline-start: 8px solid rgb(var(--sem-current));
+}
+[data-view='play'] :is(section[aria-label='Pseudocode'], section[aria-label='Operation counts']) h2,
+[data-view='play'] #step-explanation-heading {
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  color: rgb(var(--text-primary));
+}
+[data-view='play'] section[aria-label='Final answer'] { border-style: solid; }
+
+/* View mode switch above the scene. */
+[data-story-toggle] { border-color: transparent; border-radius: 20px; background: rgb(var(--bg-surface)); }
+[data-story-toggle] [role='radiogroup'] { border-radius: 999px; border-color: transparent; background: rgb(var(--bg-surface-elevated)); box-shadow: none; }
+[data-story-toggle] [role='radio'] { border-radius: 999px; min-height: 36px; }
+
+/* The animation stage keeps its warm daylight paper (docs/animation-preferences.md); it loses the
+   amber outline and drop shadow and takes the site's rounder corner. */
+[data-story-stage] { border-color: transparent; box-shadow: none; border-radius: 28px; }
+[data-story-stage] [data-story-narration] { border-radius: 20px; border-color: transparent; font-size: 1.0625rem; }
+
+/* ── Learn view panels ──────────────────────────────────────────────────────────────────── */
+[data-view='learn'] section[aria-label='Problem and how it works'],
+[data-view='learn'] section[aria-labelledby='complexity-heading'] {
+  border-color: transparent;
+  border-radius: 28px;
+  background: rgb(var(--bg-surface));
+  overflow: hidden;
+}
+[data-view='learn'] #complexity-heading {
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);
+  letter-spacing: -0.02em;
+}
+/* The owl's speech: a bigger, calmer bubble. */
+[data-owl-briefing] { border-top-color: transparent; }
+[data-owl-briefing] > div:first-child > div:last-child { border-radius: 24px; border-color: transparent; background: rgb(var(--bg-canvas)); }
+[data-owl-briefing] p { font-size: 1.0625rem; line-height: 1.6; }

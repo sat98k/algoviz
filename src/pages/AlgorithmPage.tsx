@@ -386,30 +386,26 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
     );
 
   const layoutToggle = (
-    <div className="flex items-center gap-1 bg-obsidian-950 border border-hairline p-1 font-mono text-xs">
+    <div className="al-seg">
       <button
         onClick={() => setLayoutMode('split')}
-        className={`flex items-center gap-1.5 px-2.5 py-1 transition-colors ${
-          layoutMode === 'split'
-            ? 'bg-amber/15 text-amber-glow font-bold border border-amber/30'
-            : 'text-chalk-400 hover:text-chalk-200'
-        }`}
+        aria-pressed={layoutMode === 'split'}
+        className="al-seg-btn"
         title="Split view: visualization and explanation on the left, pseudocode and current values beside them"
       >
-        <Columns className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">SPLIT VIEW</span>
+        <Columns className="w-4 h-4" aria-hidden />
+        <span className="hidden sm:inline">Split view</span>
+        <span className="sr-only sm:hidden">Split view</span>
       </button>
       <button
         onClick={() => setLayoutMode('stacked')}
-        className={`flex items-center gap-1.5 px-2.5 py-1 transition-colors ${
-          layoutMode === 'stacked'
-            ? 'bg-amber/15 text-amber-glow font-bold border border-amber/30'
-            : 'text-chalk-400 hover:text-chalk-200'
-        }`}
+        aria-pressed={layoutMode === 'stacked'}
+        className="al-seg-btn"
         title="Full width: the largest visualization, with pseudocode and current values below it"
       >
-        <Maximize2 className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">FULL WIDTH</span>
+        <Maximize2 className="w-4 h-4" aria-hidden />
+        <span className="hidden sm:inline">Full width</span>
+        <span className="sr-only sm:hidden">Full width</span>
       </button>
     </div>
   );
@@ -604,20 +600,20 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
     >
       <OwlFlightLayer />
 
-      {/* Compact header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2 min-w-0">
+      {/* Compact header: a bar marked with the module's chapter colour. */}
+      <div className="al-bar" style={{ ['--chapter' as string]: learnField.bg }}>
+        <div className="flex flex-wrap items-center gap-3 min-w-0">
           <button
             type="button"
             data-back-to-learn
             onClick={() => setView('learn')}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-300 hover:text-chalk-100 border border-hairline font-sans text-xs font-semibold transition-colors"
+            className="al-pill"
             title="Back to the owl's explanation of the problem and how it works"
           >
             <ArrowLeft className="w-3.5 h-3.5" aria-hidden />
             <span aria-hidden>🦉</span> Problem &amp; how it works
           </button>
-          <h1 className="font-display font-bold text-base sm:text-lg tracking-tight text-chalk-100">{config.name}</h1>
+          <h1 className="hc-display al-bar-title">{config.name}</h1>
         </div>
         {/* The roadmap shares the header row on wide screens (its own row when narrow). */}
         {roadmapStrip && <div className="order-last lg:order-none basis-full lg:basis-0 lg:flex-1 min-w-0">{roadmapStrip}</div>}
@@ -626,7 +622,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
             type="button"
             data-edit-input
             onClick={() => setInputDialogOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-obsidian-950 hover:bg-obsidian-850 text-chalk-200 border border-amber/50 font-sans text-xs font-semibold transition-colors"
+            className="al-pill"
             title="Change the input or pick a preset"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-amber" aria-hidden />
