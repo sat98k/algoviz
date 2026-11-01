@@ -248,7 +248,7 @@ describe('No dead or broken controls', () => {
   it('removed controls are gone', () => {
     expect(cfg('floyd-warshall').inputSchema).toEqual([]);
     expect(cfg('vertex-cover-approx').inputSchema).toEqual([]);
-    expect(cfg('edmonds-karp').inputSchema).toEqual([]);
+    expect(cfg('edmonds-karp').inputSchema.map((f) => f.name)).toEqual(['searchDetail']);
     expect(cfg('push-relabel').inputSchema).toEqual([]);
     expect(cfg('line-segment-intersection').inputSchema).toEqual([]);
     expect(cfg('karger-min-cut').inputSchema.map((f) => f.name)).toEqual(['trials']);

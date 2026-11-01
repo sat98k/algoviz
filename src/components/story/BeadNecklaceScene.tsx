@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases } from './useAnimPhases';
+import { LcsGridView } from './LcsGridView';
 
 /**
  * 📿 Longest Common Subsequence as two bead necklaces.
@@ -10,7 +11,20 @@ import { useAnimPhases } from './useAnimPhases';
  * filled one question at a time: "using only the first i beads on top and the first j
  * below, how long is the best shared chain?" — beads outside that range are dimmed.
  * Matching beads click together; at the end golden threads tie the shared chain.
+ *
+ * An optional 🧮 answer grid view (toggle above the necklaces) shows those questions as the DP
+ * table itself. The necklaces then shrink to a small strip above it, still acting out each
+ * comparison, while the grid takes the focus.
  */
+
+const VIEW_KEY = 'algoviz.lcs.storyView';
+const readView = (): 'beads' | 'grid' => {
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === 'grid' ? 'grid' : 'beads';
+  } catch {
+    return 'beads';
+  }
+};
 
 const BEAD = 46;
 const GAP = 10;
@@ -20,6 +34,16 @@ const BOT_Y = 200;
 const PALETTE = ['#f87171', '#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#f472b6', '#22d3ee', '#a3e635', '#fb923c'];
 
 export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
+  const [view, setView] = useState<'beads' | 'grid'>(() => (typeof window === 'undefined' ? 'beads' : readView()));
+  const choose = (v: 'beads' | 'grid') => {
+    setView(v);
+    try {
+      window.localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      // Remembering the view is only a convenience.
+    }
+  };
+  const grid = view === 'grid';
   const st: any = step.state || {};
   const X: string = st.str1 || '';
   const Y: string = st.str2 || '';
@@ -89,7 +113,40 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
       narration={narration}
       status={phaseName === 'final' ? `Shared chain • ${finalChain.length} beads` : filling ? `Best chain here • ${phase === 'judge' ? cell : '?'}` : 'Ready'}
     >
-      <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.25 }} role="img" aria-label="Two necklaces">
+      <div className="flex justify-center mb-3">
+        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5 font-sans text-xs font-semibold" role="radiogroup" aria-label="Picture">
+          {(
+            [
+              ['beads', '📿 Necklaces'],
+              ['grid', '🧮 Answer grid'],
+            ] as const
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={view === v}
+              data-lcs-view={v}
+              onClick={() => choose(v)}
+              className={`px-3 py-1 rounded-full transition-colors ${view === v ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* With the grid on, the necklaces shrink into a small side panel (above it on narrow screens) but keep acting out each comparison. */}
+      <div className={grid ? 'flex flex-col lg:flex-row items-center lg:items-start justify-center gap-4' : undefined}>
+      <div className={grid ? 'w-full max-w-[240px] shrink-0 rounded-xl border border-amber-200 bg-white/60 p-2' : undefined} data-necklace-panel>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="block mx-auto w-full h-auto overflow-visible"
+        style={{ maxWidth: grid ? 224 : width * 1.25 }}
+        role="img"
+        aria-label="Two necklaces"
+        data-necklaces-size={grid ? 'small' : 'full'}
+      >
         {/* strings */}
         <line x1={PAD - 16} y1={TOP_Y} x2={PAD + X.length * (BEAD + GAP)} y2={TOP_Y} stroke="#a8a29e" strokeWidth="2" />
         <line x1={PAD - 16} y1={BOT_Y} x2={PAD + Y.length * (BEAD + GAP)} y2={BOT_Y} stroke="#a8a29e" strokeWidth="2" />
@@ -114,7 +171,7 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
       </svg>
 
       {/* the answer so far, shown as a little chain of beads */}
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 font-sans text-sm text-stone-600">
+      <div className={`mt-3 flex flex-wrap items-center justify-center gap-2 font-sans text-stone-600 ${grid ? 'text-xs' : 'text-sm'}`}>
         {filling && phase === 'judge' && (
           <>
             <span className="font-semibold">Best shared chain for these beads:</span>
@@ -134,6 +191,28 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
             ))}
           </>
         )}
+      </div>
+      </div>
+
+      {grid && (
+        <div className="min-w-0 flex-1">
+          <LcsGridView
+            X={X}
+            Y={Y}
+            phase={phaseName}
+            colour={colour}
+            table={L}
+            directions={st.directions || []}
+            row={i}
+            col={j}
+            revealed={phase === 'judge'}
+            isMatch={isMatch}
+            sources={st.sourceCells || []}
+            path={phaseName === 'traceback' || phaseName === 'final' ? st.backtrackPath || [] : []}
+            pairs={pairs}
+          />
+        </div>
+      )}
       </div>
     </StoryStage>
   );

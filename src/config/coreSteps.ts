@@ -128,15 +128,15 @@ export const CORE_STEPS: Record<string, string[]> = {
   ],
   'ford-fulkerson': [
     'Start with zero flow on every edge.',
-    'Find an augmenting path: any path from s to t with spare capacity in the residual graph. Any search works; this page uses BFS.',
+    'Find an augmenting path with **DFS**: keep going deeper along the first edge with room in the residual graph, backing up at dead ends. The stack is the path.',
     'Its **bottleneck** is the smallest spare capacity on that path.',
-    'Push that much flow along the path and update the residual capacities, including the backward edges.',
-    'Repeat until no such path exists. The total flow is then the maximum. (The Edmonds-Karp page shows the BFS search step by step.)',
+    'Push that much flow along the path: forward room shrinks, and the **reverse edge** gains the same room so a later path can send that flow back.',
+    'Repeat until no such path exists. The total flow is then the maximum. (The Edmonds-Karp page searches with BFS instead and always finds a shortest path.)',
   ],
   'edmonds-karp': [
-    'Run **BFS** from S to find the augmenting path with the fewest edges that still has spare capacity.',
+    'Run **BFS** from S: a queue explores ring by ring and each vertex remembers its parent. Tracing parents back from T gives the augmenting path with the fewest edges.',
     'The **bottleneck** is the smallest spare capacity along that path.',
-    '**Increase the flow** along the path by the bottleneck, and add the same amount of backward capacity so it can be undone later.',
+    '**Increase the flow** along the path by the bottleneck, and add the same amount of reverse capacity so it can be sent back later.',
     'Repeat the BFS. When T can no longer be reached, the flow is maximum.',
   ],
   'push-relabel': [

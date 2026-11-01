@@ -231,8 +231,10 @@ export const ROADMAPS: Record<string, Roadmap> = {
   'ford-fulkerson': {
     labels: ['Zero flow', 'Find a path', 'Its bottleneck', 'Push the flow', 'Until no path'],
     rules: [
+      [/Unreachable/, 4],
       [/^Initialize/, 0],
-      [/^Augmenting Path Found/, [1, 2]],
+      [/^DFS/, 1],
+      [/^Augmenting Path Found/, 2],
       [/^Augmented Flow/, 3],
       [/Complete/, 4],
     ],
@@ -240,6 +242,7 @@ export const ROADMAPS: Record<string, Roadmap> = {
   'edmonds-karp': {
     labels: ['BFS for a path', 'Its bottleneck', 'Push the flow', 'Until T unreachable'],
     rules: [
+      [/Unreachable/, 3],
       [/^(Initialize|BFS)/, 0],
       [/^Shortest Augmenting Path/, 1],
       [/^Augment Residual/, 2],

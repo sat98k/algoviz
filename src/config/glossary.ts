@@ -232,6 +232,12 @@ export const GLOSSARY = defineGlossary({
       'Explores a graph level by level from a start vertex, so the first path it finds to any vertex uses the fewest edges.',
     aliases: ['breadth-first search', 'bfs'],
   },
+  dfs: {
+    term: 'Depth-First Search (DFS)',
+    definition:
+      'Follows one path as deep as it can go, and backs up to try another branch only at a dead end. A stack holds the path walked so far. The first path it finds is not necessarily the shortest.',
+    aliases: ['depth-first search', 'dfs'],
+  },
   'flow-network': {
     term: 'Flow Network',
     definition:
@@ -241,7 +247,7 @@ export const GLOSSARY = defineGlossary({
   'residual-graph': {
     term: 'Residual Graph',
     definition:
-      'Shows how much more flow each edge can still carry, plus backward edges that allow already-sent flow to be undone. Augmenting paths are searched for here.',
+      'Shows how much more flow each edge can still carry, plus reverse edges (pointing against pipes that carry flow) that allow already-sent flow to be sent back. Augmenting paths are searched for here.',
     aliases: ['residual network', 'residual graph', 'residual capacities', 'residual edges'],
   },
   'augmenting-path': {

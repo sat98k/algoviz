@@ -155,7 +155,8 @@ describe('Implementation notes match the code', () => {
   it('flow algorithms store capacities in a V × V matrix scanned row by row', () => {
     for (const [id, file] of [['ford-fulkerson', 'fordFulkerson.ts'], ['edmonds-karp', 'edmondsKarp.ts'], ['push-relabel', 'pushRelabel.ts']]) {
       expect(A(id).space.bound).toBe('O(V²)');
-      expect(src(file)).toContain('for (let v = 0; v < n; v++)');
+      // Every neighbour v of a vertex is found by scanning its whole row of the matrix.
+      expect(src(file)).toMatch(/for \(let v = 0; v < n; v\+\+\)|while \(v < n && /);
     }
   });
 

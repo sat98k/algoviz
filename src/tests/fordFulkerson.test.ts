@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { fordFulkersonSteps } from '../algorithms/fordFulkerson';
 
-describe('Ford-Fulkerson (M4 Network Flow / Edmonds-Karp)', () => {
+describe('Ford-Fulkerson with DFS (M4 Network Flow)', () => {
   it('correctly calculates maximum flow = 23 for classic 6-node network', () => {
     const capacities = [
       [0, 16, 13, 0, 0, 0],

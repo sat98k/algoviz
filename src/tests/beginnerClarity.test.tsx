@@ -265,6 +265,8 @@ describe('Owl briefing ("The owl explains: Problem & how it works")', () => {
     // Before the reveal runs, every word is in the page but hidden (so nothing jumps when it appears).
     expect(html).toContain('data-owl-skip');
     expect(html).toContain('Show everything');
+    // Like the player, the owl can be paused mid-sentence.
+    expect(html).toMatch(/data-owl-pause="playing"[^>]*aria-pressed="false"[^>]*>.*Pause<\/button>/s);
     expect(html).toContain('data-owl-sound');
     expect(html).toContain('data-owl-button');
     expect(html).toMatch(/data-owl-state="talking"/);

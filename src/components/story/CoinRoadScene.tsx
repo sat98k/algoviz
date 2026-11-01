@@ -159,7 +159,7 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
       </div>
 
       {view === 'tree' ? (
-        <MaxSubarrayTreeView arr={arr} nodes={st.treeNodes || []} activeId={st.activeNodeId} scan={scan as any} isFinal={!!step.isFinal} stepKey={step.stepIndex} narration={narration} stepLabel={`Step ${step.stepIndex + 1}`} />
+        <MaxSubarrayTreeView arr={arr} nodes={st.treeNodes || []} activeId={st.activeNodeId} scan={scan as any} isFinal={!!step.isFinal} stepKey={step.stepIndex} />
       ) : (
         <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.3 }} role="img" aria-label="Coin road">
           <rect x={PAD - 12} y={ROAD_Y - 12} width={width - 2 * PAD + 24} height={TILE + 24} rx="14" fill="#d6c3a5" />

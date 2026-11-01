@@ -265,17 +265,17 @@ export const COMPLEXITY_ANALYSIS = define({
     time: [
       {
         case: 'worst',
-        bound: 'O(V·E²)',
-        note: 'With paths found by BFS, as in this implementation. With arbitrary path choices and integer capacities the bound is O(E·|f*|), which depends on the size of the answer.',
+        bound: 'O(E·|f*|)',
+        note: 'With paths found by DFS (as here) or any other search, and integer capacities: each augmentation adds at least 1, so there are at most |f*| of them. The bound depends on the size of the answer, not just the graph. Choosing shortest paths (BFS, Edmonds-Karp) gives O(V·E²) instead.',
       },
     ],
     kinds: ['Worst-case'],
     dominant: 'One path search per augmentation, times the number of augmentations.',
     derivation:
-      'Each augmentation finds an s–t path in the residual graph and pushes flow along it, O(E) with adjacency lists. Choosing shortest paths (BFS) limits the number of augmentations to O(V·E): each one saturates a bottleneck edge, and an edge can be a bottleneck only O(V) times because the BFS distance to it keeps growing. Multiplying gives O(V·E²). With arbitrary paths, each augmentation adds at least 1 unit of integer flow, giving O(E·|f*|).',
+      'Each augmentation finds an s–t path in the residual graph with DFS and pushes flow along it, O(E) with adjacency lists. With integer capacities each augmentation adds at least 1 unit of flow, so there are at most |f*| augmentations, giving O(E·|f*|). DFS may choose long paths with a small bottleneck, so on some networks the number of augmentations really does grow with the capacities. Choosing shortest paths (BFS, Edmonds-Karp) limits it to O(V·E) whatever the capacities.',
     space: { bound: 'O(V²)', explanation: 'Capacities and flows are stored as V × V matrices here; adjacency lists would need O(V + E).' },
     implementationNote:
-      'Because residual capacities live in a V × V matrix, each BFS scans a whole row per vertex: O(V²) per search instead of O(E), so O(V³·E) overall. That equals O(V·E²) on dense graphs and is fine for the small networks here.',
+      'Because residual capacities live in a V × V matrix, each DFS scans a whole row per vertex: O(V²) per search instead of O(E), so O(V²·|f*|) overall. That is fine for the small networks here.',
   },
   'edmonds-karp': {
     variables: [

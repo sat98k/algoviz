@@ -1,280 +1,261 @@
 import { AlgorithmStep } from '../types/algorithm';
-import { GraphNode, GraphEdge } from './floydWarshall';
+import { AugmentingPathPhase, AugmentingPathState, FlowInputs, createFlowNetwork, describeAugment } from './flowSearch';
 
-export interface EdmondsKarpState {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  source: string;
-  sink: string;
+export interface EdmondsKarpState extends AugmentingPathState {
   bfsQueue: string[];
   bfsVisited: string[];
   currentBfsNode?: string;
-  currentAugmentingPath?: string[];
-  bottleneckCapacity?: number;
-  totalMaxFlow: number;
-  residualMatrix: number[][];
-  flowMatrix: number[][];
-  capacityMatrix: number[][];
-  phase: 'bfs_explore' | 'path_found' | 'augment' | 'complete';
 }
 
-export function* edmondsKarpSteps(inputs: {
-  capacities?: number[][];
-  source?: number;
-  sink?: number;
-  nodeLabels?: string[];
-}): Generator<AlgorithmStep<EdmondsKarpState>> {
-  // Classic 6-node network (max flow = 23)
-  const defaultCapacities = [
-    [0, 16, 13, 0, 0, 0], // 0: Source (S)
-    [0, 0, 10, 12, 0, 0], // 1: Node A
-    [0, 4, 0, 0, 14, 0],  // 2: Node B
-    [0, 0, 9, 0, 0, 20],  // 3: Node C
-    [0, 0, 0, 7, 0, 4],   // 4: Node D
-    [0, 0, 0, 0, 0, 0],   // 5: Sink (T)
-  ];
-
-  const cap = inputs.capacities || defaultCapacities;
-  const n = cap.length;
-  const s = inputs.source !== undefined ? inputs.source : 0;
-  const t = inputs.sink !== undefined ? inputs.sink : n - 1;
-
-  const defaultLabels = ['S', 'A', 'B', 'C', 'D', 'T'];
-  const labels = inputs.nodeLabels || defaultLabels.slice(0, n);
-
-  const nodes: GraphNode[] = Array.from({ length: n }, (_, i) => ({
-    id: `${i}`,
-    label: labels[i] || `Node ${i}`,
-  }));
-
-  // Flow and residual capacity matrices
-  const flow: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
-  const residual: number[][] = Array.from({ length: n }, (_, r) =>
-    Array.from({ length: n }, (_, c) => cap[r][c])
+/**
+ * Edmonds-Karp: Ford-Fulkerson where every augmenting path is found by breadth-first search.
+ * The queue explores the residual graph in rings (1 edge from S, then 2, …), so the first time
+ * T is discovered, following the parent links back gives a path with the fewest edges.
+ */
+export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<EdmondsKarpState>> {
+  const net = createFlowNetwork(
+    { capacities: inputs.capacities, source: inputs.source, sink: inputs.sink, nodeLabels: inputs.nodeLabels },
+    'bfs',
   );
-
-  function getEdges(): GraphEdge[] {
-    const edgeList: GraphEdge[] = [];
-    for (let u = 0; u < n; u++) {
-      for (let v = 0; v < n; v++) {
-        if (cap[u][v] > 0) {
-          edgeList.push({
-            u: `${u}`,
-            v: `${v}`,
-            weight: cap[u][v],
-            capacity: cap[u][v],
-            flow: flow[u][v],
-          });
-        }
-      }
-    }
-    return edgeList;
-  }
+  const { n, s, t, label, search } = net;
 
   let stepIndex = 0;
   let comparisons = 0;
   let iterations = 0;
-  let totalFlow = 0;
+  const metrics = () => ({ comparisons, iterations });
+  // 'moves' hides the looks that lead nowhere (full pipes, vertices already found) and mentions them in the next step.
+  const everyLook = inputs.searchDetail !== 'moves';
+  const skipped: string[] = [];
+  const skippedNote = () => {
+    if (!skipped.length) return '';
+    const note = ` (Skipped: ${skipped.join('; ')}.)`;
+    skipped.length = 0;
+    return note;
+  };
+  const snap = (phase: AugmentingPathPhase, extra: Partial<AugmentingPathState> = {}): EdmondsKarpState => ({
+    ...net.snapshot(phase, extra),
+    bfsQueue: [...search.frontier],
+    bfsVisited: [...search.visited],
+    currentBfsNode: search.current,
+  });
+  const queueText = () => `[${search.frontier.map(label).join(', ') || 'empty'}]`;
 
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize Edmonds-Karp Network',
-    description: `Same goal as Ford-Fulkerson: send as much flow as possible from ${nodes[s].label} to ${nodes[t].label}. Edmonds-Karp always uses the path with the fewest pipes, found by breadth-first search (BFS): explore the network in rings, closest vertices first. This choice guarantees it finishes quickly.`,
+    description: `Same goal as Ford-Fulkerson: send as much flow as possible from ${label(s)} to ${label(t)}. Edmonds-Karp always uses the path with the fewest pipes, found by breadth-first search (BFS): explore the network in rings, closest vertices first. This choice guarantees it finishes quickly.`,
     codeLine: [1, 2],
-    state: {
-      nodes,
-      edges: getEdges(),
-      source: `${s}`,
-      sink: `${t}`,
-      bfsQueue: [`${s}`],
-      bfsVisited: [`${s}`],
-      totalMaxFlow: 0,
-      residualMatrix: residual.map((row) => [...row]),
-      flowMatrix: flow.map((row) => [...row]),
-      capacityMatrix: cap.map((row) => [...row]),
-      phase: 'bfs_explore',
-    },
-    highlights: {
-      activeNode: `${s}`,
-    },
-    metrics: { comparisons, iterations },
+    state: snap('bfs_explore'),
+    highlights: { activeNode: `${s}` },
+    metrics: metrics(),
   };
 
   while (true) {
     iterations++;
-
-    // Explicit BFS to find shortest path
-    const visited = Array(n).fill(false);
-    const parent = Array(n).fill(-1);
+    net.resetSearch();
     const queue: number[] = [s];
-    visited[s] = true;
-    let pathFound = false;
 
-    while (queue.length > 0) {
+    yield {
+      stepIndex: stepIndex++,
+      title: `BFS Search ${search.round}: Queue [${label(s)}]`,
+      description:
+        search.round === 1
+          ? `Start a breadth-first search at ${label(s)}: the queue holds [${label(s)}], and ${label(s)} is ring 0. Vertices leave the queue from the front and newly found ones join at the back, so everything 1 pipe away is explored before anything 2 pipes away.`
+          : `Start search ${search.round} from ${label(s)} with a fresh queue [${label(s)}]. The flow has changed: some pipes are now full, and pipes carrying flow now also offer a reverse edge (flow that could be sent back).`,
+      codeLine: [3, 9],
+      state: snap('bfs_explore'),
+      highlights: { activeNode: `${s}` },
+      metrics: metrics(),
+    };
+
+    let found = false;
+
+    while (queue.length > 0 && !found) {
       const u = queue.shift()!;
+      search.frontier.shift();
+      search.current = `${u}`;
+      search.probe = undefined;
+      search.event = 'dequeue';
 
       yield {
         stepIndex: stepIndex++,
-        title: `BFS Frontier: Dequeue ${nodes[u].label}`,
-        description: `Take ${nodes[u].label} from the front of the queue and look along every pipe out of it that still has room. ${(() => {
-          const found = residual[u].map((room, v) => (room > 0 && !visited[v] ? nodes[v].label : null)).filter(Boolean);
-          return found.length ? `Newly found: ${found.join(', ')} (added to the back of the queue).` : 'No new vertices are found from here.';
-        })()} Still waiting in the queue: [${queue.map((idx) => nodes[idx].label).join(', ') || 'empty'}].`,
-        codeLine: 3,
-        state: {
-          nodes,
-          edges: getEdges(),
-          source: `${s}`,
-          sink: `${t}`,
-          bfsQueue: queue.map((idx) => `${idx}`),
-          bfsVisited: visited.map((v, i) => (v ? `${i}` : null)).filter(Boolean) as string[],
-          currentBfsNode: `${u}`,
-          totalMaxFlow: totalFlow,
-          residualMatrix: residual.map((row) => [...row]),
-          flowMatrix: flow.map((row) => [...row]),
-          capacityMatrix: cap.map((row) => [...row]),
-          phase: 'bfs_explore',
-        },
-        highlights: {
-          activeNode: `${u}`,
-        },
-        metrics: { comparisons, iterations },
+        title: `BFS Frontier: Dequeue ${label(u)}`,
+        description: `${
+          u === s
+            ? `Take ${label(s)} from the queue.`
+            : `Take ${label(u)} (ring ${search.depth[`${u}`]}) from the front of the queue: it was found earliest, so it is among the closest to ${label(s)}.`
+        } Now look along every residual edge out of ${label(u)}. Still waiting in the queue: ${queueText()}.${skippedNote()}`,
+        codeLine: [10, 11],
+        state: snap('bfs_explore'),
+        highlights: { activeNode: `${u}` },
+        metrics: metrics(),
       };
 
       for (let v = 0; v < n; v++) {
+        // Only vertices joined to u by a pipe in either direction can have a residual edge from u.
+        if (!net.linked(u, v)) continue;
         comparisons++;
-        if (!visited[v] && residual[u][v] > 0) {
-          visited[v] = true;
-          parent[v] = u;
-          queue.push(v);
+        const room = net.room(u, v);
+        // No pipe u → v and nothing to send back: this edge is not in the residual graph.
+        if (room === 0 && !(net.cap[u][v] > 0)) continue;
 
-          if (v === t) {
-            pathFound = true;
-            break;
+        if (room === 0) {
+          if (!everyLook) {
+            skipped.push(`${net.hopText(u, v)} is full`);
+            continue;
           }
+          search.probe = net.probeOf(u, v, 'full');
+          yield {
+            stepIndex: stepIndex++,
+            title: `BFS: Pipe ${net.hopText(u, v)} Is Full`,
+            description: `Look along ${net.hopText(u, v)}: it already carries its full capacity ${net.cap[u][v]}, and nothing flows the other way that could be sent back. No room, so ${label(v)} cannot be reached this way.`,
+            codeLine: 12,
+            state: snap('bfs_explore'),
+            highlights: { activeNode: `${u}`, edges: [{ u: `${u}`, v: `${v}`, status: 'residual' }] },
+            metrics: metrics(),
+          };
+          continue;
         }
-      }
 
-      if (pathFound) break;
+        if (search.visited.includes(`${v}`)) {
+          if (!everyLook) {
+            skipped.push(`${label(v)} already found`);
+            continue;
+          }
+          search.probe = net.probeOf(u, v, 'seen');
+          yield {
+            stepIndex: stepIndex++,
+            title: `BFS: ${label(v)} Already Found`,
+            description: `${net.hopText(u, v)} has room, but ${label(v)} was already found (ring ${search.depth[`${v}`]}) by a route at least as short. BFS keeps the first way it found each vertex, so skip it.`,
+            codeLine: 12,
+            state: snap('bfs_explore'),
+            highlights: { activeNode: `${u}`, edges: [{ u: `${u}`, v: `${v}`, status: 'visited' }] },
+            metrics: metrics(),
+          };
+          continue;
+        }
+
+        search.probe = net.probeOf(u, v, 'take');
+        search.visited.push(`${v}`);
+        search.parent[`${v}`] = `${u}`;
+        search.depth[`${v}`] = search.depth[`${u}`] + 1;
+        search.frontier.push(`${v}`);
+        queue.push(v);
+        const roomWords = net.roomText(search.probe);
+
+        if (v === t) {
+          found = true;
+          yield {
+            stepIndex: stepIndex++,
+            title: `BFS: Found ${label(t)} via ${net.hopText(u, v)} (Ring ${search.depth[`${v}`]})`,
+            description: `${net.hopText(u, v)}: ${roomWords}. The sink ${label(t)} is found in ring ${search.depth[`${v}`]}, so no route to it can use fewer pipes. Stop the search.${skippedNote()}`,
+            codeLine: [13, 14],
+            state: snap('bfs_explore'),
+            highlights: { activeNode: `${t}`, edges: [{ u: `${u}`, v: `${v}`, status: 'active' }] },
+            metrics: metrics(),
+          };
+          break;
+        }
+
+        yield {
+          stepIndex: stepIndex++,
+          title: `BFS: Discover ${label(v)} via ${net.hopText(u, v)} (Ring ${search.depth[`${v}`]})`,
+          description: `${net.hopText(u, v)}: ${roomWords}. ${label(v)} is new: remember that it was reached from ${label(u)} (its parent), mark it as ring ${search.depth[`${v}`]}, and add it to the back of the queue: ${queueText()}.${skippedNote()}`,
+          codeLine: 13,
+          state: snap('bfs_explore'),
+          highlights: { activeNode: `${u}`, edges: [{ u: `${u}`, v: `${v}`, status: 'active' }] },
+          metrics: metrics(),
+        };
+      }
     }
 
-    if (!pathFound) {
-      // No augmenting path reaches sink
+    if (!found) {
+      search.current = undefined;
+      search.event = 'stuck';
+      search.probe = undefined;
+      const cut = net.minCut();
+      yield {
+        stepIndex: stepIndex++,
+        title: `BFS Search ${search.round}: ${label(t)} Unreachable`,
+        description: `The queue is empty and ${label(t)} was never found.${skippedNote()} From ${label(s)} only ${cut.reachable.map(label).join(', ')} can be reached; every pipe leading out of that group is full (${cut.edges.map((e) => `${net.hopText(Number(e.u), Number(e.v))} ${e.capacity}`).join(', ')}). No augmenting path is left.`,
+        codeLine: 15,
+        state: snap('bfs_explore', { minCut: cut }),
+        highlights: { nodes: cut.reachable, edges: cut.edges.map((e) => ({ u: e.u, v: e.v, status: 'conflict' as const })) },
+        metrics: metrics(),
+      };
       break;
     }
 
-    // Reconstruct shortest augmenting path
-    const path: number[] = [];
-    let curr = t;
-    while (curr !== -1) {
-      path.unshift(curr);
-      curr = parent[curr];
-    }
-
-    const pathNodesStr = path.map((idx) => `${idx}`);
-    const pathLabelStr = path.map((idx) => nodes[idx].label).join(' → ');
-
-    // Calculate bottleneck capacity
-    let bottleneck = Infinity;
-    for (let i = 0; i < path.length - 1; i++) {
-      const u = path[i];
-      const v = path[i + 1];
-      bottleneck = Math.min(bottleneck, residual[u][v]);
-    }
+    // Follow the parent links back from T to S.
+    const path: number[] = [t];
+    while (path[0] !== s) path.unshift(Number(search.parent[`${path[0]}`]));
+    search.trace = [...path].reverse().map(String);
+    search.event = 'trace';
+    search.probe = undefined;
+    search.current = `${t}`;
+    const pathIds = path.map(String);
+    const pathText = path.map(label).join(' → ');
+    const pathEdges = path.slice(0, -1).map((u, i) => ({ u: `${u}`, v: `${path[i + 1]}` }));
 
     yield {
       stepIndex: stepIndex++,
-      title: `Shortest Augmenting Path Discovered: ${pathLabelStr}`,
-      description: `BFS reached the sink ${nodes[t].label}, so this is a path with the fewest pipes (${path.length - 1}). Its narrowest pipe has room for ${bottleneck}: that is the bottleneck.`,
-      codeLine: [3, 4],
-      state: {
-        nodes,
-        edges: getEdges(),
-        source: `${s}`,
-        sink: `${t}`,
-        bfsQueue: [],
-        bfsVisited: pathNodesStr,
-        currentAugmentingPath: pathNodesStr,
-        bottleneckCapacity: bottleneck,
-        totalMaxFlow: totalFlow,
-        residualMatrix: residual.map((row) => [...row]),
-        flowMatrix: flow.map((row) => [...row]),
-        capacityMatrix: cap.map((row) => [...row]),
-        phase: 'path_found',
-      },
-      highlights: {
-        nodes: pathNodesStr,
-        edges: path.slice(0, -1).map((u, i) => ({ u: `${u}`, v: `${path[i + 1]}`, status: 'active' as const })),
-      },
-      metrics: { comparisons, iterations },
+      title: `BFS: Trace Parents Back from ${label(t)}`,
+      description: `Follow the parent links back: ${[...path]
+        .reverse()
+        .map(label)
+        .join(' ← ')}. Each vertex remembers which vertex found it, so walking back from ${label(t)} ends at ${label(s)}. Read forwards, the path is ${pathText}, with ${path.length - 1} pipes: the fewest possible.`,
+      codeLine: 14,
+      state: snap('bfs_explore'),
+      highlights: { nodes: pathIds, edges: pathEdges.map((e) => ({ ...e, status: 'visited' as const })) },
+      metrics: metrics(),
     };
 
-    // Augment flow along shortest path
-    for (let i = 0; i < path.length - 1; i++) {
-      const u = path[i];
-      const v = path[i + 1];
-      flow[u][v] += bottleneck;
-      flow[v][u] -= bottleneck;
-      residual[u][v] -= bottleneck;
-      residual[v][u] += bottleneck;
-    }
-
-    totalFlow += bottleneck;
+    const { bottleneck, edge } = net.bottleneckOf(path);
+    const reverse = net.reverseHops(path);
 
     yield {
       stepIndex: stepIndex++,
-      title: `Augment Residual Flow +${bottleneck} (Total Flow: ${totalFlow})`,
-      description: `Push ${bottleneck} along ${pathLabelStr}, and add the same amount of backward room so it can be undone later if needed. Total flow is now ${totalFlow}.`,
+      title: `Shortest Augmenting Path Discovered: ${pathText}`,
+      description: `BFS reached the sink ${label(t)}, so this is a path with the fewest pipes (${path.length - 1}). Its narrowest hop (${net.hopText(Number(edge.u), Number(edge.v))}) has room for ${bottleneck}: that is the bottleneck.${
+        reverse.length
+          ? ` Note: ${reverse.map(([a, b]) => net.hopText(a, b)).join(', ')} ${reverse.length > 1 ? 'are reverse edges' : 'is a reverse edge'}: it sends earlier flow back instead of using a free pipe.`
+          : ''
+      }`,
+      codeLine: [3, 4],
+      state: snap('path_found', { currentAugmentingPath: pathIds, bottleneckCapacity: bottleneck, bottleneckEdge: edge }),
+      highlights: { nodes: pathIds, edges: pathEdges.map((e) => ({ ...e, status: 'active' as const })) },
+      metrics: metrics(),
+    };
+
+    const log = net.augment(path, bottleneck);
+
+    yield {
+      stepIndex: stepIndex++,
+      title: `Augment Residual Flow +${bottleneck} (Total Flow: ${net.totalFlow})`,
+      description: `Push ${bottleneck} along ${pathText}, and add the same amount of reverse room on each hop so it can be undone later if needed.${describeAugment(net, log)} Total flow is now ${net.totalFlow}.`,
       codeLine: [5, 6],
-      state: {
-        nodes,
-        edges: getEdges(),
-        source: `${s}`,
-        sink: `${t}`,
-        bfsQueue: [],
-        bfsVisited: [],
-        currentAugmentingPath: pathNodesStr,
-        bottleneckCapacity: bottleneck,
-        totalMaxFlow: totalFlow,
-        residualMatrix: residual.map((row) => [...row]),
-        flowMatrix: flow.map((row) => [...row]),
-        capacityMatrix: cap.map((row) => [...row]),
-        phase: 'augment',
-      },
-      highlights: {
-        nodes: pathNodesStr,
-        edges: path.slice(0, -1).map((u, i) => ({ u: `${u}`, v: `${path[i + 1]}`, status: 'flow' as const })),
-      },
-      metrics: { comparisons, iterations },
+      state: snap('augment', { currentAugmentingPath: pathIds, bottleneckCapacity: bottleneck, augmentLog: log }),
+      highlights: { nodes: pathIds, edges: pathEdges.map((e) => ({ ...e, status: 'flow' as const })) },
+      metrics: metrics(),
     };
   }
 
+  const cut = net.minCut();
   yield {
     stepIndex: stepIndex++,
     title: 'Edmonds-Karp Complete: Maximum Flow Found',
-    description: `BFS can no longer reach ${nodes[t].label}: every route is blocked by a full pipe. The maximum flow is ${totalFlow}.`,
+    description: `BFS can no longer reach ${label(t)}: every route is blocked by a full pipe. The maximum flow is ${net.totalFlow}, found with ${net.pathHistory.length} shortest augmenting path${net.pathHistory.length === 1 ? '' : 's'}.`,
     codeLine: 7,
-    state: {
-      nodes,
-      edges: getEdges(),
-      source: `${s}`,
-      sink: `${t}`,
-      bfsQueue: [],
-      bfsVisited: [],
-      totalMaxFlow: totalFlow,
-      residualMatrix: residual.map((row) => [...row]),
-      flowMatrix: flow.map((row) => [...row]),
-      capacityMatrix: cap.map((row) => [...row]),
-      phase: 'complete',
-    },
+    state: snap('complete', { minCut: cut }),
     highlights: {},
-    metrics: { comparisons, iterations },
+    metrics: metrics(),
     isFinal: true,
     result: {
-      maxFlow: totalFlow,
-      source: nodes[s].label,
-      sink: nodes[t].label,
-      edgesWithFlow: getEdges().filter((e) => (e.flow || 0) > 0),
+      maxFlow: net.totalFlow,
+      source: label(s),
+      sink: label(t),
+      augmentingPaths: net.pathHistory.length,
+      edgesWithFlow: net.snapshot('complete').edges.filter((e) => (e.flow || 0) > 0),
     },
   };
 }

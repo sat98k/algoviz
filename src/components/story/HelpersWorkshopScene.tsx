@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
+import { KaratsubaTreeView } from './KaratsubaTreeView';
 
 /**
  * 👷 Karatsuba as a workshop with three helpers instead of four.
@@ -8,7 +9,20 @@ import { StoryStage, StorySceneProps } from './StoryStage';
  * and a low half. Ordinary school multiplication would need four helpers (a·c, a·d, b·c,
  * b·d); Karatsuba gets away with three, so the fourth chair stays empty. The three
  * answers are then slid left by place value (extra zero tiles) and added up in columns.
+ *
+ * An optional 🌳 recursion tree view (toggle above the workshop) shows the same steps as the
+ * tree of jobs: every job splits into three helpers on the way down, and answers are handed
+ * back up and combined.
  */
+
+const VIEW_KEY = 'algoviz.karatsuba.storyView';
+const readView = (): 'workshop' | 'tree' => {
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === 'tree' ? 'tree' : 'workshop';
+  } catch {
+    return 'workshop';
+  }
+};
 
 const HIGH = '#fde68a';
 const LOW = '#bae6fd';
@@ -30,6 +44,15 @@ const Digits: React.FC<{ value: string; tone?: string; zeros?: number; label?: s
 );
 
 export const HelpersWorkshopScene: React.FC<StorySceneProps> = ({ step }) => {
+  const [view, setView] = useState<'workshop' | 'tree'>(() => (typeof window === 'undefined' ? 'workshop' : readView()));
+  const choose = (v: 'workshop' | 'tree') => {
+    setView(v);
+    try {
+      window.localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      // Remembering the view is only a convenience.
+    }
+  };
   const st: any = step.state || {};
   const d = st.karatsubaDetails || {};
   const title: string = step.title || '';
@@ -110,6 +133,32 @@ export const HelpersWorkshopScene: React.FC<StorySceneProps> = ({ step }) => {
       narration={narration}
       status={kind === 'final' ? 'Multiplication done' : `Depth • ${Math.max(0, trail.length - 1)}`}
     >
+      <div className="flex justify-center mb-3">
+        <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5 font-sans text-xs font-semibold" role="radiogroup" aria-label="Picture">
+          {(
+            [
+              ['workshop', '👷 Workshop'],
+              ['tree', '🌳 Recursion tree'],
+            ] as const
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={view === v}
+              data-workshop-view={v}
+              onClick={() => choose(v)}
+              className={`px-3 py-1 rounded-full transition-colors ${view === v ? 'bg-amber-500 text-white' : 'text-stone-600 hover:bg-amber-50'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {view === 'tree' ? (
+        <KaratsubaTreeView num1={String(st.num1 ?? '')} num2={String(st.num2 ?? '')} nodes={st.treeNodes || []} activeId={st.activeNodeId} title={title} isFinal={!!step.isFinal} stepKey={step.stepIndex} />
+      ) : (
       <div className="flex flex-col items-center gap-5 font-sans">
         {trail.length > 1 && (
           <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs text-stone-500">
@@ -209,6 +258,7 @@ export const HelpersWorkshopScene: React.FC<StorySceneProps> = ({ step }) => {
           </div>
         )}
       </div>
+      )}
     </StoryStage>
   );
 };

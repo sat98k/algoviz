@@ -1,14 +1,20 @@
 import React, { useRef } from 'react';
 import { StoryStage, StorySceneProps } from './StoryStage';
 import { useAnimPhases, useHeldValue, useProgress, useTweened } from './useAnimPhases';
+import type { AugmentEntry, FlowSearchState } from '../../algorithms/flowSearch';
 
 /**
  * 🚰 Water pipes story for the three max-flow algorithms.
  *
  * - Pipes are real pipes: thickness = capacity, blue water inside = flow.
- * - Ford-Fulkerson / Edmonds-Karp: a scout droplet finds a route, the narrowest pipe
- *   glows, then a surge of water flows along the route and the pipes fill.
- *   Edmonds-Karp's search spreads out as ripples, nearest tanks first (BFS).
+ * - Ford-Fulkerson / Edmonds-Karp: the search itself is acted out, one look at a time.
+ *   Ford-Fulkerson (DFS): a scout unrolls a string as it walks deeper, peeks into full pipes and
+ *   turns back, and winds the string in at dead ends. The string is the route.
+ *   Edmonds-Karp (BFS): scouts spread out like ripples; each tank gets a ring flag and a trail
+ *   back to the tank that found it. When the city is reached, the trail is pulled tight back to the tower.
+ *   Then the narrowest pipe glows, a surge of water flows along the route and the pipes fill.
+ * - Pipes carrying water have a violet return valve (the reverse edge): a route may open it and
+ *   send water back, shown with "undo" tags and a spinning valve.
  * - Push-Relabel: tanks stand on stilts at their height; water only pours downhill,
  *   and a jack lifts an overflowing tank that has no downhill pipe with room.
  */
@@ -93,8 +99,11 @@ function buildPipes(cap: number[][], pos: Pt[], bow: (u: number, v: number) => n
   return pipes;
 }
 
-/** Point along a route of tanks, following the pipe used for each hop. */
-function pointOnRoute(route: number[], pipes: Pipe[], pos: Pt[], p: number): Pt {
+/**
+ * Point along a route of tanks, following the pipe used for each hop. Hops listed in `viaBack`
+ * ("a-b") travel through the pipe b → a against its direction (water sent back through it).
+ */
+function pointOnRoute(route: number[], pipes: Pipe[], pos: Pt[], p: number, viaBack?: Set<string>): Pt {
   const hops = route.length - 1;
   if (hops <= 0) return pos[route[0]];
   const f = Math.min(hops - 1e-6, Math.max(0, p) * hops);
@@ -102,7 +111,7 @@ function pointOnRoute(route: number[], pipes: Pipe[], pos: Pt[], p: number): Pt 
   const t = f - h;
   const a = route[h];
   const b = route[h + 1];
-  const fwd = pipes.find((pp) => pp.u === a && pp.v === b);
+  const fwd = viaBack?.has(`${a}-${b}`) ? undefined : pipes.find((pp) => pp.u === a && pp.v === b);
   if (fwd) return quad(fwd.p0, fwd.c, fwd.p2, t);
   const back = pipes.find((pp) => pp.u === b && pp.v === a);
   if (back) return quad(back.p0, back.c, back.p2, 1 - t);
@@ -126,8 +135,20 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
   const isPR = algorithmId === 'push-relabel' || !!st.isPushRelabel;
   const phaseName: string = st.phase || '';
   const route: number[] = (st.currentAugmentingPath || []).map(Number);
-  const label = (i: number) => nodes[i]?.label ?? `${i}`;
+  const label = (i: number | string) => nodes[Number(i)]?.label ?? `${i}`;
   const routeText = route.map(label).join(' → ');
+
+  // ── The search (Ford-Fulkerson: DFS with a string; Edmonds-Karp: BFS ripples) ──
+  const search: FlowSearchState | undefined = isPR ? undefined : st.search;
+  const exploring = phaseName === 'bfs_explore' || phaseName === 'dfs_explore';
+  const isDfs = search?.kind === 'dfs';
+  const event = exploring ? search?.event : undefined;
+  const probe = event === 'probe' ? search?.probe : undefined;
+  const pu = probe ? Number(probe.u) : -1;
+  const pv = probe ? Number(probe.v) : -1;
+  const augmentLog: AugmentEntry[] = phaseName === 'augment' ? st.augmentLog || [] : [];
+  /** Hops of the current route that only send water back (they travel through the opposite pipe). */
+  const undoHops = new Set(augmentLog.filter((e) => e.forward === 0).map((e) => `${e.u}-${e.v}`));
 
   // ── Animation phases (strict cause → effect order) ──
   const phases: readonly (readonly [string, number])[] = isPR
@@ -136,7 +157,15 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
       : phaseName === 'relabel'
       ? [['jack', 0], ['lift', 0.35]]
       : [['idle', 0]]
-    : route.length && (phaseName === 'bfs' || phaseName === 'path_found')
+    : probe
+    ? probe.verdict === 'take'
+      ? [['walk', 0], ['arrive', 0.55]]
+      : [['peek', 0], ['blocked', 0.45]]
+    : event === 'backtrack'
+    ? [['rewind', 0], ['back', 0.6]]
+    : event === 'trace'
+    ? [['pull', 0], ['taut', 0.65]]
+    : route.length && phaseName === 'path_found'
     ? [['scout', 0], ['bottleneck', 0.5]]
     : phaseName === 'augment'
     ? [['surge', 0], ['filled', 0.5]]
@@ -146,7 +175,7 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
   const flow = useHeldValue<number[][]>(st.flowMatrix || [], phase !== 'surge' && phase !== 'pour');
   const excessRec = useHeldValue<Record<string, number>>(st.excess || {}, phase !== 'pour');
   const heightRec = useHeldValue<Record<string, number>>(st.heights || {}, phase !== 'jack');
-  const travelling = phase === 'scout' || phase === 'surge' || phase === 'pour';
+  const travelling = ['scout', 'surge', 'pour', 'walk', 'peek', 'rewind', 'pull'].includes(phase);
   const progress = useProgress(travelling, stepMs * 0.45, `${step.stepIndex}-${phase}`);
 
   // ── Layout ──
@@ -262,6 +291,12 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
 
   /** How the current route uses a pipe: forwards (fill it) or backwards (undo water already in it). */
   const hopOf = (p: Pipe): { room: number; backward: boolean } | null => {
+    // While water is sent, the augment log says exactly which pipes fill and which send water back.
+    if (augmentLog.length) {
+      if (augmentLog.some((e) => Number(e.u) === p.v && Number(e.v) === p.u && e.undo > 0)) return { room: 0, backward: true };
+      if (augmentLog.some((e) => Number(e.u) === p.u && Number(e.v) === p.v && e.forward > 0)) return { room: 0, backward: false };
+      return null;
+    }
     for (let i = 0; i < route.length - 1; i++) {
       const a = route[i];
       const b = route[i + 1];
@@ -273,10 +308,14 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
   // Spare room on each hop of the route, before the water is sent.
   const routeHops = route.slice(0, -1).map((a, i) => ({ a, b: route[i + 1], room: residual[a]?.[route[i + 1]] ?? 0 }));
 
-  const visited: string[] = st.bfsVisited || [];
-  const queue: string[] = st.bfsQueue || [];
-  const bfsCurrent: string | undefined =
-    phaseName === 'bfs_explore' && step.highlights?.activeNode !== undefined ? `${step.highlights.activeNode}` : undefined;
+  const visited: string[] = exploring ? search?.visited ?? [] : [];
+  const queue: string[] = search?.frontier ?? [];
+  const deadEnds: string[] = exploring ? search?.deadEnds ?? [] : [];
+  /** Where the scout stands (DFS: top of the stack; BFS: the tank taking its turn). */
+  const bfsCurrent: string | undefined = exploring ? search?.current : undefined;
+  /** DFS: the string laid from the tower, as a route of tanks (the stack). */
+  const stringRoute = exploring && isDfs ? queue.map(Number) : [];
+  const ringOf = (i: number) => search?.depth?.[`${i}`];
   const prFrom = st.currentVertex !== undefined ? Number(st.currentVertex) : -1;
   const prTo = st.targetVertex !== undefined ? Number(st.targetVertex) : -1;
 
@@ -285,6 +324,63 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
   const delivered = isPR ? excessRec[`${t}`] ?? 0 : (flow[s] || []).reduce((a, f) => a + Math.max(0, f), 0);
 
   // ── Narration ──
+  /** What the scout is doing on a search step, in plain words. */
+  const searchNarration = (): string => {
+    const round = search?.round ?? 0;
+    if (!search || round === 0)
+      return `Water waits in the tower ${label(s)}. Every pipe is empty. Let's push as much water as we can to the city ${label(t)}.`;
+    if (event === 'start') {
+      if (isDfs)
+        return round === 1
+          ? `A scout ties a ball of string to the tower ${label(s)} and sets off. At every tank it takes the first pipe with room and keeps going deeper.`
+          : `The scout starts again from the tower ${label(s)} with a fresh ball of string. Some pipes are full now, but pipes with water have return valves it may use.`;
+      return round === 1
+        ? `Scouts start at the tower ${label(s)}. They spread out like ripples: first every tank one pipe away, then two pipes away, and so on.`
+        : `New ripples start from the tower ${label(s)}. Some pipes are full now, but pipes with water have return valves the scouts may use.`;
+    }
+    if (event === 'dequeue') {
+      const u = Number(bfsCurrent);
+      return u === s
+        ? `The tower ${label(s)} sends scouts down every pipe that still has room.`
+        : `${label(u)} (ring ${ringOf(u)}) was reached earliest, so it takes its turn: scouts look down every pipe out of ${label(u)}.`;
+    }
+    if (event === 'backtrack') {
+      const from = label(search.backtrackFrom ?? '');
+      return `Every way out of ${from} is blocked: a dead end! The scout winds its string back to ${label(Number(bfsCurrent))} and tries the next pipe there.`;
+    }
+    if (event === 'trace') {
+      const path = search.trace ?? [];
+      return `A scout reached the city. Follow its trail back: ${path.map(label).join(' ← ')}. Pull the thread tight: that is a route with the fewest pipes.`;
+    }
+    if (event === 'stuck')
+      return isDfs
+        ? `The scout has wound its string all the way back to the tower. No route to the city has room left.`
+        : `The ripples die out before reaching the city. No route to it has room left.`;
+    if (probe) {
+      const hop = `${label(pu)} to ${label(pv)}`;
+      const valve =
+        probe.undoRoom > 0 && probe.forwardRoom === 0
+          ? `There is no free pipe from ${hop}, but the pipe from ${label(pv)} to ${label(pu)} carries water, so its return valve can send ${probe.undoRoom} back. That counts as room!`
+          : '';
+      if (probe.verdict === 'full')
+        return phase === 'peek'
+          ? `The scout peeks into the pipe from ${hop}…`
+          : `The pipe from ${hop} is full, so nothing more fits that way. ${isDfs ? 'The scout tries the next pipe.' : 'That way is closed.'}`;
+      if (probe.verdict === 'seen')
+        return isDfs
+          ? `The pipe from ${hop} has room, but the scout has already been at ${label(pv)} on this search, so it does not go there again.`
+          : `The pipe from ${hop} has room, but ${label(pv)} already has a scout from a closer ring, so this one turns back.`;
+      if (pv === t)
+        return isDfs
+          ? `${valve ? valve + ' ' : ''}The scout walks on from ${label(pu)} and reaches the city ${label(t)}! The string now marks the whole route.`
+          : `${valve ? valve + ' ' : ''}A scout runs from ${label(pu)} and reaches the city ${label(t)} in ring ${ringOf(pv)}. No route can use fewer pipes.`;
+      return isDfs
+        ? `${valve || `The pipe from ${hop} has room.`} The scout walks on to ${label(pv)}, unrolling its string, and keeps going deeper from there.`
+        : `${valve || `The pipe from ${hop} has room.`} A new scout runs to ${label(pv)} and plants a flag: ring ${ringOf(pv)}. It remembers that it came from ${label(pu)}.`;
+    }
+    return step.title;
+  };
+
   const narration = (() => {
     if (step.isFinal || phaseName === 'complete') {
       return isPR
@@ -303,20 +399,22 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
         return `${label(prFrom)} is overflowing, but no pipe with room goes downhill from it. A jack lifts ${label(prFrom)} up to level ${levelOf(prFrom)} so the water can roll down again.`;
       return step.title;
     }
-    if (phaseName === 'bfs_explore') {
-      return step.stepIndex === 0
-        ? `Water waits in the tower ${label(s)}. Every pipe is empty. Let's push as much water as we can to the city ${label(t)}.`
-        : `A scout spreads out like ripples on a pond, checking the closest tanks first. Now it looks around ${label(Number(bfsCurrent))} for pipes that still have room.`;
-    }
+    if (exploring) return searchNarration();
     if (route.length && phaseName !== 'augment') {
       return phase === 'scout'
         ? `A scout droplet looks for a route with spare room: ${routeText}.`
         : `On the route ${routeText}, the narrowest pipe has room for only ${bottleneck} more litres, so that's all this route can add.`;
     }
     if (phaseName === 'augment') {
+      const undone = augmentLog.filter((e) => e.undo > 0);
+      const valves = undone.length
+        ? ` At ${undone.map((e) => `${label(e.u)} → ${label(e.v)}`).join(' and ')} a return valve opens: ${undone
+            .map((e) => `${e.undo} litres go back through the pipe ${label(e.v)} → ${label(e.u)}`)
+            .join(', and ')}, so that water takes a new way instead.`
+        : '';
       return phase === 'surge'
-        ? `Water rushes along ${routeText}…`
-        : `The pipes on ${routeText} fill up. The city now receives ${st.totalMaxFlow} litres per second.`;
+        ? `Water rushes along ${routeText}…${valves}`
+        : `The pipes on ${routeText} fill up. The city now receives ${st.totalMaxFlow} litres per second.${undone.length ? ' Pipes with water get return valves too.' : ''}`;
     }
     return `Water waits in the tower ${label(s)}. Every pipe is empty. Let's push as much water as we can to the city ${label(t)}.`;
   })();
@@ -340,9 +438,16 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
     badge?: boolean;
   }[] = [];
   const isPouring = (p: Pipe) => isPR && phaseName === 'push' && ((p.u === prFrom && p.v === prTo) || (p.u === prTo && p.v === prFrom));
-  const isLit = (p: Pipe) => onRoute(p.u, p.v) && (phase === 'scout' || phase === 'bottleneck' || phase === 'surge');
+  const isLit = (p: Pipe) =>
+    (onRoute(p.u, p.v) && (phase === 'scout' || phase === 'bottleneck' || phase === 'surge')) ||
+    (!!probe && probe.verdict === 'take' && ((p.u === pu && p.v === pv && probe.forwardRoom > 0) || (p.u === pv && p.v === pu && probe.undoRoom > 0)));
   /** Empty pipes are drawn first, then pipes with water, and the pipe in action on top. */
   const pipeLayer = (p: Pipe) => (isPouring(p) || isBottleneckPipe(p) || isLit(p) ? 2 : (flow[p.u]?.[p.v] ?? 0) > 0 ? 1 : 0);
+
+  /** The pipe's return valve is in use: the search is using its reverse edge, or water is being sent back through it. */
+  const valveOpen = (p: Pipe) =>
+    (!!probe && probe.verdict === 'take' && probe.undoRoom > 0 && p.u === pv && p.v === pu) ||
+    (phase === 'surge' && augmentLog.some((e) => Number(e.u) === p.v && Number(e.v) === p.u && e.undo > 0));
 
   const renderPipe = (p: Pipe) => {
     const casing = casingOf(p);
@@ -369,9 +474,23 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
         if (f <= 0 && !pouring) return null;
         return { text: full ? `full ${f}/${p.cap}` : `${f} / ${p.cap}`, tone: full ? 'full' : pouring ? 'surge' : 'plain' };
       }
+      if (probe) {
+        const fwdPipe = p.u === pu && p.v === pv;
+        const backPipe = p.u === pv && p.v === pu;
+        if (probe.verdict === 'take') {
+          if (fwdPipe && probe.forwardRoom > 0) return { text: `room +${probe.forwardRoom}`, tone: 'room' };
+          if (backPipe && probe.undoRoom > 0) return { text: `send back ${probe.undoRoom}`, tone: 'undo' };
+        } else if (phase === 'blocked' && (fwdPipe || (backPipe && !(cap[pu]?.[pv] > 0)))) {
+          if (probe.verdict === 'full') return { text: `full ${f}/${p.cap}`, tone: 'full' };
+          return { text: isDfs ? 'been there' : 'has a scout', tone: 'plain' };
+        }
+      }
       if (hop && phase === 'bottleneck') return { text: `room +${hop.room}`, tone: 'room' };
-      if (hop && phase === 'surge' && bottleneck !== undefined)
-        return hop.backward ? { text: `undo −${bottleneck}`, tone: 'undo' } : { text: `+${bottleneck}`, tone: 'surge' };
+      if (hop && phase === 'surge' && bottleneck !== undefined) {
+        const sentBack = augmentLog.find((e) => Number(e.u) === p.v && Number(e.v) === p.u)?.undo;
+        const sentOn = augmentLog.find((e) => Number(e.u) === p.u && Number(e.v) === p.v)?.forward;
+        return hop.backward ? { text: `undo −${sentBack ?? bottleneck}`, tone: 'undo' } : { text: `+${sentOn ?? bottleneck}`, tone: 'surge' };
+      }
       return { text: full ? `full ${f}/${p.cap}` : `${f} / ${p.cap}`, tone: full ? 'full' : 'plain' };
     })();
     const tagStyle = {
@@ -421,6 +540,16 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
             strokeDasharray="8 10"
             className="animate-flow-dash"
           />
+        )}
+        {/* Return valve: a pipe carrying water can send it back (the reverse edge). It spins while that happens. */}
+        {!isPR && f > 0 && (
+          <g transform={`translate(${quad(p.p0, p.c, p.p2, 0.8).x}, ${quad(p.p0, p.c, p.p2, 0.8).y})`} data-valve={`${p.u}-${p.v}`} data-valve-open={valveOpen(p) || undefined}>
+            {valveOpen(p) && <circle r="12" fill="#ede9fe" stroke="#8b5cf6" strokeWidth="1.5" opacity="0.9" />}
+            <g className={valveOpen(p) ? 'animate-spin' : undefined} style={{ transformBox: 'fill-box', transformOrigin: 'center' }}>
+              <circle r="6.5" fill="#f5f3ff" stroke="#7c3aed" strokeWidth="2" />
+              <path d="M -6 0 H 6 M 0 -6 V 6" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" />
+            </g>
+          </g>
         )}
         {/* A tagged pipe shows its arrow inside the tag; an untagged two-way pipe shows both ways. */}
         {!tag && chevron(p.twoWay ? 0.4 : 0.48)}
@@ -639,6 +768,48 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
     );
   };
 
+  /**
+   * Search marks on a tank: Edmonds-Karp plants a ring flag on every tank a scout has reached;
+   * Ford-Fulkerson chalks a cross on dead ends.
+   */
+  const renderSearchMarks = (i: number) => {
+    const p = pos[i];
+    const id = `${i}`;
+    if (!exploring || i === s) return null;
+    if (isDfs) {
+      if (!deadEnds.includes(id)) return null;
+      // The cross appears once the scout has turned back from this tank.
+      if (event === 'backtrack' && search?.backtrackFrom === id && phase === 'rewind') return null;
+      return (
+        <g key={`mark-${i}`} transform={`translate(${p.x}, ${p.y})`} data-dead-end={id}>
+          <g className="animate-story-pop">
+            <path d="M -13 -13 L 13 13 M 13 -13 L -13 13" stroke="#b91c1c" strokeWidth="4" strokeLinecap="round" opacity="0.75" />
+            <rect x="-30" y="27" width="60" height="16" rx="4" fill="#fef2f2" stroke="#fca5a5" />
+            <text textAnchor="middle" y="39" fontSize="10.5" fontWeight="800" fill="#991b1b">
+              dead end
+            </text>
+          </g>
+        </g>
+      );
+    }
+    if (!visited.includes(id)) return null;
+    // A new flag goes up only when its scout arrives.
+    if (probe?.verdict === 'take' && pv === i && phase === 'walk') return null;
+    const ring = ringOf(i);
+    const fresh = probe?.verdict === 'take' && pv === i;
+    return (
+      <g key={`mark-${i}`} transform={`translate(${p.x + (i === t ? 36 : 18)}, ${p.y + (i === t ? 8 : -16)})`} data-ring-flag={id} data-ring={ring}>
+        <g className={fresh ? 'animate-story-pop' : undefined}>
+          <line x1="0" y1="0" x2="0" y2="-30" stroke="#57534e" strokeWidth="2" />
+          <path d="M 0 -30 L 44 -30 L 38 -22 L 44 -14 L 0 -14 Z" fill={fresh ? '#0284c7' : '#e0f2fe'} stroke="#0369a1" strokeWidth="1.2" />
+          <text x="19" y="-18.5" textAnchor="middle" fontSize="10" fontWeight="800" fill={fresh ? '#ffffff' : '#075985'}>
+            ring {ring}
+          </text>
+        </g>
+      </g>
+    );
+  };
+
   /** Stilts (and the jack while lifting) are drawn behind the pipes, so they never cut across the water. */
   const renderStilts = (i: number) => {
     const p = pos[i];
@@ -732,8 +903,88 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
     for (let k = 0; k < count; k++) {
       const pk = Math.max(0, Math.min(1, progress * 1.3 - k * 0.1));
       if (pk >= 1) continue; // arrived: it has joined the tank
-      travellers.push(<Droplet key={`d-${k}`} at={pointOnRoute(route, pipes, pos, pk)} scale={phase === 'scout' ? 1.15 : 0.85} color={phase === 'scout' ? '#0369a1' : WATER_DEEP} />);
+      travellers.push(
+        <Droplet
+          key={`d-${k}`}
+          at={pointOnRoute(route, pipes, pos, pk, phase === 'surge' ? undoHops : undefined)}
+          scale={phase === 'scout' ? 1.15 : 0.85}
+          color={phase === 'scout' ? '#0369a1' : WATER_DEEP}
+        />,
+      );
     }
+  }
+
+  // ── The search, acted out ──
+  /** Hop a → b of a search walks through the opposite pipe when it only uses that pipe's return valve. */
+  const searchBack = new Set<string>();
+  if (probe && probe.forwardRoom === 0 && probe.undoRoom > 0) searchBack.add(`${pu}-${pv}`);
+  /** A line along a route of tanks, from its start to fraction `upTo` of the way. */
+  const lineAlong = (r: number[], upTo = 1) => {
+    if (r.length < 2 || upTo <= 0) return '';
+    const samples = Math.max(2, Math.ceil(24 * (r.length - 1) * upTo));
+    return Array.from({ length: samples + 1 }, (_, k) => {
+      const q = pointOnRoute(r, pipes, pos, (k / samples) * Math.min(1, upTo), searchBack);
+      return `${k === 0 ? 'M' : 'L'} ${q.x.toFixed(1)} ${q.y.toFixed(1)}`;
+    }).join(' ');
+  };
+  const TWINE = '#c2410c';
+  const searchLayer: React.ReactNode[] = [];
+  let scoutAt: Pt | null = null;
+  if (exploring && search) {
+    const peekBack = (p0: number) => (p0 < 0.5 ? p0 * 0.7 : (1 - p0) * 0.7);
+    if (isDfs) {
+      // The string runs along the stack. While walking, its last stretch unrolls behind the scout;
+      // while rewinding, the stretch to the dead end winds back in.
+      let r = stringRoute;
+      let upTo = 1;
+      if (probe?.verdict === 'take' && phase === 'walk') upTo = (r.length - 2 + progress) / Math.max(1, r.length - 1);
+      if (event === 'backtrack' && search.backtrackFrom !== undefined && phase === 'rewind') {
+        r = [...stringRoute, Number(search.backtrackFrom)];
+        upTo = (r.length - 2 + (1 - progress)) / Math.max(1, r.length - 1);
+      }
+      if (r.length > 1) {
+        const d = lineAlong(r, upTo);
+        searchLayer.push(
+          <g key="string" data-scout-string={r.map(label).join('')}>
+            <path d={d} fill="none" stroke="#fffbeb" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" opacity="0.95" />
+            <path d={d} fill="none" stroke={TWINE} strokeWidth="4.5" strokeDasharray="7 2" strokeLinecap="round" strokeLinejoin="round" />
+          </g>,
+        );
+        scoutAt = pointOnRoute(r, pipes, pos, upTo, searchBack);
+      } else scoutAt = pos[r[0] ?? s];
+      if (probe && probe.verdict !== 'take') scoutAt = pointOnRoute([pu, pv], pipes, pos, peekBack(progress), searchBack);
+    } else {
+      // Every tank reached keeps a trail back to the tank that found it.
+      Object.entries(search.parent).forEach(([v, u]) => {
+        const fresh = probe?.verdict === 'take' && Number(v) === pv;
+        const d = lineAlong([Number(u), Number(v)], fresh && phase === 'walk' ? progress : 1);
+        if (d)
+          searchLayer.push(
+            <path key={`trail-${v}`} d={d} fill="none" stroke="#0284c7" strokeWidth="3.5" strokeDasharray="2 6" strokeLinecap="round" opacity="0.85" data-trail={`${u}-${v}`} />,
+          );
+      });
+      if (probe) scoutAt = pointOnRoute([pu, pv], pipes, pos, probe.verdict === 'take' ? progress : peekBack(progress), searchBack);
+      if (event === 'trace' && search.trace) {
+        // The thread is pulled tight from the city back to the tower.
+        // The trace runs from the city back to the tower.
+        const back = search.trace.map(Number);
+        const d = lineAlong(back, phase === 'pull' ? progress : 1);
+        if (d)
+          searchLayer.push(
+            <g key="thread" data-trace-thread={back.map(label).join('')}>
+              <path d={d} fill="none" stroke="#fffbeb" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+              <path d={d} fill="none" stroke={TWINE} strokeWidth="4.5" strokeDasharray="7 2" strokeLinecap="round" strokeLinejoin="round" />
+            </g>,
+          );
+        scoutAt = pointOnRoute(back, pipes, pos, phase === 'pull' ? progress : 1);
+      }
+    }
+  }
+  if (scoutAt && search && search.round > 0) {
+    // A scout standing at a tank waits just above it, so the tank's name stays readable.
+    const resting = !['walk', 'peek', 'rewind', 'pull'].includes(phase);
+    const at = resting ? { x: scoutAt.x, y: scoutAt.y - 34 } : scoutAt;
+    travellers.push(<Droplet key="scout" at={at} scale={1.15} color="#0369a1" />);
   }
   if (isPR && phase === 'pour' && prFrom >= 0 && prTo >= 0) {
     for (let k = 0; k < 3; k++) {
@@ -746,7 +997,7 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
   return (
     <StoryStage
       emoji="🚰"
-      title={isPR ? 'Water Tanks on Stilts' : algorithmId === 'edmonds-karp' ? 'Water Pipes & Ripple Scouts' : 'Water Pipes to the City'}
+      title={isPR ? 'Water Tanks on Stilts' : algorithmId === 'edmonds-karp' ? 'Water Pipes & Ripple Scouts' : 'Water Pipes & the String Scout'}
       subtitle={
         isPR
           ? 'Water only rolls downhill. Overflowing tanks get lifted higher.'
@@ -770,7 +1021,9 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
         {isPR && nodes.map((_, i) => renderStilts(i))}
         {/* Empty pipes first, then pipes with water, and the pipe in action on top. */}
         {[...pipes].sort((a, b) => pipeLayer(a) - pipeLayer(b)).map(renderPipe)}
+        {searchLayer}
         {nodes.map((_, i) => (isPR ? renderTank(i) : renderJunction(i)))}
+        {!isPR && nodes.map((_, i) => renderSearchMarks(i))}
         {renderTags()}
         {travellers}
       </svg>
@@ -805,8 +1058,8 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
         </div>
       )}
 
-      {algorithmId === 'edmonds-karp' && phaseName === 'bfs_explore' && (
-        <div className="flex flex-wrap items-center gap-2 mt-3 font-sans text-xs text-stone-600">
+      {exploring && search && !isDfs && search.round > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mt-3 font-sans text-xs text-stone-600" data-scout-queue>
           <span className="font-semibold uppercase tracking-wider text-stone-500">Scouts waiting in line:</span>
           {queue.length === 0 && <span className="italic">nobody</span>}
           {queue.map((q, i) => (
@@ -815,8 +1068,27 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-50 border border-sky-300 text-sky-900 font-bold animate-story-pop"
             >
               💧 {label(Number(q))}
+              <span className="font-semibold text-sky-700">· ring {ringOf(Number(q))}</span>
             </span>
           ))}
+          {queue.length > 1 && <span className="text-stone-400">(first in line goes next)</span>}
+        </div>
+      )}
+      {exploring && search && isDfs && search.round > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 mt-3 font-sans text-xs text-stone-600" data-scout-string-summary>
+          <span className="font-semibold uppercase tracking-wider text-stone-500 mr-1">🧶 String laid:</span>
+          {stringRoute.length === 0 && <span className="italic">wound back in</span>}
+          {stringRoute.map((v, i) => (
+            <React.Fragment key={`str-${v}-${i}`}>
+              {i > 0 && <span className="text-orange-800 font-bold">→</span>}
+              <span className="px-2 py-0.5 rounded-full bg-orange-50 border border-orange-300 text-orange-900 font-bold">{label(v)}</span>
+            </React.Fragment>
+          ))}
+          {deadEnds.length > 0 && (
+            <span className="ml-3">
+              Dead ends: <b className="text-red-800">{deadEnds.map((d) => label(Number(d))).join(', ')}</b>
+            </span>
+          )}
         </div>
       )}
     </StoryStage>

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Eye, FastForward, Lightbulb, RotateCcw } from 'lucide-react';
+import { Eye, FastForward, Lightbulb, Pause, Play, RotateCcw } from 'lucide-react';
 import { cardDuration, endsSentence, fadeFor, playChirp, prefersReducedMotion, tickMs, useOwlPrefs, wordDuration } from './owlVoice';
 import { OwlSoundToggle, OwlSpeedControl } from './OwlControls';
 
@@ -89,7 +89,8 @@ const QUIPS = [
 /**
  * The learn view's owl: it tells the problem while the words flow in (fading out of a blur),
  * bobbing and chirping as it talks, then the big-picture stages pop in one by one. "Show
- * everything" reveals it all at once; "Replay" tells it again; click the owl for a hoot.
+ * everything" reveals it all at once; "Pause" stops the owl mid-sentence and "Play" carries on
+ * from there; "Replay" tells it again; click the owl for a hoot.
  */
 export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, problem, dpBrief }) => {
   const units = useMemo(
@@ -121,6 +122,7 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
 
   const [shown, setShown] = useState(0);
   const [skipped, setSkipped] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [runId, setRunId] = useState(0);
   const [notes, setNotes] = useState<{ id: number; dx: number; ch: string }[]>([]);
   const [hopping, setHopping] = useState(false);
@@ -130,6 +132,9 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
   // Read every frame by the reveal clock, so changing speed never restarts or jumps.
   const speedRef = useRef(speed);
   speedRef.current = speed;
+  // Read every frame too: while paused the clock stands still, and Play carries on from the same word.
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
   const emitNote = useCallback(() => {
     const id = ++noteId.current;
@@ -152,7 +157,7 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
     let last = 0;
     let chirpIndex = 0;
     const tick = (now: number) => {
-      elapsed += tickMs(previous, now) * speedRef.current;
+      if (!pausedRef.current) elapsed += tickMs(previous, now) * speedRef.current;
       previous = now;
       let n = last;
       while (n < total && times[n] <= elapsed) n++;
@@ -171,7 +176,7 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
   }, [runId, skipped, total, times, chirps, emitNote]);
 
   const done = shown >= total;
-  const talking = !done;
+  const talking = !done && !paused;
   const on = (index: number) => shown > index;
 
   const hoot = () => {
@@ -232,12 +237,26 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
             <div className="flex flex-wrap items-center gap-1.5">
               <OwlSpeedControl />
               <OwlSoundToggle />
+              {!done && (
+                <button
+                  type="button"
+                  data-owl-pause={paused ? 'paused' : 'playing'}
+                  onClick={() => setPaused((v) => !v)}
+                  title={paused ? 'Carry on reading' : 'Pause the owl'}
+                  aria-pressed={paused}
+                  className={`${pillButton} ${paused ? 'border-chalk-100 bg-chalk-100 text-obsidian-950 hover:bg-chalk-300' : 'border-amber bg-amber text-obsidian-950 hover:bg-amber-glow'}`}
+                >
+                  {paused ? <Play className="w-3.5 h-3.5 fill-current" aria-hidden /> : <Pause className="w-3.5 h-3.5 fill-current" aria-hidden />}
+                  {paused ? 'Play' : 'Pause'}
+                </button>
+              )}
               {done ? (
                 <button
                   type="button"
                   data-owl-replay
                   onClick={() => {
                     setSkipped(false);
+                    setPaused(false);
                     setRunId((r) => r + 1);
                   }}
                   className={`${pillButton} border-hairline text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-850`}
@@ -249,8 +268,11 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
                 <button
                   type="button"
                   data-owl-skip
-                  onClick={() => setSkipped(true)}
-                  className={`${pillButton} border-amber bg-amber text-obsidian-950 hover:bg-amber-glow`}
+                  onClick={() => {
+                    setPaused(false);
+                    setSkipped(true);
+                  }}
+                  className={`${pillButton} border-hairline text-chalk-300 hover:text-chalk-100 hover:bg-obsidian-850`}
                 >
                   <FastForward className="w-3.5 h-3.5" aria-hidden />
                   Show everything

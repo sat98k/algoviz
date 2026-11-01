@@ -477,16 +477,16 @@ export const OWL_BRIEFINGS: Record<string, OwlBriefing> = {
     example: 'Two separate routes: one through pipes of size 5 and 3, one through pipes of size 4 and 6. The first carries at most 3, the second at most 4, so together 7.',
     overview: [
       { title: 'Empty pipes', text: 'Start with no water flowing anywhere.' },
-      { title: 'Find a route with room', text: 'A scout droplet looks for any route from the tower to the city where every pipe still has spare room: an **augmenting path**. (This page finds it with a ripple search, **BFS**.)' },
+      { title: 'Find a route with room', text: 'A scout unrolls a ball of string as it walks from the tower, always taking the first pipe with spare room and going deeper (**DFS**, depth-first search). At a dead end it winds the string back and tries the next pipe. When it reaches the city, the string marks the route: an **augmenting path**.' },
       { title: 'The narrowest pipe', text: 'A route can only carry as much as its narrowest pipe allows: its bottleneck.' },
-      { title: 'Send the water', text: 'Push that much water along the route. Also note that this water could be sent back later: the "room left" picture, including these backward pipes, is the **residual graph**.' },
+      { title: 'Send the water', text: 'Push that much water along the route. Also note that this water could be sent back later: every pipe with water gets a return valve (a reverse edge). The "room left" picture, including these reverse edges, is the **residual graph**.' },
       { title: 'Until no route has room', text: 'Repeat until no route to the city has spare room. The total now flowing is the maximum.' },
     ],
     insight:
       'The backward pipes mean an early, unlucky choice is never final: a later route can push water back and send it a better way. When no route has room left, the full pipes form a wall that no extra water can pass.',
     watch: [
-      'The scout\'s route, and the narrowest pipe on it.',
-      'Purple "undo" tags when a route sends water backwards through a pipe.',
+      'The scout\'s string: it grows as the scout goes deeper and winds back at dead ends.',
+      'Purple "undo" tags and spinning return valves when a route sends water back through a pipe.',
       'The litres per second reaching the city growing with each route.',
     ],
   },
@@ -497,15 +497,16 @@ export const OWL_BRIEFINGS: Record<string, OwlBriefing> = {
     goal: 'Find the **maximum flow** from the tower to the city, always using a route with the fewest pipes.',
     example: 'If one route has 2 pipes and another has 5, the ripples reach the city along the 2-pipe route first, so that route is used first.',
     overview: [
-      { title: 'Ripple search', text: 'From the tower, look at every tank one pipe away, then two pipes away, and so on, using only pipes with spare room. A queue keeps the tanks waiting to be explored, closest first.' },
-      { title: 'Shortest route found', text: 'When the ripples reach the city, follow the trail back: that route (an **augmenting path**) has the fewest pipes. Its narrowest pipe is the bottleneck.' },
-      { title: 'Send the water', text: 'Push the bottleneck amount along the route, and add the same amount of backward room so it can be undone later.' },
+      { title: 'Ripple search', text: 'From the tower, look at every tank one pipe away, then two pipes away, and so on, using only pipes with spare room. A queue keeps the tanks waiting to be explored, closest first. Each tank gets a ring number and a trail back to the tank that found it.' },
+      { title: 'Shortest route found', text: 'When the ripples reach the city, follow the trail back to the tower: that route (an **augmenting path**) has the fewest pipes. Its narrowest pipe is the bottleneck.' },
+      { title: 'Send the water', text: 'Push the bottleneck amount along the route, and add the same amount of reverse room (a return valve) so it can be sent back later.' },
       { title: 'Repeat', text: 'Run the ripple search again. When the ripples can no longer reach the city, the flow is the maximum.' },
     ],
     insight:
       'Always taking a route with the fewest pipes guarantees the algorithm finishes after a limited number of routes, whatever the pipe sizes. It is Ford-Fulkerson with a careful choice of route.',
     watch: [
-      'The ripple rings spreading from the tower, and the queue of waiting tanks.',
+      'The ripple rings spreading from the tower, the ring numbers, and the queue of waiting tanks.',
+      'The trail pulled tight from the city back to the tower.',
       'Each shortest route lighting up, and its narrowest pipe.',
     ],
   },

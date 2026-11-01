@@ -37,8 +37,8 @@ export interface StorySceneEntry {
  * Fractional Knapsack keeps its own built-in toggle and is deliberately not listed.
  */
 export const STORY_SCENES: Record<string, StorySceneEntry> = {
-  'ford-fulkerson': { component: WaterPipesScene, hint: 'Water pipes: scout droplets and the narrowest pipe' },
-  'edmonds-karp': { component: WaterPipesScene, hint: 'Water pipes: ripple scouts check the nearest tanks first' },
+  'ford-fulkerson': { component: WaterPipesScene, hint: 'Water pipes: a scout with a ball of string goes deep first' },
+  'edmonds-karp': { component: WaterPipesScene, hint: 'Water pipes: ripple scouts check the nearest tanks first, then follow the trail back' },
   'push-relabel': { component: WaterPipesScene, hint: 'Tanks on stilts: water only rolls downhill' },
   'naive-string-match': { component: StencilScene, hint: 'A word stencil sliding along a sentence' },
   kmp: { component: StencilScene, hint: 'A smart stencil with jump-back notes' },

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { semColor } from '../../styles/semantics';
 import { AlgorithmStep } from '../../types/algorithm';
 import { GraphNode, GraphEdge } from '../../algorithms/floydWarshall';
+import { FlowNetworkGraph } from './FlowNetworkGraph';
 
 interface GraphVisualizerProps {
   step: AlgorithmStep;
@@ -36,7 +37,8 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
 
   // Default to dual split view for Bellman-Ford, Floyd-Warshall, Push-Relabel, and Ford-Fulkerson / Edmonds-Karp
   const [activeTab, setActiveTab] = useState<ViewTab>(
-    isBellmanFord || isFloyd || isPushRelabel || isFordFulkerson ? 'both' : 'graph'
+    // Ford-Fulkerson / Edmonds-Karp open on the graph: their search is the part to watch.
+    isFordFulkerson && state.search !== undefined ? 'graph' : isBellmanFord || isFloyd || isPushRelabel || isFordFulkerson ? 'both' : 'graph'
   );
   const [flowMatrixMode, setFlowMatrixMode] = useState<'residual' | 'flow'>('residual');
 
@@ -79,8 +81,14 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
     return null;
   };
 
+  // Ford-Fulkerson / Edmonds-Karp draw the residual graph and their search with their own component.
+  const hasFlowSearch = isFordFulkerson && state.search !== undefined;
+
   // Render SVG Graph
-  const renderGraphSvg = (compact: boolean = false) => (
+  const renderGraphSvg = (compact: boolean = false) =>
+    hasFlowSearch ? (
+      <FlowNetworkGraph step={step} compact={compact} />
+    ) : (
     <svg
       viewBox={`0 0 ${svgWidth} ${svgHeight}`}
       className={`w-full ${compact ? 'max-w-xl h-[330px] sm:h-[360px]' : 'max-w-2xl h-[360px]'} select-none transition-all`}
@@ -549,7 +557,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
         );
       })}
     </svg>
-  );
+    );
 
   // Render Bellman-Ford Distance & Predecessor Table
   const renderBellmanFordTable = () => (
@@ -855,11 +863,15 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                       const isSubpathKJ = isFloyd && state.k === r && state.j === c;
                       const isDirectIJ = isFloyd && state.i === r && state.j === c;
                       const augRel = getAugmentingRelation(r, c);
+                      const probe = isFordFulkerson ? state.search?.probe : undefined;
+                      const isProbed = !!probe && (state.phase === 'bfs_explore' || state.phase === 'dfs_explore') && probe.u === `${r}` && probe.v === `${c}`;
 
                       let cellStyle = 'text-chalk-300';
                       let cellContent: React.ReactNode = val === null ? '∞' : val;
 
-                      if (isUpdated) {
+                      if (isProbed) {
+                        cellStyle = 'bg-sem-current/15 text-sem-current-ink font-extrabold border-2 border-sem-current';
+                      } else if (isUpdated) {
                         cellStyle = 'bg-sem-match/20 text-sem-match-ink font-extrabold border-2 border-sem-match shadow-sm scale-105';
                       } else if (isDirectIJ) {
                         cellStyle = 'bg-sem-current/15 text-sem-current-ink font-bold border border-sem-current';
@@ -903,7 +915,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
                             cellContent = <span className="text-chalk-600">0</span>;
                           } else {
                             cellContent = (
-                              <span className={augRel ? 'font-extrabold text-acid-300' : 'text-chalk-200'}>
+                              <span className={isProbed ? 'font-extrabold' : augRel ? 'font-extrabold text-acid-300' : 'text-chalk-200'}>
                                 {resCap}
                               </span>
                             );
@@ -1092,7 +1104,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-hairline/60">
               <span className="text-[11px] font-mono uppercase tracking-wider text-chalk-300 font-bold flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-amber inline-block"></span>
-                GRAPH TOPOLOGY
+                {hasFlowSearch ? (state.search.kind === 'dfs' ? 'RESIDUAL GRAPH • DFS SEARCH' : 'RESIDUAL GRAPH • BFS SEARCH') : 'GRAPH TOPOLOGY'}
               </span>
               <span className="text-[11px] font-mono text-chalk-500">
                 {nodes.length} Vertices • {edges.length} Edges
@@ -1156,7 +1168,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
 
       {/* High-Contrast Legend */}
       <div className="flex flex-wrap items-center justify-center gap-5 mt-5 text-xs font-mono text-chalk-400">
-        {!isGraphColoring && (
+        {!isGraphColoring && !hasFlowSearch && (
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 bg-amber border border-amber-glow"></span>
             <span>Active Edge / Relaxation</span>
@@ -1192,10 +1204,16 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ step }) => {
             <span>Vertex Cover C</span>
           </div>
         )}
-        {isFordFulkerson && (
+        {isFordFulkerson && !hasFlowSearch && (
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 bg-acid-500 border border-acid-400"></span>
             <span>Augmented Flow</span>
+          </div>
+        )}
+        {hasFlowSearch && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 border-2 border-sem-current bg-sem-current/15"></span>
+            <span>Edge the search is looking at (✓ room / ✗ full / • already {state.search.kind === 'dfs' ? 'visited' : 'found'})</span>
           </div>
         )}
         {isGraphColoring && (

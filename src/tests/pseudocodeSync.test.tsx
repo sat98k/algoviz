@@ -33,7 +33,13 @@ describe('Edmonds-Karp pseudocode lines', () => {
   it('each step highlights the operation it performs', () => {
     const byTitle = (re: RegExp) => steps.filter((s) => re.test(s.title));
     expect(codeOf('edmonds-karp', steps[0])).toMatch(/initialize flow = 0/);
-    for (const s of byTitle(/^BFS Frontier/)) expect(codeOf('edmonds-karp', s)).toMatch(/BFS_ShortestPath/);
+    for (const s of byTitle(/^BFS Search \d+: Queue/)) expect(codeOf('edmonds-karp', s)).toMatch(/BFS_ShortestPath[\s\S]*queue = \[s\]/);
+    for (const s of byTitle(/^BFS Frontier/)) expect(codeOf('edmonds-karp', s)).toMatch(/u = dequeue\(\)/);
+    for (const s of byTitle(/^BFS: Discover/)) expect(codeOf('edmonds-karp', s)).toMatch(/parent\[v\] = u; ring\[v\] = ring\[u\] \+ 1; enqueue\(v\)/);
+    for (const s of byTitle(/^BFS: (Pipe .* Is Full|.* Already Found)/)) expect(codeOf('edmonds-karp', s)).toMatch(/residual\[u\]\[v\] > 0 that is not found yet/);
+    for (const s of byTitle(/^BFS: Trace Parents/)) expect(codeOf('edmonds-karp', s)).toMatch(/follow parent\[\] back/);
+    expect(byTitle(/^BFS: Discover/).length).toBeGreaterThan(0);
+    expect(byTitle(/^BFS: Trace Parents/).length).toBeGreaterThan(0);
     const found = byTitle(/^Shortest Augmenting Path Discovered/);
     expect(found.length).toBeGreaterThan(0);
     for (const s of found) expect(codeOf('edmonds-karp', s)).toMatch(/bottleneck = min_capacity_along/);
@@ -44,6 +50,23 @@ describe('Edmonds-Karp pseudocode lines', () => {
       expect(codeOf('edmonds-karp', s)).not.toMatch(/return totalFlow/);
     }
     expect(codeOf('edmonds-karp', steps.at(-1))).toMatch(/return totalFlow/);
+  });
+});
+
+describe('Ford-Fulkerson pseudocode lines', () => {
+  const steps = stepsFor('ford-fulkerson', getDefaultInputs(getAlgorithmById('ford-fulkerson')!));
+  const byTitle = (re: RegExp) => steps.filter((s) => re.test(s.title));
+
+  it('each DFS step highlights the operation it performs', () => {
+    for (const s of byTitle(/^DFS Search \d+: Start/)) expect(codeOf('ford-fulkerson', s)).toMatch(/path = DFS\(s\)[\s\S]*function DFS\(u\)/);
+    for (const s of byTitle(/^DFS: Go Deeper/)) expect(codeOf('ford-fulkerson', s)).toMatch(/push v; if DFS\(v\)/);
+    for (const s of byTitle(/^DFS: (Pipe .* Is Full|.* Already Visited)/)) expect(codeOf('ford-fulkerson', s)).toMatch(/residual\[u\]\[v\] > 0 and v is not visited/);
+    for (const s of byTitle(/^DFS: Dead End/)) expect(codeOf('ford-fulkerson', s)).toMatch(/pop u/);
+    for (const s of byTitle(/^DFS: Reached/)) expect(codeOf('ford-fulkerson', s)).toMatch(/if u == t: return stack/);
+    for (const s of byTitle(/^DFS Search \d+: .* Unreachable/)) expect(codeOf('ford-fulkerson', s)).toMatch(/return none/);
+    for (const s of byTitle(/^Augmented Flow/)) expect(codeOf('ford-fulkerson', s)).toMatch(/residual\[v\]\[u\] \+= bottleneck/);
+    expect(byTitle(/^DFS: Dead End/).length).toBeGreaterThan(0);
+    expect(codeOf('ford-fulkerson', steps.at(-1))).toMatch(/return flow/);
   });
 });
 

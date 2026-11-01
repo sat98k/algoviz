@@ -307,3 +307,48 @@ describe('Animations without animation frames', () => {
     expect(container.querySelector('[data-progress]')?.getAttribute('data-progress')).toBe('1');
   });
 });
+
+describe('The problem page owl can be paused', () => {
+  it('Pause freezes the words where they are; Play carries on from the same word', async () => {
+    const { OwlBriefingReveal } = await import('../components/common/OwlBriefingReveal');
+    // Drive animation frames from the test clock.
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => window.setTimeout(() => cb(clock), 16) as unknown as number);
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => window.clearTimeout(id));
+    const text = (t: string) => [{ kind: 'text' as const, text: t }];
+    render(
+      <OwlBriefingReveal
+        owl={{
+          story: text('Water flows from a tower to a city through many pipes of different sizes, and we want to send as much as we can.'),
+          goal: text('Find the most water per second.'),
+          example: null,
+          overview: [{ title: 'Start', text: text('Begin with empty pipes.') }],
+          insight: text('Full pipes form a wall.'),
+          watch: [text('The water.')],
+        }}
+        problem={text('Maximum flow from s to t.')}
+      />
+    );
+    const shown = () => container.querySelectorAll('.owl-reveal-word[data-on="true"]').length;
+    const button = () => container.querySelector('[data-owl-pause]') as HTMLButtonElement;
+    const owlState = () => container.querySelector('[data-owl-state]')?.getAttribute('data-owl-state');
+
+    play(2000);
+    const before = shown();
+    expect(before).toBeGreaterThan(0);
+    expect(button().textContent).toContain('Pause');
+
+    act(() => button().click());
+    expect(button().getAttribute('data-owl-pause')).toBe('paused');
+    expect(button().textContent).toContain('Play');
+    play(4000);
+    expect(shown()).toBe(before);
+    expect(owlState()).toBe('idle');
+
+    act(() => button().click());
+    expect(owlState()).toBe('talking');
+    play(1500);
+    // It carries on from where it stopped: no words skipped, none shown again from the start.
+    expect(shown()).toBeGreaterThan(before);
+    expect(shown()).toBeLessThan(before + 10);
+  });
+});

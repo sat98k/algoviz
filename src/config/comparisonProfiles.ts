@@ -110,7 +110,7 @@ export const COMPARISON_PROFILES = defineProfiles({
   // ── Maximum Flow ──────────────────────────────────────────────────────────
   'ford-fulkerson': {
     group: 'max-flow',
-    keyIdea: 'Keep finding an augmenting path in the residual graph and push its bottleneck amount, until no path remains. (This visualizer finds each path with BFS and shows one step per augmentation.)',
+    keyIdea: 'Keep finding an augmenting path in the residual graph and push its bottleneck amount, until no path remains. This visualizer finds each path with depth-first search, so paths can be long and reverse edges get used.',
     strengths: [
       'The simple, general method behind most max-flow algorithms.',
       'With integer capacities it needs at most |f*| augmentations.',
@@ -119,6 +119,7 @@ export const COMPARISON_PROFILES = defineProfiles({
     limitations: [
       'With arbitrary path choices, time depends on the flow value: O(E·|f*|).',
       'With irrational capacities and poor path choices it may never terminate.',
+      'DFS may pick long, winding paths, needing more augmentations than Edmonds-Karp.',
     ],
     chooseWhen: 'Capacities are small integers, or you want the clearest view of the augmenting-path idea.',
     answerQuality: 'Exact maximum flow',

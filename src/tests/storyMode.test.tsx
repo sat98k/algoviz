@@ -11,6 +11,8 @@ import { subsetSumSteps } from '../algorithms/subsetSum';
 import { graphColoringSteps } from '../algorithms/graphColoring';
 import { buildNQueensStateSpaceTree } from '../algorithms/nQueensTree';
 import { MaxSubarrayTreeView } from '../components/story/MaxSubarrayTreeView';
+import { KaratsubaTreeView } from '../components/story/KaratsubaTreeView';
+import { LcsGridView } from '../components/story/LcsGridView';
 
 const stepsOf = (id: string) => {
   const a = getAlgorithmById(id)!;
@@ -154,6 +156,95 @@ describe('Story (Animation) Mode', () => {
     expect(kinds.filter((k) => k === 'solution').length).toBe(1);
   });
 
+  it('LCS keeps the full necklaces by default and offers the answer grid', () => {
+    const { steps } = stepsOf('lcs');
+    const html = renderScene('lcs', steps[5]);
+    expect(html).toMatch(/data-lcs-view="grid"[^>]*>🧮 Answer grid/);
+    expect(html).toContain('data-necklaces-size="full"');
+    expect(html).not.toContain('data-lcs-grid');
+  });
+
+  it('LCS answer grid fills one square at a time, reads from its sources, and traces the path back', () => {
+    const { steps } = stepsOf('lcs');
+    const render = (s: any, revealed: boolean) =>
+      renderToStaticMarkup(
+        <LcsGridView
+          X={s.state.str1}
+          Y={s.state.str2}
+          phase={s.state.phase}
+          colour={() => '#fde68a'}
+          table={s.state.dpTable}
+          directions={s.state.directions}
+          row={s.state.currentRow}
+          col={s.state.currentCol}
+          revealed={revealed}
+          isMatch={s.state.comparison === 'match'}
+          sources={s.state.sourceCells || []}
+          path={s.state.phase === 'traceback' || s.state.phase === 'final' ? s.state.backtrackPath : []}
+          pairs={s.state.matchedPairs}
+        />
+      );
+    const cellsOf = (html: string) => [...html.matchAll(/data-cell="(\d+)-(\d+)" data-cell-state="([a-z]+)"/g)].map((m) => ({ r: +m[1], c: +m[2], state: m[3] }));
+    const m = steps[0].state.str1.length;
+    const n = steps[0].state.str2.length;
+    let filledBefore = -1;
+    for (const s of steps.filter((x: any) => x.state.phase === 'fill')) {
+      const before = cellsOf(render(s, false));
+      const after = render(s, true);
+      expect(before.length, s.title).toBe((m + 1) * (n + 1));
+      // Before the beads are compared the square shows "?"; afterwards its value.
+      expect(before.find((c) => c.r === s.state.currentRow && c.c === s.state.currentCol)!.state).toBe('current');
+      expect(render(s, false), s.title).toContain('>?<');
+      for (const src of s.state.sourceCells) expect(cellsOf(after).find((c) => c.r === src.r && c.c === src.c)!.state, s.title).toBe('source');
+      const filled = before.filter((c) => c.state !== 'empty').length;
+      expect(filled, s.title).toBeGreaterThan(filledBefore);
+      filledBefore = filled;
+      expect(after, s.title).not.toMatch(/undefined|NaN/);
+    }
+    const last = steps[steps.length - 1];
+    const end = cellsOf(render(last, true));
+    expect(end.every((c) => c.state !== 'empty')).toBe(true);
+    expect(end.filter((c) => c.state === 'path').length).toBe(last.state.backtrackPath.length);
+  });
+
+  it('Karatsuba keeps the workshop by default and offers the recursion tree', () => {
+    const { steps } = stepsOf('karatsuba');
+    const html = renderScene('karatsuba', steps[3]);
+    expect(html).toMatch(/data-workshop-view="workshop"[^>]*aria-checked="true"|aria-checked="true"[^>]*data-workshop-view="workshop"/);
+    expect(html).toMatch(/data-workshop-view="tree"[^>]*>🌳 Recursion tree/);
+    expect(html).not.toContain('data-karatsuba-tree');
+  });
+
+  it('Karatsuba tree: every job splits into three helpers, and answers come back up', () => {
+    const { steps } = stepsOf('karatsuba');
+    const jobsOf = (html: string) => [...html.matchAll(/data-job="([^"]+)" data-state="([a-z_]+)"/g)].map((m) => ({ job: m[1], state: m[2] }));
+    const render = (s: any) =>
+      renderToStaticMarkup(
+        <KaratsubaTreeView num1={s.state.num1} num2={s.state.num2} nodes={s.state.treeNodes} activeId={s.state.activeNodeId} title={s.title} isFinal={!!s.isFinal} stepKey={s.stepIndex} />
+      );
+    const last = steps[steps.length - 1];
+    const total = last.state.treeNodes.length;
+    for (const s of steps) {
+      const html = render(s);
+      const jobs = jobsOf(html);
+      // The whole plan is drawn from the start; jobs not started yet are marked "later".
+      expect(jobs.length, s.title).toBe(total);
+      expect(jobs.filter((j) => j.state !== 'later').length, s.title).toBe(s.state.treeNodes.length);
+      expect(jobs.filter((j) => j.state !== 'later').map((j) => j.job.replace('x', ' × ')), s.title).toEqual(s.state.treeNodes.map((n: any) => n.label));
+      expect(html, s.title).not.toMatch(/undefined|NaN/);
+    }
+    // Every job that is not a single digit has exactly three helpers: P1, P2 and P3.
+    const end = render(last);
+    const splitJobs = last.state.treeNodes.filter((n: any) => n.status !== 'base_case').length;
+    for (const role of ['P1', 'P2', 'P3']) expect((end.match(new RegExp(`data-branch="${role}"`, 'g')) ?? []).length).toBe(splitJobs);
+    expect(jobsOf(end)[0].state).toBe('optimal');
+    expect(end).toContain(`final answer: ${last.state.num1} × ${last.state.num2} = ${last.result.product}`);
+    expect(end).toContain('🎯 Follow');
+    // While a helper is being called, the answers of finished helpers ride up their branches.
+    const p2 = steps.find((s) => /^Step 2B/.test(s.title))!;
+    expect(render(p2)).toMatch(/↑\d+/);
+  });
+
   it('Maximum Subarray keeps the coin road by default and offers the split & merge tree', () => {
     const { steps } = stepsOf('max-subarray');
     const html = renderScene('max-subarray', steps[1]);
@@ -178,10 +269,11 @@ describe('Story (Animation) Mode', () => {
     }
     const last = steps[steps.length - 1];
     const end = renderToStaticMarkup(
-      <MaxSubarrayTreeView arr={last.state.array} nodes={last.state.treeNodes} activeId={last.state.activeNodeId} isFinal stepKey={last.stepIndex} narration="The richest stretch is found." stepLabel="Step 88" />
+      <MaxSubarrayTreeView arr={last.state.array} nodes={last.state.treeNodes} activeId={last.state.activeNodeId} isFinal stepKey={last.stepIndex} />
     );
-    // The owl's sentence sits right above the tree, with zoom and follow controls.
-    expect(end).toMatch(/data-tree-narration[^>]*>.*The richest stretch is found\./s);
+    // The scene's one owl tells the story; the tree has no second narrator, just zoom and follow controls.
+    expect(end).not.toContain('data-tree-narration');
+    expect(end).not.toContain('🦉');
     expect(end).toContain('aria-label="Zoom in"');
     expect(end).toContain('🎯 Follow');
     expect(piecesOf(end).every((p) => p.state !== 'later')).toBe(true);

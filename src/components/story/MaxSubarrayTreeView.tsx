@@ -55,13 +55,9 @@ interface Props {
   scan?: CrossScan;
   isFinal: boolean;
   stepKey: number;
-  /** The owl's sentence for this step, repeated next to the tree. */
-  narration?: string;
-  /** e.g. "Step 12 of 88". */
-  stepLabel?: string;
 }
 
-export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, scan, isFinal, stepKey, narration, stepLabel }) => {
+export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, scan, isFinal, stepKey }) => {
   const n = arr.length;
   const plan = useMemo(() => skeleton(n), [n]);
   const maxDepth = Math.max(0, ...plan.map((r) => r.depth));
@@ -372,17 +368,6 @@ export const MaxSubarrayTreeView: React.FC<Props> = ({ arr, nodes, activeId, sca
       <p className="font-sans text-xs text-stone-600 mb-2">
         Going <b>down</b>, each piece of road is cut in half. Going <b>up</b>, each half reports its best stretch, and the parent picks the richest of left, right and crossing the cut. Click any piece to read about it, or drag to look around.
       </p>
-
-      {/* What is happening right now, right next to the tree (no scrolling up to the owl) */}
-      {narration && (
-        <div className="flex items-start gap-2.5 mb-2 rounded-xl border border-amber-200 bg-white px-3 py-2 shadow-sm" aria-live="polite" data-tree-narration>
-          <span className="text-xl leading-none" aria-hidden>
-            🦉
-          </span>
-          <p className="flex-1 font-sans text-sm sm:text-[15px] leading-snug text-stone-800">{narration}</p>
-          {stepLabel && <span className="shrink-0 self-center rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 font-sans text-[11px] font-semibold text-amber-900">{stepLabel}</span>}
-        </div>
-      )}
 
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2 font-sans text-xs font-semibold">
         <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-white p-0.5">

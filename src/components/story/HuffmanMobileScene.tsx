@@ -5,9 +5,10 @@ import { HuffmanNode, leafChars } from '../../algorithms/huffman';
 /**
  * 🫙 Huffman coding as a hanging mobile.
  *
- * Every letter is a glass jar holding one marble per appearance, hung from a wooden
- * rail in order of weight. The two lightest mobiles are lifted, tied under a new
- * wooden bar, and the combined mobile glides back into line by its weight. At the end
+ * Every letter is a glass jar holding one marble per appearance, floating loose in a
+ * line in order of weight (nothing is tied together yet). The two lightest mobiles are
+ * lifted, tied under a new wooden bar, and the combined mobile glides back into line by
+ * its weight. Only bars made by merging appear: there is no shared rail. At the end
  * the left string of every bar is "0" and the right one "1", so heavy (frequent)
  * letters hang near the top with short codes. While decoding, a marble rolls down
  * the strings one bit at a time.
@@ -16,7 +17,6 @@ import { HuffmanNode, leafChars } from '../../algorithms/huffman';
 type Placed = { node: HuffmanNode; x: number; y: number; parent?: string; side?: '0' | '1'; tree: string; code: string };
 
 const LEVEL = 66;
-const RAIL_Y = 22;
 const ROOT_Y = 64;
 const GAP = 26;
 
@@ -39,7 +39,7 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
   const letters = [...new Set(forest.map(leafChars).join(''))].sort();
   const colourOf = (ch?: string) => MARBLES[Math.max(0, letters.indexOf(ch ?? '')) % MARBLES.length];
 
-  // ── Order the mobiles along the rail: queue order (lightest first) ──
+  // ── Order the loose mobiles in a line: queue order (lightest first) ──
   const order = queue.length ? queue.map((q) => q.id) : forest.map((t) => t.id);
   const trees = [...forest].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 
@@ -112,14 +112,14 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
       const t = forest.find((f) => f.id === inserted);
       return `Tie them under one wooden bar. Together they weigh ${t?.left?.freq} + ${t?.right?.freq} = ${t?.freq}, so the new mobile slides into line by its weight.`;
     }
-    return `Count the letters of “${st.inputText}”: each letter gets a jar with one marble per appearance. The jars hang in line from lightest to heaviest.`;
+    return `Count the letters of “${st.inputText}”: each letter gets a jar with one marble per appearance. The jars float loose in a line from lightest to heaviest: none of them is tied to anything yet.`;
   })();
 
   const status = decoding
     ? `Decoded • ${(st.accumulatedText || '').length} letters`
     : isFinal
     ? `Space saved • ${st.compressionRatio}%`
-    : `Mobiles on the rail • ${forest.length}`;
+    : `Loose mobiles • ${forest.length}`;
 
   const renderNode = (p: Placed) => {
     const n = p.node;
@@ -129,15 +129,16 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
     const isNew = n.id === inserted;
     const onPath = visited.includes(n.id);
     const parent = p.parent ? byId.get(p.parent) : undefined;
-    const stringTop = parent ? -LEVEL : RAIL_Y - (p.y + dy);
+    // A jar or bar that has not been tied under a parent floats free: no string above it.
+    const floating = !p.parent;
     const r = jarR(n.freq);
     // A lone letter still needs one bit.
     const leafCode = codeTable[n.char ?? ''] || p.code || '0';
 
     return (
       <g key={n.id} style={{ transform: `translate(${p.x}px, ${p.y + dy}px)`, transition: 'transform 0.9s ease-in-out' }}>
-        {/* string up to the parent's bar or to the rail */}
-        <line x1="0" y1={stringTop} x2="0" y2="0" stroke={onPath ? '#f59e0b' : '#78716c'} strokeWidth={onPath ? 3.5 : 1.8} />
+        {/* string up to the parent's bar (only once it has been tied under one) */}
+        {parent && <line x1="0" y1={-LEVEL} x2="0" y2="0" stroke={onPath ? '#f59e0b' : '#78716c'} strokeWidth={onPath ? 3.5 : 1.8} />}
         {showCodes && p.side && (
           <g transform={`translate(${p.side === '0' ? -11 : 11}, ${-LEVEL / 2})`}>
             <circle r="9" fill={p.side === '0' ? '#e0f2fe' : '#fef3c7'} stroke={p.side === '0' ? '#0284c7' : '#d97706'} strokeWidth="1.5" />
@@ -146,6 +147,8 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
             </text>
           </g>
         )}
+        {/* loose jars bob gently, out of step with each other, so they read as floating */}
+        <g style={floating && leaf && !decoding ? { animation: `storyBob 3.2s ease-in-out ${-((p.x / 37) % 3.2)}s infinite` } : undefined}>
         <g className={isNew ? 'animate-story-pop' : undefined}>
           {leaf ? (
             <g>
@@ -198,6 +201,7 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
             </g>
           )}
         </g>
+        </g>
       </g>
     );
   };
@@ -228,8 +232,6 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
       )}
 
       <svg viewBox={`0 0 ${width} ${height}`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: width * 1.25 }} role="img" aria-label="Huffman mobile">
-        {/* wooden rail */}
-        <rect x="6" y={RAIL_Y - 7} width={width - 12} height="12" rx="6" fill="#a16207" stroke="#78350f" strokeWidth="1.5" />
         {placed.map(renderNode)}
         {marble && (
           <circle
