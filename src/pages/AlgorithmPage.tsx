@@ -4,6 +4,7 @@ import { AlgorithmStep } from '../types/algorithm';
 import { getAlgorithmById } from '../config/algorithmRegistry';
 import { motion, useReducedMotion } from 'framer-motion';
 import { GlowSection } from '../components/home/fx/GlowSection';
+import { PageGlow } from '../components/home/fx/PageGlow';
 import { SplitText } from '../components/home/SplitText';
 
 // Visualizer Components
@@ -542,6 +543,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
   if (view === 'learn') {
     return (
       <div data-view="learn" className="flex flex-col gap-6 max-w-[1440px] mx-auto px-2 sm:px-3 lg:px-4 py-3 w-full">
+        <PageGlow field={learnField} />
         {/* The algorithm's chapter: its module's colour, its name, the story it tells, and the way in. */}
         {/* Its colour field drifts like the home chapters; the learning panels below stay still. */}
         <GlowSection
@@ -596,6 +598,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
       // While paused, every looping scene animation holds still too (see index.css).
       data-playing={isPlaying ? 'true' : 'false'}
     >
+      <PageGlow field={learnField} />
       <OwlFlightLayer />
 
       {/* Compact header: a bar marked with the module's chapter colour. */}

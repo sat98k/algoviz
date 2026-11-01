@@ -996,3 +996,20 @@ main h1[tabindex='-1']:focus { outline: none; }
    in fixed pixels so the slice and leftover fit back into one wheel), so nothing hangs off the board. */
 @media (max-width: 479px) { .fk-arena { zoom: 0.6; } }
 @media (min-width: 480px) and (max-width: 639px) { .fk-arena { zoom: 0.8; } }
+
+/* ── Glow fields (learn view and player) ────────────────────────────────────────────────────
+   The bone paper gives way to a warm white with peach, lemon and mint glows drifting behind
+   (PageGlow). The surface tokens are re-pointed for these two views only: panels turn white,
+   insets a light cream, so text always sits on a solid light surface, never on the glow. */
+.page-glow { position: fixed; inset: 0; z-index: -1; background: #fffaf1; }
+[data-view='learn'],
+[data-view='play'] {
+  --bg-canvas: 255 248 236;
+  --bg-surface: 255 255 255;
+  --bg-surface-elevated: 248 241 228;
+  --bg-surface-muted: 238 229 211;
+}
+[data-view='learn'] .ss-stage,
+[data-view='play'] .ss-stage { background-color: #fffcf6; }
+/* The app wrapper paints the bone paper; on a glow page it steps aside so the glow shows through. */
+#root > div:has([data-page-glow]) { background: transparent; }

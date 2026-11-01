@@ -8,6 +8,8 @@ interface NavbarProps {
 /** Bar colours for each chapter colour a page section can declare with data-chapter. */
 const CHAPTER_BAR: Record<string, { bg: string; ink: string }> = {
   bone: { bg: '#e6e0d2', ink: '#1a1a1a' },
+  // The algorithm pages' glow fields (PageGlow): the bar takes their warm white.
+  glow: { bg: '#fffaf1', ink: '#1a1a1a' },
   coral: { bg: '#ed4b44', ink: '#0f0f0f' },
   ink: { bg: '#1a1a1a', ink: '#e6e0d2' },
   green: { bg: '#18bc42', ink: '#1a1a1a' },
@@ -20,7 +22,7 @@ const CHAPTER_BAR: Record<string, { bg: string; ink: string }> = {
  * The site uses the light theme only.
  */
 export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
-  const [chapter, setChapter] = useState('bone');
+  const [chapter, setChapter] = useState(currentView === 'algorithm' ? 'glow' : 'bone');
   const inCatalog = currentView === 'home' || currentView === 'module';
 
   const barRef = React.useRef<HTMLElement>(null);
@@ -36,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
         const r = el.getBoundingClientRect();
         return r.top <= edge && r.bottom > edge;
       });
-      setChapter(under?.getAttribute('data-chapter') ?? 'bone');
+      setChapter(under?.getAttribute('data-chapter') ?? (currentView === 'algorithm' ? 'glow' : 'bone'));
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);

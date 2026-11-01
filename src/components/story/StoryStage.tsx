@@ -78,8 +78,8 @@ interface OwlBubbleProps {
 }
 
 const bubbleClass = (steady: boolean) =>
-  `relative font-sans text-sm sm:text-base text-stone-800 bg-[#fbf9f4] rounded-2xl rounded-tl-sm px-4 py-2.5 leading-relaxed ${steady ? 'lg:flex-1 lg:min-h-[4.25rem] lg:py-2 lg:text-[15px] lg:leading-snug' : ''}`;
-const wrapClass = 'flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2 sm:sticky z-30 -mx-2 px-2 py-1 bg-[#f3efe6]/95 rounded-xl';
+  `relative font-sans text-sm sm:text-base text-stone-800 bg-white rounded-2xl rounded-tl-sm px-4 py-2.5 leading-relaxed ${steady ? 'lg:flex-1 lg:min-h-[4.25rem] lg:py-2 lg:text-[15px] lg:leading-snug' : ''}`;
+const wrapClass = 'flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2 sm:sticky z-30 -mx-2 px-2 py-1 bg-[#fffcf6]/95 rounded-xl';
 const wrapTop = 'var(--owl-top, calc(2.75rem + var(--dock-h, 0px) + 0.5rem))';
 
 const PlainOwlBubble: React.FC<OwlBubbleProps> = ({ narration, className = '', steady = false }) => (
