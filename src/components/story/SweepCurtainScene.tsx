@@ -79,8 +79,8 @@ export const SweepCurtainScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
           <rect x="0" y="0" width={W} height={H} rx="18" fill="#efe3d3" stroke="#d5be9f" strokeWidth="2" />
 
           {/* the curtain: everything left of it has been swept */}
-          <rect x="0" y="0" width={Math.max(0, curtainX)} height={H} rx="18" fill="#fde68a" opacity="0.18" style={{ transition: 'width 0.8s ease-in-out' }} />
-          <g style={{ transform: `translateX(${curtainX}px)`, transition: 'transform 0.8s ease-in-out' }}>
+          <rect x="0" y="0" width={Math.max(0, curtainX)} height={H} rx="18" fill="#fde68a" opacity="0.18" style={{ transition: 'width 0.8s var(--ease-move)' }} />
+          <g style={{ transform: `translateX(${curtainX}px)`, transition: 'transform 0.8s var(--ease-move)' }}>
             <rect x="-5" y="6" width="10" height={H - 12} rx="5" fill="#be123c" opacity="0.85" />
             {[40, 110, 180, 250, 320].map((y) => (
               <path key={y} d={`M -5 ${y} q -10 18 0 36`} fill="none" stroke="#9f1239" strokeWidth="2" />

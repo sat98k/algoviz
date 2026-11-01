@@ -109,7 +109,7 @@ export const ClayBlobsScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
           const involved = picked && (nd.id === picked.u || nd.id === picked.v) && phaseName === 'pick_edge' && phase === 'pick';
           const fresh = phaseName === 'contract' && mem.length > 1 && picked && (nd.id === picked.u || nd.id.includes(picked.u));
           return (
-            <g key={nd.id} style={{ transform: `translate(${p.x}px, ${p.y}px)`, transition: 'transform 0.8s ease-in-out' }}>
+            <g key={nd.id} style={{ transform: `translate(${p.x}px, ${p.y}px)`, transition: 'transform 0.8s var(--ease-move)' }}>
               <g className={fresh ? 'animate-story-pop' : undefined}>
                 <ellipse cx="3" cy="5" rx={r} ry={r * 0.88} fill="#00000022" />
                 <ellipse rx={r} ry={r * 0.88} fill={colourOf(mem[0])} stroke={involved ? '#f59e0b' : '#78716c'} strokeWidth={involved ? 4 : 2} />

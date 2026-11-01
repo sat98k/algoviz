@@ -95,7 +95,7 @@ export const BeadNecklaceScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
     const up = lifted(row, k) ? (row === 'top' ? 24 : -24) : 0;
     const tied = pairs.some(([a, b]) => (row === 'top' ? a - 1 === k : b - 1 === k));
     return (
-      <g key={`${row}-${k}`} style={{ transform: `translateY(${up}px)`, transition: 'transform 0.5s ease-out', opacity: dim(row, k) ? 0.25 : 1 }}>
+      <g key={`${row}-${k}`} style={{ transform: `translateY(${up}px)`, transition: 'transform 0.5s var(--ease-out)', opacity: dim(row, k) ? 0.25 : 1 }}>
         <circle cx={cx(k)} cy={y} r={BEAD / 2} fill={colour(ch)} stroke={tied ? '#b45309' : lifted(row, k) ? '#f59e0b' : '#57534e'} strokeWidth={tied || lifted(row, k) ? 4 : 1.5} />
         <circle cx={cx(k) - 7} cy={y - 8} r="5" fill="#ffffff" opacity="0.6" />
         <text x={cx(k)} y={y + 7} textAnchor="middle" fontSize="20" fontWeight="900" fill="#1c1917">

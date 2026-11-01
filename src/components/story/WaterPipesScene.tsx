@@ -528,7 +528,7 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
           stroke={WATER}
           strokeWidth={water}
           strokeLinecap="round"
-          style={{ transition: 'stroke-width 0.9s ease-in-out' }}
+          style={{ transition: 'stroke-width 0.9s var(--ease-move)' }}
         />
         {water > 0 && (
           <path
@@ -748,7 +748,7 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
             height={38 * level}
             rx="6"
             fill={WATER}
-            style={{ transition: 'all 0.9s ease-in-out' }}
+            style={{ transition: 'all 0.9s var(--ease-move)' }}
           />
           <text textAnchor="middle" y="7" fontSize="15" fontWeight="800" fill="#1c1917">
             {label(i)}
@@ -878,7 +878,7 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
             height={40 * level}
             rx="5"
             fill={WATER}
-            style={{ transition: 'all 0.8s ease-in-out' }}
+            style={{ transition: 'all 0.8s var(--ease-move)' }}
           />
           <text textAnchor="middle" y="5" fontSize="14" fontWeight="800" fill={level > 0.55 ? '#ffffff' : '#1c1917'}>
             {label(i)}

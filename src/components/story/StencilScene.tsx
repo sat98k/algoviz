@@ -307,7 +307,7 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
 
         {/* Rabin-Karp window frame */}
         {isRK && !step.isFinal && (
-          <g style={{ transform: `translateX(${shownShift * CELL}px)`, transition: 'transform 0.8s ease-in-out' }}>
+          <g style={{ transform: `translateX(${shownShift * CELL}px)`, transition: 'transform 0.8s var(--ease-move)' }}>
             <rect
               x={PAD - 3}
               y={TEXT_Y - 12}
@@ -355,7 +355,7 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
 
         {/* Reading finger */}
         {showFinger && (
-          <g style={{ transform: `translateX(${PAD + fingerAt * CELL + CELL / 2}px)`, transition: 'transform 0.6s ease-in-out' }}>
+          <g style={{ transform: `translateX(${PAD + fingerAt * CELL + CELL / 2}px)`, transition: 'transform 0.6s var(--ease-move)' }}>
             <text x="0" y={TEXT_Y - 16} textAnchor="middle" fontSize="22">
               👇
             </text>
@@ -364,7 +364,7 @@ export const StencilScene: React.FC<StorySceneProps> = ({ step, algorithmId, ste
 
         {/* The stencil: a paper strip gliding horizontally */}
         {!step.isFinal && kind !== 'lps-done' && m > 0 && (
-          <g style={{ transform: `translateX(${shownShift * CELL}px)`, transition: 'transform 0.8s ease-in-out' }} data-stencil-shift={shownShift}>
+          <g style={{ transform: `translateX(${shownShift * CELL}px)`, transition: 'transform 0.8s var(--ease-move)' }} data-stencil-shift={shownShift}>
             <rect x={PAD - 4} y={STENCIL_Y - 6} width={m * CELL + 8} height={TILE + 12} rx="8" fill="#fff7ed" stroke="#c2410c" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.95" />
             {Array.from(pattern).map((ch, k) => {
               const mk = marks[k];

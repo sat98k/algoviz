@@ -187,7 +187,7 @@ export const CoinScaleScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
         <rect x={PIVOT.x - 7} y={PIVOT.y} width="14" height={tableY - PIVOT.y + 12} fill="#a16207" />
         <path d={`M ${PIVOT.x - 46} ${tableY + 12} L ${PIVOT.x + 46} ${tableY + 12} L ${PIVOT.x + 24} ${tableY - 6} L ${PIVOT.x - 24} ${tableY - 6} Z`} fill="#78350f" />
         {/* beam */}
-        <line x1={leftEnd.x} y1={leftEnd.y} x2={rightEnd.x} y2={rightEnd.y} stroke="#b45309" strokeWidth="10" strokeLinecap="round" style={{ transition: 'all 0.8s ease-in-out' }} />
+        <line x1={leftEnd.x} y1={leftEnd.y} x2={rightEnd.x} y2={rightEnd.y} stroke="#b45309" strokeWidth="10" strokeLinecap="round" style={{ transition: 'all 0.8s var(--ease-move)' }} />
         <circle cx={PIVOT.x} cy={PIVOT.y} r="9" fill="#78350f" />
         {balanced && kind !== 'intro' && (
           <text x={PIVOT.x} y={PIVOT.y - 22} textAnchor="middle" fontSize="22" className="animate-story-pop">
@@ -221,7 +221,7 @@ export const CoinScaleScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
           const s = coinState[i];
           const isNow = i === index && (kind === 'include' || kind === 'exclude' || kind === 'overflow' || kind === 'short-in' || kind === 'short-out' || kind === 'undo');
           return (
-            <g key={`coin-${i}`} style={{ transform: `translate(${p.x}px, ${p.y}px) scale(${s === 'pan' || s === 'trying' ? 0.72 : 1})`, transition: 'transform 0.8s ease-in-out', opacity: s === 'skipped' ? 0.55 : 1 }}>
+            <g key={`coin-${i}`} style={{ transform: `translate(${p.x}px, ${p.y}px) scale(${s === 'pan' || s === 'trying' ? 0.72 : 1})`, transition: 'transform 0.8s var(--ease-move)', opacity: s === 'skipped' ? 0.55 : 1 }}>
               <g className={s === 'trying' ? 'animate-story-bob' : undefined}>
                 <ellipse cx="0" cy={r * 0.25} rx={r} ry={r * 0.82} fill="#a16207" />
                 <ellipse cx="0" cy="0" rx={r} ry={r * 0.82} fill={s === 'trying' ? '#fde68a' : '#facc15'} stroke={isNow ? '#ea580c' : '#a16207'} strokeWidth={isNow ? 3 : 1.5} strokeDasharray={s === 'trying' ? '4 3' : undefined} />

@@ -223,7 +223,7 @@ export const CoinRoadScene: React.FC<StorySceneProps> = ({ step }) => {
 
           {/* lantern + basket */}
           {lanternAt !== undefined && (
-            <g style={{ transform: `translate(${x(lanternAt) + TILE / 2}px, ${ROAD_Y + TILE + 44}px)`, transition: 'transform 0.6s ease-in-out' }}>
+            <g style={{ transform: `translate(${x(lanternAt) + TILE / 2}px, ${ROAD_Y + TILE + 44}px)`, transition: 'transform 0.6s var(--ease-move)' }}>
               <text textAnchor="middle" fontSize="24" y="0">
                 🏮
               </text>

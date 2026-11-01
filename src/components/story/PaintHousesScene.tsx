@@ -134,7 +134,7 @@ export const PaintHousesScene: React.FC<StorySceneProps> = ({ step, stepMs }) =>
               {isCur && <circle r="44" fill="#fde68a" opacity="0.6" />}
               <g className={wiping ? 'animate-story-shake' : undefined}>
                 <path d="M -32 -4 L 0 -34 L 32 -4 Z" fill="#9a3412" stroke="#7c2d12" strokeWidth="2" strokeLinejoin="round" />
-                <rect x="-26" y="-6" width="52" height="40" rx="3" fill={PAINT[c] ?? '#ffffff'} stroke="#57534e" strokeWidth="2" style={{ transition: 'fill 0.6s ease-in-out' }} />
+                <rect x="-26" y="-6" width="52" height="40" rx="3" fill={PAINT[c] ?? '#ffffff'} stroke="#57534e" strokeWidth="2" style={{ transition: 'fill 0.6s var(--ease-move)' }} />
                 <rect x="-6" y="14" width="12" height="20" rx="2" fill="#78350f" />
                 <rect x="-20" y="2" width="10" height="9" fill="#e0f2fe" stroke="#57534e" strokeWidth="1" />
                 <rect x="10" y="2" width="10" height="9" fill="#e0f2fe" stroke="#57534e" strokeWidth="1" />

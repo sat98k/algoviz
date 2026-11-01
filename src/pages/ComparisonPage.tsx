@@ -228,13 +228,11 @@ export const ComparisonPage: React.FC = () => {
         className="flex flex-col gap-6 pb-6 border-b border-hairline"
       >
         <div>
-          <div className="flex items-center gap-2 font-mono text-xs text-amber uppercase tracking-wider font-semibold">
-            <GitCompare className="w-3.5 h-3.5" />
-            <span>Algorithm Comparison</span>
-          </div>
-          <h1 className="font-display font-black text-3xl sm:text-5xl md:text-6xl tracking-tighter text-chalk-100 mt-2 uppercase">
-            {group.title} <span className="font-serif italic font-normal normal-case text-chalk-300">comparison.</span>
-          </h1>
+          <p className="flex items-center gap-2 font-sans text-base font-bold text-amber">
+            <GitCompare className="w-4 h-4" aria-hidden />
+            Compare two algorithms
+          </p>
+          <h1 className="hc-display text-[clamp(40px,6vw,96px)] text-chalk-100 mt-2">{group.title}, side by side</h1>
         </div>
 
         {/* 1. Pick a problem */}

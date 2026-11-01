@@ -282,7 +282,7 @@ export const CubbyWallScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
             <svg viewBox="0 0 220 150" className="w-56 h-auto overflow-visible" aria-label="Balance scale">
               <rect x="104" y="40" width="12" height="96" fill="#a16207" />
               <rect x="70" y="132" width="80" height="10" rx="4" fill="#78350f" />
-              <g style={{ transform: `rotate(${-beamTilt}deg)`, transformOrigin: '110px 40px', transition: 'transform 0.8s ease-in-out' }}>
+              <g style={{ transform: `rotate(${-beamTilt}deg)`, transformOrigin: '110px 40px', transition: 'transform 0.8s var(--ease-move)' }}>
                 <rect x="20" y="36" width="180" height="8" rx="4" fill="#b45309" />
                 {/* skip pan (left) */}
                 <line x1="40" y1="40" x2="40" y2="78" stroke="#78350f" strokeWidth="1.5" />

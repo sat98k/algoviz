@@ -136,7 +136,7 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
     const leafCode = codeTable[n.char ?? ''] || p.code || '0';
 
     return (
-      <g key={n.id} style={{ transform: `translate(${p.x}px, ${p.y + dy}px)`, transition: 'transform 0.9s ease-in-out' }}>
+      <g key={n.id} style={{ transform: `translate(${p.x}px, ${p.y + dy}px)`, transition: 'transform 0.9s var(--ease-move)' }}>
         {/* string up to the parent's bar (only once it has been tied under one) */}
         {parent && <line x1="0" y1={-LEVEL} x2="0" y2="0" stroke={onPath ? '#f59e0b' : '#78716c'} strokeWidth={onPath ? 3.5 : 1.8} />}
         {showCodes && p.side && (
@@ -148,7 +148,7 @@ export const HuffmanMobileScene: React.FC<StorySceneProps> = ({ step }) => {
           </g>
         )}
         {/* loose jars bob gently, out of step with each other, so they read as floating */}
-        <g style={floating && leaf && !decoding ? { animation: `storyBob 3.2s ease-in-out ${-((p.x / 37) % 3.2)}s infinite` } : undefined}>
+        <g style={floating && leaf && !decoding ? { animation: `storyBob 3.2s var(--ease-move) ${-((p.x / 37) % 3.2)}s infinite` } : undefined}>
         <g className={isNew ? 'animate-story-pop' : undefined}>
           {leaf ? (
             <g>

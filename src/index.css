@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 :root {
+  /* Motion curves for inline transitions (the same as Tailwind's ease-out and ease-in-out). */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
+
   /* Redesign C, "colour chapters": bone paper, near-black ink, one deep green accent that reads as
      text (5:1 or better on every surface). The flat poster colours of the home page are fields,
      not text colours. Every text token is checked against canvas, surface and elevated. */
@@ -409,4 +413,11 @@
   .animate-slice-laser, .animate-pulse, .animate-ping, .animate-spin, .animate-bounce
 ) {
   animation-play-state: paused;
+}
+
+/* Every keyboard focus shows a ring, including controls whose classes switch the outline off
+   (focus:outline-none); mouse clicks stay ringless. The home and module pages set their own. */
+:root :focus-visible {
+  outline: 3px solid rgb(var(--amber-primary));
+  outline-offset: 2px;
 }

@@ -114,7 +114,7 @@ export const HeightLineupScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
 
         {/* the fence between "shorter" and "taller" */}
         {fenceAt !== undefined && (
-          <g style={{ transform: `translateX(${PAD + fenceAt * SLOT}px)`, transition: 'transform 0.6s ease-in-out' }}>
+          <g style={{ transform: `translateX(${PAD + fenceAt * SLOT}px)`, transition: 'transform 0.6s var(--ease-move)' }}>
             <rect x="-3" y={FLOOR - 70} width="6" height="70" fill="#78350f" />
             <rect x="-14" y={FLOOR - 64} width="28" height="5" fill="#a16207" />
             <rect x="-14" y={FLOOR - 30} width="28" height="5" fill="#a16207" />
@@ -133,7 +133,7 @@ export const HeightLineupScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
           const measuring = kind === 'compare' && j === k;
           const medal = sorted.includes(k);
           return (
-            <g key={id} style={{ transform: `translateX(${x(k)}px)`, transition: 'transform 0.9s ease-in-out', opacity: inWindow(k) ? 1 : 0.35 }}>
+            <g key={id} style={{ transform: `translateX(${x(k)}px)`, transition: 'transform 0.9s var(--ease-move)', opacity: inWindow(k) ? 1 : 0.35 }}>
               <g className={measuring ? 'animate-story-bob' : undefined}>
                 {/* legs, body, head */}
                 <rect x="-9" y={FLOOR - h * 0.38} width="7" height={h * 0.38} rx="3" fill="#1e3a8a" />
