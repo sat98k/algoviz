@@ -644,3 +644,120 @@ main h1[tabindex='-1']:focus { outline: none; }
 [data-owl-briefing] { border-top-color: transparent; }
 [data-owl-briefing] > div:first-child > div:last-child { border-radius: 24px; border-color: transparent; background: rgb(var(--bg-canvas)); }
 [data-owl-briefing] p { font-size: 1.0625rem; line-height: 1.6; }
+
+/* ── Learn view: the owl's explanation ─────────────────────────────────────────────────── */
+.lb-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 56px;
+  padding: 0.75rem clamp(16px, 2.5vw, 28px);
+  text-align: left;
+  transition: background-color 150ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  .lb-toggle:hover { background: rgb(var(--bg-surface-elevated)); }
+}
+.lb-toggle-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.125rem, 1rem + 0.5vw, 1.5rem);
+  letter-spacing: -0.01em;
+  color: rgb(var(--text-primary));
+}
+.lb-toggle-state { display: flex; align-items: center; gap: 0.35rem; font-weight: 700; font-size: 0.9375rem; color: rgb(var(--text-muted)); }
+[data-owl-briefing] { gap: 1.75rem; padding: 0.5rem clamp(16px, 2.5vw, 28px) clamp(20px, 3vw, 32px); }
+
+.lb-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);
+  letter-spacing: -0.02em;
+  color: rgb(var(--text-primary));
+}
+.lb-heading-sm { font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem); }
+.lb-steps { display: grid; gap: 12px; margin-top: 0.75rem; list-style: none; }
+@media (min-width: 768px) { .lb-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .lb-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.lb-step {
+  display: flex;
+  gap: 0.9rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: 22px;
+  background: rgb(var(--bg-canvas));
+}
+.lb-step-num {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #1a1a1a;
+  color: #e6e0d2;
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+.lb-step-title { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: 1.125rem; line-height: 1.25; color: rgb(var(--text-primary)); }
+.lb-step-text { margin-top: 0.25rem; font-size: 1rem; line-height: 1.55; color: rgb(var(--text-secondary)); }
+
+/* The key insight as a chapter field. */
+.lb-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding: clamp(18px, 2.5vw, 28px);
+  border-radius: 24px;
+  background: #18bc42;
+  color: #1a1a1a;
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  line-height: 1.5;
+}
+.lb-insight-label { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; }
+/* Glossary terms and code chips inside the field keep the field's ink. */
+.lb-insight :is(button, a, code, span) { color: inherit; }
+
+.lb-panel { display: flex; flex-direction: column; gap: 0.75rem; padding: clamp(18px, 2.5vw, 28px); border-radius: 24px; background: rgb(var(--bg-canvas)); }
+.lb-watch { display: flex; flex-direction: column; gap: 0.6rem; padding-left: 1.4rem; list-style: disc; font-size: 1rem; line-height: 1.55; color: rgb(var(--text-secondary)); }
+.lb-watch li::marker { color: #0b6b2a; }
+.lb-tip { font-size: 0.9375rem; color: rgb(var(--text-muted)); }
+
+/* ── Learn view: complexity ─────────────────────────────────────────────────────────────── */
+[data-view='learn'] section[aria-labelledby='complexity-heading'] { padding: clamp(20px, 3vw, 36px); gap: 1.25rem; }
+[data-view='learn'] section[aria-labelledby='complexity-heading'] .border-hairline,
+[data-view='learn'] section[aria-labelledby='complexity-heading'] .border-b { border-color: transparent; }
+[data-view='learn'] section[aria-labelledby='complexity-heading'] > .grid > div { border-radius: 22px; background: rgb(var(--bg-canvas)); padding: 1.25rem; }
+[data-view='learn'] section[aria-labelledby='complexity-heading'] > div:first-child span { border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.8125rem; font-family: 'Red Hat Text', system-ui, sans-serif; font-weight: 700; }
+[data-view='learn'] section[aria-labelledby='complexity-heading'] h3 { font-size: 0.9375rem; font-weight: 700; color: rgb(var(--text-secondary)); }
+
+/* ── Player: scene header and view switch ──────────────────────────────────────────────── */
+.ss-title {
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.75rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #1c1917;
+}
+.ss-title-fit { font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem); }
+.ss-subtitle { margin-top: 0.15rem; font-size: 0.9375rem; line-height: 1.45; color: #57534e; }
+.ss-status {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: #1a1a1a;
+  color: #f3efe6;
+  font-weight: 700;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.ss-viewlabel { font-weight: 700; font-size: 0.9375rem; color: rgb(var(--text-secondary)); }

@@ -103,9 +103,9 @@ export const ProblemIntuitionPanel: React.FC<ProblemIntuitionPanelProps> = ({ pr
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-controls={contentId}
-        className="w-full flex items-center justify-between gap-3 px-3 py-2 sm:px-4 text-left hover:bg-obsidian-900 transition-colors"
+        className="lb-toggle"
       >
-        <span className="flex items-center gap-2 font-sans text-sm font-semibold text-chalk-200">
+        <span className="lb-toggle-title">
           {owl ? (
             <span aria-hidden className="text-base leading-none">
               🦉
@@ -115,9 +115,9 @@ export const ProblemIntuitionPanel: React.FC<ProblemIntuitionPanelProps> = ({ pr
           )}
           {owl ? 'The owl explains: Problem & how it works' : 'Problem & how it works'}
         </span>
-        <span className="flex items-center gap-1 font-sans text-xs text-chalk-500">
+        <span className="lb-toggle-state">
           <span>{isOpen ? 'Hide' : 'Show'}</span>
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown aria-hidden className={`w-5 h-5 transition-transform duration-200 ease-out ${isOpen ? 'rotate-180' : ''}`} />
         </span>
       </button>
 

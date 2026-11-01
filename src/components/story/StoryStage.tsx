@@ -36,12 +36,12 @@ export const StoryStage: React.FC<StoryStageProps> = ({ emoji, title, subtitle, 
           {emoji}
         </span>
         <div className={fit ? 'lg:flex lg:items-baseline lg:gap-3 lg:flex-wrap' : undefined}>
-          <h2 className={`font-display font-bold text-lg sm:text-xl text-stone-900 ${fit ? 'lg:text-base' : ''}`}>{title}</h2>
-          <p className="font-sans text-xs text-stone-600">{subtitle}</p>
+          <h2 className={`ss-title ${fit ? 'ss-title-fit' : ''}`}>{title}</h2>
+          <p className="ss-subtitle">{subtitle}</p>
         </div>
       </div>
       {status && (
-        <div className="font-sans text-xs font-semibold text-amber-900 bg-amber-50 border border-amber-300 rounded-full px-3 py-1.5">
+        <div className="ss-status">
           {status}
         </div>
       )}

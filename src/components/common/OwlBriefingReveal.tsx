@@ -310,23 +310,23 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
 
       {/* The whole procedure, start to finish */}
       <div className="flex flex-col gap-2" aria-label="How it works, the big picture">
-        <h2 className="owl-reveal font-sans text-sm font-semibold text-chalk-200" data-on={on(offsets.stages)}>
+        <h2 className="owl-reveal lb-heading" data-on={on(offsets.stages)}>
           How it works: the big picture
         </h2>
-        <ol className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+        <ol className="lb-steps">
           {owl.overview.map((stage, i) => (
             <li
               key={i}
               data-owl-stage
               data-on={on(offsets.stages + i)}
-              className="owl-reveal-card flex gap-2.5 px-3 py-2.5 bg-obsidian-900 border border-hairline"
+              className="owl-reveal-card lb-step"
             >
-              <span aria-hidden className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-amber text-obsidian-950 text-xs font-bold tabular-nums">
+              <span aria-hidden className="lb-step-num">
                 {i + 1}
               </span>
               <div className="min-w-0 flex flex-col gap-0.5">
-                <h3 className="font-sans text-sm font-semibold text-chalk-100">{stage.title}</h3>
-                <p className="font-sans text-sm leading-relaxed text-chalk-300">
+                <h3 className="lb-step-title">{stage.title}</h3>
+                <p className="lb-step-text">
                   <RichTokens tokens={stage.text} />
                 </p>
               </div>
@@ -337,32 +337,32 @@ export const OwlBriefingReveal: React.FC<OwlBriefingRevealProps> = ({ owl, probl
 
       <p
         data-on={on(offsets.insight)}
-        className="owl-reveal-card flex items-start gap-2 px-3 py-2.5 bg-amber/10 border border-amber/30 font-sans text-sm leading-relaxed text-chalk-200"
+        className="owl-reveal-card lb-insight"
       >
-        <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-amber" aria-hidden />
+        <Lightbulb className="w-6 h-6 shrink-0" aria-hidden />
         <span>
-          <strong className="font-semibold text-chalk-100">Why it works: </strong>
+          <strong className="lb-insight-label">Why it works: </strong>
           <RichTokens tokens={owl.insight} />
         </span>
       </p>
 
       <div data-on={on(offsets.watch)} className={`owl-reveal-card grid grid-cols-1 gap-3 ${dpBrief ? 'md:grid-cols-2' : ''}`}>
-        <div className="flex flex-col gap-2 px-3 py-3 border border-hairline">
-          <h2 className="flex items-center gap-1.5 font-sans text-sm font-semibold text-chalk-200">
-            <Eye className="w-3.5 h-3.5 text-amber" aria-hidden />
+        <div className="lb-panel">
+          <h2 className="lb-heading lb-heading-sm">
+            <Eye className="w-5 h-5" aria-hidden />
             While you watch
           </h2>
-          <ul className="flex flex-col gap-1.5 list-disc pl-5 marker:text-amber font-sans text-sm leading-relaxed text-chalk-300">
+          <ul className="lb-watch">
             {owl.watch.map((w, i) => (
               <li key={i}>
                 <RichTokens tokens={w} />
               </li>
             ))}
           </ul>
-          <p className="font-sans text-xs text-chalk-400">Tip: switch on 🎬 Animation Mode to see the owl's story, then press Step (→) at your own pace.</p>
+          <p className="lb-tip">Tip: switch on 🎬 Animation Mode to see the owl's story, then press Step (→) at your own pace.</p>
         </div>
         {dpBrief && (
-          <div className="px-3 py-3 border border-hairline">
+          <div className="lb-panel">
             <DpCases brief={dpBrief} />
           </div>
         )}
