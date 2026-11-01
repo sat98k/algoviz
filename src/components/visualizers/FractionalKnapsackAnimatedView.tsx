@@ -46,11 +46,11 @@ export const cheeseNarration = (step: AlgorithmStep): string => {
 
 // Classic appetizing normal yellow cheese theme for all cheese wheels
 const NORMAL_CHEESE_THEME = {
-  rindColor: '#f59e0b',
-  pasteColor: '#fef08a',
-  holeColor: '#eab308',
-  rindBorder: '#d97706',
-  highlight: '#fef9c3',
+  rindColor: '#e8a817',
+  pasteColor: '#fde68a',
+  holeColor: '#d99a1e',
+  rindBorder: '#b8740f',
+  highlight: '#fff6d6',
 };
 
 /** Renders a classic 3D Cheese Wheel in appetizing normal yellow with cheese eyes */
@@ -106,7 +106,7 @@ const renderNormalCheese = (
           y1={1}
           x2={width * slicedFraction}
           y2={height - 2}
-          stroke="#ef4444"
+          stroke="#cc2e2e"
           strokeWidth="2.5"
           strokeDasharray="4 2"
         />
@@ -286,20 +286,19 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
 
   return (
     <div
-      className={`flex flex-col w-full min-h-[620px] bg-[#faf7f2] border border-amber-200/90 rounded-2xl p-4 sm:p-8 select-none relative shadow-md text-stone-800 ${
+      className={`ss-stage flex flex-col w-full min-h-[620px] rounded-[28px] p-4 sm:p-8 select-none relative text-stone-800 ${
         fit ? 'lg:flex-1 lg:min-h-0 lg:px-4 lg:py-2.5' : ''
       }`}
     >
       
       {/* ─── STAGE HEADER: Clean Light-Mode Story Bar ─── */}
-      <div className={`flex flex-wrap items-center justify-between pb-4 border-b border-amber-200/80 gap-3 z-30 ${fit ? 'lg:pb-1.5' : ''}`}>
-        <div className={`flex items-center gap-3 ${fit ? 'lg:gap-2' : ''}`}>
-          <span className={`text-3xl filter drop-shadow ${fit ? 'lg:text-xl' : ''}`}>🧀</span>
+      <div className={`flex flex-wrap items-end justify-between gap-3 z-30 ${fit ? 'lg:pb-0' : 'pb-1'}`}>
+        <div className="min-w-0">
           <div className={fit ? 'lg:flex lg:items-baseline lg:gap-3 lg:flex-wrap' : undefined}>
-            <h2 className={`font-display font-bold text-lg sm:text-xl text-stone-900 flex items-center gap-2 ${fit ? 'lg:text-base' : ''}`}>
+            <h2 className={`ss-title ${fit ? 'ss-title-fit' : ''}`}>
               The Cheese Knapsack
             </h2>
-            <p className="font-sans text-xs text-stone-600">
+            <p className="ss-subtitle">
               {!isSorted
                 ? 'Cheese wheels resting on the wooden board in raw entered order.'
                 : animPhase === 'slicing'
@@ -324,9 +323,9 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
                 setTimeout(() => setAnimPhase('lidClosing'), 3600);
                 setTimeout(() => setAnimPhase('closed'), 4800);
               }}
-              className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-full font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              className="c-pill"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-amber-700" /> Replay Slicing & Packing
+              <RotateCcw className="w-4 h-4" aria-hidden /> Replay Slicing & Packing
             </button>
           )}
         </div>
@@ -336,21 +335,28 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
 
       <ZoomIf fit={fit}>
       {/* ─── UNCLIPPED FULL-STAGE ARENA (TABLE TOP & BAG BOTTOM) ─── */}
-      <div className={`relative w-full min-h-[500px] mt-4 flex flex-col justify-between ${fit ? 'lg:mt-1' : ''}`}>
+      <div className={`fk-arena relative w-full min-h-[500px] mt-4 flex flex-col justify-between ${fit ? 'lg:mt-1' : ''}`}>
         
         {/* ─── WOODEN CUTTING BOARD (TABLE) ─── */}
-        <div className="relative w-full h-[180px] bg-gradient-to-b from-[#f8f1e7] via-[#efe3d3] to-[#e4d2bc] border-2 border-[#d5be9f] rounded-2xl shadow-inner z-10">
-          <div className="flex items-center justify-between text-xs font-sans text-stone-600 px-3 pt-2 font-medium">
-            <span className="font-bold tracking-wider uppercase text-amber-950 flex items-center gap-1.5">
-              🪵 Kitchen Table (Available Cheese Wheels)
+        <div
+          className="relative w-full h-[180px] rounded-[26px] z-10"
+          style={{
+            background: 'linear-gradient(180deg, #f6e9d2 0%, #ecd7b4 70%, #ddc196 100%)',
+            boxShadow: 'inset 0 -10px 0 rgb(150 105 55 / 0.25), inset 0 2px 0 rgb(255 255 255 / 0.6), 0 14px 24px -16px rgb(58 36 20 / 0.55)',
+          }}
+        >
+          <div className="absolute inset-3 rounded-[18px] border-2 border-[#d8bd94]/70 pointer-events-none" />
+          <div className="flex flex-wrap items-baseline gap-x-3 text-sm font-sans text-stone-700 px-5 pt-3 font-medium">
+            <span className="font-display font-black text-base text-stone-900">
+              Kitchen Table (Available Cheese Wheels)
             </span>
-            <span className="text-stone-500 italic">
+            <span className="text-stone-600 italic">
               {isSorted ? 'Sorted: Highest value per kg first' : 'Initial raw order'}
             </span>
           </div>
 
           {/* Wooden plank groove */}
-          <div className="absolute inset-x-0 bottom-0 h-4 bg-[#c8b090]/30 border-t border-[#bfa280]/40 rounded-b-xl" />
+          <div className="absolute inset-x-0 bottom-0 h-3 rounded-b-[26px] bg-[#c9a77a]/40" />
         </div>
 
         {/* ─── PHYSICAL CHEESE WHEELS LAYER (ABSOLUTELY POSITIONED ACROSS WHOLE ARENA) ─── */}
@@ -410,11 +416,19 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
                   {isFractionStep && animPhase === 'slicing' && (
                     <div className="absolute -top-12 z-50 pointer-events-none animate-knife-chop">
                       <svg width="45" height="75" viewBox="0 0 40 70" className="drop-shadow-xl">
-                        <path d="M 18 5 L 36 45 C 36 60, 24 65, 18 65 L 18 5 Z" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1.5" />
+                        <defs>
+                          <linearGradient id="knifeSteel" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0" stopColor="#c9d3db" />
+                            <stop offset="0.5" stopColor="#f4f7f9" />
+                            <stop offset="1" stopColor="#9aa8b4" />
+                          </linearGradient>
+                        </defs>
+                        <path d="M 18 5 L 36 45 C 36 60, 24 65, 18 65 L 18 5 Z" fill="url(#knifeSteel)" stroke="#6b7680" strokeWidth="1.2" />
                         <path d="M 36 45 C 36 60, 24 65, 18 65" stroke="#ffffff" strokeWidth="2" fill="none" />
-                        <rect x="13" y="2" width="10" height="22" rx="2" fill="#78350f" stroke="#451a03" strokeWidth="1" />
-                        <circle cx="18" cy="8" r="1.5" fill="#fef08a" />
-                        <circle cx="18" cy="16" r="1.5" fill="#fef08a" />
+                        <rect x="12.5" y="1" width="11" height="23" rx="4" fill="#7a4f2c" />
+                        <rect x="14" y="2.5" width="3" height="20" rx="1.5" fill="#a8743f" />
+                        <circle cx="18" cy="8" r="1.6" fill="#e3e8ec" />
+                        <circle cx="18" cy="17" r="1.6" fill="#e3e8ec" />
                       </svg>
                     </div>
                   )}
@@ -433,17 +447,17 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
                         {renderCheesePiece(baseWidth, baseHeight, item.fractionTaken, 1, `left-${item.id}`)}
                       </div>
                       {animPhase === 'slicing' ? (
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="text-[10px] font-bold text-amber-900 bg-white/95 px-2 py-0.5 rounded-full border border-amber-400 shadow-xs">
+                        <div className="flex flex-col items-center gap-1 mt-1.5">
+                          <span className="text-xs font-bold text-stone-900 bg-[#f2c21a] px-3 py-1 rounded-2xl text-center max-w-[12rem]">
                             ✓ Cut piece slides into bag! ({fmt(item.fractionTaken * 100)}%)
                           </span>
-                          <span className="text-[10px] font-medium text-stone-600 bg-white/95 px-2 py-0.5 rounded-full border border-stone-300">
+                          <span className="text-xs font-bold text-stone-800 bg-[#fbf9f4] px-3 py-1 rounded-full whitespace-nowrap">
                             Left on board ({fmt((1 - item.fractionTaken) * 100)}%)
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs font-bold text-stone-800 mt-1 bg-white/80 px-2 py-0.5 rounded-full border border-stone-200 shadow-xs">
-                          🧀 Cheese #{item.id}
+                        <span className="text-xs font-bold text-stone-800 bg-[#fbf9f4] px-3 py-1 rounded-full whitespace-nowrap mt-1.5">
+                          Cheese #{item.id}
                         </span>
                       )}
                     </div>
@@ -451,7 +465,7 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
                     /* Leftover piece permanently sitting on the cutting board, its cut face showing */
                     <div className="flex flex-col items-center">
                       {renderCheesePiece(baseWidth, baseHeight, item.fractionTaken, 1, `left-${item.id}`)}
-                      <span className="text-[10px] font-bold text-stone-700 bg-white/95 px-2.5 py-0.5 rounded-full border border-stone-300 shadow-xs mt-1">
+                      <span className="text-xs font-bold text-stone-800 bg-[#fbf9f4] px-3 py-1 rounded-full whitespace-nowrap mt-1.5">
                         Left on board ({fmt((1 - item.fractionTaken) * 100)}%)
                       </span>
                     </div>
@@ -475,15 +489,15 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
               >
                 {/* Floating Selection Banner */}
                 {isExamining && (
-                  <div className="mb-2 px-2.5 py-0.5 bg-amber-400 text-amber-950 font-bold text-[11px] rounded-full shadow-md animate-bounce flex items-center gap-1">
-                    <span>👀 Picking this up!</span>
+                  <div className="mb-2 px-3 py-1 bg-[#1a1a1a] text-[#f3efe6] font-bold text-xs rounded-full animate-story-bob">
+                    <span>Picking this up!</span>
                   </div>
                 )}
                 <div className="p-1 transition-transform duration-300 hover:scale-105">
                   {renderNormalCheese(baseWidth, baseHeight)}
                 </div>
-                <span className="text-xs font-bold text-stone-800 flex items-center gap-1 mt-1 bg-white/80 px-2 py-0.5 rounded-full border border-stone-200 shadow-xs">
-                  🧀 Cheese #{item.id}
+                <span className="text-xs font-bold text-stone-800 bg-[#fbf9f4] px-3 py-1 rounded-full whitespace-nowrap mt-1.5">
+                  Cheese #{item.id}
                 </span>
               </div>
             );
@@ -515,7 +529,7 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
                 }}
               >
                 <div className="drop-shadow-xl">{renderCheesePiece(baseWidth, baseHeight, 0, fracItem.fractionTaken, `fly-${fracItem.id}`)}</div>
-                <span className="text-[10px] font-bold text-amber-900 bg-white px-2 py-0.5 rounded-full border border-amber-400 shadow-sm mt-1">
+                <span className="text-xs font-bold text-stone-900 bg-[#f2c21a] px-3 py-1 rounded-2xl text-center max-w-[12rem] mt-1.5">
                   ✓ Cut piece slides into bag!
                 </span>
               </div>
@@ -525,19 +539,24 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
 
         {/* ─── ROW 2: THE CONSISTENT LEATHER KNAPSACK (EXACT W-80) ─── */}
         <div className="relative w-full flex flex-col items-center justify-center pt-8 z-20">
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-24 rounded-[26px] -z-10"
+            style={{ background: 'linear-gradient(180deg, #f07a6f 0%, #ed4b44 100%)', boxShadow: 'inset 0 6px 0 rgb(255 255 255 / 0.18)' }}
+          />
           
           {/* Header above Bag: Shows Capacity & Total Profit */}
-          <div className="flex items-center justify-between w-80 max-w-full px-1 text-xs font-sans text-stone-600 pb-2 font-medium">
-            <span className="font-bold tracking-wider uppercase text-amber-950 flex items-center gap-1.5">
-              🎒 The Leather Knapsack
+          <div className="flex flex-wrap items-center justify-between gap-2 w-80 max-w-full px-1 text-sm font-sans text-stone-700 pb-2 font-medium">
+            <span className="font-display font-black text-base text-stone-900">
+              The Leather Knapsack
             </span>
             <div>
               {isLidActive ? (
-                <span className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2.5 py-0.5 rounded-full text-xs shadow-xs">
-                  Capacity Reached • Total Profit: <strong className="text-emerald-950 font-black">${fmt(currentValue)}</strong>
+                <span className="font-bold text-stone-900 bg-[#18bc42] px-3 py-1 rounded-full text-xs">
+                  Capacity Reached • Total Profit: <strong className="font-black">${fmt(currentValue)}</strong>
                 </span>
               ) : (
-                <span className="text-stone-500 font-medium">
+                <span className="text-stone-600 font-medium">
                   Open and ready for cheese
                 </span>
               )}
@@ -548,60 +567,63 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
           <div className="relative w-80 max-w-full flex flex-col items-center">
             
             {/* Top Leather Handle */}
-            <div className="w-16 h-5 border-4 border-amber-900/80 rounded-t-lg bg-transparent -mb-1" />
+            <div className="w-16 h-6 border-[5px] border-[#7a4a26] rounded-t-2xl bg-transparent -mb-1" />
 
             {/* ─── CONSISTENT LID FLAP (EXACT W-80) ─── */}
             <div className="relative z-20 w-80 max-w-full">
               {isLidActive ? (
                 /* Snapped Closed Leather Lid Animation */
-                <div className="animate-lid-close w-80 max-w-full h-14 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-950 rounded-t-2xl shadow-lg flex items-center justify-between px-6">
+                <div className="animate-lid-close w-80 max-w-full h-14 rounded-t-[22px] flex items-center justify-between px-6" style={{ background: 'linear-gradient(180deg, #b77a44 0%, #9a6235 100%)', boxShadow: 'inset 0 -4px 0 rgb(0 0 0 / 0.15), inset 0 2px 0 rgb(255 255 255 / 0.25)' }}>
                   {/* Left leather strap & brass buckle */}
                   <div className="flex flex-col items-center">
-                    <div className="w-4 h-9 bg-amber-950 border border-amber-700 rounded-sm shadow flex items-center justify-center">
-                      <div className="w-2.5 h-3.5 border-2 border-amber-300 rounded-xs" />
+                    <div className="w-5 h-10 bg-[#6e4426] rounded-md flex items-center justify-center">
+                      <div className="w-3 h-4 border-[2.5px] border-[#e8a817] rounded-[3px]" />
                     </div>
                   </div>
 
                   {/* Brass Centre Clasp: Clean and Buckled */}
-                  <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-950/70 rounded-full border border-amber-600 shadow-inner">
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-300 shadow" />
-                    <span className="text-[11px] font-black text-amber-200 tracking-wider">LID CLOSED & BUCKLED</span>
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-[#6e4426] rounded-full">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#e8a817]" />
+                    <span className="text-xs font-black text-[#fde68a] tracking-wider">LID CLOSED & BUCKLED</span>
                   </div>
 
                   {/* Right leather strap & brass buckle */}
                   <div className="flex flex-col items-center">
-                    <div className="w-4 h-9 bg-amber-950 border border-amber-700 rounded-sm shadow flex items-center justify-center">
-                      <div className="w-2.5 h-3.5 border-2 border-amber-300 rounded-xs" />
+                    <div className="w-5 h-10 bg-[#6e4426] rounded-md flex items-center justify-center">
+                      <div className="w-3 h-4 border-[2.5px] border-[#e8a817] rounded-[3px]" />
                     </div>
                   </div>
                 </div>
               ) : (
                 /* Open Mouth (Tilted Upwards, Consistent Dimensions) */
                 <div
-                  className="w-80 max-w-full h-11 bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 border-2 border-dashed border-amber-600 rounded-t-xl flex items-center justify-center gap-2 shadow-md transition-all duration-700"
+                  className="w-80 max-w-full h-11 rounded-t-[18px] flex items-center justify-center gap-2 transition-all duration-700"
                   style={{
                     transform: 'perspective(600px) rotateX(45deg)',
                     transformOrigin: 'top center',
+                    background: 'linear-gradient(180deg, #5a3820 0%, #7a4a26 100%)',
+                    boxShadow: 'inset 0 6px 10px rgb(0 0 0 / 0.35)',
                   }}
                 >
-                  <span className="text-amber-300 text-xs font-bold animate-pulse">
-                    ⬇ Cheese drops in here ⬇
+                  <span className="text-[#fde68a] text-xs font-bold">
+                    Cheese drops in here
                   </span>
                 </div>
               )}
             </div>
 
             {/* ─── MAIN BACKPACK STORAGE CHAMBER (EXACT W-80, NO JUMP) ─── */}
-            <div className="relative w-80 max-w-full min-h-[175px] bg-gradient-to-b from-[#854d0e] via-[#713f12] to-[#451a03] border-4 border-[#3f1d0b] rounded-b-3xl p-4 flex flex-col justify-end shadow-2xl overflow-hidden z-10">
+            <div className="relative w-80 max-w-full min-h-[175px] rounded-b-[34px] p-4 flex flex-col justify-end overflow-hidden z-10" style={{ background: 'linear-gradient(180deg, #c98a52 0%, #b07240 60%, #93592f 100%)', boxShadow: 'inset 0 -8px 0 rgb(0 0 0 / 0.14), inset 0 0 0 2px rgb(255 228 190 / 0.25), 0 22px 30px -18px rgb(58 36 20 / 0.7)' }}>
+              <div className="absolute inset-2.5 rounded-b-[28px] rounded-t-md border-2 border-dashed border-[#f1d2ad]/45 pointer-events-none" />
               
               {/* Backpack Leather Straps Accents */}
-              <div className="absolute top-0 left-6 w-3 h-full bg-[#3f1d0b]/40 rounded-full" />
-              <div className="absolute top-0 right-6 w-3 h-full bg-[#3f1d0b]/40 rounded-full" />
+              <div className="absolute top-0 left-6 w-3.5 h-full bg-[#7a4a26]/45 rounded-full" />
+              <div className="absolute top-0 right-6 w-3.5 h-full bg-[#7a4a26]/45 rounded-full" />
 
               {/* Cheese Wheels Stacked Inside the Bag */}
               <div className="flex flex-wrap items-center justify-center gap-3 py-2 z-10 min-h-[90px]">
                 {itemsInBag.length === 0 ? (
-                  <div className="text-center text-xs text-amber-200/60 py-6 italic">
+                  <div className="text-center text-sm text-[#fdf0dc] py-6 italic">
                     The bag is empty. Waiting to pack cheese.
                   </div>
                 ) : (
@@ -621,12 +643,12 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
                         key={`bag-cheese-${item.id}`}
                         className="flex flex-col items-center animate-fade-in transition-all duration-700"
                       >
-                        <div className="p-1 rounded-xl bg-amber-950/40 border border-amber-400/40 shadow-sm">
+                        <div className="p-1.5 rounded-2xl bg-[#6e4426]/45">
                           {isFraction
                             ? renderCheesePiece(inBagWidth, inBagHeight, 0, item.fractionTaken, `bag-${item.id}`)
                             : renderNormalCheese(inBagWidth, inBagHeight, 1)}
                         </div>
-                        <span className="text-[10px] font-bold text-amber-200 mt-0.5">
+                        <span className="text-xs font-bold text-[#fff3dd] mt-1">
                           {isFraction ? `${Math.round(item.fractionTaken * 100)}% wedge` : `Cheese #${item.id}`}
                         </span>
                       </div>
@@ -638,7 +660,7 @@ export const FractionalKnapsackAnimatedView: React.FC<FractionalKnapsackAnimated
 
             {/* Consistent Floor Shadow */}
             <div
-              className={`h-4 bg-stone-900/30 rounded-full filter blur-md mt-1 transition-all duration-700 ${
+              className={`h-4 bg-[#3a2414]/35 rounded-full filter blur-md mt-1 transition-all duration-700 ${
                 isLidActive ? 'w-80 max-w-full opacity-70' : 'w-76 opacity-40'
               }`}
             />

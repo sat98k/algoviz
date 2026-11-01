@@ -112,7 +112,7 @@ export const InterviewRoomScene: React.FC<StorySceneProps> = ({ step }) => {
   })();
 
   const W = 780;
-  const FLOOR = 300;
+  const FLOOR = 250;
   const DESK_X = 210;
   const CHAIR_X = 360;
   const smallX = (k: number, start: number) => start + k * 34;
@@ -124,12 +124,12 @@ export const InterviewRoomScene: React.FC<StorySceneProps> = ({ step }) => {
       narration={narration}
       status={`Spent • ${interviewed * ci + hired.length * ch} coins`}
     >
-      <svg viewBox={`0 0 ${W} 470`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: W * 1.2 }} role="img" aria-label="Interview room">
+      <svg viewBox={`0 0 ${W} 420`} className="block mx-auto w-full h-auto overflow-visible" style={{ maxWidth: W * 1.2 }} role="img" aria-label="Interview room">
         <SceneDefs ids={ids} floor={field.bg} />
         <Room ids={ids} width={W} floorY={FLOOR} depth={170} floor={field.bg} />
         {/* a window and a framed picture on the wall */}
-        <rect x="40" y="40" width="110" height="80" rx="10" fill="#dff1ff" stroke="#c9b48f" strokeWidth="6" />
-        <path d="M95 40 V120 M40 80 H150" stroke="#c9b48f" strokeWidth="4" />
+        <rect x="40" y="26" width="110" height="80" rx="10" fill="#dff1ff" stroke="#c9b48f" strokeWidth="6" />
+        <path d="M95 26 V106 M40 66 H150" stroke="#c9b48f" strokeWidth="4" />
 
         {/* the person at the desk */}
         {atDesk !== undefined ? (
@@ -185,20 +185,20 @@ export const InterviewRoomScene: React.FC<StorySceneProps> = ({ step }) => {
           ['Hired, then replaced', 300],
           ['Went home', 540],
         ].map(([label, x]) => (
-          <text key={label as string} x={x as number} y={FLOOR + 74} fontSize="13" fontWeight="900" fill={tint(field.bg, -0.55)} style={F}>
+          <text key={label as string} x={x as number} y={FLOOR + 74} fontSize="17" fontWeight="900" fill={tint(field.bg, -0.55)} style={F}>
             {label}
           </text>
         ))}
         {waiting.map(({ k }, idx) => (
           <g key={`w-${k}`} transform={`translate(${smallX(idx, 46)}, ${FLOOR + 150})`}>
             <Person height={62} {...look(k)} />
-            <text y="16" textAnchor="middle" fontSize="11" fontWeight="900" fill={PALETTE.ink}>
+            <text y="20" textAnchor="middle" fontSize="16" fontWeight="900" fill={PALETTE.ink}>
               {k + 1}
             </text>
           </g>
         ))}
         {waiting.length === 0 && (
-          <text x="30" y={FLOOR + 110} fontSize="12" fontStyle="italic" fill="#5c554c">
+          <text x="30" y={FLOOR + 110} fontSize="16" fontStyle="italic" fill="#5c554c">
             nobody
           </text>
         )}
@@ -206,26 +206,26 @@ export const InterviewRoomScene: React.FC<StorySceneProps> = ({ step }) => {
           <g key={`b-${k}`} transform={`translate(${smallX(idx, 316)}, ${FLOOR + 150})`}>
             <Person height={62} {...look(k)} />
             <Box x={0} y={-28} />
-            <text y="16" textAnchor="middle" fontSize="11" fontWeight="900" fill={PALETTE.ink}>
+            <text y="20" textAnchor="middle" fontSize="16" fontWeight="900" fill={PALETTE.ink}>
               {k + 1}
             </text>
           </g>
         ))}
         {leftWithBox.length === 0 && (
-          <text x="300" y={FLOOR + 110} fontSize="12" fontStyle="italic" fill="#5c554c">
+          <text x="300" y={FLOOR + 110} fontSize="16" fontStyle="italic" fill="#5c554c">
             nobody
           </text>
         )}
         {wentHome.map((k, idx) => (
           <g key={`h-${k}`} transform={`translate(${smallX(idx % 7, 556)}, ${FLOOR + 150 - Math.floor(idx / 7) * 0})`} opacity="0.7">
             <Person height={62} {...look(k)} />
-            <text y="16" textAnchor="middle" fontSize="11" fontWeight="900" fill={PALETTE.ink}>
+            <text y="20" textAnchor="middle" fontSize="16" fontWeight="900" fill={PALETTE.ink}>
               {k + 1}
             </text>
           </g>
         ))}
         {wentHome.length === 0 && (
-          <text x="540" y={FLOOR + 110} fontSize="12" fontStyle="italic" fill="#5c554c">
+          <text x="540" y={FLOOR + 110} fontSize="16" fontStyle="italic" fill="#5c554c">
             nobody
           </text>
         )}

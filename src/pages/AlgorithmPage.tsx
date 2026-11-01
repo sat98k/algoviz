@@ -81,13 +81,10 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
   if (!config) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-8">
-        <p className="text-rose-400 font-mono text-sm tracking-wide">
-          Algorithm '{algorithmId}' not found.
+        <p className="hc-display text-3xl text-chalk-100">
+          No algorithm called '{algorithmId}'.
         </p>
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 px-5 py-2.5 bg-obsidian-850 hover:bg-obsidian-800 text-chalk-200 border border-hairline font-mono text-xs uppercase tracking-wider"
-        >
+        <button onClick={onBack} className="al-start">
           <ArrowLeft className="w-4 h-4" /> Return to Catalog
         </button>
       </div>
@@ -265,11 +262,10 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
   const learnField = moduleField(config.module);
 
   const huffmanStageSwitch = (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-obsidian-950 border border-amber/40 shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-[11px] text-chalk-400 uppercase font-bold tracking-wider">
-          STAGE:
-        </span>
+    <div className="mode-bar">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="mode-label">Stage</span>
+        <div className="c-group">
         <button
           onClick={() => {
             setIsPlaying(false);
@@ -277,13 +273,10 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
             setCurrentStepIndex(0);
             setHuffmanPhase('encode');
           }}
-          className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
-            huffmanPhase === 'encode'
-              ? 'bg-amber text-obsidian-950 border-amber shadow-sm'
-              : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
-          }`}
+          aria-pressed={huffmanPhase === 'encode'}
+          className="c-pill"
         >
-          1. ENCODE / TREE BUILD
+          1. Encode: build the tree
         </button>
         <button
           onClick={() => {
@@ -292,15 +285,13 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
             setCurrentStepIndex(0);
             setHuffmanPhase('decode');
           }}
-          className={`px-3 py-1 font-mono text-xs font-bold transition-all border flex items-center gap-1.5 ${
-            huffmanPhase === 'decode'
-              ? 'bg-amber text-obsidian-950 border-amber shadow-sm'
-              : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
-          }`}
+          aria-pressed={huffmanPhase === 'decode'}
+          className="c-pill"
         >
-          <Play className="w-3 h-3" />
-          2. DECODE ENCODED STRING
+          <Play className="w-3.5 h-3.5" aria-hidden />
+          2. Decode the bits
         </button>
+        </div>
       </div>
 
       {huffmanPhase === 'encode' && (
@@ -311,9 +302,9 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
             setCurrentStepIndex(0);
             setHuffmanPhase('decode');
           }}
-          className="flex items-center gap-1.5 px-3 py-1 font-mono text-xs font-bold bg-amber/15 border border-amber/40 text-amber hover:bg-amber/25 transition-colors self-end sm:self-center"
+          className="c-pill c-pill-go self-end sm:self-center"
         >
-          <span>⚡ Decode String &gt;</span>
+          <span>Decode the string →</span>
         </button>
       )}
 
@@ -325,9 +316,9 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
             setCurrentStepIndex(0);
             setHuffmanPhase('encode');
           }}
-          className="flex items-center gap-1.5 px-3 py-1 font-mono text-xs font-bold bg-obsidian-900 border border-hairline text-chalk-400 hover:text-chalk-200 transition-colors self-end sm:self-center"
+          className="c-pill self-end sm:self-center"
         >
-          <RefreshCw className="w-3 h-3" />
+          <RefreshCw className="w-3.5 h-3.5" aria-hidden />
           <span>Back to Encoding</span>
         </button>
       )}
@@ -336,9 +327,10 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
 
   /** First / All solutions switch shared by the search algorithms. Changing mode restarts the run. */
   const renderModeSwitch = (isAll: boolean, setAll: (all: boolean) => void, firstHint: string, allHint: string) => (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-obsidian-950 border border-hairline font-mono text-xs">
+    <div className="mode-bar">
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Search mode">
-        <span className="text-[11px] text-chalk-400 uppercase font-bold tracking-wider">Search mode:</span>
+        <span className="mode-label">Search mode</span>
+        <span className="c-group">
         {([false, true] as const).map((all) => (
           <button
             key={String(all)}
@@ -349,15 +341,14 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
               setCurrentStepIndex(0);
               setAll(all);
             }}
-            className={`px-3 py-1 font-mono text-xs font-bold transition-all border ${
-              isAll === all ? 'bg-amber text-obsidian-950 border-amber shadow-sm' : 'bg-obsidian-900 text-chalk-400 border-hairline hover:text-chalk-100'
-            }`}
+            className="c-pill"
           >
             {all ? 'Find all solutions' : 'Find first solution'}
           </button>
         ))}
+        </span>
       </div>
-      <span className="text-[11px] text-chalk-400">{isAll ? allHint : firstHint}</span>
+      <span className="mode-hint">{isAll ? allHint : firstHint}</span>
     </div>
   );
 

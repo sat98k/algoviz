@@ -300,7 +300,7 @@ export const CubbyWallScene: React.FC<StorySceneProps> = ({ step, stepMs }) => {
         </svg>
 
         {/* ── Side panel: balance scale and the backpack ── */}
-        <div className="flex flex-row lg:flex-col gap-4 w-full lg:w-64 shrink-0 items-center justify-center">
+        <div className="flex flex-col sm:flex-row lg:flex-col gap-4 w-full lg:w-64 shrink-0 items-center justify-center">
           {kind === 'choose' && (
             <svg viewBox="0 0 220 150" className="w-56 h-auto overflow-visible" aria-label="Balance scale">
               <ellipse cx="110" cy="144" rx="46" ry="5" fill="#3a2414" opacity="0.15" />

@@ -983,3 +983,16 @@ main h1[tabindex='-1']:focus { outline: none; }
 [data-input-dialog] > [role='dialog'] { border-color: transparent; border-radius: 28px; background: rgb(var(--bg-surface)); overflow: hidden; }
 [data-input-dialog] :is(input, textarea, select) { border-radius: 14px; font-size: 1rem; }
 [data-input-dialog] h2 { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: 1.25rem; letter-spacing: -0.01em; }
+
+/* Mode bars above the player (Huffman stage, first / all solutions): a rounded bar of pills. */
+.mode-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 6px 8px 6px 16px; border-radius: 20px; background: rgb(var(--bg-surface)); }
+.mode-label { font-family: 'Red Hat Display', system-ui, sans-serif; font-weight: 900; font-size: 1rem; color: #1a1a1a; }
+.mode-hint { font-size: 0.875rem; font-weight: 500; color: rgb(var(--text-muted)); padding-right: 8px; }
+/* On narrow screens a tray of options wraps onto two lines instead of pushing the page sideways. */
+.mode-bar .c-group { flex-wrap: wrap; border-radius: 20px; }
+.mode-bar .c-pill { white-space: normal; text-align: left; }
+
+/* Fractional Knapsack on phones: the table, wheels and backpack shrink together (they are laid out
+   in fixed pixels so the slice and leftover fit back into one wheel), so nothing hangs off the board. */
+@media (max-width: 479px) { .fk-arena { zoom: 0.6; } }
+@media (min-width: 480px) and (max-width: 639px) { .fk-arena { zoom: 0.8; } }
