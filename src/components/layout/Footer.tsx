@@ -1,33 +1,39 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { ArrowRight } from 'lucide-react';
+import { GradientField, LiquidOwl } from '../home/fx/lazy';
+import { useLiquidGlass } from '../home/fx/useLiquidGlass';
 
+/**
+ * The close of every catalog page: an olive field (a slow shader gradient) with the name
+ * returning at full width beside the owl in liquid metal, and the first step as a liquid-glass button.
+ */
 export const Footer: React.FC = () => {
+  const root = useRef<HTMLElement>(null);
+  useLiquidGlass(root);
   return (
-    <footer className="w-full bg-obsidian-950 border-t border-hairline pt-8 pb-8 text-chalk-400 overflow-hidden">
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-chalk-100">
-              ALGO<span className="text-amber">VIZ</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-chalk-400 font-sans mt-1.5 max-w-lg leading-relaxed">
-              An interactive visualization platform for learning and analyzing fundamental algorithms step-by-step.
+    <footer ref={root} className="chrome-a ha-footer relative w-full overflow-hidden">
+      <GradientField className="absolute inset-0" colors={['#38450f', '#55661c', '#323d0d']} speed={0.12} />
+      <div className="ha-frame relative pt-10 pb-8 flex flex-col gap-[clamp(64px,12vh,160px)]">
+        <p className="max-w-[38ch] text-[15px] leading-relaxed">
+          A visual companion to Design and Analysis of Algorithms (BCSE204L): every algorithm in the course, one
+          small step at a time.
+        </p>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-end justify-between gap-6">
+            <p className="ha-display text-[clamp(64px,21vw,380px)] leading-[0.8] -ml-[0.04em] select-none" aria-hidden>
+              AlgoViz
             </p>
+            <LiquidOwl className="w-[14vw] max-w-[260px] aspect-[200/220] shrink-0" tint="#f3eee5" />
           </div>
-        </div>
-
-        {/* Bottom Row */}
-        <div className="pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-chalk-400">
-          <div>
-            <span>Design & Analysis of Algorithms</span>
-          </div>
-          <div className="flex items-center gap-4 text-chalk-400">
-            <span>Client-Side Interactive Visualizer</span>
+          <div className="flex flex-wrap justify-between gap-4 text-[14px]">
+            <span>Runs entirely in your browser</span>
             <span>© 2026 AlgoViz</span>
           </div>
         </div>
       </div>
+      <a href="#/module/1" data-glass className="ha-glass-cta">
+        Start with module 1 <ArrowRight className="w-5 h-5" aria-hidden />
+      </a>
     </footer>
   );
 };
-
