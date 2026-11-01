@@ -1013,3 +1013,70 @@ main h1[tabindex='-1']:focus { outline: none; }
 [data-view='play'] .ss-stage { background-color: #fffcf6; }
 /* The app wrapper paints the bone paper; on a glow page it steps aside so the glow shows through. */
 #root > div:has([data-page-glow]) { background: transparent; }
+
+/* ── Liquid glass (redesign C) ────────────────────────────────────────────────────────────────
+   One material, three weights (apple-design: bigger, floating surfaces read thicker; never a light
+   glass on another light glass). Frost everywhere via backdrop-filter; in Chromium the rim also
+   refracts (html.lg-refract, filters in GlassFilter.tsx). The story stages stay solid daylight. */
+:root {
+  --glass-fill: rgb(255 255 255 / 0.56);
+  --glass-rim: rgb(255 255 255 / 0.75);
+  --glass-shadow: 0 1px 1px rgb(58 36 20 / 0.04), 0 14px 34px -14px rgb(58 36 20 / 0.28);
+}
+.glass,
+.glass-bar,
+.glass-dark {
+  -webkit-backdrop-filter: blur(16px) saturate(170%);
+  backdrop-filter: blur(16px) saturate(170%);
+}
+.glass {
+  background-color: var(--glass-fill);
+  box-shadow: inset 0 1px 0 var(--glass-rim), inset 0 0 0 1px rgb(255 255 255 / 0.35), var(--glass-shadow);
+}
+.glass-bar {
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.35), 0 10px 24px -18px rgb(58 36 20 / 0.45);
+}
+.glass-dark {
+  background-color: rgb(26 26 26 / 0.82);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 34px -16px rgb(0 0 0 / 0.55);
+}
+.lg-refract .glass { backdrop-filter: url(#lg-soft) blur(14px) saturate(170%); }
+.lg-refract .glass-bar { backdrop-filter: url(#lg-strong) blur(18px) saturate(180%); }
+.lg-refract .glass-dark { backdrop-filter: url(#lg-strong) blur(16px) saturate(170%); }
+
+/* Where it goes: the floating chrome and the top-level panels of the learn view and the player. */
+[data-view] :is(.sp-card, .al-bar, .mode-bar, .cx-panel, section[aria-label='Problem and how it works']),
+[data-view='play'] [data-story-owl] {
+  background-color: var(--glass-fill);
+  -webkit-backdrop-filter: blur(16px) saturate(170%);
+  backdrop-filter: blur(16px) saturate(170%);
+  box-shadow: inset 0 1px 0 var(--glass-rim), inset 0 0 0 1px rgb(255 255 255 / 0.35), var(--glass-shadow);
+}
+.lg-refract [data-view] :is(.sp-card, .al-bar, .mode-bar, .cx-panel, section[aria-label='Problem and how it works']),
+.lg-refract [data-view='play'] [data-story-owl] { backdrop-filter: url(#lg-soft) blur(14px) saturate(170%); }
+/* The step explanation keeps its marigold hint as tinted glass. */
+[data-view] .sp-card-now { background-color: color-mix(in srgb, rgb(var(--sem-current)) 16%, var(--glass-fill)); }
+/* The playback dock: dark glass (the wrapper steps aside so only the rounded bar shows). */
+[data-playback-dock] { background: transparent !important; box-shadow: none !important; }
+[data-view='play'] [aria-label='Playback'] {
+  background: rgb(26 26 26 / 0.82);
+  -webkit-backdrop-filter: blur(16px) saturate(170%);
+  backdrop-filter: blur(16px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 16px 34px -16px rgb(0 0 0 / 0.55);
+}
+.lg-refract [data-view='play'] [aria-label='Playback'] { backdrop-filter: url(#lg-strong) blur(16px) saturate(170%); }
+
+/* Reduced transparency and more contrast: the glass turns solid, with a defined edge. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .glass-bar, [data-view] :is(.sp-card, .al-bar, .mode-bar, .cx-panel, section[aria-label='Problem and how it works']), [data-view='play'] [data-story-owl] {
+    background-color: #ffffff !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  }
+  .glass-dark, [data-view='play'] [aria-label='Playback'] { background-color: #1a1a1a !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}
+@media (prefers-contrast: more) {
+  .glass, .glass-bar, [data-view] :is(.sp-card, .al-bar, .mode-bar, .cx-panel, section[aria-label='Problem and how it works']) {
+    background-color: #ffffff !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; box-shadow: inset 0 0 0 1.5px #1a1a1a !important;
+  }
+}

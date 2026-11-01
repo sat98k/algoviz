@@ -1,3 +1,4 @@
+import { GlassFilter } from './components/glass/GlassFilter';
 import { useState, useEffect, useRef } from 'react';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
@@ -147,6 +148,7 @@ export function App() {
       >
         Skip to content
       </button>
+      <GlassFilter />
       <Navbar currentView={view} onNavigate={navigateTo} />
 
       <main ref={mainRef} id="main" className="flex-1 focus:outline-none">
