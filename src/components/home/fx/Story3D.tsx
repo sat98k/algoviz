@@ -150,7 +150,7 @@ const Lights: React.FC = () => (
 
 /** While `active` the scene renders every frame; otherwise it draws once and holds still. */
 const canvasProps = (active: boolean) => ({
-  dpr: [1, 2] as [number, number],
+  dpr: [1, 1.5] as [number, number],
   gl: { alpha: true, antialias: true },
   frameloop: (active ? 'always' : 'demand') as 'demand' | 'always',
   style: { width: '100%', height: '100%', pointerEvents: 'none' as const },

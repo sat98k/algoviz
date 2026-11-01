@@ -57,6 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
     <header
       ref={barRef}
       className="chrome-c glass-bar sticky top-0 z-50 w-full transition-colors duration-300"
+      data-over={inCatalog ? 'catalog' : undefined}
       style={{ background: `color-mix(in srgb, ${bar.bg} 74%, transparent)`, color: bar.ink }}
     >
       <div className="hc-frame h-11 flex items-center justify-between">

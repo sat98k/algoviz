@@ -1044,6 +1044,9 @@ main h1[tabindex='-1']:focus { outline: none; }
 }
 .lg-refract .glass { backdrop-filter: url(#lg-soft) blur(14px) saturate(170%); }
 .lg-refract .glass-bar { backdrop-filter: url(#lg-strong) blur(18px) saturate(180%); }
+/* Refraction re-runs whenever the backdrop changes. Over the home and module pages' moving WebGL
+   and over the playing story it would run every frame, so those keep the (GPU-cheap) frost only. */
+.lg-refract .glass-bar[data-over='catalog'] { backdrop-filter: blur(18px) saturate(180%); }
 .lg-refract .glass-dark { backdrop-filter: url(#lg-strong) blur(16px) saturate(170%); }
 
 /* Where it goes: the floating chrome and the top-level panels of the learn view and the player. */
@@ -1066,7 +1069,6 @@ main h1[tabindex='-1']:focus { outline: none; }
   backdrop-filter: blur(16px) saturate(170%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 16px 34px -16px rgb(0 0 0 / 0.55);
 }
-.lg-refract [data-view='play'] [aria-label='Playback'] { backdrop-filter: url(#lg-strong) blur(16px) saturate(170%); }
 
 /* Reduced transparency and more contrast: the glass turns solid, with a defined edge. */
 @media (prefers-reduced-transparency: reduce) {

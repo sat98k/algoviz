@@ -1,11 +1,18 @@
 import { GlassFilter } from './components/glass/GlassFilter';
-import { useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { Home } from './pages/Home';
-import { ModulePage } from './pages/ModulePage';
-import { AlgorithmPage, AlgorithmView } from './pages/AlgorithmPage';
-import { ComparisonPage } from './pages/ComparisonPage';
+import type { AlgorithmView } from './pages/AlgorithmPage';
+
+// Only the home page ships with the first load; the rest arrive when needed, and are fetched
+// while the browser is idle so a click rarely waits for them.
+const loadModule = () => import('./pages/ModulePage');
+const loadAlgorithm = () => import('./pages/AlgorithmPage');
+const loadCompare = () => import('./pages/ComparisonPage');
+const ModulePage = lazy(() => loadModule().then((m) => ({ default: m.ModulePage })));
+const AlgorithmPage = lazy(() => loadAlgorithm().then((m) => ({ default: m.AlgorithmPage })));
+const ComparisonPage = lazy(() => loadCompare().then((m) => ({ default: m.ComparisonPage })));
 import { algorithmRegistry } from './config/algorithmRegistry';
 
 export function App() {
@@ -16,6 +23,13 @@ export function App() {
   // #/algorithm/<id> is the owl's explanation; #/algorithm/<id>/play is the player.
   const [algoView, setAlgoView] = useState<AlgorithmView>('learn');
   const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    const warm = () => void Promise.all([loadModule(), loadAlgorithm(), loadCompare()]).catch(() => {});
+    const t = window.setTimeout(() => (w.requestIdleCallback ? w.requestIdleCallback(warm, { timeout: 4000 }) : warm()), 2500);
+    return () => window.clearTimeout(t);
+  }, []);
 
   // A hash route changes nothing a screen reader notices on its own: name the page in the tab
   // title and move focus to its heading (not on the very first load, which starts at the top).
@@ -152,6 +166,7 @@ export function App() {
       <Navbar currentView={view} onNavigate={navigateTo} />
 
       <main ref={mainRef} id="main" className="flex-1 focus:outline-none">
+        <Suspense fallback={<div className="min-h-[60vh]" aria-busy="true" />}>
         {view === 'home' && (
           <Home
             onSelectModule={selectModule}
@@ -194,6 +209,7 @@ export function App() {
         )}
 
         {view === 'compare' && <ComparisonPage />}
+        </Suspense>
       </main>
 
       {view !== 'algorithm' && <Footer />}

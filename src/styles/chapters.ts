@@ -1,5 +1,5 @@
 import { algorithmRegistry } from '../config/algorithmRegistry';
-import { STORY_SCENES } from '../components/story/storyRegistry';
+import { STORY_HINTS } from '../components/story/storyHints';
 
 export { FIELDS, MODULE_FIELDS, moduleField } from './fields';
 export type { FieldName } from './fields';
@@ -11,4 +11,4 @@ export const ALGO_NAMES: Record<string, string> = Object.fromEntries(algorithmRe
 export const storyLine = (id: string, problem: string) =>
   id === 'fractional-knapsack'
     ? 'Cheese wheels sliced to fit a leather backpack'
-    : STORY_SCENES[id]?.hint ?? problem.split(/(?<=\.)\s/)[0];
+    : STORY_HINTS[id] ?? problem.split(/(?<=\.)\s/)[0];

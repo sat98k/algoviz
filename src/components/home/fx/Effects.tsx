@@ -19,7 +19,8 @@ export const GradientField: React.FC<{ colors: [string, string, string]; classNa
 }) => {
   const { active, wake } = useAmbient(8000);
   return (
-    <div className={className} aria-hidden data-dynamic onPointerMove={wake}>
+    // data-dynamic tells the hero's liquid glass to re-read this canvas every frame; only while it moves.
+    <div className={className} aria-hidden data-dynamic={active ? '' : undefined} onPointerMove={wake}>
       <ShaderGradientCanvas
         style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
         pixelDensity={1}
