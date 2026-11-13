@@ -104,7 +104,33 @@ export interface AugmentingPathState {
   augmentLog?: AugmentEntry[];
   pathHistory: PathRecord[];
   /** After the last search: the vertices S can still reach (one side of a minimum cut). */
-  minCut?: { reachable: string[]; edges: { u: string; v: string; capacity: number }[] };
+  minCut?: MinCut;
+}
+
+/** A pipe crossing the cut. */
+export interface CutEdge {
+  u: string;
+  v: string;
+  capacity: number;
+  /** Flow on the pipe at the end: equal to its capacity for every S → T pipe of a minimum cut. */
+  flow: number;
+}
+
+/**
+ * The minimum s-t cut read off the final residual graph: side S is every vertex the source can still
+ * reach through edges with room, side T is the rest. Its capacity (the S → T pipes) equals the max flow.
+ */
+export interface MinCut {
+  /** Side S: the vertices reachable from the source in the final residual graph (the source first). */
+  reachable: string[];
+  /** Side T: every other vertex (the sink among them). */
+  sinkSide: string[];
+  /** Pipes from S to T. Their capacities add up to the cut capacity; every one is full. */
+  edges: CutEdge[];
+  /** Pipes from T back to S. They do not count toward the cut, and carry no flow at the end. */
+  backEdges: CutEdge[];
+  /** c(S, T): the sum of the capacities of the S → T pipes. */
+  capacity: number;
 }
 
 export interface FlowInputs {
@@ -238,14 +264,34 @@ export function createFlowNetwork(inputs: FlowInputs, kind: SearchKind) {
     return log;
   };
 
-  const minCut = () => {
-    const reachable = search.visited;
+  /**
+   * Side S = the vertices reachable from s through edges with room (its own residual search, so it
+   * does not depend on how far the last search got); side T = the rest. Meant for after the last search.
+   */
+  const minCut = (): MinCut => {
+    const reachable = [`${s}`];
     const inS = new Set(reachable);
-    const cut: { u: string; v: string; capacity: number }[] = [];
-    for (let u = 0; u < n; u++)
+    for (let i = 0; i < reachable.length; i++) {
+      const u = Number(reachable[i]);
       for (let v = 0; v < n; v++)
-        if (cap[u][v] > 0 && inS.has(`${u}`) && !inS.has(`${v}`)) cut.push({ u: `${u}`, v: `${v}`, capacity: cap[u][v] });
-    return { reachable: [...reachable], edges: cut };
+        if (!inS.has(`${v}`) && linked(u, v) && room(u, v) > 0) {
+          inS.add(`${v}`);
+          reachable.push(`${v}`);
+        }
+    }
+    // List each side in vertex order (the source first), so the sides read like the input.
+    reachable.sort((a, b) => (a === `${s}` ? -1 : b === `${s}` ? 1 : Number(a) - Number(b)));
+    const sinkSide = nodes.map((x) => x.id).filter((id) => !inS.has(id));
+    const edges: CutEdge[] = [];
+    const backEdges: CutEdge[] = [];
+    for (let u = 0; u < n; u++)
+      for (let v = 0; v < n; v++) {
+        if (!(cap[u][v] > 0)) continue;
+        const e = { u: `${u}`, v: `${v}`, capacity: cap[u][v], flow: flow[u][v] };
+        if (inS.has(e.u) && !inS.has(e.v)) edges.push(e);
+        else if (!inS.has(e.u) && inS.has(e.v)) backEdges.push(e);
+      }
+    return { reachable, sinkSide, edges, backEdges, capacity: edges.reduce((a, e) => a + e.capacity, 0) };
   };
 
   const snapshot = (phase: AugmentingPathPhase, extra: Partial<AugmentingPathState> = {}): AugmentingPathState => ({
@@ -315,6 +361,38 @@ export function createFlowNetwork(inputs: FlowInputs, kind: SearchKind) {
 }
 
 export type FlowNetwork = ReturnType<typeof createFlowNetwork>;
+
+/**
+ * The min-cut step both pages show after the last search: the S / T split, the S → T pipes and
+ * their capacities, and the max-flow min-cut theorem (cut capacity = max flow).
+ */
+export function minCutStepText(net: FlowNetwork, cut: MinCut, search: 'DFS' | 'BFS') {
+  const { label } = net;
+  const side = (ids: string[]) => `{${ids.map(label).join(', ')}}`;
+  const hop = (e: CutEdge) => net.hopText(Number(e.u), Number(e.v));
+  const sum = cut.edges.length ? `${cut.edges.map((e) => e.capacity).join(' + ')} = ${cut.capacity}` : '0';
+  const back = cut.backEdges.length
+    ? ` Pipes from T back to S (${cut.backEdges.map(hop).join(', ')}) do not count toward the cut: they point the wrong way, and they carry 0 flow at the end.`
+    : '';
+  return {
+    title: `Min Cut: S = ${side(cut.reachable)} | T = ${side(cut.sinkSide)}, Capacity ${cut.capacity} = Max Flow`,
+    description: `Split the vertices in two. Side S is every vertex ${label(net.s)} can still reach through edges with room (exactly what the last ${search} found): ${side(cut.reachable)}. Side T is everything else, the sink ${label(net.t)} included: ${side(cut.sinkSide)}. This is an s-t cut. The pipes from S to T are ${cut.edges.map((e) => `${hop(e)} (${e.flow}/${e.capacity})`).join(', ')}, and every one is full; otherwise the search could have crossed it. Their capacities add up to c(S, T) = ${sum}.${back} All flow from ${label(net.s)} to ${label(net.t)} has to cross these pipes, so no flow can exceed ${cut.capacity}. Our flow is ${net.totalFlow}, so it is a maximum flow and this is a minimum cut (the max-flow min-cut theorem).`,
+    highlights: {
+      nodes: cut.reachable,
+      edges: cut.edges.map((e) => ({ u: e.u, v: e.v, status: 'conflict' as const })),
+    },
+  };
+}
+
+/** Result fields describing the minimum cut, shared by both pages' final step. */
+export function minCutResult(net: FlowNetwork, cut: MinCut) {
+  return {
+    minCutCapacity: cut.capacity,
+    cutSourceSide: cut.reachable.map(net.label),
+    cutSinkSide: cut.sinkSide.map(net.label),
+    cutEdges: cut.edges.map((e) => ({ edge: net.hopText(Number(e.u), Number(e.v)), capacity: e.capacity })),
+  };
+}
 
 /** The augment step's sentence: what happened on each hop, naming every reverse edge used. */
 export function describeAugment(net: FlowNetwork, log: AugmentEntry[]): string {

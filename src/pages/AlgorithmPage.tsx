@@ -25,6 +25,7 @@ import { ProblemIntuitionPanel } from '../components/common/ProblemIntuitionPane
 import { StepExplanation } from '../components/common/StepExplanation';
 import { DpCurrentRule } from '../components/common/DpCurrentRule';
 import { FinalAnswerCard } from '../components/common/FinalAnswerCard';
+import { MinCutPanel } from '../components/visualizers/MinCutPanel';
 import { NQueensSolutionsPanel, findSolutionSteps } from '../components/common/NQueensSolutionsPanel';
 import { RoadmapStrip } from '../components/common/RoadmapStrip';
 import { ROADMAPS, roadmapPhases, spanHas } from '../config/roadmaps';
@@ -483,6 +484,9 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
     </div>
   ) : null;
   const operationCounts = <MetricsPanel metrics={currentStep.metrics || {}} />;
+  // Augmenting-path max flow: the minimum cut gets its own card beside the final answer.
+  const minCutPanel =
+    config.id === 'ford-fulkerson' || config.id === 'edmonds-karp' ? <MinCutPanel step={currentStep} /> : null;
 
   const showColoringSolutions =
     config.id === 'graph-coloring' && (inputs.findMode === 'all' || currentStep.state?.allSolutions?.length);
@@ -667,6 +671,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
               {dpRulePanel}
               {operationCounts}
               <section className="w-full">{finalAnswer}</section>
+              {minCutPanel}
             </div>
           </section>
         ) : (
@@ -675,6 +680,7 @@ export const AlgorithmPage: React.FC<AlgorithmPageProps> = ({
             <div className="w-full relative">{renderVisualizer()}</div>
             {stepExplanation}
             <section className="w-full">{finalAnswer}</section>
+            {minCutPanel}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
               {pseudocodeFor('max-h-[22rem]')}
               <div className="flex flex-col gap-2 min-w-0">

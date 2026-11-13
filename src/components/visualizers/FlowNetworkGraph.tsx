@@ -31,7 +31,7 @@ const quad = (k: Curve, t: number): Pt => ({
 });
 
 /** Column of each vertex: its distance from the source along pipes, with the sink alone at the far right. */
-function columnsOf(cap: number[][], s: number, t: number): number[] {
+export function columnsOf(cap: number[][], s: number, t: number): number[] {
   const n = cap.length;
   const col = Array(n).fill(-1);
   col[s] = 0;

@@ -265,8 +265,14 @@ export const GLOSSARY = defineGlossary({
   'minimum-cut': {
     term: 'Minimum Cut',
     definition:
-      'A split of the vertices into two groups that minimizes the edges (or total capacity) crossing between them. Its size limits how much can flow from one side to the other.',
-    aliases: ['global minimum cut', 'minimum cut', 'min cut'],
+      'A split of the vertices into two groups that minimizes the edges (or total capacity) crossing between them. For flow, the smallest s-t cut: its capacity equals the maximum flow (max-flow min-cut theorem).',
+    aliases: ['global minimum cut', 'minimum cut', 'min cut', 'min-cut'],
+  },
+  's-t-cut': {
+    term: 's-t Cut',
+    definition:
+      'A split of the vertices into side S (holding the source s) and side T (holding the sink t). Its capacity c(S, T) adds up only the edges from S to T; edges from T back to S do not count.',
+    aliases: ['s-t cut', 's-t cuts', 'c(s, t)'],
   },
   preflow: {
     term: 'Preflow',
@@ -316,6 +322,12 @@ export const GLOSSARY = defineGlossary({
     definition:
       'An imaginary line moved across the plane, processing objects only when the line reaches them, so each object is compared only with its current neighbours.',
     aliases: ['sweep-line', 'sweep line'],
+  },
+  'avl-tree': {
+    term: 'AVL Tree',
+    definition:
+      'A self-balancing binary search tree: at every node the heights of the left and right subtrees differ by at most 1. When an insert or delete breaks that rule, one or two rotations restore it, so search, insert and delete all take O(log n).',
+    aliases: ['avl tree', 'avl-tree'],
   },
 });
 

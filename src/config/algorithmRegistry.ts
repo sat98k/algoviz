@@ -1452,9 +1452,9 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     problemStatement:
       'Find the maximum flow from a source s to a sink t through a flow network: think of water pipes, where every pipe (edge) can carry at most its capacity. How much can reach t per second?',
     explanation:
-      'Ford-Fulkerson is the general augmenting-path method: any s-t path with spare capacity in the residual graph may be used. This page finds each path with depth-first search (DFS): it follows one route as deep as it can, backs up from dead ends, and takes the first route that reaches t, even a long one. Reverse edges let a later path send earlier flow back. The Edmonds-Karp page uses breadth-first search instead and always gets a shortest path.',
+      'Ford-Fulkerson is the general augmenting-path method: any s-t path with spare capacity in the residual graph may be used. This page finds each path with depth-first search (DFS): it follows one route as deep as it can, backs up from dead ends, and takes the first route that reaches t, even a long one. Reverse edges let a later path send earlier flow back. The Edmonds-Karp page uses breadth-first search instead and always gets a shortest path. When no path is left, the vertices still reachable from s form side S of a minimum s-t cut: every edge from S to T is full, and their capacities add up to exactly the max flow (the max-flow min-cut theorem), which proves the flow cannot be beaten.',
     coreSteps: CORE_STEPS['ford-fulkerson'],
-    glossaryTerms: ['maximum-flow', 'flow-network', 'dfs', 'augmenting-path', 'residual-graph'],
+    glossaryTerms: ['maximum-flow', 'flow-network', 'dfs', 'augmenting-path', 'residual-graph', 's-t-cut', 'minimum-cut'],
     pseudocode: [
       'function FordFulkerson(s, t, capacities):',
       '  flow = 0; residual = copy(capacities)  // no flow yet: every pipe has all its room',
@@ -1464,6 +1464,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '      residual[u][v] -= bottleneck  // less room left going forward',
       '      residual[v][u] += bottleneck  // the flow can be sent back later (reverse edge)',
       '    flow += bottleneck  // the total flow grows',
+      '  S = vertices the last DFS reached; T = the rest  // min cut: c(S, T) = sum of capacities S → T = flow',
       '  return flow  // no path has room left: this is the maximum',
       'function DFS(u):  // the stack holds the route walked so far',
       '  if u == t: return stack  // reached the sink: the stack is the path',
@@ -1591,9 +1592,9 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     problemStatement:
       'Find the maximum flow from source S to sink T through a network of pipes, where every pipe (edge) can carry at most its capacity. Same problem as Ford-Fulkerson, solved by always using the path with the fewest pipes.',
     explanation:
-      'Edmonds-Karp is the Ford-Fulkerson method with breadth-first search (BFS): the queue explores the residual graph ring by ring, every vertex remembers the vertex that found it (its parent), and when T is found the parent links are followed back to S. That path has the fewest edges. Always choosing such a path guarantees termination in polynomial O(V · E²) time, whatever the capacities.',
+      'Edmonds-Karp is the Ford-Fulkerson method with breadth-first search (BFS): the queue explores the residual graph ring by ring, every vertex remembers the vertex that found it (its parent), and when T is found the parent links are followed back to S. That path has the fewest edges. Always choosing such a path guarantees termination in polynomial O(V · E²) time, whatever the capacities. When T can no longer be reached, the vertices the last BFS did reach form side S of a minimum s-t cut: its full S → T edges add up to exactly the max flow (the max-flow min-cut theorem).',
     coreSteps: CORE_STEPS['edmonds-karp'],
-    glossaryTerms: ['maximum-flow', 'bfs', 'augmenting-path'],
+    glossaryTerms: ['maximum-flow', 'bfs', 'augmenting-path', 's-t-cut', 'minimum-cut'],
     pseudocode: [
       'function EdmondsKarp(network, source s, sink t):',
       '  initialize flow = 0 for all edges  // no flow yet',
@@ -1601,6 +1602,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       '    bottleneck = min_capacity_along(path)  // the narrowest hop on the path',
       '    for each edge (u, v) in path:  // send that much along the path',
       '      flow[u][v] += bottleneck; flow[v][u] -= bottleneck  // forward room shrinks, reverse room grows',
+      '  S = vertices the last BFS reached; T = the rest  // min cut: c(S, T) = sum of capacities S → T = totalFlow',
       '  return totalFlow  // T cannot be reached any more: this is the maximum',
       'function BFS_ShortestPath(residual, s, t):',
       '  queue = [s]; mark s found (ring 0)',
@@ -1980,32 +1982,51 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     id: 'line-segment-intersection',
     module: 5,
     moduleName: 'Module 5: Computational Geometry',
-    name: 'Line Segment Intersection (Sweep-Line)',
+    name: 'Line Segment Intersection (Sweep Line + AVL Tree)',
     paradigm: 'Geometric',
     complexity: complexityFrom(COMPLEXITY_ANALYSIS['line-segment-intersection']),
     analysis: COMPLEXITY_ANALYSIS['line-segment-intersection'],
     problemStatement:
-      'Given some line segments in the plane, decide whether any two of them intersect.',
+      'Given n line segments in the plane, decide whether any two of them intersect.',
     explanation:
-      'The Bentley-Ottmann sweep-line paradigm sorts all segment endpoints by x-coordinate. As the sweep line moves left to right, segments currently cutting the sweep line are stored in an active status structure T ordered by y-coordinate. Only segments that are neighbours in T are ever tested: when a segment is inserted it is tested against the segments directly above and below it, and when a segment is deleted its former above and below neighbours become adjacent and are tested against each other. Each pairwise test intersects(s1, s2) computes four 2D cross-product orientations (d1, d2, d3, d4): the segments intersect if they strictly straddle each other (d1, d2 have opposite signs and d3, d4 have opposite signs), or if an endpoint is collinear (d = 0, on the same line) and passes the onSegment bounding-box check rather than lying out of segment bounds. The leftmost intersection always involves two segments that are neighbours just before it, so these checks are enough, reducing naive O(n²) comparisons to O(n log n).',
+      'This is the Shamos–Hoey sweep (CLRS Any-Segments-Intersect). A vertical sweep line moves from left to right and stops only at segment endpoints, which are sorted by x into an event queue. The segments the sweep line currently cuts form the sweep status T, ordered from bottom to top by where they meet the line. T is stored in an AVL tree: a binary search tree whose left subtree holds the segments below a node and whose right subtree holds the segments above it, kept balanced (the heights of every node’s two subtrees differ by at most 1) by single and double rotations, so its height is O(log n). Two segments are compared exactly with one cross product: s is above t at the sweep line if the point where the line meets s lies counter-clockwise of t. Only neighbours in T are ever tested: when a segment is inserted it is tested against its in-order successor (the segment directly above) and predecessor (directly below), and when a segment is deleted its former above and below neighbours become adjacent and are tested against each other. Each test intersects(s1, s2) uses four cross-product orientations: the segments cross if each one’s endpoints lie on opposite sides of the other, or if an endpoint lies on the other segment. Why this is enough: just before the sweep line reaches the leftmost intersection point, the two segments that cross there are neighbours in T, and they became neighbours at some earlier event, where they were tested. With 2n events and O(log n) work in the AVL tree per event, the whole sweep takes O(n log n) instead of testing all O(n²) pairs.',
     coreSteps: CORE_STEPS['line-segment-intersection'],
-    glossaryTerms: ['sweep-line'],
+    glossaryTerms: ['sweep-line', 'avl-tree'],
     pseudocode: [
-      'function AnySegmentsIntersect(segments):',
-      '  events = sortEndpointsByX(segments)  // Event queue: left & right endpoints sorted by x',
-      '  T = BalancedBinarySearchTree()  // Active status structure ordered by current y(x)',
-      '  for each event in events:  // Sweep line advances left to right across plane',
-      '    if event.type == LEFT_ENDPOINT:  // Segment starts: insert into active status',
-      '      insert(T, event.segment)',
-      '      if intersects(event.segment, above(T, event.segment)): return true  // Adjacent check',
-      '      if intersects(event.segment, below(T, event.segment)): return true',
-      '    else:  // RIGHT_ENDPOINT: segment ends: delete from active status',
-      '      aboveSeg = above(T, event.segment); belowSeg = below(T, event.segment)',
-      '      delete(T, event.segment)',
-      '      if intersects(aboveSeg, belowSeg): return true  // Former neighbors are now adjacent',
-      '  return false  // No intersecting pairs found across entire plane',
+      'function AnySegmentsIntersect(S):',
+      '  Q = sort all 2n endpoints by x  // event queue; ties: left endpoints first, then lower y',
+      '  T = empty AVL tree  // sweep status: segments cut by the sweep line, bottom (left) to top (right)',
+      '  for each endpoint p in Q:  // the sweep line jumps to x = p.x',
+      '    s = the segment that p belongs to',
+      '    if p is the left endpoint of s:',
+      '      AVL-Insert(T, s)  // O(log n): walk down, attach a leaf, rebalance',
+      '      a = Above(T, s); b = Below(T, s)  // in-order successor and predecessor',
+      '      if (a and Intersect(s, a)) or (b and Intersect(s, b)): return true',
+      '    else:  // p is the right endpoint of s',
+      '      a = Above(T, s); b = Below(T, s)  // read the neighbours before s leaves',
+      '      AVL-Delete(T, s)  // O(log n): unlink, rebalance',
+      '      if a and b and Intersect(a, b): return true  // a and b have just become neighbours',
+      '  return false  // no pair of neighbours ever crossed',
       '',
-      'function intersects(s1 = (p1, p2), s2 = (p3, p4)):',
+      'function AVL-Insert(T, s):',
+      '  walk down from the root: go right if IsAbove(s, node), else go left',
+      '  attach s there as a new leaf with height 1',
+      '  walk back up: height = 1 + max(child heights); balance = height(left) - height(right)',
+      '  if balance == +2: LL -> rotate right; LR -> rotate left at the left child, then right',
+      '  if balance == -2: RR -> rotate left; RL -> rotate right at the right child, then left',
+      '',
+      'function AVL-Delete(T, s):',
+      '  find s; if it has two children, copy in its in-order successor and delete that node instead',
+      '  unlink the node (it has at most one child); walk back up rebalancing as in lines 19-21',
+      '',
+      'function Above(T, s):  // in-order successor; Below(T, s) is the mirror image',
+      '  if s has a right child: return the leftmost node of that right subtree',
+      '  else: return the nearest ancestor that has s in its left subtree',
+      '',
+      'function IsAbove(s, t):  // compare at the point p where the sweep line meets s',
+      '  return direction(t.p1, t.p2, p) > 0  // p is counter-clockwise of t, so s is above t',
+      '',
+      'function Intersect(s1 = (p1, p2), s2 = (p3, p4)):',
       '  d1 = direction(p3, p4, p1); d2 = direction(p3, p4, p2)  // Orientation of p1, p2 vs line p3->p4',
       '  d3 = direction(p1, p2, p3); d4 = direction(p1, p2, p4)  // Orientation of p3, p4 vs line p1->p2',
       '  if ((d1 > 0 and d2 < 0) or (d1 < 0 and d2 > 0)) and ((d3 > 0 and d4 < 0) or (d3 < 0 and d4 > 0)):',
@@ -2027,12 +2048,38 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     presets: [
       {
         name: 'Neighbours Change Mid-Sweep',
-        description: 'A short middle segment separates two long ones; when it ends, the long segments become neighbours for the first time',
+        description: 'A short middle segment separates two long ones; inserting the third triggers an LL rotation, and when the short one ends the long segments become neighbours for the first time',
         data: {
           segments: [
             { id: 'S1', label: 'S1', p1: { x: 50, y: 300 }, p2: { x: 450, y: 100 } },
             { id: 'S2', label: 'S2', p1: { x: 80, y: 190 }, p2: { x: 200, y: 190 } },
             { id: 'S3', label: 'S3', p1: { x: 100, y: 80 }, p2: { x: 450, y: 280 } },
+          ],
+        },
+      },
+      {
+        name: 'Rising Shelves (RR Rotations)',
+        description: '6 shelves, each starting a little higher than the last: every insert lands on the right, so the AVL tree keeps rotating left. No two cross',
+        data: {
+          segments: [
+            { id: 'S1', label: 'S1', p1: { x: 40, y: 40 }, p2: { x: 330, y: 70 } },
+            { id: 'S2', label: 'S2', p1: { x: 70, y: 100 }, p2: { x: 360, y: 125 } },
+            { id: 'S3', label: 'S3', p1: { x: 100, y: 160 }, p2: { x: 390, y: 180 } },
+            { id: 'S4', label: 'S4', p1: { x: 130, y: 220 }, p2: { x: 420, y: 235 } },
+            { id: 'S5', label: 'S5', p1: { x: 160, y: 280 }, p2: { x: 450, y: 290 } },
+            { id: 'S6', label: 'S6', p1: { x: 190, y: 340 }, p2: { x: 480, y: 345 } },
+          ],
+        },
+      },
+      {
+        name: 'Zig-Zag (Double Rotation)',
+        description: 'Top, then bottom, then middle: the third insert makes a zig-zag that needs an LR double rotation. A later long diagonal crosses one of them',
+        data: {
+          segments: [
+            { id: 'S1', label: 'S1', p1: { x: 50, y: 300 }, p2: { x: 300, y: 320 } },
+            { id: 'S2', label: 'S2', p1: { x: 80, y: 80 }, p2: { x: 420, y: 60 } },
+            { id: 'S3', label: 'S3', p1: { x: 110, y: 190 }, p2: { x: 380, y: 200 } },
+            { id: 'S4', label: 'S4', p1: { x: 140, y: 250 }, p2: { x: 460, y: 140 } },
           ],
         },
       },
@@ -2061,12 +2108,13 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       },
     ],
     generateRandomInput: () => {
-      const segs = [
-        { id: 'S1', label: 'S1', p1: { x: 50, y: 120 }, p2: { x: 280, y: 260 } },
-        { id: 'S2', label: 'S2', p1: { x: 80, y: 300 }, p2: { x: 320, y: 80 } },
-        { id: 'S3', label: 'S3', p1: { x: 200, y: 350 }, p2: { x: 420, y: 330 } },
-        { id: 'S4', label: 'S4', p1: { x: 300, y: 150 }, p2: { x: 460, y: 220 } },
-      ];
+      // 4–6 random segments on a 500 × 380 board, each running left to right.
+      const n = 4 + Math.floor(Math.random() * 3);
+      const r = (lo: number, hi: number) => Math.round(lo + Math.random() * (hi - lo));
+      const segs = Array.from({ length: n }, (_, i) => {
+        const x1 = r(30, 260);
+        return { id: `S${i + 1}`, label: `S${i + 1}`, p1: { x: x1, y: r(30, 370) }, p2: { x: r(x1 + 80, 490), y: r(30, 370) } };
+      });
       return { segments: segs };
     },
     summarizeResult: resultSummaries.summarizeLineSegmentIntersection,
@@ -2144,6 +2192,7 @@ export const algorithmRegistry: AlgorithmConfig[] = [
     coreSteps: CORE_STEPS['hiring-problem'],
     pseudocode: [
       'function HiringProblem(candidates, costInterview, costHire):',
+      '  randomly shuffle candidates  // no order can be forced on us',
       '  bestScore = -infinity, totalCost = 0  // nobody hired yet, nothing spent',
       '  for i = 0 to n - 1:  // interview candidates in the order they arrive',
       '    totalCost += costInterview  // every interview costs a little',
@@ -2163,7 +2212,18 @@ export const algorithmRegistry: AlgorithmConfig[] = [
         maxLength: 12,
         defaultValue: [4, 7, 2, 9, 8, 10, 5, 12],
         placeholder: 'e.g. 4, 7, 2, 9, 8, 10, 5, 12',
-        helperText: 'Applicant skill ratings (comma-separated). Evaluated left to right.',
+        helperText: 'Applicant skill ratings (comma-separated), in the order they arrive.',
+      },
+      {
+        name: 'order',
+        label: 'Arrival Order',
+        type: 'select',
+        defaultValue: 'shuffle',
+        options: [
+          { label: 'Shuffle the line first (randomized)', value: 'shuffle' },
+          { label: 'Keep the order given', value: 'given' },
+        ],
+        helperText: 'Shuffling is what makes this a randomized algorithm: about ln n hires are expected whatever order people arrive in.',
       },
       {
         name: 'interviewCost',
@@ -2186,23 +2246,28 @@ export const algorithmRegistry: AlgorithmConfig[] = [
       {
         name: 'Classic Textbook Sequence',
         description: 'Standard 8-candidate stream with mixed quality ratings',
-        data: { candidates: [4, 7, 2, 9, 8, 10, 5, 12], interviewCost: 1, hiringCost: 5 },
+        data: { candidates: [4, 7, 2, 9, 8, 10, 5, 12], order: 'shuffle', interviewCost: 1, hiringCost: 5 },
       },
       {
         name: 'Ascending Ratings (Worst-Case Order)',
-        description: 'Each candidate is rated higher than the one before',
-        data: { candidates: [2, 4, 6, 8, 10, 12, 14, 16], interviewCost: 1, hiringCost: 5 },
+        description: 'Each candidate is rated higher than the one before, kept in that order: everyone gets hired',
+        data: { candidates: [2, 4, 6, 8, 10, 12, 14, 16], order: 'given', interviewCost: 1, hiringCost: 5 },
+      },
+      {
+        name: 'Ascending Ratings, Shuffled',
+        description: 'The same worst-case line, shuffled first: only a few hires',
+        data: { candidates: [2, 4, 6, 8, 10, 12, 14, 16], order: 'shuffle', interviewCost: 1, hiringCost: 5 },
       },
       {
         name: 'Descending Ratings (Best-Case Order)',
-        description: 'Each candidate is rated lower than the one before',
-        data: { candidates: [20, 18, 15, 12, 9, 6, 4, 2], interviewCost: 1, hiringCost: 5 },
+        description: 'Each candidate is rated lower than the one before, kept in that order: one hire',
+        data: { candidates: [20, 18, 15, 12, 9, 6, 4, 2], order: 'given', interviewCost: 1, hiringCost: 5 },
       },
     ],
     generateRandomInput: () => {
       const len = 8;
       const candidates = Array.from({ length: len }, () => Math.floor(Math.random() * 25) + 1);
-      return { candidates, interviewCost: 1, hiringCost: 5 };
+      return { candidates, order: 'shuffle', interviewCost: 1, hiringCost: 5 };
     },
     summarizeResult: resultSummaries.summarizeHiringProblem,
     stepGenerator: hiringProblemSteps,

@@ -350,8 +350,20 @@ const maxFlowSummarizer =
     };
   };
 
-export const summarizeFordFulkerson = maxFlowSummarizer();
-export const summarizeEdmondsKarp = maxFlowSummarizer();
+/** The minimum cut both augmenting-path pages report: its capacity (= max flow) and the two sides. */
+const minCutDetails = (r: any): (ResultSummaryDetail | false)[] => [
+  isNum(r.minCutCapacity) && { label: 'Min cut capacity c(S, T)', value: `${r.minCutCapacity} (= max flow)` },
+  isArr(r.cutSourceSide) && { label: 'Side S (reachable from source)', value: `{${r.cutSourceSide.join(', ')}}` },
+  isArr(r.cutSinkSide) && { label: 'Side T (the rest)', value: `{${r.cutSinkSide.join(', ')}}` },
+  isArr(r.cutEdges) &&
+    r.cutEdges.length > 0 && {
+      label: 'Cut edges S → T',
+      value: r.cutEdges.map((e: any) => `${e.edge} (${e.capacity})`).join(', '),
+    },
+];
+
+export const summarizeFordFulkerson = maxFlowSummarizer(minCutDetails);
+export const summarizeEdmondsKarp = maxFlowSummarizer(minCutDetails);
 export const summarizePushRelabel = maxFlowSummarizer((r) => [
   isNum(r.totalPushRelabelSteps) && { label: 'Push / relabel operations', value: r.totalPushRelabelSteps },
 ]);
@@ -377,7 +389,8 @@ export const summarizeLineSegmentIntersection: ResultSummarizer = (r) => {
   if (typeof r.hasIntersection !== 'boolean') return null;
   const details = detailsOf(
     isNum(r.eventsProcessed) && { label: 'Sweep events processed', value: r.eventsProcessed },
-    isNum(r.segmentsChecked) && { label: 'Segments checked', value: r.segmentsChecked }
+    isNum(r.segmentsChecked) && { label: 'Segments checked', value: r.segmentsChecked },
+    isNum(r.rotations) && { label: 'AVL rotations', value: r.rotations }
   );
   if (!r.hasIntersection) return { headline: 'No two segments intersect.', details };
   const [a, b] = isArr(r.intersectingPair) ? r.intersectingPair : [];

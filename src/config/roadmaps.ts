@@ -229,24 +229,26 @@ export const ROADMAPS: Record<string, Roadmap> = {
     ],
   },
   'ford-fulkerson': {
-    labels: ['Zero flow', 'Find a path', 'Its bottleneck', 'Push the flow', 'Until no path'],
+    labels: ['Zero flow', 'Find a path', 'Its bottleneck', 'Push the flow', 'Until no path', 'Min cut'],
     rules: [
       [/Unreachable/, 4],
       [/^Initialize/, 0],
       [/^DFS/, 1],
       [/^Augmenting Path Found/, 2],
       [/^Augmented Flow/, 3],
-      [/Complete/, 4],
+      [/^Min Cut/, 5],
+      [/Complete/, [4, 5]],
     ],
   },
   'edmonds-karp': {
-    labels: ['BFS for a path', 'Its bottleneck', 'Push the flow', 'Until T unreachable'],
+    labels: ['BFS for a path', 'Its bottleneck', 'Push the flow', 'Until T unreachable', 'Min cut'],
     rules: [
       [/Unreachable/, 3],
       [/^(Initialize|BFS)/, 0],
       [/^Shortest Augmenting Path/, 1],
       [/^Augment Residual/, 2],
-      [/Complete/, 3],
+      [/^Min Cut/, 4],
+      [/Complete/, [3, 4]],
     ],
   },
   'push-relabel': {
@@ -293,13 +295,13 @@ export const ROADMAPS: Record<string, Roadmap> = {
     ],
   },
   'hiring-problem': {
-    labels: ['Interview', 'Compare with best', 'Better? Hire', 'Otherwise skip', 'Expected hires'],
+    labels: ['Shuffle the line', 'Interview', 'Compare with best', 'Better? Hire', 'Otherwise skip', 'Expected hires'],
     rules: [
-      [/^Initialize/, 0],
-      [/^Interview Candidate/, 1],
-      [/^HIRE/, 2],
-      [/^SKIP/, 3],
-      [/Complete/, 4],
+      [/^(Initialize|Shuffle)/, 0],
+      [/^Interview Candidate/, [1, 2]],
+      [/^HIRE/, 3],
+      [/^SKIP/, 4],
+      [/Complete/, 5],
     ],
   },
   'karger-min-cut': {

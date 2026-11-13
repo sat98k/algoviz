@@ -4,6 +4,7 @@ import { useAnimPhases } from './useAnimPhases';
 import { doIntersect } from '../../algorithms/lineSegmentIntersection';
 import { PALETTE, tint, useSvgIds } from './kit/materials';
 import { useChapter } from './kit/chapter';
+import { FilingTreeView } from './FilingTreeView';
 
 /**
  * 🎭 Line Segment Intersection as sticks on a table and a sliding curtain.
@@ -30,7 +31,7 @@ export const SweepCurtainScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
   const phaseName: string = st.phase || 'init';
   const title: string = step.title || '';
 
-  const checking = phaseName === 'check_adj' || /^Check/.test(title);
+  const checking = phaseName === 'check_adj';
   const phases: readonly (readonly [string, number])[] = checking ? [['look', 0], ['verdict', 0.45]] : [['idle', 0]];
   const phase = useAnimPhases(step.stepIndex, phases, stepMs);
 
@@ -58,7 +59,14 @@ export const SweepCurtainScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
     if (/^Initialize/.test(title))
       return 'Sticks lie on the table. Do any two cross? Instead of checking every pair, a curtain slides from left to right and stops only at stick ends. A clipboard lists the sticks the curtain touches, from top to bottom.';
     if (phaseName === 'event_left') return `The curtain reaches the left end of ${label(st.currentEvent?.segmentId)}. Write it on the clipboard in its place from top to bottom.`;
-    if (phaseName === 'event_right') return `The curtain passes the right end of ${label(st.currentEvent?.segmentId)}. Cross it off the clipboard; its two neighbours now sit next to each other.`;
+    if (phaseName === 'avl_insert')
+      return `To find ${label(st.insertedId)}’s place quickly, the clipboard is filed as a balanced tree: ask “above or below?” at a few sticks and it slots straight in.`;
+    if (phaseName === 'avl_rotate')
+      return 'One branch of the filing tree grew too long, so it is turned (a rotation) to stay balanced. The top-to-bottom order on the clipboard does not change.';
+    if (phaseName === 'neighbours')
+      return `Who is right above and right below ${label(st.insertedId)} on the clipboard? Only those two can be the first to cross it.`;
+    if (phaseName === 'event_right') return `The curtain reaches the right end of ${label(st.currentEvent?.segmentId)}. Before crossing it off, note its two neighbours on the clipboard.`;
+    if (phaseName === 'avl_delete') return `${label(st.removedId)} is crossed off the clipboard. Its two old neighbours now sit next to each other.`;
     if (checking && pair)
       return phase === 'look'
         ? `${label(pair[0])} and ${label(pair[1])} are neighbours on the clipboard. Do they cross?`
@@ -156,6 +164,21 @@ export const SweepCurtainScene: React.FC<StorySceneProps> = ({ step, stepMs }) =
             {active.length > 0 && <p className="mt-2 text-xs text-stone-500">top ↑ … bottom ↓</p>}
           </div>
         </div>
+      </div>
+      <div className="mt-4">
+        <FilingTreeView
+          tree={st.tree ?? null}
+          colour={colour}
+          label={label}
+          phase={phaseName}
+          searchPath={st.searchPath ?? []}
+          insertedId={st.insertedId}
+          rotation={st.rotation}
+          aboveId={st.aboveId}
+          belowId={st.belowId}
+          pair={pair}
+          found={found}
+        />
       </div>
     </StoryStage>
   );

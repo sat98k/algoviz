@@ -2,7 +2,9 @@ import { AlgorithmStep } from '../types/algorithm';
 
 export interface HiringProblemState {
   mode: 'hiring';
-  array: number[]; // Candidate scores
+  array: number[]; // Candidate scores, in the order they will be interviewed
+  /** Who stands at each place in line: `arrivalOrder[p]` is the place that candidate had when they arrived. */
+  arrivalOrder: number[];
   currentIndex: number;
   currentScore?: number;
   currentBestScore?: number;
@@ -12,25 +14,30 @@ export interface HiringProblemState {
   interviewCost: number;
   hiringCost: number;
   totalCost: number;
-  phase: 'init' | 'interview' | 'decision' | 'complete';
+  phase: 'init' | 'shuffle' | 'interview' | 'decision' | 'complete';
 }
 
 export function* hiringProblemSteps(inputs: {
   candidates?: number[];
   interviewCost?: number;
   hiringCost?: number;
+  /** 'shuffle' (the default) randomizes the line first; 'given' keeps the order as typed. */
+  order?: 'shuffle' | 'given';
   shuffle?: boolean;
 }): Generator<AlgorithmStep<HiringProblemState>> {
   const defaultCandidates = [4, 7, 2, 9, 8, 10, 5, 12];
-  let scores = [...(inputs.candidates && inputs.candidates.length > 0 ? inputs.candidates : defaultCandidates)];
+  const given = [...(inputs.candidates && inputs.candidates.length > 0 ? inputs.candidates : defaultCandidates)];
+  const shuffle = inputs.shuffle ?? inputs.order !== 'given';
 
-  if (inputs.shuffle) {
-    // Fisher-Yates shuffle if randomized order requested
-    for (let i = scores.length - 1; i > 0; i--) {
+  // Fisher-Yates: shuffle who stands where. order[p] is the arrival place of whoever now stands at place p.
+  const order = given.map((_, k) => k);
+  if (shuffle) {
+    for (let i = order.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [scores[i], scores[j]] = [scores[j], scores[i]];
+      [order[i], order[j]] = [order[j], order[i]];
     }
   }
+  const scores = order.map((k) => given[k]);
 
   const ci = inputs.interviewCost ?? 1;
   const ch = inputs.hiringCost ?? 5;
@@ -45,11 +52,12 @@ export function* hiringProblemSteps(inputs: {
   yield {
     stepIndex: stepIndex++,
     title: 'Initialize The Hiring Problem',
-    description: `${scores.length} candidates wait in line. Each interview costs ${ci} and each hire costs ${ch}. Rule: hire a candidate right away if they are better than everyone seen so far.`,
+    description: `${scores.length} candidates arrive and wait in line. Each interview costs ${ci} and each hire costs ${ch}. Rule: hire a candidate right away if they are better than everyone seen so far.`,
     codeLine: 1,
     state: {
       mode: 'hiring',
-      array: [...scores],
+      array: [...given],
+      arrivalOrder: given.map((_, k) => k),
       currentIndex: -1,
       hiredIndices: [],
       interviewCost: ci,
@@ -61,6 +69,28 @@ export function* hiringProblemSteps(inputs: {
     metrics: { comparisons, custom: { hires: 0, totalCost: 0 } },
   };
 
+  if (shuffle) {
+    yield {
+      stepIndex: stepIndex++,
+      title: 'Shuffle the Line',
+      description: `Before any interview, shuffle the line at random. Now no particular order (such as weakest to strongest, which would mean hiring every single person) can be forced on us. Candidates are numbered by their new places: ${scores.join(', ')}.`,
+      codeLine: 2,
+      state: {
+        mode: 'hiring',
+        array: [...scores],
+        arrivalOrder: [...order],
+        currentIndex: -1,
+        hiredIndices: [],
+        interviewCost: ci,
+        hiringCost: ch,
+        totalCost: 0,
+        phase: 'shuffle',
+      },
+      highlights: {},
+      metrics: { comparisons, custom: { hires: 0, totalCost: 0 } },
+    };
+  }
+
   for (let i = 0; i < scores.length; i++) {
     const candidateScore = scores[i];
     totalCost += ci; // Incur interview cost
@@ -69,10 +99,11 @@ export function* hiringProblemSteps(inputs: {
       stepIndex: stepIndex++,
       title: `Interview Candidate ${i + 1} (Score: ${candidateScore})`,
       description: `Interview candidate ${i + 1}: score ${candidateScore} (+${ci}, total cost so far ${totalCost}). ${currentBestIndex >= 0 ? `The best so far is candidate ${currentBestIndex + 1} with ${currentBestScore}.` : 'Nobody has been hired yet.'}`,
-      codeLine: [2, 3],
+      codeLine: [4, 5],
       state: {
         mode: 'hiring',
         array: [...scores],
+        arrivalOrder: [...order],
         currentIndex: i,
         currentScore: candidateScore,
         currentBestScore: currentBestIndex >= 0 ? currentBestScore : undefined,
@@ -104,10 +135,11 @@ export function* hiringProblemSteps(inputs: {
         stepIndex: stepIndex++,
         title: `HIRE: Candidate ${i + 1} Sets New High Score (${candidateScore})`,
         description: `Candidate ${i + 1} (score ${candidateScore}) is better than everyone so far, so hire them (+${ch}, total cost ${totalCost}).`,
-        codeLine: [4, 5, 6],
+        codeLine: [6, 7, 8],
         state: {
           mode: 'hiring',
           array: [...scores],
+          arrivalOrder: [...order],
           currentIndex: i,
           currentScore: candidateScore,
           currentBestScore,
@@ -131,10 +163,11 @@ export function* hiringProblemSteps(inputs: {
         stepIndex: stepIndex++,
         title: `SKIP: Candidate ${i + 1} (${candidateScore}) ≤ Best (${currentBestScore})`,
         description: `Candidate ${i + 1} (score ${candidateScore}) is not better than the best so far (${currentBestScore}), so they are not hired. Only the interview was paid.`,
-        codeLine: 7,
+        codeLine: [6, 9],
         state: {
           mode: 'hiring',
           array: [...scores],
+          arrivalOrder: [...order],
           currentIndex: i,
           currentScore: candidateScore,
           currentBestScore,
@@ -164,10 +197,11 @@ export function* hiringProblemSteps(inputs: {
     stepIndex: stepIndex++,
     title: 'The Hiring Problem Complete',
     description: `All ${scores.length} candidates interviewed. Total hires: ${hiredIndices.length} (Candidates [${hiredIndices.map((idx) => idx + 1).join(', ')}]). Total expense: $${totalCost} (Interviews: $${scores.length * ci}, Hires: $${hiredIndices.length * ch}). If candidates arrived in random order, the expected number of hires would be the harmonic number H_${scores.length} = 1 + 1/2 + … + 1/${scores.length} ≈ ${harmonicSum.toFixed(2)} (H_n ≈ ln n + 0.577; here ln ${scores.length} ≈ ${Math.log(scores.length).toFixed(2)}).`,
-    codeLine: 8,
+    codeLine: 10,
     state: {
       mode: 'hiring',
       array: [...scores],
+      arrivalOrder: [...order],
       currentIndex: scores.length,
       currentBestScore,
       currentBestIndex,

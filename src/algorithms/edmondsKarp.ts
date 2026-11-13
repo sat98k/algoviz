@@ -1,5 +1,5 @@
 import { AlgorithmStep } from '../types/algorithm';
-import { AugmentingPathPhase, AugmentingPathState, FlowInputs, createFlowNetwork, describeAugment } from './flowSearch';
+import { AugmentingPathPhase, AugmentingPathState, FlowInputs, createFlowNetwork, describeAugment, minCutResult, minCutStepText } from './flowSearch';
 
 export interface EdmondsKarpState extends AugmentingPathState {
   bfsQueue: string[];
@@ -62,7 +62,7 @@ export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<E
         search.round === 1
           ? `Start a breadth-first search at ${label(s)}: the queue holds [${label(s)}], and ${label(s)} is ring 0. Vertices leave the queue from the front and newly found ones join at the back, so everything 1 pipe away is explored before anything 2 pipes away.`
           : `Start search ${search.round} from ${label(s)} with a fresh queue [${label(s)}]. The flow has changed: some pipes are now full, and pipes carrying flow now also offer a reverse edge (flow that could be sent back).`,
-      codeLine: [3, 9],
+      codeLine: [3, 10],
       state: snap('bfs_explore'),
       highlights: { activeNode: `${s}` },
       metrics: metrics(),
@@ -85,7 +85,7 @@ export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<E
             ? `Take ${label(s)} from the queue.`
             : `Take ${label(u)} (ring ${search.depth[`${u}`]}) from the front of the queue: it was found earliest, so it is among the closest to ${label(s)}.`
         } Now look along every residual edge out of ${label(u)}. Still waiting in the queue: ${queueText()}.${skippedNote()}`,
-        codeLine: [10, 11],
+        codeLine: [11, 12],
         state: snap('bfs_explore'),
         highlights: { activeNode: `${u}` },
         metrics: metrics(),
@@ -109,7 +109,7 @@ export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<E
             stepIndex: stepIndex++,
             title: `BFS: Pipe ${net.hopText(u, v)} Is Full`,
             description: `Look along ${net.hopText(u, v)}: it already carries its full capacity ${net.cap[u][v]}, and nothing flows the other way that could be sent back. No room, so ${label(v)} cannot be reached this way.`,
-            codeLine: 12,
+            codeLine: 13,
             state: snap('bfs_explore'),
             highlights: { activeNode: `${u}`, edges: [{ u: `${u}`, v: `${v}`, status: 'residual' }] },
             metrics: metrics(),
@@ -127,7 +127,7 @@ export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<E
             stepIndex: stepIndex++,
             title: `BFS: ${label(v)} Already Found`,
             description: `${net.hopText(u, v)} has room, but ${label(v)} was already found (ring ${search.depth[`${v}`]}) by a route at least as short. BFS keeps the first way it found each vertex, so skip it.`,
-            codeLine: 12,
+            codeLine: 13,
             state: snap('bfs_explore'),
             highlights: { activeNode: `${u}`, edges: [{ u: `${u}`, v: `${v}`, status: 'visited' }] },
             metrics: metrics(),
@@ -149,7 +149,7 @@ export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<E
             stepIndex: stepIndex++,
             title: `BFS: Found ${label(t)} via ${net.hopText(u, v)} (Ring ${search.depth[`${v}`]})`,
             description: `${net.hopText(u, v)}: ${roomWords}. The sink ${label(t)} is found in ring ${search.depth[`${v}`]}, so no route to it can use fewer pipes. Stop the search.${skippedNote()}`,
-            codeLine: [13, 14],
+            codeLine: [14, 15],
             state: snap('bfs_explore'),
             highlights: { activeNode: `${t}`, edges: [{ u: `${u}`, v: `${v}`, status: 'active' }] },
             metrics: metrics(),
@@ -161,7 +161,7 @@ export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<E
           stepIndex: stepIndex++,
           title: `BFS: Discover ${label(v)} via ${net.hopText(u, v)} (Ring ${search.depth[`${v}`]})`,
           description: `${net.hopText(u, v)}: ${roomWords}. ${label(v)} is new: remember that it was reached from ${label(u)} (its parent), mark it as ring ${search.depth[`${v}`]}, and add it to the back of the queue: ${queueText()}.${skippedNote()}`,
-          codeLine: 13,
+          codeLine: 14,
           state: snap('bfs_explore'),
           highlights: { activeNode: `${u}`, edges: [{ u: `${u}`, v: `${v}`, status: 'active' }] },
           metrics: metrics(),
@@ -177,8 +177,8 @@ export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<E
       yield {
         stepIndex: stepIndex++,
         title: `BFS Search ${search.round}: ${label(t)} Unreachable`,
-        description: `The queue is empty and ${label(t)} was never found.${skippedNote()} From ${label(s)} only ${cut.reachable.map(label).join(', ')} can be reached; every pipe leading out of that group is full (${cut.edges.map((e) => `${net.hopText(Number(e.u), Number(e.v))} ${e.capacity}`).join(', ')}). No augmenting path is left.`,
-        codeLine: 15,
+        description: `The queue is empty and ${label(t)} was never found.${skippedNote()} From ${label(s)} only ${cut.reachable.map(label).join(', ')} can be reached; every pipe leading out of that group is full (${cut.edges.map((e) => `${net.hopText(Number(e.u), Number(e.v))} ${e.capacity}`).join(', ')}). No augmenting path is left. The vertices it did reach become side S of a cut.`,
+        codeLine: 16,
         state: snap('bfs_explore', { minCut: cut }),
         highlights: { nodes: cut.reachable, edges: cut.edges.map((e) => ({ u: e.u, v: e.v, status: 'conflict' as const })) },
         metrics: metrics(),
@@ -204,7 +204,7 @@ export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<E
         .reverse()
         .map(label)
         .join(' ← ')}. Each vertex remembers which vertex found it, so walking back from ${label(t)} ends at ${label(s)}. Read forwards, the path is ${pathText}, with ${path.length - 1} pipes: the fewest possible.`,
-      codeLine: 14,
+      codeLine: 15,
       state: snap('bfs_explore'),
       highlights: { nodes: pathIds, edges: pathEdges.map((e) => ({ ...e, status: 'visited' as const })) },
       metrics: metrics(),
@@ -241,11 +241,22 @@ export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<E
   }
 
   const cut = net.minCut();
+  const cutStep = minCutStepText(net, cut, 'BFS');
+  yield {
+    stepIndex: stepIndex++,
+    title: cutStep.title,
+    description: cutStep.description,
+    codeLine: 7,
+    state: snap('complete', { minCut: cut }),
+    highlights: cutStep.highlights,
+    metrics: metrics(),
+  };
+
   yield {
     stepIndex: stepIndex++,
     title: 'Edmonds-Karp Complete: Maximum Flow Found',
-    description: `BFS can no longer reach ${label(t)}: every route is blocked by a full pipe. The maximum flow is ${net.totalFlow}, found with ${net.pathHistory.length} shortest augmenting path${net.pathHistory.length === 1 ? '' : 's'}.`,
-    codeLine: 7,
+    description: `BFS can no longer reach ${label(t)}: every route is blocked by a full pipe. The maximum flow is ${net.totalFlow}, found with ${net.pathHistory.length} shortest augmenting path${net.pathHistory.length === 1 ? '' : 's'}. It equals the capacity of the minimum cut, ${cut.capacity}.`,
+    codeLine: 8,
     state: snap('complete', { minCut: cut }),
     highlights: {},
     metrics: metrics(),
@@ -256,6 +267,7 @@ export function* edmondsKarpSteps(inputs: FlowInputs): Generator<AlgorithmStep<E
       sink: label(t),
       augmentingPaths: net.pathHistory.length,
       edgesWithFlow: net.snapshot('complete').edges.filter((e) => (e.flow || 0) > 0),
+      ...minCutResult(net, cut),
     },
   };
 }

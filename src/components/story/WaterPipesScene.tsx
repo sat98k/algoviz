@@ -384,6 +384,10 @@ export const WaterPipesScene: React.FC<StorySceneProps> = ({ step, algorithmId, 
   };
 
   const narration = (() => {
+    if (!isPR && !step.isFinal && phaseName === 'complete' && st.minCut?.sinkSide) {
+      const full = (st.minCut.edges as { u: string; v: string }[]).map((e) => `${label(e.u)} → ${label(e.v)}`).join(', ');
+      return `Draw a chalk line around the tanks the tower ${label(s)} can still reach. Every pipe crossing that line toward the city is full to the brim (${full}), so together they carry exactly what reaches ${label(t)}: the narrowest gap in the whole network.`;
+    }
     if (step.isFinal || phaseName === 'complete') {
       return isPR
         ? `Every tank has drained its extra water. The city ${label(t)} now receives ${delivered} litres per second, which is the most these pipes can carry.`

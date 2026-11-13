@@ -1,5 +1,5 @@
 import { AlgorithmStep } from '../types/algorithm';
-import { AugmentingPathState, FlowInputs, createFlowNetwork, describeAugment } from './flowSearch';
+import { AugmentingPathState, FlowInputs, createFlowNetwork, describeAugment, minCutResult, minCutStepText } from './flowSearch';
 
 export type FordFulkersonState = AugmentingPathState;
 
@@ -55,7 +55,7 @@ export function* fordFulkersonSteps(inputs: FlowInputs): Generator<AlgorithmStep
         search.round === 1
           ? `Start a depth-first search at ${label(s)}. The stack holds the route walked so far: just [${label(s)}]. At each vertex, try its pipes in order and go deeper along the first one that still has room.`
           : `Start search ${search.round} from ${label(s)} with a fresh stack [${label(s)}]. The flow has changed, so pipes that were free may now be full, and pipes carrying flow now also offer a reverse edge (flow that could be sent back).`,
-      codeLine: [3, 10],
+      codeLine: [3, 11],
       state: net.snapshot('dfs_explore'),
       highlights: { activeNode: `${s}` },
       metrics: metrics(),
@@ -86,7 +86,7 @@ export function* fordFulkersonSteps(inputs: FlowInputs): Generator<AlgorithmStep
           stepIndex: stepIndex++,
           title: `DFS: Dead End at ${label(u)}, Back Up to ${label(back)}`,
           description: `Every pipe out of ${label(u)} is full or leads somewhere already tried, so no route to ${label(t)} continues from here. Pop ${label(u)} off the stack and go back to ${label(back)} to try its next pipe. Stack: [${search.frontier.map(label).join(', ')}].${skippedNote()}`,
-          codeLine: 16,
+          codeLine: 17,
           state: net.snapshot('dfs_explore'),
           highlights: {
             activeNode: `${back}`,
@@ -114,7 +114,7 @@ export function* fordFulkersonSteps(inputs: FlowInputs): Generator<AlgorithmStep
           stepIndex: stepIndex++,
           title: `DFS: Pipe ${net.hopText(u, v)} Is Full`,
           description: `Look along ${net.hopText(u, v)}: it already carries its full capacity ${net.cap[u][v]}, and nothing flows the other way that could be sent back. No room, so skip it and try the next pipe out of ${label(u)}.`,
-          codeLine: 14,
+          codeLine: 15,
           state: net.snapshot('dfs_explore'),
           highlights: { activeNode: `${u}`, edges: [{ u: `${u}`, v: `${v}`, status: 'residual' }] },
           metrics: metrics(),
@@ -135,7 +135,7 @@ export function* fordFulkersonSteps(inputs: FlowInputs): Generator<AlgorithmStep
           stepIndex: stepIndex++,
           title: `DFS: ${label(v)} Already Visited`,
           description: `${net.hopText(u, v)} has room, but ${why}. Skip it.`,
-          codeLine: 14,
+          codeLine: 15,
           state: net.snapshot('dfs_explore'),
           highlights: { activeNode: `${u}`, edges: [{ u: `${u}`, v: `${v}`, status: 'visited' }] },
           metrics: metrics(),
@@ -160,7 +160,7 @@ export function* fordFulkersonSteps(inputs: FlowInputs): Generator<AlgorithmStep
           stepIndex: stepIndex++,
           title: `DFS: Reached ${label(t)} via ${net.hopText(u, v)}`,
           description: `${net.hopText(u, v)}: ${roomWords}. That reaches the sink ${label(t)}, so the search stops here. The stack is the route: ${path.map(label).join(' → ')}. DFS took the first route it could finish, not necessarily the shortest one.${skippedNote()}`,
-          codeLine: [11, 15],
+          codeLine: [12, 16],
           state: net.snapshot('dfs_explore'),
           highlights: { activeNode: `${t}`, nodes: search.frontier, edges: [{ u: `${u}`, v: `${v}`, status: 'active' }] },
           metrics: metrics(),
@@ -172,7 +172,7 @@ export function* fordFulkersonSteps(inputs: FlowInputs): Generator<AlgorithmStep
         stepIndex: stepIndex++,
         title: `DFS: Go Deeper ${net.hopText(u, v)}`,
         description: `${net.hopText(u, v)}: ${roomWords}. ${label(v)} is new, so push it on the stack and carry on from ${label(v)} before trying any other pipe out of ${label(u)}. Stack: [${search.frontier.map(label).join(', ')}].${skippedNote()}`,
-        codeLine: [14, 15],
+        codeLine: [15, 16],
         state: net.snapshot('dfs_explore'),
         highlights: { activeNode: `${v}`, nodes: search.frontier, edges: [{ u: `${u}`, v: `${v}`, status: 'active' }] },
         metrics: metrics(),
@@ -186,8 +186,8 @@ export function* fordFulkersonSteps(inputs: FlowInputs): Generator<AlgorithmStep
       yield {
         stepIndex: stepIndex++,
         title: `DFS Search ${search.round}: ${label(t)} Unreachable`,
-        description: `The search backed all the way up to ${label(s)} without reaching ${label(t)}. From ${label(s)} only ${cut.reachable.map(label).join(', ')} can still be reached; every pipe leading out of that group is full (${cut.edges.map((e) => `${net.hopText(Number(e.u), Number(e.v))} ${e.capacity}`).join(', ')}). No augmenting path is left.`,
-        codeLine: 17,
+        description: `The search backed all the way up to ${label(s)} without reaching ${label(t)}. From ${label(s)} only ${cut.reachable.map(label).join(', ')} can still be reached; every pipe leading out of that group is full (${cut.edges.map((e) => `${net.hopText(Number(e.u), Number(e.v))} ${e.capacity}`).join(', ')}). No augmenting path is left. The vertices it did reach become side S of a cut.`,
+        codeLine: 18,
         state: net.snapshot('dfs_explore', { minCut: cut }),
         highlights: { nodes: cut.reachable, edges: cut.edges.map((e) => ({ u: e.u, v: e.v, status: 'conflict' as const })) },
         metrics: metrics(),
@@ -229,11 +229,22 @@ export function* fordFulkersonSteps(inputs: FlowInputs): Generator<AlgorithmStep
   }
 
   const cut = net.minCut();
+  const cutStep = minCutStepText(net, cut, 'DFS');
+  yield {
+    stepIndex: stepIndex++,
+    title: cutStep.title,
+    description: cutStep.description,
+    codeLine: 9,
+    state: net.snapshot('complete', { minCut: cut }),
+    highlights: cutStep.highlights,
+    metrics: metrics(),
+  };
+
   yield {
     stepIndex: stepIndex++,
     title: 'Ford-Fulkerson Complete',
-    description: `No path from ${label(s)} to ${label(t)} has room left: every route is blocked by at least one full pipe. The flow cannot grow any more, so the maximum flow is ${net.totalFlow}, found with ${net.pathHistory.length} augmenting path${net.pathHistory.length === 1 ? '' : 's'}.`,
-    codeLine: 9,
+    description: `No path from ${label(s)} to ${label(t)} has room left: every route is blocked by at least one full pipe. The flow cannot grow any more, so the maximum flow is ${net.totalFlow}, found with ${net.pathHistory.length} augmenting path${net.pathHistory.length === 1 ? '' : 's'}. It equals the capacity of the minimum cut, ${cut.capacity}.`,
+    codeLine: 10,
     state: net.snapshot('complete', { minCut: cut }),
     highlights: {},
     metrics: metrics(),
@@ -244,6 +255,7 @@ export function* fordFulkersonSteps(inputs: FlowInputs): Generator<AlgorithmStep
       sink: label(t),
       augmentingPaths: net.pathHistory.length,
       edgesWithFlow: net.snapshot('complete').edges.filter((e) => (e.flow || 0) > 0),
+      ...minCutResult(net, cut),
     },
   };
 }

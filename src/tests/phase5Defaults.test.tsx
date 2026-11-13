@@ -96,14 +96,14 @@ describe('Line Segment Intersection default needs the deletion-time check', () =
 
   it('the intersection is found right after a deletion, at the former-neighbours check', () => {
     const t = titles(steps);
-    const removeIdx = t.findIndex((x) => x.startsWith('Right Endpoint Event: Remove S2'));
+    const removeIdx = t.findIndex((x) => x.startsWith('AVL Delete S2'));
     const checkIdx = t.findIndex((x) => x.startsWith('Check Former Neighbors: S1 and S3'));
     const foundIdx = t.findIndex((x) => x.startsWith('INTERSECTION FOUND'));
     expect(removeIdx).toBeGreaterThan(0);
     expect(checkIdx).toBe(removeIdx + 1);
     expect(foundIdx).toBe(checkIdx + 1);
     expect(t.slice(0, removeIdx).some((x) => x.startsWith('INTERSECTION FOUND'))).toBe(false);
-    expect(steps[foundIdx].codeLine).toBe(12);
+    expect(steps[foundIdx].codeLine).toEqual([13]);
   });
 
   it('code lines stay inside the pseudocode for every preset', () => {

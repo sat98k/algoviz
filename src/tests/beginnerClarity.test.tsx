@@ -134,7 +134,7 @@ describe('Wording fixes', () => {
   it('the Hiring Problem counts candidates from 1, like the owl', () => {
     const steps = stepsOf('hiring-problem');
     expect(textOf(steps)).not.toMatch(/Candidate 0\b/i);
-    expect(steps[1].title).toMatch(/Interview Candidate 1 /);
+    expect(steps.find((s) => /^Interview/.test(s.title))!.title).toMatch(/Interview Candidate 1 /);
     const summary = getAlgorithmById('hiring-problem')!.summarizeResult!(steps[steps.length - 1].result, {});
     expect(summary!.table!.rows[0][0]).toBe(1);
   });

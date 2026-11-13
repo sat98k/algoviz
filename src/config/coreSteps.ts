@@ -132,12 +132,14 @@ export const CORE_STEPS: Record<string, string[]> = {
     'Its **bottleneck** is the smallest spare capacity on that path.',
     'Push that much flow along the path: forward room shrinks, and the **reverse edge** gains the same room so a later path can send that flow back.',
     'Repeat until no such path exists. The total flow is then the maximum. (The Edmonds-Karp page searches with BFS instead and always finds a shortest path.)',
+    'Read off the **min cut**: side S = what s can still reach, side T = the rest. The edges of this s-t cut from S to T are full and add up to the max flow.',
   ],
   'edmonds-karp': [
     'Run **BFS** from S: a queue explores ring by ring and each vertex remembers its parent. Tracing parents back from T gives the augmenting path with the fewest edges.',
     'The **bottleneck** is the smallest spare capacity along that path.',
     '**Increase the flow** along the path by the bottleneck, and add the same amount of reverse capacity so it can be sent back later.',
     'Repeat the BFS. When T can no longer be reached, the flow is maximum.',
+    'Read off the **min cut**: side S = what the last BFS reached, side T = the rest. The edges of this s-t cut from S to T are full and add up to the max flow.',
   ],
   'push-relabel': [
     'Give S height V (the number of vertices) and fill every pipe leaving S completely (a preflow). Other vertices start at height 0.',
@@ -160,11 +162,11 @@ export const CORE_STEPS: Record<string, string[]> = {
     'Repeat until you return to the starting point.',
   ],
   'line-segment-intersection': [
-    'Sort all segment endpoints by x.',
-    'Move a vertical sweep line from left to right, keeping the segments it currently cuts ordered by y.',
-    'At a left endpoint, insert the segment and **test it against its neighbours** above and below.',
-    'At a right endpoint, remove the segment and **test its old neighbours** against each other.',
-    'Stop as soon as a test finds an intersection.',
+    'Sort all 2n segment endpoints by x: the sweep line stops only there.',
+    'Keep the segments the sweep line cuts in an **AVL tree**, ordered bottom to top (left subtree = below, right subtree = above).',
+    'At a left endpoint, **insert** the segment (rotate if a balance hits ±2) and **test it against its neighbours**: successor (above) and predecessor (below).',
+    'At a right endpoint, read its two neighbours, **delete** it (rebalancing), then **test those old neighbours** against each other.',
+    'Stop as soon as a test finds an intersection; if the sweep ends with none, no two segments cross.',
   ],
   'randomized-quicksort': [
     'Pick the pivot **uniformly at random**.',
@@ -174,6 +176,7 @@ export const CORE_STEPS: Record<string, string[]> = {
     'A random pivot makes very unbalanced splits unlikely, whatever the input order.',
   ],
   'hiring-problem': [
+    'Shuffle the line at random first, so nobody can hand us a bad order (like weakest to strongest).',
     'Interview the next candidate and pay the interview cost `c_i`.',
     'Compare them with the best candidate so far.',
     'If they are better ✓, **hire** them and pay the hiring cost `c_h`. They become the best so far.',

@@ -341,12 +341,10 @@ export const COMPLEXITY_ANALYSIS = define({
       },
     ],
     kinds: ['Worst-case'],
-    dominant: 'Sorting the endpoint events, plus O(log n) per event in the sweep status.',
+    dominant: 'Sorting the endpoint events, plus O(log n) per event in the AVL tree.',
     derivation:
-      'Sorting the 2n endpoint events costs O(n log n). Each event does a constant number of insert, delete and neighbour lookups in the sweep status, O(log n) each in a balanced search tree, plus at most two O(1) intersection tests. With 2n events that is O(n log n), and the algorithm stops at the first intersection it finds.',
-    space: { bound: 'O(n)', explanation: 'The event list and the sweep status, each holding at most 2n entries.' },
-    implementationNote:
-      'The pseudocode uses a balanced search tree. This visualizer keeps the status in an array and re-sorts it on each insertion: O(n log n) per event and O(n² log n) in the worst case, which is fine for a few segments.',
+      'Sorting the 2n endpoint events costs O(n log n). Each event does one insert or delete in the AVL tree plus two neighbour lookups (in-order successor and predecessor). An AVL tree never lets the two subtrees of a node differ in height by more than 1, so its height is at most about 1.44·log₂ n: each walk down costs O(log n) comparisons, and rebalancing adds O(1) rotations per level on the way back up. With at most two O(1) intersection tests per event and 2n events, the sweep costs O(n log n), and it stops at the first intersection it finds.',
+    space: { bound: 'O(n)', explanation: 'The event queue (2n endpoints) and the AVL tree (at most n nodes, one per segment the sweep line cuts).' },
   },
 
   // ── Module 6: randomized ──────────────────────────────────────────────────

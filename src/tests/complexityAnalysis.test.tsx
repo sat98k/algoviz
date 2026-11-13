@@ -160,8 +160,9 @@ describe('Implementation notes match the code', () => {
     }
   });
 
-  it('Line Segment re-sorts its status array; B&B re-sorts its queue; TSP-approx Prim scans the tree', () => {
-    expect(src('lineSegmentIntersection.ts')).toContain('activeSegmentIds.sort(');
+  it('Line Segment keeps its status in an AVL tree; B&B re-sorts its queue; TSP-approx Prim scans the tree', () => {
+    expect(src('lineSegmentIntersection.ts')).toMatch(/function rotateRight[\s\S]*function rotateLeft/);
+    expect(src('lineSegmentIntersection.ts')).not.toContain('.sort((idA');
     expect(src('knapsackBB.ts')).toContain('queue.sort(');
     expect(src('jobSelectionBB.ts')).toContain('queue.sort(');
     expect(src('tspApprox.ts')).toContain('for (const u of inMst)');
